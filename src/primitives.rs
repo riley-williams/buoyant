@@ -5,17 +5,19 @@ use core::cmp::max;
 
 #[allow(non_camel_case_types)]
 #[cfg(not(feature = "reduced_precision"))]
-pub(crate) type uint = u32;
+pub type uint = u32;
+
+#[allow(non_camel_case_types)]
 #[cfg(not(feature = "reduced_precision"))]
-pub(crate) type iint = i32;
+pub type iint = i32;
 
 #[allow(non_camel_case_types)]
 #[cfg(feature = "reduced_precision")]
-pub(crate) type uint = u16;
+pub type uint = u16;
 
 #[allow(non_camel_case_types)]
 #[cfg(feature = "reduced_precision")]
-pub(crate) type iint = i16;
+pub type iint = i16;
 
 #[derive(Debug, PartialEq, Clone, Copy, Default)]
 pub struct Size {
