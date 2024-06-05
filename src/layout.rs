@@ -1,0 +1,76 @@
+use crate::primitives::{iint, Size};
+
+pub trait Environment {
+    fn layout_direction(&self) -> LayoutDirection {
+        LayoutDirection::default()
+    }
+    fn alignment(&self) -> Alignment {
+        Alignment::default()
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Default)]
+pub enum LayoutDirection {
+    /// Content is laid out horizontally, from left to right. Typically in a HStack
+    #[default]
+    Horizontal,
+    /// Content is laid out vertically, from top to bottom. Typically in a VStack
+    Vertical,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Default)]
+pub struct Alignment {
+    pub horizontal: HorizontalAlignment,
+    pub vertical: VerticalAlignment,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Default)]
+pub enum HorizontalAlignment {
+    /// Align the content to the start of the layout direction
+    Leading,
+    /// Align the content to the center of the layout direction
+    #[default]
+    Center,
+    /// Align the content to the end of the layout direction
+    Trailing,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Default)]
+/// Strategy to align the heights of items that do not fill the available frame height
+pub enum VerticalAlignment {
+    /// Align the content to the start of the layout direction
+    Top,
+    /// Align the content to the center of the layout direction
+    #[default]
+    Center,
+    /// Align the content to the end of the layout direction
+    Bottom,
+}
+
+impl VerticalAlignment {
+    pub fn align(&self, available: iint, content: iint) -> iint {
+        match self {
+            VerticalAlignment::Top => 0,
+            VerticalAlignment::Center => (available - content) / 2,
+            VerticalAlignment::Bottom => available - content,
+        }
+    }
+}
+
+pub struct PreRender<'a, V, C> {
+    pub source_view: &'a V,
+    pub layout_cache: C,
+    pub resolved_size: Size,
+}
+
+pub trait Layout: Sized {
+    type Cache<'a>
+    where
+        Self: 'a;
+    /// The size of the view given the offer
+    fn layout(&self, offer: Size, env: &dyn Environment) -> PreRender<'_, Self, Self::Cache<'_>>;
+    /// The layout priority of the view. Higher priority views are more likely to be given the size they want
+    fn priority(&self) -> i8 {
+        0
+    }
+}

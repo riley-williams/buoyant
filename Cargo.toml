@@ -1,0 +1,13 @@
+[package]
+name = "buoyant"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[features]
+default = []
+std = []
+# When this feature is enabled, 16 bit integers are used instead of 32 bit integers
+reduced_precision = []
+
+[dependencies]
