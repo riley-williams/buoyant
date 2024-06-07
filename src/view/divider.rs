@@ -1,15 +1,15 @@
 use crate::{
     layout::{Environment, Layout, LayoutDirection, PreRender},
-    primitives::{iint, uint, Point, Size},
+    primitives::{Point, Size},
     render::{Render, RenderTarget},
 };
 
 pub struct Divider {
-    pub weight: uint,
+    pub weight: u16,
 }
 
 impl Divider {
-    pub fn new(weight: uint) -> Self {
+    pub fn new(weight: u16) -> Self {
         Self { weight }
     }
 }
@@ -40,16 +40,16 @@ impl Layout for Divider {
 }
 
 impl Render<char> for PreRender<'_, Divider, ()> {
-    fn render(&self, target: &mut impl RenderTarget<char>, env: &impl Environment) {
+    fn render(&self, target: &mut impl RenderTarget<char>, env: &dyn Environment) {
         match env.layout_direction() {
             LayoutDirection::Horizontal => {
                 for y in 0..self.resolved_size.height {
-                    target.draw(Point::new(0, y as iint), '|');
+                    target.draw(Point::new(0, y as i16), '|');
                 }
             }
             LayoutDirection::Vertical => {
                 for x in 0..self.resolved_size.width {
-                    target.draw(Point::new(x as iint, 0), '-');
+                    target.draw(Point::new(x as i16, 0), '-');
                 }
             }
         }

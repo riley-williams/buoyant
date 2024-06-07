@@ -1,11 +1,11 @@
 use crate::{
     layout::{Environment, Layout, PreRender},
-    primitives::{iint, uint, Point, Size},
+    primitives::{Point, Size},
     render::{Render, RenderProxy, RenderTarget},
 };
 
 pub struct Padding<T> {
-    padding: uint,
+    padding: u16,
     child: T,
 }
 
@@ -30,12 +30,12 @@ impl<'a, V: Layout, P> Render<P> for PreRender<'_, Padding<V>, V::Cache<'a>>
 where
     V: Render<P>,
 {
-    fn render(&self, target: &mut impl RenderTarget<P>, env: &impl Environment) {
+    fn render(&self, target: &mut impl RenderTarget<P>, env: &dyn Environment) {
         let mut proxy = RenderProxy::new(
             target,
             Point {
-                x: self.source_view.padding as iint,
-                y: self.source_view.padding as iint,
+                x: self.source_view.padding as i16,
+                y: self.source_view.padding as i16,
             },
         );
         self.source_view.child.render(&mut proxy, env);

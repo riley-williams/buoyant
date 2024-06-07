@@ -16,7 +16,5 @@ maintenance = { status = "experimental" }
 [features]
 default = []
 std = []
-# When this feature is enabled, 16 bit integers are used instead of 32 bit integers
-reduced_precision = []
 
 [dependencies]

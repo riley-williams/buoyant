@@ -1,12 +1,12 @@
 use crate::{
     layout::{Environment, Layout, LayoutDirection, PreRender},
-    primitives::{uint, Size},
+    primitives::Size,
     render::{Render, RenderTarget},
 };
 
 #[derive(Default)]
 pub struct Spacer {
-    min_length: uint,
+    min_length: u16,
 }
 
 impl Layout for Spacer {
@@ -32,5 +32,5 @@ impl Layout for Spacer {
 }
 
 impl<I> Render<I> for PreRender<'_, Spacer, ()> {
-    fn render(&self, _target: &mut impl RenderTarget<I>, _env: &impl Environment) {}
+    fn render(&self, _target: &mut impl RenderTarget<I>, _env: &dyn Environment) {}
 }

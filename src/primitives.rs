@@ -1,32 +1,13 @@
 use core::cmp::max;
 
-// use 32 bit integers if the half_precision feature is disabled
-// otherwise use 16 bit integers
-
-#[allow(non_camel_case_types)]
-#[cfg(not(feature = "reduced_precision"))]
-pub type uint = u32;
-
-#[allow(non_camel_case_types)]
-#[cfg(not(feature = "reduced_precision"))]
-pub type iint = i32;
-
-#[allow(non_camel_case_types)]
-#[cfg(feature = "reduced_precision")]
-pub type uint = u16;
-
-#[allow(non_camel_case_types)]
-#[cfg(feature = "reduced_precision")]
-pub type iint = i16;
-
 #[derive(Debug, PartialEq, Clone, Copy, Default)]
 pub struct Size {
-    pub width: uint,
-    pub height: uint,
+    pub width: u16,
+    pub height: u16,
 }
 
 impl Size {
-    pub fn new(width: uint, height: uint) -> Self {
+    pub fn new(width: u16, height: u16) -> Self {
         Size { width, height }
     }
 
@@ -51,8 +32,8 @@ impl core::ops::Add for Size {
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct Point {
-    pub x: iint,
-    pub y: iint,
+    pub x: i16,
+    pub y: i16,
 }
 
 impl core::ops::Add for Point {
@@ -66,7 +47,7 @@ impl core::ops::Add for Point {
 }
 
 impl Point {
-    pub fn new(x: iint, y: iint) -> Self {
+    pub fn new(x: i16, y: i16) -> Self {
         Point { x, y }
     }
 }

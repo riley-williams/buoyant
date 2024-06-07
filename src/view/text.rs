@@ -3,7 +3,7 @@ use core::cmp::max;
 use crate::{
     font::{Font, TextBufferFont},
     layout::{Environment, Layout, PreRender},
-    primitives::{iint, uint, Point, Size},
+    primitives::{Point, Size},
     render::{Render, RenderTarget},
 };
 
@@ -16,7 +16,7 @@ pub enum HorizontalTextAlignment {
 }
 
 impl HorizontalTextAlignment {
-    pub fn align(&self, available: iint, content: iint) -> iint {
+    pub fn align(&self, available: i16, content: i16) -> i16 {
         match self {
             Self::Leading => 0,
             Self::Center => (available - content) / 2,
@@ -70,7 +70,7 @@ impl<'a, F: Font, const N: usize> Text<'a, F, N> {
 // This occupies the vast majority of the size of the layout cache, only really for no_std support
 pub struct TextLayoutCache<'a, const N: usize> {
     /// The cached lines and their lengths
-    lines: [Option<(uint, &'a str)>; N],
+    lines: [Option<(u16, &'a str)>; N],
     did_exceed_cache: bool,
     remaining: &'a str,
 }
@@ -190,16 +190,16 @@ impl<'a, F: Font, const N: usize> Layout for Text<'a, F, N> {
 impl<const N: usize> Render<char>
     for PreRender<'_, Text<'_, TextBufferFont, N>, TextLayoutCache<'_, N>>
 {
-    fn render(&self, target: &mut impl RenderTarget<char>, _env: &impl Environment) {
-        let mut consumed_height: uint = 0;
+    fn render(&self, target: &mut impl RenderTarget<char>, _env: &dyn Environment) {
+        let mut consumed_height: u16 = 0;
         for (width, line) in self.layout_cache.lines.iter().filter_map(|l| *l) {
             let x = self
                 .source_view
                 .alignment
-                .align(self.resolved_size.width as iint, width as iint);
+                .align(self.resolved_size.width as i16, width as i16);
 
             line.chars().enumerate().for_each(|(i, c)| {
-                target.draw(Point::new(x + i as iint, consumed_height as iint), c);
+                target.draw(Point::new(x + i as i16, consumed_height as i16), c);
             });
             consumed_height += 1;
         }
@@ -276,13 +276,13 @@ impl<const N: usize> Render<char>
             let x = self
                 .source_view
                 .alignment
-                .align(self.resolved_size.width as iint, whole_width_points as iint);
+                .align(self.resolved_size.width as i16, whole_width_points as i16);
 
             remaining_slice[..completed_index]
                 .chars()
                 .enumerate()
                 .for_each(|(i, c)| {
-                    target.draw(Point::new(x + i as iint, consumed_height as iint), c);
+                    target.draw(Point::new(x + i as i16, consumed_height as i16), c);
                 });
 
             consumed_height += 1;

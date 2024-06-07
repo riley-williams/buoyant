@@ -1,22 +1,22 @@
 use buoyant::{
     font::{Font, TextBufferFont},
     layout::{Environment, Layout as _},
-    primitives::{uint, Size},
+    primitives::Size,
     render::{FixedTextBuffer, Render as _, RenderTarget as _},
     view::{HorizontalTextAlignment, Text},
 };
 
 #[derive(Debug)]
 struct MonospaceFont {
-    line_height: uint,
-    character_width: uint,
+    line_height: u16,
+    character_width: u16,
 }
 
 impl Font for MonospaceFont {
-    fn line_height(&self) -> uint {
+    fn line_height(&self) -> u16 {
         self.line_height
     }
-    fn character_width(&self, _character: char) -> uint {
+    fn character_width(&self, _character: char) -> u16 {
         self.character_width
     }
 }

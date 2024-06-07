@@ -2,7 +2,7 @@ use core::fmt::{Display, Formatter, Result};
 
 use crate::{
     layout::Environment,
-    primitives::{uint, Point, Size},
+    primitives::{Point, Size},
 };
 
 /// A target that accepts pixels
@@ -20,7 +20,7 @@ pub trait RenderTarget<C> {
 /// A view that can be rendered to pixels
 pub trait Render<C> {
     /// Render the view to the screen
-    fn render(&self, target: &mut impl RenderTarget<C>, env: &impl Environment);
+    fn render(&self, target: &mut impl RenderTarget<C>, env: &dyn Environment);
 }
 
 pub struct FixedTextBuffer<const W: usize, const H: usize> {
@@ -49,7 +49,7 @@ impl<const W: usize, const H: usize> Default for FixedTextBuffer<W, H> {
 
 impl<const W: usize, const H: usize> RenderTarget<char> for FixedTextBuffer<W, H> {
     fn size(&self) -> Size {
-        Size::new(W as uint, H as uint)
+        Size::new(W as u16, H as u16)
     }
 
     fn clear(&mut self) {
@@ -68,13 +68,13 @@ impl<const W: usize, const H: usize> RenderTarget<char> for FixedTextBuffer<W, H
         }
     }
 }
-pub(crate) struct RenderProxy<'a, T> {
+pub struct RenderProxy<'a, T> {
     target: &'a mut T,
-    pub(crate) origin: Point,
+    pub origin: Point,
 }
 
 impl<'a, T> RenderProxy<'a, T> {
-    pub(crate) fn new(target: &'a mut T, origin: Point) -> Self {
+    pub fn new(target: &'a mut T, origin: Point) -> Self {
         RenderProxy { target, origin }
     }
 }
@@ -89,5 +89,36 @@ impl<'a, T: RenderTarget<I>, I> RenderTarget<I> for RenderProxy<'a, T> {
 
     fn draw(&mut self, point: Point, item: I) {
         self.target.draw(point + self.origin, item)
+    }
+}
+
+pub struct ClippingRenderProxy<'a, T> {
+    target: &'a mut T,
+    pub origin: Point,
+    pub size: Size,
+}
+
+impl<'a, T> ClippingRenderProxy<'a, T> {
+    pub fn new(target: &'a mut T, origin: Point, size: Size) -> Self {
+        Self {
+            target,
+            origin,
+            size,
+        }
+    }
+}
+
+impl<'a, T: RenderTarget<I>, I> RenderTarget<I> for ClippingRenderProxy<'a, T> {
+    fn size(&self) -> Size {
+        self.target.size()
+    }
+    fn clear(&mut self) {
+        self.target.clear()
+    }
+
+    fn draw(&mut self, point: Point, item: I) {
+        if point.x < self.size.width as i16 && point.y < self.size.height as i16 {
+            self.target.draw(point + self.origin, item)
+        }
     }
 }

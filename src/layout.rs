@@ -1,4 +1,4 @@
-use crate::primitives::{iint, Size};
+use crate::primitives::Size;
 
 pub trait Environment {
     fn layout_direction(&self) -> LayoutDirection {
@@ -35,6 +35,16 @@ pub enum HorizontalAlignment {
     Trailing,
 }
 
+impl HorizontalAlignment {
+    pub fn align(&self, available: i16, content: i16) -> i16 {
+        match self {
+            HorizontalAlignment::Leading => 0,
+            HorizontalAlignment::Center => (available - content) / 2,
+            HorizontalAlignment::Trailing => available - content,
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Default)]
 /// Strategy to align the heights of items that do not fill the available frame height
 pub enum VerticalAlignment {
@@ -48,7 +58,7 @@ pub enum VerticalAlignment {
 }
 
 impl VerticalAlignment {
-    pub fn align(&self, available: iint, content: iint) -> iint {
+    pub fn align(&self, available: i16, content: i16) -> i16 {
         match self {
             VerticalAlignment::Top => 0,
             VerticalAlignment::Center => (available - content) / 2,
