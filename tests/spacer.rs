@@ -1,7 +1,8 @@
 use buoyant::font::TextBufferFont;
 use buoyant::layout::{Environment, Layout, LayoutDirection};
 use buoyant::primitives::Size;
-use buoyant::render::{FixedTextBuffer, Render, RenderTarget};
+use buoyant::render::Render;
+use buoyant::render_target::{FixedTextBuffer, RenderTarget};
 use buoyant::view::{HStack, Spacer, Text};
 
 struct TestEnv {
@@ -44,6 +45,11 @@ fn test_render_fills_stack() {
         direction: LayoutDirection::Horizontal,
     };
     let layout = hstack.layout(buffer.size(), &env);
-    layout.render(&mut buffer, &env);
+    hstack.render(
+        &mut buffer,
+        &layout.layout_cache,
+        layout.resolved_size,
+        &env,
+    );
     assert_eq!(buffer.text[0].iter().collect::<String>(), "       67");
 }

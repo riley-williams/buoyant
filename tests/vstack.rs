@@ -1,7 +1,8 @@
 use buoyant::font::TextBufferFont;
 use buoyant::layout::{Environment, HorizontalAlignment, Layout};
 use buoyant::primitives::Size;
-use buoyant::render::{FixedTextBuffer, Render, RenderTarget};
+use buoyant::render::Render;
+use buoyant::render_target::{FixedTextBuffer, RenderTarget as _};
 use buoyant::view::{Divider, HStack, HorizontalTextAlignment, Spacer, Text, VStack};
 
 struct TestEnv {}
@@ -36,7 +37,12 @@ fn test_undersized_layout_3_bottom_pad() {
     let layout = vstack.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(1, 10));
     let mut buffer = FixedTextBuffer::<1, 10>::default();
-    layout.render(&mut buffer, &env);
+    vstack.render(
+        &mut buffer,
+        &layout.layout_cache,
+        layout.resolved_size,
+        &env,
+    );
     assert_eq!(buffer.text[0].iter().collect::<String>(), "1");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "2");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "3");
@@ -51,7 +57,7 @@ fn test_undersized_layout_3_bottom_pad() {
 
 #[test]
 fn test_undersized_layout_3_right_pad_space() {
-    let hstack = VStack::three(
+    let vstack = VStack::three(
         Spacer::default(),
         Text::new("234", TextBufferFont {}),
         Text::new("5678", TextBufferFont {}),
@@ -59,10 +65,15 @@ fn test_undersized_layout_3_right_pad_space() {
     .spacing(1);
     let offer = Size::new(1, 10);
     let env = TestEnv {};
-    let layout = hstack.layout(offer, &env);
+    let layout = vstack.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(1, 10));
     let mut buffer = FixedTextBuffer::<1, 10>::default();
-    layout.render(&mut buffer, &env);
+    vstack.render(
+        &mut buffer,
+        &layout.layout_cache,
+        layout.resolved_size,
+        &env,
+    );
     assert_eq!(collect_text(&buffer), "  234 5678");
 }
 
@@ -72,7 +83,7 @@ fn test_oversized_layout_3_right_pad_space_overflows() {
     // Despite the view having enough space for all the text, we are avoiding extra layout
     // calls and only offer the layout group width / N to the views.
     // This constrains the number of layout passes to at most 2 per group.
-    let hstack = VStack::three(
+    let vstack = VStack::three(
         Spacer::default(),
         Text::new("234", TextBufferFont {}),
         Text::new("56789", TextBufferFont {}),
@@ -80,10 +91,15 @@ fn test_oversized_layout_3_right_pad_space_overflows() {
     .spacing(1);
     let offer = Size::new(1, 10);
     let env = TestEnv {};
-    let layout = hstack.layout(offer, &env);
+    let layout = vstack.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(1, 10));
     let mut buffer = FixedTextBuffer::<1, 10>::default();
-    layout.render(&mut buffer, &env);
+    vstack.render(
+        &mut buffer,
+        &layout.layout_cache,
+        layout.resolved_size,
+        &env,
+    );
     assert_eq!(collect_text(&buffer), "  234 5678");
 }
 
@@ -99,7 +115,12 @@ fn test_undersized_layout_3_middle_pad() {
     let layout = vstack.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(1, 10));
     let mut buffer = FixedTextBuffer::<1, 10>::default();
-    layout.render(&mut buffer, &env);
+    vstack.render(
+        &mut buffer,
+        &layout.layout_cache,
+        layout.resolved_size,
+        &env,
+    );
     assert_eq!(collect_text(&buffer), "234   5678");
 }
 
@@ -115,22 +136,42 @@ fn test_layout_3_remainder_allocation() {
     let mut buffer = FixedTextBuffer::<1, 10>::default();
     let offer = Size::new(1, 7);
     let layout = vstack.layout(offer, &env);
-    layout.render(&mut buffer, &env);
+    vstack.render(
+        &mut buffer,
+        &layout.layout_cache,
+        layout.resolved_size,
+        &env,
+    );
     assert_eq!(collect_text(&buffer), "aaabbcc   ");
 
     let offer = Size::new(1, 8);
     let layout = vstack.layout(offer, &env);
-    layout.render(&mut buffer, &env);
+    vstack.render(
+        &mut buffer,
+        &layout.layout_cache,
+        layout.resolved_size,
+        &env,
+    );
     assert_eq!(collect_text(&buffer), "aaabbbcc  ");
 
     let offer = Size::new(1, 9);
     let layout = vstack.layout(offer, &env);
-    layout.render(&mut buffer, &env);
+    vstack.render(
+        &mut buffer,
+        &layout.layout_cache,
+        layout.resolved_size,
+        &env,
+    );
     assert_eq!(collect_text(&buffer), "aaabbbccc ");
 
     let offer = Size::new(1, 10);
     let layout = vstack.layout(offer, &env);
-    layout.render(&mut buffer, &env);
+    vstack.render(
+        &mut buffer,
+        &layout.layout_cache,
+        layout.resolved_size,
+        &env,
+    );
     assert_eq!(collect_text(&buffer), "aaabbbccc ");
 }
 
@@ -147,7 +188,12 @@ fn test_layout_3_horizontal_alignment_trailing() {
     let env = TestEnv {};
     let mut buffer = FixedTextBuffer::<6, 7>::default();
     let layout = vstack.layout(buffer.size(), &env);
-    layout.render(&mut buffer, &env);
+    vstack.render(
+        &mut buffer,
+        &layout.layout_cache,
+        layout.resolved_size,
+        &env,
+    );
     assert_eq!(buffer.text[0].iter().collect::<String>(), "   aaa");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "------");
@@ -161,7 +207,7 @@ fn test_layout_3_horizontal_alignment_trailing() {
 #[test]
 fn test_layout_3_alignment_center() {
     // The VStack should attempt to lay out the views into the full width of the offer.
-    let hstack = VStack::three(
+    let vstack = VStack::three(
         Text::new("aaa", TextBufferFont {}),
         Divider::default(),
         Text::new("cccc", TextBufferFont {}),
@@ -169,8 +215,13 @@ fn test_layout_3_alignment_center() {
     .alignment(HorizontalAlignment::Center);
     let env = TestEnv {};
     let mut buffer = FixedTextBuffer::<7, 5>::default();
-    let layout = hstack.layout(buffer.size(), &env);
-    layout.render(&mut buffer, &env);
+    let layout = vstack.layout(buffer.size(), &env);
+    vstack.render(
+        &mut buffer,
+        &layout.layout_cache,
+        layout.resolved_size,
+        &env,
+    );
     assert_eq!(buffer.text[0].iter().collect::<String>(), "  aaa  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "-------");
     assert_eq!(buffer.text[2].iter().collect::<String>(), " cccc  ");
@@ -192,7 +243,12 @@ fn test_layout_3_alignment_leading() {
     let env = TestEnv {};
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = vstack.layout(buffer.size(), &env);
-    layout.render(&mut buffer, &env);
+    vstack.render(
+        &mut buffer,
+        &layout.layout_cache,
+        layout.resolved_size,
+        &env,
+    );
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aaa   ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "------");
@@ -212,7 +268,12 @@ fn test_layout_direction_is_set_inner_hstack() {
     let env = TestEnv {};
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = vstack.layout(buffer.size(), &env);
-    layout.render(&mut buffer, &env);
+    vstack.render(
+        &mut buffer,
+        &layout.layout_cache,
+        layout.resolved_size,
+        &env,
+    );
     assert_eq!(buffer.text[0].iter().collect::<String>(), "------");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "|     ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "|     ");
@@ -230,7 +291,12 @@ fn test_layout_direction_is_set_inner_vstack() {
     let env = TestEnv {};
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = hstack.layout(buffer.size(), &env);
-    layout.render(&mut buffer, &env);
+    hstack.render(
+        &mut buffer,
+        &layout.layout_cache,
+        layout.resolved_size,
+        &env,
+    );
     assert_eq!(buffer.text[0].iter().collect::<String>(), "|----|");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "|    |");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "|    |");

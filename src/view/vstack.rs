@@ -3,7 +3,8 @@ use core::cmp::max;
 use crate::{
     layout::{Environment, HorizontalAlignment, Layout, LayoutDirection, PreRender},
     primitives::{Point, Size},
-    render::{Render, RenderProxy, RenderTarget},
+    render::{Render, RenderProxy},
+    render_target::RenderTarget,
 };
 
 pub struct VStack<T> {
@@ -38,28 +39,6 @@ impl<T> VStack<T> {
 
     pub fn alignment(self, alignment: HorizontalAlignment) -> Self {
         Self { alignment, ..self }
-    }
-}
-
-impl<U> VStack<U> {
-    pub fn one(item0: U) -> Self {
-        VStack {
-            items: (item0),
-            alignment: HorizontalAlignment::default(),
-            spacing: 0,
-        }
-    }
-}
-
-impl<U: Layout> Layout for VStack<U> {
-    type Cache<'a> = U::Cache<'a> where U: 'a;
-    fn layout(&self, offer: Size, env: &dyn Environment) -> PreRender<'_, Self, Self::Cache<'_>> {
-        let item_layout = self.items.layout(offer, &VerticalEnvironment::from(env));
-        PreRender {
-            source_view: self,
-            layout_cache: item_layout.layout_cache,
-            resolved_size: item_layout.resolved_size,
-        }
     }
 }
 
@@ -112,40 +91,57 @@ impl<U: Layout, V: Layout> Layout for VStack<(U, V)> {
     }
 }
 
-impl<'a, P, U: Layout, V: Layout> Render<P>
-    for PreRender<
-        '_,
-        VStack<(U, V)>,
+impl<'a, Pixel, U: Layout, V: Layout>
+    Render<
+        Pixel,
         (
             PreRender<'a, U, U::Cache<'a>>,
             PreRender<'a, V, V::Cache<'a>>,
         ),
-    >
+    > for VStack<(U, V)>
 where
-    PreRender<'a, U, U::Cache<'a>>: Render<P>,
-    PreRender<'a, V, V::Cache<'a>>: Render<P>,
+    U: Render<Pixel, U::Cache<'a>>,
+    V: Render<Pixel, V::Cache<'a>>,
 {
-    fn render(&self, target: &mut impl RenderTarget<P>, env: &dyn Environment) {
+    fn render(
+        &self,
+        target: &mut impl RenderTarget<Pixel>,
+        cache: &(
+            PreRender<'a, U, U::Cache<'a>>,
+            PreRender<'a, V, V::Cache<'a>>,
+        ),
+        resolved_size: Size,
+        env: &dyn Environment,
+    ) {
         let env = &VerticalEnvironment::from(env);
         let mut proxy = RenderProxy::new(
             target,
             Point::new(
-                self.source_view.alignment.align(
-                    self.resolved_size.width as i16,
-                    self.layout_cache.0.resolved_size.width as i16,
+                self.alignment.align(
+                    resolved_size.width as i16,
+                    cache.0.resolved_size.width as i16,
                 ),
                 0,
             ),
         );
-        self.layout_cache.0.render(&mut proxy, env);
-
-        proxy.origin.x = self.source_view.alignment.align(
-            self.resolved_size.width as i16,
-            self.layout_cache.1.resolved_size.width as i16,
+        self.items.0.render(
+            &mut proxy,
+            &cache.0.layout_cache,
+            cache.0.resolved_size,
+            env,
         );
-        proxy.origin.y +=
-            (self.layout_cache.0.resolved_size.height + self.source_view.spacing) as i16;
-        self.layout_cache.1.render(&mut proxy, env);
+
+        proxy.origin.x = self.alignment.align(
+            resolved_size.width as i16,
+            cache.1.resolved_size.width as i16,
+        );
+        proxy.origin.y += (cache.0.resolved_size.height + self.spacing) as i16;
+        self.items.1.render(
+            &mut proxy,
+            &cache.1.layout_cache,
+            cache.1.resolved_size,
+            env,
+        );
     }
 }
 
@@ -208,50 +204,72 @@ impl<U: Layout, V: Layout, W: Layout> Layout for VStack<(U, V, W)> {
     }
 }
 
-impl<'a, P, U: Layout, V: Layout, W: Layout> Render<P>
-    for PreRender<
-        '_,
-        VStack<(U, V, W)>,
+impl<'a, Pixel, U: Layout, V: Layout, W: Layout>
+    Render<
+        Pixel,
         (
             PreRender<'a, U, U::Cache<'a>>,
             PreRender<'a, V, V::Cache<'a>>,
             PreRender<'a, W, W::Cache<'a>>,
         ),
-    >
+    > for VStack<(U, V, W)>
 where
-    PreRender<'a, U, U::Cache<'a>>: Render<P>,
-    PreRender<'a, V, V::Cache<'a>>: Render<P>,
-    PreRender<'a, W, W::Cache<'a>>: Render<P>,
+    U: Render<Pixel, U::Cache<'a>>,
+    V: Render<Pixel, V::Cache<'a>>,
+    W: Render<Pixel, W::Cache<'a>>,
 {
-    fn render(&self, target: &mut impl RenderTarget<P>, env: &dyn Environment) {
+    fn render(
+        &self,
+        target: &mut impl RenderTarget<Pixel>,
+        sublayouts: &(
+            PreRender<'a, U, U::Cache<'a>>,
+            PreRender<'a, V, V::Cache<'a>>,
+            PreRender<'a, W, W::Cache<'a>>,
+        ),
+        resolved_size: Size,
+        env: &dyn Environment,
+    ) {
         let env = &VerticalEnvironment::from(env);
         let mut proxy = RenderProxy::new(
             target,
             Point::new(
-                self.source_view.alignment.align(
-                    self.resolved_size.width as i16,
-                    self.layout_cache.0.resolved_size.width as i16,
+                self.alignment.align(
+                    resolved_size.width as i16,
+                    sublayouts.0.resolved_size.width as i16,
                 ),
                 0,
             ),
         );
-        self.layout_cache.0.render(&mut proxy, env);
-
-        proxy.origin.x = self.source_view.alignment.align(
-            self.resolved_size.width as i16,
-            self.layout_cache.1.resolved_size.width as i16,
+        self.items.0.render(
+            &mut proxy,
+            &sublayouts.0.layout_cache,
+            sublayouts.0.resolved_size,
+            env,
         );
-        proxy.origin.y +=
-            (self.layout_cache.0.resolved_size.height + self.source_view.spacing) as i16;
-        self.layout_cache.1.render(&mut proxy, env);
 
-        proxy.origin.x = self.source_view.alignment.align(
-            self.resolved_size.width as i16,
-            self.layout_cache.2.resolved_size.width as i16,
+        proxy.origin.x = self.alignment.align(
+            resolved_size.width as i16,
+            sublayouts.1.resolved_size.width as i16,
         );
-        proxy.origin.y +=
-            (self.layout_cache.1.resolved_size.height + self.source_view.spacing) as i16;
-        self.layout_cache.2.render(&mut proxy, env);
+        proxy.origin.y += (sublayouts.0.resolved_size.height + self.spacing) as i16;
+        self.items.1.render(
+            &mut proxy,
+            &sublayouts.1.layout_cache,
+            sublayouts.1.resolved_size,
+            env,
+        );
+
+        proxy.origin.x = self.alignment.align(
+            resolved_size.width as i16,
+            sublayouts.2.resolved_size.width as i16,
+        );
+        proxy.origin.y += (sublayouts.1.resolved_size.height + self.spacing) as i16;
+        self.items.2.render(
+            &mut proxy,
+            &sublayouts.2.layout_cache,
+            sublayouts.2.resolved_size,
+            env,
+        );
     }
 }
 

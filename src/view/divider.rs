@@ -1,7 +1,8 @@
 use crate::{
     layout::{Environment, Layout, LayoutDirection, PreRender},
     primitives::{Point, Size},
-    render::{Render, RenderTarget},
+    render::Render,
+    render_target::RenderTarget,
 };
 
 pub struct Divider {
@@ -39,16 +40,22 @@ impl Layout for Divider {
     }
 }
 
-impl Render<char> for PreRender<'_, Divider, ()> {
-    fn render(&self, target: &mut impl RenderTarget<char>, env: &dyn Environment) {
+impl<Cache> Render<char, Cache> for Divider {
+    fn render(
+        &self,
+        target: &mut impl RenderTarget<char>,
+        _cache: &Cache,
+        resolved_size: Size,
+        env: &dyn Environment,
+    ) {
         match env.layout_direction() {
             LayoutDirection::Horizontal => {
-                for y in 0..self.resolved_size.height {
+                for y in 0..resolved_size.height {
                     target.draw(Point::new(0, y as i16), '|');
                 }
             }
             LayoutDirection::Vertical => {
-                for x in 0..self.resolved_size.width {
+                for x in 0..resolved_size.width {
                     target.draw(Point::new(x as i16, 0), '-');
                 }
             }
@@ -61,7 +68,7 @@ mod tests {
     use super::*;
     use crate::layout::{Layout, LayoutDirection};
     use crate::primitives::Size;
-    use crate::render::FixedTextBuffer;
+    use crate::render_target::FixedTextBuffer;
 
     struct TestEnv {
         direction: LayoutDirection,
@@ -102,7 +109,7 @@ mod tests {
             direction: LayoutDirection::Horizontal,
         };
         let layout = divider.layout(buffer.size(), &env);
-        layout.render(&mut buffer, &env);
+        divider.render(&mut buffer, &layout, layout.resolved_size, &env);
         assert_eq!(buffer.text[0][0], '|');
         assert_eq!(buffer.text[4][0], '|');
         assert_eq!(buffer.text[0][1], ' ');
@@ -116,7 +123,7 @@ mod tests {
             direction: LayoutDirection::Vertical,
         };
         let layout = divider.layout(buffer.size(), &env);
-        layout.render(&mut buffer, &env);
+        divider.render(&mut buffer, &layout, layout.resolved_size, &env);
         assert_eq!(buffer.text[0][0], '-');
         assert_eq!(buffer.text[0][4], '-');
         assert_eq!(buffer.text[1][0], ' ');

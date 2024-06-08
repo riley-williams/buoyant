@@ -4,7 +4,8 @@ use crate::{
     font::{Font, TextBufferFont},
     layout::{Environment, Layout, PreRender},
     primitives::{Point, Size},
-    render::{Render, RenderTarget},
+    render::Render,
+    render_target::RenderTarget,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Default)]
@@ -187,16 +188,19 @@ impl<'a, F: Font, const N: usize> Layout for Text<'a, F, N> {
     }
 }
 
-impl<const N: usize> Render<char>
-    for PreRender<'_, Text<'_, TextBufferFont, N>, TextLayoutCache<'_, N>>
-{
-    fn render(&self, target: &mut impl RenderTarget<char>, _env: &dyn Environment) {
+impl<'a, const N: usize> Render<char, TextLayoutCache<'a, N>> for Text<'a, TextBufferFont, N> {
+    fn render(
+        &self,
+        target: &mut impl RenderTarget<char>,
+        cache: &TextLayoutCache<'a, N>,
+        resolved_size: Size,
+        _env: &dyn Environment,
+    ) {
         let mut consumed_height: u16 = 0;
-        for (width, line) in self.layout_cache.lines.iter().filter_map(|l| *l) {
+        for (width, line) in cache.lines.iter().filter_map(|l| *l) {
             let x = self
-                .source_view
                 .alignment
-                .align(self.resolved_size.width as i16, width as i16);
+                .align(resolved_size.width as i16, width as i16);
 
             line.chars().enumerate().for_each(|(i, c)| {
                 target.draw(Point::new(x + i as i16, consumed_height as i16), c);
@@ -204,17 +208,17 @@ impl<const N: usize> Render<char>
             consumed_height += 1;
         }
 
-        if !self.layout_cache.did_exceed_cache {
+        if !cache.did_exceed_cache {
             return;
         }
 
         // we already know the longest line
-        let mut max_line_width_points = self.resolved_size.width;
+        let mut max_line_width_points = resolved_size.width;
 
-        let mut remaining_slice = self.layout_cache.remaining;
+        let mut remaining_slice = cache.remaining;
 
         // layout a new line as long as there is vertical space for it, always layout at least one line
-        while !remaining_slice.is_empty() && consumed_height < self.resolved_size.height {
+        while !remaining_slice.is_empty() && consumed_height < resolved_size.height {
             // find the longest line that fits horizontally without truncating mid-word, unless
             // only one word fits
             let mut whole_width_points = 0;
@@ -236,7 +240,7 @@ impl<const N: usize> Render<char>
                         }
                         ' ' => {
                             whole_width_points += width_accumulator;
-                            let char_width = self.source_view.font.character_width(' ');
+                            let char_width = self.font.character_width(' ');
                             // add the space to the accumulator so it is skipped if there are no
                             // other characters on the line
                             width_accumulator = char_width;
@@ -244,10 +248,10 @@ impl<const N: usize> Render<char>
                             completed_index = index + 1;
                         }
                         _ => {
-                            let char_width = self.source_view.font.character_width(char);
+                            let char_width = self.font.character_width(char);
                             let candidate_width =
                                 whole_width_points + width_accumulator + char_width;
-                            if candidate_width > self.resolved_size.width {
+                            if candidate_width > resolved_size.width {
                                 // if we reached the limit before the first word, break mid word
                                 if whole_width_points == 0 {
                                     if index == 0 {
@@ -274,9 +278,8 @@ impl<const N: usize> Render<char>
                 }
             }
             let x = self
-                .source_view
                 .alignment
-                .align(self.resolved_size.width as i16, whole_width_points as i16);
+                .align(resolved_size.width as i16, whole_width_points as i16);
 
             remaining_slice[..completed_index]
                 .chars()

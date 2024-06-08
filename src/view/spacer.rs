@@ -1,7 +1,8 @@
 use crate::{
     layout::{Environment, Layout, LayoutDirection, PreRender},
     primitives::Size,
-    render::{Render, RenderTarget},
+    render::Render,
+    render_target::RenderTarget,
 };
 
 #[derive(Default)]
@@ -31,6 +32,13 @@ impl Layout for Spacer {
     }
 }
 
-impl<I> Render<I> for PreRender<'_, Spacer, ()> {
-    fn render(&self, _target: &mut impl RenderTarget<I>, _env: &dyn Environment) {}
+impl<Pixel, Cache> Render<Pixel, Cache> for Spacer {
+    fn render(
+        &self,
+        _target: &mut impl RenderTarget<Pixel>,
+        _cache: &Cache,
+        _size: Size,
+        _env: &dyn Environment,
+    ) {
+    }
 }
