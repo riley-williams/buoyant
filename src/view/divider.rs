@@ -1,5 +1,5 @@
 use crate::{
-    layout::{Environment, Layout, LayoutDirection, PreRender},
+    layout::{Environment, Layout, LayoutDirection, ResolvedLayout},
     primitives::{Point, Size},
     render::Render,
     render_target::RenderTarget,
@@ -22,15 +22,14 @@ impl Default for Divider {
 }
 
 impl Layout for Divider {
-    type Cache<'a> = ();
-    fn layout(&self, offer: Size, env: &dyn Environment) -> PreRender<'_, Self, ()> {
+    type Sublayout<'a> = ();
+    fn layout(&self, offer: Size, env: &dyn Environment) -> ResolvedLayout<()> {
         let size = match env.layout_direction() {
             LayoutDirection::Horizontal => Size::new(self.weight, offer.height),
             LayoutDirection::Vertical => Size::new(offer.width, self.weight),
         };
-        PreRender {
-            source_view: self,
-            layout_cache: (),
+        ResolvedLayout {
+            sublayouts: (),
             resolved_size: size,
         }
     }
@@ -40,22 +39,21 @@ impl Layout for Divider {
     }
 }
 
-impl<Cache> Render<char, Cache> for Divider {
+impl<Sublayout> Render<char, Sublayout> for Divider {
     fn render(
         &self,
         target: &mut impl RenderTarget<char>,
-        _cache: &Cache,
-        resolved_size: Size,
+        layout: &ResolvedLayout<Sublayout>,
         env: &dyn Environment,
     ) {
         match env.layout_direction() {
             LayoutDirection::Horizontal => {
-                for y in 0..resolved_size.height {
+                for y in 0..layout.resolved_size.height {
                     target.draw(Point::new(0, y as i16), '|');
                 }
             }
             LayoutDirection::Vertical => {
-                for x in 0..resolved_size.width {
+                for x in 0..layout.resolved_size.width {
                     target.draw(Point::new(x as i16, 0), '-');
                 }
             }
@@ -86,8 +84,8 @@ mod tests {
         let env = TestEnv {
             direction: LayoutDirection::Horizontal,
         };
-        let pre_render = divider.layout(offer, &env);
-        assert_eq!(pre_render.resolved_size, Size::new(2, 100));
+        let layout = divider.layout(offer, &env);
+        assert_eq!(layout.resolved_size, Size::new(2, 100));
     }
 
     #[test]
@@ -97,8 +95,8 @@ mod tests {
         let env = TestEnv {
             direction: LayoutDirection::Vertical,
         };
-        let pre_render = divider.layout(offer, &env);
-        assert_eq!(pre_render.resolved_size, Size::new(100, 2));
+        let layout = divider.layout(offer, &env);
+        assert_eq!(layout.resolved_size, Size::new(100, 2));
     }
 
     #[test]
@@ -109,7 +107,7 @@ mod tests {
             direction: LayoutDirection::Horizontal,
         };
         let layout = divider.layout(buffer.size(), &env);
-        divider.render(&mut buffer, &layout, layout.resolved_size, &env);
+        divider.render(&mut buffer, &layout, &env);
         assert_eq!(buffer.text[0][0], '|');
         assert_eq!(buffer.text[4][0], '|');
         assert_eq!(buffer.text[0][1], ' ');
@@ -123,7 +121,7 @@ mod tests {
             direction: LayoutDirection::Vertical,
         };
         let layout = divider.layout(buffer.size(), &env);
-        divider.render(&mut buffer, &layout, layout.resolved_size, &env);
+        divider.render(&mut buffer, &layout, &env);
         assert_eq!(buffer.text[0][0], '-');
         assert_eq!(buffer.text[0][4], '-');
         assert_eq!(buffer.text[1][0], ' ');

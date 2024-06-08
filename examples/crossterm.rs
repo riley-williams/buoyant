@@ -25,7 +25,7 @@ fn main() {
             TextBufferFont::default(),
                 )
                 .multiline_text_alignment(HorizontalTextAlignment::Center),
-        Spacer::default(),
+        Divider::default(),
         Text::new(
             "This text is aligned to the right, with trailing multi-line text alignment",
             TextBufferFont::default(),
@@ -35,16 +35,16 @@ fn main() {
             .spacing(1)
             .alignment(VerticalAlignment::Bottom),
     Divider::default(),
-        VStack::three(
-            Spacer::default(),
-            Padding::new(4,
-                Text::new(
-                    "This is several lines of text.\nEach line is centered in the available space.\n Spacers are used to fill all the remaining verical space and align the content within it.",
-                    TextBufferFont::default(),
-                        )
-                        .multiline_text_alignment(HorizontalTextAlignment::Center),
-                    ),
-            Divider::default(),
+    VStack::three(
+        Spacer::default(),
+        Padding::new(2,
+            Text::new(
+                "This is several lines of text.\nEach line is centered in the available space.\n Spacers are used to fill all the remaining verical space and align the content within it.\n2 points of padding are around this text",
+                TextBufferFont::default(),
+                    )
+                    .multiline_text_alignment(HorizontalTextAlignment::Center),
+                ),
+        Divider::default(),
         ),
     );
 
@@ -66,12 +66,7 @@ fn main() {
                 target.flush();
                 size = Size::new(width, height);
                 let layout = stack.layout(size, &env);
-                stack.render(
-                    &mut target,
-                    &layout.layout_cache,
-                    layout.resolved_size,
-                    &env,
-                );
+                stack.render(&mut target, &layout, &env);
 
                 target.flush();
             }

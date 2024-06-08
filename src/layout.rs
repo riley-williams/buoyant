@@ -67,18 +67,17 @@ impl VerticalAlignment {
     }
 }
 
-pub struct PreRender<'a, V, C> {
-    pub source_view: &'a V,
-    pub layout_cache: C,
+pub struct ResolvedLayout<C> {
+    pub sublayouts: C,
     pub resolved_size: Size,
 }
 
 pub trait Layout: Sized {
-    type Cache<'a>
+    type Sublayout<'a>
     where
         Self: 'a;
     /// The size of the view given the offer
-    fn layout(&self, offer: Size, env: &dyn Environment) -> PreRender<'_, Self, Self::Cache<'_>>;
+    fn layout(&self, offer: Size, env: &dyn Environment) -> ResolvedLayout<Self::Sublayout<'_>>;
     /// The layout priority of the view. Higher priority views are more likely to be given the size they want
     fn priority(&self) -> i8 {
         0

@@ -1,31 +1,18 @@
 use crate::{
-    layout::{Environment, PreRender},
+    layout::{Environment, ResolvedLayout},
     primitives::{Point, Size},
     render_target::RenderTarget,
 };
 
 /// A view that can be rendered to pixels
-pub trait Render<Pixel, Cache> {
+pub trait Render<Pixel, Sublayout> {
     /// Render the view to the screen
     fn render(
         &self,
         target: &mut impl RenderTarget<Pixel>,
-        cache: &Cache,
-        size: Size,
+        layout: &ResolvedLayout<Sublayout>,
         env: &dyn Environment,
     );
-}
-
-impl<Pixel, Cache, View: Render<Pixel, Cache>> Render<Pixel, Cache> for PreRender<'_, View, Cache> {
-    fn render(
-        &self,
-        target: &mut impl RenderTarget<Pixel>,
-        cache: &Cache,
-        size: Size,
-        env: &dyn Environment,
-    ) {
-        self.source_view.render(target, cache, size, env)
-    }
 }
 
 pub struct RenderProxy<'a, T> {

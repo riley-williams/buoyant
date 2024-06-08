@@ -98,29 +98,12 @@ fn test_newline() {
 }
 
 #[test]
-fn test_size_is_correct_after_exceeding_cache() {
-    let font = MonospaceFont {
-        line_height: 10,
-        character_width: 5,
-    };
-    let text = Text::new("1234\n12\n\n123\n", font).max_lines::<1>();
-    let offer = Size::new(25, 100);
-    let layout = text.layout(offer, &TestEnv);
-    assert_eq!(layout.resolved_size, Size::new(20, 40));
-}
-
-#[test]
 fn test_render_wrapping_leading() {
     let env = TestEnv {};
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let text = Text::new("This is a lengthy text here", TextBufferFont {}).max_lines::<8>();
+    let text = Text::new("This is a lengthy text here", TextBufferFont {});
     let layout = text.layout(buffer.size(), &env);
-    text.render(
-        &mut buffer,
-        &layout.layout_cache,
-        layout.resolved_size,
-        &env,
-    );
+    text.render(&mut buffer, &layout, &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "This  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "is a  ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "length");
@@ -133,15 +116,9 @@ fn test_render_wrapping_center_even() {
     let env = TestEnv {};
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let text = Text::new("This is a lengthy text here", TextBufferFont {})
-        .max_lines::<8>()
         .multiline_text_alignment(HorizontalTextAlignment::Center);
     let layout = text.layout(buffer.size(), &env);
-    text.render(
-        &mut buffer,
-        &layout.layout_cache,
-        layout.resolved_size,
-        &env,
-    );
+    text.render(&mut buffer, &layout, &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), " This ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), " is a ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "length");
@@ -154,15 +131,9 @@ fn test_render_wrapping_center_odd() {
     let env = TestEnv {};
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let text = Text::new("This is a lengthy text 12345", TextBufferFont {})
-        .max_lines::<8>()
         .multiline_text_alignment(HorizontalTextAlignment::Center);
     let layout = text.layout(buffer.size(), &env);
-    text.render(
-        &mut buffer,
-        &layout.layout_cache,
-        layout.resolved_size,
-        &env,
-    );
+    text.render(&mut buffer, &layout, &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), " This ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), " is a ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "length");
@@ -175,115 +146,9 @@ fn test_render_wrapping_trailing() {
     let env = TestEnv {};
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let text = Text::new("This is a lengthy text here", TextBufferFont {})
-        .max_lines::<8>()
         .multiline_text_alignment(HorizontalTextAlignment::Trailing);
     let layout = text.layout(buffer.size(), &env);
-    text.render(
-        &mut buffer,
-        &layout.layout_cache,
-        layout.resolved_size,
-        &env,
-    );
-    assert_eq!(buffer.text[0].iter().collect::<String>(), "  This");
-    assert_eq!(buffer.text[1].iter().collect::<String>(), "  is a");
-    assert_eq!(buffer.text[2].iter().collect::<String>(), "length");
-    assert_eq!(buffer.text[3].iter().collect::<String>(), "y text");
-    assert_eq!(buffer.text[4].iter().collect::<String>(), "  here");
-}
-
-#[test]
-fn test_renders_beyond_cache() {
-    let env = TestEnv {};
-    let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let text = Text::new("This is a lengthy text here", TextBufferFont {}).max_lines::<2>();
-    let layout = text.layout(buffer.size(), &env);
-    text.render(
-        &mut buffer,
-        &layout.layout_cache,
-        layout.resolved_size,
-        &env,
-    );
-    assert_eq!(buffer.text[0].iter().collect::<String>(), "This  ");
-    assert_eq!(buffer.text[1].iter().collect::<String>(), "is a  ");
-    assert_eq!(buffer.text[2].iter().collect::<String>(), "length");
-    assert_eq!(buffer.text[3].iter().collect::<String>(), "y text");
-    assert_eq!(buffer.text[4].iter().collect::<String>(), "here  ");
-}
-
-#[test]
-fn test_renders_beyond_cache_do_render_extra_spaces() {
-    let env = TestEnv {};
-    let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let text = Text::new("This is a length text here", TextBufferFont {}).max_lines::<3>();
-    let layout = text.layout(buffer.size(), &env);
-    text.render(
-        &mut buffer,
-        &layout.layout_cache,
-        layout.resolved_size,
-        &env,
-    );
-    assert_eq!(buffer.text[0].iter().collect::<String>(), "This  ");
-    assert_eq!(buffer.text[1].iter().collect::<String>(), "is a  ");
-    assert_eq!(buffer.text[2].iter().collect::<String>(), "length");
-    assert_eq!(buffer.text[3].iter().collect::<String>(), "text  "); // no space at the start
-    assert_eq!(buffer.text[4].iter().collect::<String>(), "here  ");
-}
-#[test]
-fn test_render_beyond_cache_wrapping_center_even() {
-    let env = TestEnv {};
-    let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let text = Text::new("This is a lengthy text here", TextBufferFont {})
-        .max_lines::<1>()
-        .multiline_text_alignment(HorizontalTextAlignment::Center);
-    let layout = text.layout(buffer.size(), &env);
-    text.render(
-        &mut buffer,
-        &layout.layout_cache,
-        layout.resolved_size,
-        &env,
-    );
-    assert_eq!(buffer.text[0].iter().collect::<String>(), " This ");
-    assert_eq!(buffer.text[1].iter().collect::<String>(), " is a ");
-    assert_eq!(buffer.text[2].iter().collect::<String>(), "length");
-    assert_eq!(buffer.text[3].iter().collect::<String>(), "y text");
-    assert_eq!(buffer.text[4].iter().collect::<String>(), " here ");
-}
-
-#[test]
-fn test_render_beyond_cache_wrapping_center_odd() {
-    let env = TestEnv {};
-    let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let text = Text::new("This is a lengthy text 12345", TextBufferFont {})
-        .max_lines::<0>()
-        .multiline_text_alignment(HorizontalTextAlignment::Center);
-    let layout = text.layout(buffer.size(), &env);
-    text.render(
-        &mut buffer,
-        &layout.layout_cache,
-        layout.resolved_size,
-        &env,
-    );
-    assert_eq!(buffer.text[0].iter().collect::<String>(), " This ");
-    assert_eq!(buffer.text[1].iter().collect::<String>(), " is a ");
-    assert_eq!(buffer.text[2].iter().collect::<String>(), "length");
-    assert_eq!(buffer.text[3].iter().collect::<String>(), "y text");
-    assert_eq!(buffer.text[4].iter().collect::<String>(), "12345 ");
-}
-
-#[test]
-fn test_render_beyond_cache_wrapping_trailing() {
-    let env = TestEnv {};
-    let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let text = Text::new("This is a lengthy text here", TextBufferFont {})
-        .max_lines::<1>()
-        .multiline_text_alignment(HorizontalTextAlignment::Trailing);
-    let layout = text.layout(buffer.size(), &env);
-    text.render(
-        &mut buffer,
-        &layout.layout_cache,
-        layout.resolved_size,
-        &env,
-    );
+    text.render(&mut buffer, &layout, &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "  This");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "  is a");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "length");

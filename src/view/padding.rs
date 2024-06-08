@@ -1,5 +1,5 @@
 use crate::{
-    layout::{Environment, Layout, PreRender},
+    layout::{Environment, Layout, ResolvedLayout},
     primitives::{Point, Size},
     render::{Render, RenderProxy},
     render_target::RenderTarget,
@@ -17,31 +17,29 @@ impl<T> Padding<T> {
 }
 
 impl<V: Layout> Layout for Padding<V> {
-    type Cache<'a> = V::Cache<'a> where V: 'a;
+    type Sublayout<'a> = ResolvedLayout<V::Sublayout<'a>> where V: 'a;
 
-    fn layout(&self, offer: Size, env: &dyn Environment) -> PreRender<'_, Self, Self::Cache<'_>> {
+    fn layout(&self, offer: Size, env: &dyn Environment) -> ResolvedLayout<Self::Sublayout<'_>> {
         let padded_offer = Size::new(
             offer.width.saturating_sub(2 * self.padding),
             offer.height.saturating_sub(2 * self.padding),
         );
-        let child_pre_render = self.child.layout(padded_offer, env);
-        PreRender {
-            source_view: self,
-            layout_cache: child_pre_render.layout_cache,
+        let child_layout = self.child.layout(padded_offer, env);
+        ResolvedLayout {
+            sublayouts: child_layout,
             resolved_size: offer,
         }
     }
 }
 
-impl<Pixel, View, Cache> Render<Pixel, Cache> for Padding<View>
+impl<'a, Pixel, View: Layout> Render<Pixel, ResolvedLayout<View::Sublayout<'a>>> for Padding<View>
 where
-    View: Render<Pixel, Cache>,
+    View: Render<Pixel, View::Sublayout<'a>>,
 {
     fn render(
         &self,
         target: &mut impl RenderTarget<Pixel>,
-        cache: &Cache,
-        resolved_size: Size,
+        layout: &ResolvedLayout<ResolvedLayout<View::Sublayout<'a>>>,
         env: &dyn Environment,
     ) {
         let mut proxy = RenderProxy::new(
@@ -51,7 +49,6 @@ where
                 y: self.padding as i16,
             },
         );
-        // TODO: inset view
-        self.child.render(&mut proxy, cache, resolved_size, env);
+        self.child.render(&mut proxy, &layout.sublayouts, env);
     }
 }

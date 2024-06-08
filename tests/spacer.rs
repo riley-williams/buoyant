@@ -22,8 +22,8 @@ fn test_horizontal_layout() {
     let env = TestEnv {
         direction: LayoutDirection::Horizontal,
     };
-    let layout_cache = spacer.layout(offer, &env);
-    assert_eq!(layout_cache.resolved_size, Size::new(10, 0));
+    let layout = spacer.layout(offer, &env);
+    assert_eq!(layout.resolved_size, Size::new(10, 0));
 }
 
 #[test]
@@ -33,8 +33,8 @@ fn test_vertical_layout() {
     let env = TestEnv {
         direction: LayoutDirection::Vertical,
     };
-    let layout_cache = spacer.layout(offer, &env);
-    assert_eq!(layout_cache.resolved_size, Size::new(0, 10));
+    let layout = spacer.layout(offer, &env);
+    assert_eq!(layout.resolved_size, Size::new(0, 10));
 }
 
 #[test]
@@ -45,11 +45,6 @@ fn test_render_fills_stack() {
         direction: LayoutDirection::Horizontal,
     };
     let layout = hstack.layout(buffer.size(), &env);
-    hstack.render(
-        &mut buffer,
-        &layout.layout_cache,
-        layout.resolved_size,
-        &env,
-    );
+    hstack.render(&mut buffer, &layout, &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "       67");
 }
