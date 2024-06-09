@@ -39,11 +39,11 @@ impl Layout for Divider {
     }
 }
 
-impl<Sublayout> Render<char, Sublayout> for Divider {
+impl Render<char, ()> for Divider {
     fn render(
         &self,
         target: &mut impl RenderTarget<char>,
-        layout: &ResolvedLayout<Sublayout>,
+        layout: &ResolvedLayout<()>,
         env: &dyn Environment,
     ) {
         match env.layout_direction() {

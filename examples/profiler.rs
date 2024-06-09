@@ -3,20 +3,19 @@ use buoyant::{
     layout::{Environment, Layout, VerticalAlignment},
     primitives::Size,
     render::Render,
-    render_target::{CrosstermRenderTarget, RenderTarget},
+    render_target::{FixedTextBuffer, RenderTarget},
     view::{Divider, HStack, HorizontalTextAlignment, Padding, Spacer, Text, VStack},
 };
-use crossterm::event::{read, Event};
 
 fn main() {
-    let mut target = CrosstermRenderTarget::default();
+    let mut target = FixedTextBuffer::<100, 100>::default();
 
-    target.enter_fullscreen();
     target.clear();
     let mut size = target.size();
     println!("Size {:?}", size);
 
     let env = TestEnv {};
+
     let font = CharMonospace {};
     let stack = VStack::three(
     HStack::three(
@@ -25,7 +24,7 @@ fn main() {
             &font,
                 )
                 .multiline_text_alignment(HorizontalTextAlignment::Center),
-        Spacer::default(),
+        Divider::default(),
         Text::char(
             "This text is aligned to the right, with trailing multi-line text alignment",
             &font,
@@ -50,27 +49,12 @@ fn main() {
 
     println!("View size {}", std::mem::size_of_val(&stack));
     println!("Env size {}", std::mem::size_of_val(&env));
-    loop {
-        // `read()` blocks until an `Event` is available
-        match read().unwrap() {
-            Event::FocusGained => (),
-            Event::FocusLost => (),
-            Event::Key(event) => {
-                if event.code == crossterm::event::KeyCode::Char('q') {
-                    break;
-                }
-            }
-            Event::Mouse(_) => (),
-            Event::Resize(width, height) => {
-                target.clear();
-                target.flush();
-                size = Size::new(width, height);
-                let layout = stack.layout(size, &env);
-                stack.render(&mut target, &layout, &env);
-
-                target.flush();
-            }
-            Event::Paste(_) => (),
+    target.clear();
+    for width in 1..100 {
+        for height in 1..100 {
+            size = Size::new(width, height);
+            let layout = stack.layout(size, &env);
+            stack.render(&mut target, &layout, &env);
         }
     }
 }

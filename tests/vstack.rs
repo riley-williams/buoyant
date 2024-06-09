@@ -1,9 +1,9 @@
-use buoyant::font::TextBufferFont;
-use buoyant::layout::{Environment, HorizontalAlignment, Layout};
+use buoyant::font::CharMonospace;
+use buoyant::layout::{Environment, HorizontalAlignment, Layout, VerticalAlignment};
 use buoyant::primitives::Size;
 use buoyant::render::Render;
 use buoyant::render_target::{FixedTextBuffer, RenderTarget as _};
-use buoyant::view::{Divider, HStack, HorizontalTextAlignment, Spacer, Text, VStack};
+use buoyant::view::{Divider, HStack, HorizontalTextAlignment, Padding, Spacer, Text, VStack};
 
 struct TestEnv {}
 impl Environment for TestEnv {}
@@ -27,9 +27,10 @@ fn test_greedy_layout_2() {
 
 #[test]
 fn test_undersized_layout_3_bottom_pad() {
+    let font = CharMonospace {};
     let vstack = VStack::three(
-        Text::new("123", TextBufferFont {}),
-        Text::new("4567", TextBufferFont {}),
+        Text::char("123", &font),
+        Text::char("4567", &font),
         Spacer::default(),
     );
     let offer = Size::new(1, 10);
@@ -52,10 +53,11 @@ fn test_undersized_layout_3_bottom_pad() {
 
 #[test]
 fn test_undersized_layout_3_right_pad_space() {
+    let font = CharMonospace {};
     let vstack = VStack::three(
         Spacer::default(),
-        Text::new("234", TextBufferFont {}),
-        Text::new("5678", TextBufferFont {}),
+        Text::char("234", &font),
+        Text::char("5678", &font),
     )
     .spacing(1);
     let offer = Size::new(1, 10);
@@ -68,15 +70,13 @@ fn test_undersized_layout_3_right_pad_space() {
 }
 
 #[test]
-fn test_oversized_layout_3_right_pad_space_overflows() {
-    // The second text view is too large to fit in the offer.
-    // Despite the view having enough space for all the text, we are avoiding extra layout
-    // calls and only offer the layout group width / N to the views.
-    // This constrains the number of layout passes to at most 2 per group.
+fn test_oversized_layout_3_right_pad_space() {
+    // The second text view is too large to fit in the initial offer.
+    let font = CharMonospace {};
     let vstack = VStack::three(
         Spacer::default(),
-        Text::new("234", TextBufferFont {}),
-        Text::new("56789", TextBufferFont {}),
+        Text::char("234", &font),
+        Text::char("56789", &font),
     )
     .spacing(1);
     let offer = Size::new(1, 10);
@@ -85,15 +85,54 @@ fn test_oversized_layout_3_right_pad_space_overflows() {
     assert_eq!(layout.resolved_size, Size::new(1, 10));
     let mut buffer = FixedTextBuffer::<1, 10>::default();
     vstack.render(&mut buffer, &layout, &env);
-    assert_eq!(collect_text(&buffer), "  234 5678");
+    assert_eq!(collect_text(&buffer), " 234 56789");
+}
+
+#[test]
+fn test_oversized_layout_3_middle_pad_space() {
+    // The second text view is too large to fit in the initial offer.
+    let font = CharMonospace {};
+    let vstack = VStack::three(
+        Text::char("234", &font),
+        Spacer::default(),
+        Text::char("56789", &font),
+    )
+    .spacing(1);
+    let offer = Size::new(1, 10);
+    let env = TestEnv {};
+    let layout = vstack.layout(offer, &env);
+    assert_eq!(layout.resolved_size, Size::new(1, 10));
+    let mut buffer = FixedTextBuffer::<1, 10>::default();
+    vstack.render(&mut buffer, &layout, &env);
+    assert_eq!(collect_text(&buffer), "234  56789");
+}
+
+#[test]
+fn test_oversized_layout_3_trailing_pad_space() {
+    // The second text view is too large to fit in the initial offer.
+    let font = CharMonospace {};
+    let vstack = VStack::three(
+        Text::char("234", &font),
+        Text::char("56789", &font),
+        Spacer::default(),
+    )
+    .spacing(1);
+    let offer = Size::new(1, 10);
+    let env = TestEnv {};
+    let layout = vstack.layout(offer, &env);
+    assert_eq!(layout.resolved_size, Size::new(1, 10));
+    let mut buffer = FixedTextBuffer::<1, 10>::default();
+    vstack.render(&mut buffer, &layout, &env);
+    assert_eq!(collect_text(&buffer), "234 56789 ");
 }
 
 #[test]
 fn test_undersized_layout_3_middle_pad() {
+    let font = CharMonospace {};
     let vstack = VStack::three(
-        Text::new("234", TextBufferFont {}),
+        Text::char("234", &font),
         Spacer::default(),
-        Text::new("5678", TextBufferFont {}),
+        Text::char("5678", &font),
     );
     let offer = Size::new(1, 10);
     let env = TestEnv {};
@@ -107,10 +146,11 @@ fn test_undersized_layout_3_middle_pad() {
 #[test]
 fn test_layout_3_remainder_allocation() {
     // The VStack should attempt to lay out the views into the full width of the offer.
+    let font = CharMonospace {};
     let vstack = VStack::three(
-        Text::new("aaa", TextBufferFont {}),
-        Text::new("bbb", TextBufferFont {}),
-        Text::new("ccc", TextBufferFont {}),
+        Text::char("aaa", &font),
+        Text::char("bbb", &font),
+        Text::char("ccc", &font),
     );
     let env = TestEnv {};
     let mut buffer = FixedTextBuffer::<1, 10>::default();
@@ -138,10 +178,11 @@ fn test_layout_3_remainder_allocation() {
 #[test]
 fn test_layout_3_horizontal_alignment_trailing() {
     // The VStack should attempt to lay out the views into the full width of the offer.
+    let font = CharMonospace {};
     let vstack = VStack::three(
-        Text::new("aaa", TextBufferFont {}),
+        Text::char("aaa", &font),
         Divider::default(),
-        Text::new("ccccccc", TextBufferFont {}),
+        Text::char("ccccccc", &font),
     )
     .alignment(HorizontalAlignment::Trailing)
     .spacing(1);
@@ -162,10 +203,11 @@ fn test_layout_3_horizontal_alignment_trailing() {
 #[test]
 fn test_layout_3_alignment_center() {
     // The VStack should attempt to lay out the views into the full width of the offer.
+    let font = CharMonospace {};
     let vstack = VStack::three(
-        Text::new("aaa", TextBufferFont {}),
+        Text::char("aaa", &font),
         Divider::default(),
-        Text::new("cccc", TextBufferFont {}),
+        Text::char("cccc", &font),
     )
     .alignment(HorizontalAlignment::Center);
     let env = TestEnv {};
@@ -182,11 +224,11 @@ fn test_layout_3_alignment_center() {
 #[test]
 fn test_layout_3_alignment_leading() {
     // The VStack should attempt to lay out the views into the full width of the offer.
+    let font = CharMonospace {};
     let vstack = VStack::three(
-        Text::new("aaa", TextBufferFont {}),
+        Text::char("aaa", &font),
         Divider::default(),
-        Text::new("ccc", TextBufferFont {})
-            .multiline_text_alignment(HorizontalTextAlignment::Trailing),
+        Text::char("ccc", &font).multiline_text_alignment(HorizontalTextAlignment::Trailing),
     )
     .alignment(HorizontalAlignment::Leading)
     .spacing(1);
@@ -237,4 +279,49 @@ fn test_layout_direction_is_set_inner_vstack() {
     assert_eq!(buffer.text[2].iter().collect::<String>(), "|    |");
     assert_eq!(buffer.text[3].iter().collect::<String>(), "|    |");
     assert_eq!(buffer.text[4].iter().collect::<String>(), "|    |");
+}
+
+#[test]
+fn test_offer_remaining_space_for_undersized_views_expansion() {
+    let font = CharMonospace {};
+    let stack = VStack::three(
+    HStack::three(
+        Text::char(
+            "This text is centered horizontally in the middle of its space\nThe stack however, has bottom alignment.",
+            &font,
+                )
+                .multiline_text_alignment(HorizontalTextAlignment::Center),
+        Spacer::default(),
+        Text::char(
+            "This text is aligned to the right, with trailing multi-line text alignment",
+            &font,
+                )
+                .multiline_text_alignment(HorizontalTextAlignment::Trailing),
+            )
+            .spacing(1)
+            .alignment(VerticalAlignment::Bottom),
+    Divider::default(),
+    VStack::three(
+        Spacer::default(),
+        Padding::new(2,
+            Text::char(
+                "This is several lines of text.\nEach line is centered in the available space.\n Spacers are used to fill all the remaining verical space and align the content within it.\n2 points of padding are around this text",
+                &font,
+                    )
+                    .multiline_text_alignment(HorizontalTextAlignment::Center),
+                ),
+        Divider::default(),
+        ),
+    );
+
+    let env = TestEnv {};
+    // The spacers in this view should always cause the stack size to equal the offer size
+    // 10k layouts...but should only take a few ms
+    for width in 1..100 {
+        for height in 1..100 {
+            let size = Size::new(width, height);
+            let layout = stack.layout(size, &env);
+            assert_eq!(size, layout.resolved_size);
+        }
+    }
 }

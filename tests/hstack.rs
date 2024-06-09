@@ -1,4 +1,6 @@
-use buoyant::font::TextBufferFont;
+use std::iter::zip;
+
+use buoyant::font::CharMonospace;
 use buoyant::layout::{Environment, Layout, VerticalAlignment};
 use buoyant::primitives::Size;
 use buoyant::render::Render;
@@ -18,11 +20,8 @@ fn test_greedy_layout_2() {
 }
 #[test]
 fn test_undersized_layout_2() {
-    let hstack = HStack::two(
-        Text::new("123", TextBufferFont {}),
-        Text::new("4567", TextBufferFont {}),
-    )
-    .spacing(1);
+    let font = CharMonospace {};
+    let hstack = HStack::two(Text::char("123", &font), Text::char("4567", &font)).spacing(1);
     let offer = Size::new(50, 1);
     let env = TestEnv {};
     let layout = hstack.layout(offer, &env);
@@ -31,11 +30,8 @@ fn test_undersized_layout_2() {
 
 #[test]
 fn test_horizontal_render_2() {
-    let hstack = HStack::two(
-        Text::new("123", TextBufferFont {}),
-        Text::new("4567", TextBufferFont {}),
-    )
-    .spacing(1);
+    let font = CharMonospace {};
+    let hstack = HStack::two(Text::char("123", &font), Text::char("4567", &font)).spacing(1);
     let mut buffer = FixedTextBuffer::<9, 1>::default();
     let env = TestEnv {};
     let layout = hstack.layout(buffer.size(), &env);
@@ -45,9 +41,10 @@ fn test_horizontal_render_2() {
 
 #[test]
 fn test_undersized_layout_3_left_pad() {
+    let font = CharMonospace {};
     let hstack = HStack::three(
-        Text::new("123", TextBufferFont {}),
-        Text::new("4567", TextBufferFont {}),
+        Text::char("123", &font),
+        Text::char("4567", &font),
         Spacer::default(),
     );
     let offer = Size::new(10, 1);
@@ -61,10 +58,11 @@ fn test_undersized_layout_3_left_pad() {
 }
 #[test]
 fn test_undersized_layout_3_right_pad_space() {
+    let font = CharMonospace {};
     let hstack = HStack::three(
         Spacer::default(),
-        Text::new("234", TextBufferFont {}),
-        Text::new("5678", TextBufferFont {}),
+        Text::char("234", &font),
+        Text::char("5678", &font),
     )
     .spacing(1);
     let offer = Size::new(10, 1);
@@ -76,16 +74,15 @@ fn test_undersized_layout_3_right_pad_space() {
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "  234 5678");
 }
+
 #[test]
-fn test_oversized_layout_3_right_pad_space_overflows() {
-    // The second text view is too large to fit in the offer.
-    // Despite the view having enough space for all the text, we are avoiding extra layout
-    // calls and only offer the layout group width / N to the views.
-    // This constrains the number of layout passes to at most 2 per group.
+fn test_oversized_layout_3_leading_pad_space() {
+    // The second text view is too large to fit in the initial offer.
+    let font = CharMonospace {};
     let hstack = HStack::three(
         Spacer::default(),
-        Text::new("234", TextBufferFont {}),
-        Text::new("56789", TextBufferFont {}),
+        Text::char("234", &font),
+        Text::char("56789", &font),
     )
     .spacing(1);
     let offer = Size::new(10, 1);
@@ -95,14 +92,16 @@ fn test_oversized_layout_3_right_pad_space_overflows() {
     let mut buffer = FixedTextBuffer::<10, 1>::default();
     hstack.render(&mut buffer, &layout, &env);
 
-    assert_eq!(buffer.text[0].iter().collect::<String>(), "  234 5678");
+    assert_eq!(buffer.text[0].iter().collect::<String>(), " 234 56789");
 }
+
 #[test]
 fn test_undersized_layout_3_middle_pad() {
+    let font = CharMonospace {};
     let hstack = HStack::three(
-        Text::new("234", TextBufferFont {}),
+        Text::char("234", &font),
         Spacer::default(),
-        Text::new("5678", TextBufferFont {}),
+        Text::char("5678", &font),
     );
     let offer = Size::new(10, 1);
     let env = TestEnv {};
@@ -113,13 +112,55 @@ fn test_undersized_layout_3_middle_pad() {
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "234   5678");
 }
+
+#[test]
+fn test_oversized_layout_3_middle_pad_space() {
+    // The third text view is too large to fit in the initial offer.
+    let font = CharMonospace {};
+    let hstack = HStack::three(
+        Text::char("234", &font),
+        Spacer::default(),
+        Text::char("56789", &font),
+    )
+    .spacing(1);
+    let offer = Size::new(10, 1);
+    let env = TestEnv {};
+    let layout = hstack.layout(offer, &env);
+    assert_eq!(layout.resolved_size, Size::new(10, 1));
+    let mut buffer = FixedTextBuffer::<10, 1>::default();
+    hstack.render(&mut buffer, &layout, &env);
+
+    assert_eq!(buffer.text[0].iter().collect::<String>(), "234  56789");
+}
+
+#[test]
+fn test_oversized_layout_3_trailing_pad_space() {
+    // The second text view is too large to fit in the initial offer.
+    let font = CharMonospace {};
+    let hstack = HStack::three(
+        Text::char("234", &font),
+        Text::char("56789", &font),
+        Spacer::default(),
+    )
+    .spacing(1);
+    let offer = Size::new(10, 1);
+    let env = TestEnv {};
+    let layout = hstack.layout(offer, &env);
+    assert_eq!(layout.resolved_size, Size::new(10, 1));
+    let mut buffer = FixedTextBuffer::<10, 1>::default();
+    hstack.render(&mut buffer, &layout, &env);
+
+    assert_eq!(buffer.text[0].iter().collect::<String>(), "234 56789 ");
+}
+
 #[test]
 fn test_layout_3_remainder_allocation() {
     // The HStack should attempt to lay out the views into the full width of the offer.
+    let font = CharMonospace {};
     let hstack = HStack::three(
-        Text::new("aaa", TextBufferFont {}),
-        Text::new("bbb", TextBufferFont {}),
-        Text::new("ccc", TextBufferFont {}),
+        Text::char("aaa", &font),
+        Text::char("bbb", &font),
+        Text::char("ccc", &font),
     );
     let env = TestEnv {};
     let mut buffer = FixedTextBuffer::<10, 1>::default();
@@ -151,10 +192,11 @@ fn test_layout_3_remainder_allocation() {
 #[test]
 fn test_layout_3_vertical_alignment_bottom() {
     // The HStack should attempt to lay out the views into the full width of the offer.
+    let font = CharMonospace {};
     let hstack = HStack::three(
-        Text::new("aaa", TextBufferFont {}),
+        Text::char("aaa", &font),
         Divider::default(),
-        Text::new("ccc", TextBufferFont {}),
+        Text::char("ccc", &font),
     )
     .alignment(VerticalAlignment::Bottom)
     .spacing(1);
@@ -173,10 +215,11 @@ fn test_layout_3_vertical_alignment_bottom() {
 #[test]
 fn test_layout_3_vertical_alignment_center() {
     // The HStack should attempt to lay out the views into the full width of the offer.
+    let font = CharMonospace {};
     let hstack = HStack::three(
-        Text::new("aaa", TextBufferFont {}),
+        Text::char("aaa", &font),
         Divider::default(),
-        Text::new("ccc", TextBufferFont {}),
+        Text::char("ccc", &font),
     )
     .alignment(VerticalAlignment::Center)
     .spacing(1);
@@ -195,10 +238,11 @@ fn test_layout_3_vertical_alignment_center() {
 #[test]
 fn test_layout_3_vertical_alignment_top() {
     // The HStack should attempt to lay out the views into the full width of the offer.
+    let font = CharMonospace {};
     let hstack = HStack::three(
-        Text::new("aaa", TextBufferFont {}),
+        Text::char("aaa", &font),
         Divider::default(),
-        Text::new("ccc", TextBufferFont {}),
+        Text::char("ccc", &font),
     )
     .alignment(VerticalAlignment::Top)
     .spacing(1);
@@ -212,4 +256,35 @@ fn test_layout_3_vertical_alignment_top() {
     assert_eq!(buffer.text[2].iter().collect::<String>(), "   | c");
     assert_eq!(buffer.text[3].iter().collect::<String>(), "   |  ");
     assert_eq!(buffer.text[4].iter().collect::<String>(), "   |  ");
+}
+
+#[test]
+fn test_minimal_offer_extra_space_1() {
+    // The HStack should offer remaining space when the views do not consume the full width.
+    let font = CharMonospace {};
+    let hstack = HStack::three(
+        Text::char("a b c d e f", &font),
+        Text::char("g h i", &font),
+        Text::char("j", &font),
+    )
+    .alignment(VerticalAlignment::Top)
+    .spacing(1);
+
+    let env = TestEnv {};
+    let mut buffer = FixedTextBuffer::<19, 5>::default();
+
+    let layout = hstack.layout(buffer.size(), &env);
+
+    hstack.render(&mut buffer, &layout, &env);
+
+    let lines = [
+        "a b c d e f g h i j",
+        "                   ",
+        "                   ",
+        "                   ",
+        "                   ",
+    ];
+    zip(lines.iter(), buffer.text.iter()).for_each(|(expected, actual)| {
+        assert_eq!(actual.iter().collect::<String>(), *expected);
+    });
 }

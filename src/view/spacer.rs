@@ -17,7 +17,9 @@ impl Layout for Spacer {
             LayoutDirection::Horizontal => {
                 Size::new(core::cmp::max(offer.width, self.min_length), 0)
             }
-            LayoutDirection::Vertical => Size::new(0, offer.height),
+            LayoutDirection::Vertical => {
+                Size::new(0, core::cmp::max(offer.height, self.min_length))
+            }
         };
         ResolvedLayout {
             sublayouts: (),

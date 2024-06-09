@@ -1,4 +1,4 @@
-use buoyant::font::TextBufferFont;
+use buoyant::font::CharMonospace;
 use buoyant::layout::{Environment, Layout, LayoutDirection};
 use buoyant::primitives::Size;
 use buoyant::render::Render;
@@ -39,7 +39,8 @@ fn test_vertical_layout() {
 
 #[test]
 fn test_render_fills_stack() {
-    let hstack = HStack::two(Spacer::default(), Text::new("67", TextBufferFont {})).spacing(1);
+    let font = CharMonospace {};
+    let hstack = HStack::two(Spacer::default(), Text::char("67", &font)).spacing(1);
     let mut buffer = FixedTextBuffer::<9, 1>::default();
     let env = TestEnv {
         direction: LayoutDirection::Horizontal,

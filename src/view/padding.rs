@@ -25,9 +25,11 @@ impl<V: Layout> Layout for Padding<V> {
             offer.height.saturating_sub(2 * self.padding),
         );
         let child_layout = self.child.layout(padded_offer, env);
+        let padding_size =
+            child_layout.resolved_size + Size::new(2 * self.padding, 2 * self.padding);
         ResolvedLayout {
             sublayouts: child_layout,
-            resolved_size: offer,
+            resolved_size: padding_size,
         }
     }
 }

@@ -288,7 +288,7 @@ fn layout_n<const N: usize>(
 
         // Size all the unsized views that are unwilling to shrink
         let mut group_offer = Size::new(offer.width, remaining_height / slice_len as u16);
-        let remainder = remaining_height as usize % slice_len;
+        let mut remainder = remaining_height as usize % slice_len;
 
         // Create a slice of the subviews to be sized
         let subviews_indecies = &subviews_indecies[slice_start..slice_start + slice_len];
@@ -320,6 +320,9 @@ fn layout_n<const N: usize>(
                     group_offer.height = remaining_height
                         .checked_div(slice_len as u16)
                         .unwrap_or(group_offer.height);
+                    if slice_len != 0 {
+                        remainder = i + remaining_height as usize % slice_len;
+                    }
                     if did_layout_nonfinal_candidate {
                         nonfinal_candidate_invalidated = true;
                         break;
@@ -337,6 +340,17 @@ fn layout_n<const N: usize>(
         for index in subviews_indecies.iter() {
             if let LayoutStage::Candidate(s) = subviews[*index].0 {
                 remaining_height = remaining_height.saturating_sub(s.height);
+            }
+        }
+
+        // If there is any remaining height, offer it to each of the candidate views.
+        // The first view is always offered the extra height first...hope this is right
+        for subview_index in subviews_indecies.iter() {
+            if let LayoutStage::Candidate(s) = subviews[*subview_index].0 {
+                let leftover = s + Size::new(0, remaining_height);
+                let subview_size = subviews.get_mut(*subview_index).unwrap().1(leftover);
+                remaining_height -= subview_size.height - s.height;
+                subviews[*subview_index].0 = LayoutStage::Final(subview_size); // unnecessary?
             }
         }
     }
