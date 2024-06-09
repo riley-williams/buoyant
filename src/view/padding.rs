@@ -1,10 +1,13 @@
 use crate::{
     layout::{Environment, Layout, ResolvedLayout},
     primitives::{Point, Size},
-    render::{Render, RenderProxy},
-    render_target::RenderTarget,
+    render::Render,
+    render_target::{Proxy, RenderTarget},
 };
 
+/// A view that adds padding around a child view.
+/// When the space offered to the padding is less than 2* the padding, the padding will
+/// not be truncated and will return a size larger than the offer.
 pub struct Padding<T> {
     padding: u16,
     child: T,
@@ -44,7 +47,7 @@ where
         layout: &ResolvedLayout<ResolvedLayout<View::Sublayout<'a>>>,
         env: &dyn Environment,
     ) {
-        let mut proxy = RenderProxy::new(
+        let mut proxy = Proxy::new(
             target,
             Point {
                 x: self.padding as i16,

@@ -1,10 +1,10 @@
-use core::cmp::max;
+use core::cmp::{max, min};
 
 use crate::{
     layout::{Environment, HorizontalAlignment, Layout, LayoutDirection, ResolvedLayout},
     primitives::{Point, Size},
-    render::{Render, RenderProxy},
-    render_target::RenderTarget,
+    render::Render,
+    render_target::{Proxy, RenderTarget},
 };
 
 pub struct VStack<T> {
@@ -112,7 +112,7 @@ where
         env: &dyn Environment,
     ) {
         let env = &VerticalEnvironment::from(env);
-        let mut proxy = RenderProxy::new(
+        let mut proxy = Proxy::new(
             target,
             Point::new(
                 self.alignment.align(
@@ -216,7 +216,7 @@ where
         env: &dyn Environment,
     ) {
         let env = &VerticalEnvironment::from(env);
-        let mut proxy = RenderProxy::new(
+        let mut proxy = Proxy::new(
             target,
             Point::new(
                 self.alignment.align(
@@ -343,21 +343,24 @@ fn layout_n<const N: usize>(
             }
         }
 
-        // If there is any remaining height, offer it to each of the candidate views.
-        // The first view is always offered the extra height first...hope this is right
-        for subview_index in subviews_indecies.iter() {
-            if let LayoutStage::Candidate(s) = subviews[*subview_index].0 {
-                let leftover = s + Size::new(0, remaining_height);
-                let subview_size = subviews.get_mut(*subview_index).unwrap().1(leftover);
-                remaining_height -= subview_size.height - s.height;
-                subviews[*subview_index].0 = LayoutStage::Final(subview_size); // unnecessary?
+        if remaining_height > 0 {
+            // If there is any remaining height, offer it to each of the candidate views.
+            // The first view is always offered the extra height first...hope this is right
+            for subview_index in subviews_indecies.iter() {
+                if let LayoutStage::Candidate(s) = subviews[*subview_index].0 {
+                    let leftover = s + Size::new(0, remaining_height);
+                    let subview_size = subviews.get_mut(*subview_index).unwrap().1(leftover);
+                    remaining_height -= subview_size.height - s.height;
+                    subviews[*subview_index].0 = LayoutStage::Final(subview_size);
+                    // unnecessary?
+                }
             }
         }
     }
 
     // At this point all the subviews should have either a final or a candidate size
     // Calculate the final VStack size
-    subviews.iter().fold(
+    let total_child_size = subviews.iter().fold(
         Size::new(0, offer.height - remaining_height),
         |acc, (size, _, _)| match size {
             LayoutStage::Final(s) | LayoutStage::Candidate(s) => {
@@ -365,6 +368,11 @@ fn layout_n<const N: usize>(
             }
             _ => unreachable!(),
         },
+    );
+
+    Size::new(
+        min(offer.width, total_child_size.width),
+        min(offer.height, total_child_size.height),
     )
 }
 

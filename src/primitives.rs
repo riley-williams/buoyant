@@ -11,15 +11,26 @@ impl Size {
         Size { width, height }
     }
 
+    /// Returns the smallest size that contains both sizes.
+    #[inline]
     pub fn union(&self, rhs: Size) -> Size {
         Size {
             width: max(self.width, rhs.width),
             height: max(self.height, rhs.height),
         }
     }
+
+    /// Returns true if the point is non-negative and within the bounds of the size.
+    pub fn contains(&self, point: Point) -> bool {
+        point.x >= 0 && point.y >= 0 && point.x < self.width as i16 && point.y < self.height as i16
+    }
+
+    #[inline]
+    pub fn area(&self) -> u16 {
+        self.width * self.height
+    }
 }
 
-// implement addition operator for Size
 impl core::ops::Add for Size {
     type Output = Size;
     fn add(self, rhs: Size) -> Size {

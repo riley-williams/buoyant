@@ -1,7 +1,7 @@
 use std::iter::zip;
 
 use buoyant::{
-    font::{CharMonospace, CharacterFont},
+    font::{CharacterFont, TerminalChar},
     layout::{Environment, Layout as _},
     primitives::Size,
     render::Render as _,
@@ -102,7 +102,7 @@ fn test_newline() {
 #[test]
 fn test_render_wrapping_leading() {
     let env = TestEnv {};
-    let font = CharMonospace {};
+    let font = TerminalChar {};
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let text = Text::char("This is a lengthy text here", &font);
     let layout = text.layout(buffer.size(), &env);
@@ -117,7 +117,7 @@ fn test_render_wrapping_leading() {
 #[test]
 fn test_render_wrapping_center_even() {
     let env = TestEnv {};
-    let font = CharMonospace {};
+    let font = TerminalChar {};
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let text = Text::char("This is a lengthy text here", &font)
         .multiline_text_alignment(HorizontalTextAlignment::Center);
@@ -133,7 +133,7 @@ fn test_render_wrapping_center_even() {
 #[test]
 fn test_render_wrapping_center_odd() {
     let env = TestEnv {};
-    let font = CharMonospace {};
+    let font = TerminalChar {};
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let text = Text::char("This is a lengthy text 12345", &font)
         .multiline_text_alignment(HorizontalTextAlignment::Center);
@@ -149,7 +149,7 @@ fn test_render_wrapping_center_odd() {
 #[test]
 fn test_render_wrapping_trailing() {
     let env = TestEnv {};
-    let font = CharMonospace {};
+    let font = TerminalChar {};
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let text = Text::char("This is a lengthy text here", &font)
         .multiline_text_alignment(HorizontalTextAlignment::Trailing);
@@ -164,7 +164,7 @@ fn test_render_wrapping_trailing() {
 
 #[test]
 fn test_clipped_text_is_centered_correctly() {
-    let font = CharMonospace {};
+    let font = TerminalChar {};
     let text = Text::char(
         "Several lines\n of text\nshould be correctly spaced when cut off",
         &font,
@@ -191,7 +191,7 @@ fn test_clipped_text_is_centered_correctly() {
 
 #[test]
 fn test_clipped_text_trails_correctly() {
-    let font = CharMonospace {};
+    let font = TerminalChar {};
     let text = Text::char(
         "Several lines\n of text\nshould be correctly spaced when cut off",
         &font,

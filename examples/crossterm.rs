@@ -1,5 +1,5 @@
 use buoyant::{
-    font::CharMonospace,
+    font::TerminalChar,
     layout::{Environment, Layout, VerticalAlignment},
     primitives::Size,
     render::Render,
@@ -17,7 +17,7 @@ fn main() {
     println!("Size {:?}", size);
 
     let env = TestEnv {};
-    let font = CharMonospace {};
+    let font = TerminalChar {};
     let stack = VStack::three(
     HStack::three(
         Text::char(

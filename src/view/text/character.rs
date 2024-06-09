@@ -29,6 +29,13 @@ impl<'a, F: CharacterFont> Layout for Text<'a, F> {
     type Sublayout<'b> = () where Self: 'b;
 
     fn layout(&self, offer: Size, _env: &dyn Environment) -> ResolvedLayout<()> {
+        if offer.area() == 0 {
+            return ResolvedLayout {
+                sublayouts: (),
+                resolved_size: Size::new(0, 0),
+            };
+        }
+
         let font_height = self.font.line_height();
 
         let mut consumed_height = 0;
@@ -119,6 +126,9 @@ impl<'a, F: CharacterFont> Render<char, ()> for Text<'a, F> {
         layout: &ResolvedLayout<()>,
         _env: &dyn Environment,
     ) {
+        if layout.resolved_size.area() == 0 {
+            return;
+        }
         let mut consumed_height: u16 = 0;
 
         let mut remaining_slice = self.text;
