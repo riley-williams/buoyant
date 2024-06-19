@@ -18,10 +18,12 @@ default = ["std", "crossterm", "unicode"]
 std = []
 crossterm = ["dep:crossterm"]
 unicode = ["dep:unicode-segmentation"]
+embedded-graphics = ["dep:embedded-graphics"]
 
 [dependencies]
-crossterm = { version = "0.27.0", optional = true }
-unicode-segmentation = { version = "1.11.0", optional = true }
+crossterm = { version = "0.27", optional = true }
+unicode-segmentation = { version = "1.11", optional = true }
+embedded-graphics = { version = "0.8", optional = true }
 
 [profile.release]
 debug = true

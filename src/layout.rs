@@ -1,13 +1,4 @@
-use crate::primitives::Size;
-
-pub trait Environment {
-    fn layout_direction(&self) -> LayoutDirection {
-        LayoutDirection::default()
-    }
-    fn alignment(&self) -> Alignment {
-        Alignment::default()
-    }
-}
+use crate::{environment::Environment, primitives::Size};
 
 #[derive(Clone, Copy, Debug, PartialEq, Default)]
 pub enum LayoutDirection {

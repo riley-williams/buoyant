@@ -1,5 +1,6 @@
+use buoyant::environment::Environment;
 use buoyant::font::TerminalChar;
-use buoyant::layout::{Environment, Layout, LayoutDirection};
+use buoyant::layout::{Layout, LayoutDirection};
 use buoyant::primitives::Size;
 use buoyant::render::Render;
 use buoyant::render_target::{FixedTextBuffer, RenderTarget};

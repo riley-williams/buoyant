@@ -1,8 +1,9 @@
 use std::iter::zip;
 
 use buoyant::{
+    environment::Environment,
     font::TerminalChar,
-    layout::{Environment, Layout},
+    layout::Layout,
     render::Render,
     render_target::{FixedTextBuffer, RenderTarget},
     view::{Divider, HorizontalTextAlignment, Padding, Spacer, Text, VStack},

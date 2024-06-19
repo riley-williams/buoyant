@@ -1,5 +1,6 @@
 use crate::{
-    layout::{Environment, Layout, LayoutDirection, ResolvedLayout},
+    environment::Environment,
+    layout::{Layout, LayoutDirection, ResolvedLayout},
     primitives::{Point, Size},
     render::Render,
     render_target::RenderTarget,

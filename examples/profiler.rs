@@ -1,6 +1,7 @@
 use buoyant::{
+    environment::Environment,
     font::TerminalChar,
-    layout::{Environment, Layout, VerticalAlignment},
+    layout::{Layout, VerticalAlignment},
     primitives::Size,
     render::Render,
     render_target::{FixedTextBuffer, RenderTarget},

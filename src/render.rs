@@ -1,7 +1,4 @@
-use crate::{
-    layout::{Environment, ResolvedLayout},
-    render_target::RenderTarget,
-};
+use crate::{environment::Environment, layout::ResolvedLayout, render_target::RenderTarget};
 
 /// A view that can be rendered to pixels
 pub trait Render<Pixel, Sublayout> {

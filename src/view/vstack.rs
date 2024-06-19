@@ -1,7 +1,8 @@
 use core::cmp::{max, min};
 
 use crate::{
-    layout::{Environment, HorizontalAlignment, Layout, LayoutDirection, ResolvedLayout},
+    environment::Environment,
+    layout::{HorizontalAlignment, Layout, LayoutDirection, ResolvedLayout},
     primitives::{Point, Size},
     render::Render,
     render_target::{Proxy, RenderTarget},

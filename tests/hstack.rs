@@ -1,7 +1,8 @@
 use std::iter::zip;
 
+use buoyant::environment::Environment;
 use buoyant::font::TerminalChar;
-use buoyant::layout::{Environment, Layout, VerticalAlignment};
+use buoyant::layout::{Layout, VerticalAlignment};
 use buoyant::primitives::Size;
 use buoyant::render::Render;
 use buoyant::render_target::{FixedTextBuffer, RenderTarget};

@@ -1,6 +1,7 @@
 use crate::{
+    environment::Environment,
     font::CharacterFont,
-    layout::{Environment, Layout, ResolvedLayout},
+    layout::{Layout, ResolvedLayout},
     primitives::{Point, Size},
     render::Render,
     render_target::RenderTarget,
