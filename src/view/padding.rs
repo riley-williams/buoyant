@@ -1,9 +1,10 @@
 use crate::{
     environment::Environment,
     layout::{Layout, ResolvedLayout},
+    pixel::RenderUnit,
     primitives::{Point, Size},
     render::Render,
-    render_target::{Proxy, RenderTarget},
+    render_target::RenderTarget,
 };
 
 /// A view that adds padding around a child view.
@@ -41,6 +42,7 @@ impl<V: Layout> Layout for Padding<V> {
 impl<'a, Pixel, View: Layout> Render<Pixel, ResolvedLayout<View::Sublayout<'a>>> for Padding<View>
 where
     View: Render<Pixel, View::Sublayout<'a>>,
+    Pixel: RenderUnit,
 {
     fn render(
         &self,
@@ -48,13 +50,11 @@ where
         layout: &ResolvedLayout<ResolvedLayout<View::Sublayout<'a>>>,
         env: &dyn Environment,
     ) {
-        let mut proxy = Proxy::new(
-            target,
-            Point {
-                x: self.padding as i16,
-                y: self.padding as i16,
-            },
+        let original_window = target.window();
+        target.set_window_origin(
+            original_window.origin + Point::new(self.padding as i16, self.padding as i16),
         );
-        self.child.render(&mut proxy, &layout.sublayouts, env);
+        self.child.render(target, &layout.sublayouts, env);
+        target.set_window(original_window);
     }
 }

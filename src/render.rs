@@ -1,7 +1,10 @@
-use crate::{environment::Environment, layout::ResolvedLayout, render_target::RenderTarget};
+use crate::{
+    environment::Environment, layout::ResolvedLayout, pixel::RenderUnit,
+    render_target::RenderTarget,
+};
 
 /// A view that can be rendered to pixels
-pub trait Render<Pixel, Sublayout> {
+pub trait Render<Pixel: RenderUnit, Sublayout> {
     /// Render the view to the screen
     fn render(
         &self,

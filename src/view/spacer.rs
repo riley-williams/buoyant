@@ -1,6 +1,7 @@
 use crate::{
     environment::Environment,
     layout::{Layout, LayoutDirection, ResolvedLayout},
+    pixel::RenderUnit,
     primitives::Size,
     render::Render,
     render_target::RenderTarget,
@@ -34,7 +35,7 @@ impl Layout for Spacer {
     }
 }
 
-impl<Pixel, Sublayout> Render<Pixel, Sublayout> for Spacer {
+impl<Pixel: RenderUnit, Sublayout> Render<Pixel, Sublayout> for Spacer {
     fn render(
         &self,
         _target: &mut impl RenderTarget<Pixel>,

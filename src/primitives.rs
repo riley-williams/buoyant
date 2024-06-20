@@ -62,3 +62,9 @@ impl Point {
         Point { x, y }
     }
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub struct Frame {
+    pub size: Size,
+    pub origin: Point,
+}

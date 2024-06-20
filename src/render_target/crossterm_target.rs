@@ -9,12 +9,13 @@ use crossterm::{
 #[cfg(feature = "std")]
 use std::io::{stdout, Stdout, Write};
 
-use crate::primitives::Size;
+use crate::primitives::{Frame, Point, Size};
 
 use super::RenderTarget;
 
 pub struct CrosstermRenderTarget {
     stdout: Stdout,
+    window: Frame,
 }
 
 impl CrosstermRenderTarget {
@@ -33,7 +34,15 @@ impl CrosstermRenderTarget {
 
 impl Default for CrosstermRenderTarget {
     fn default() -> Self {
-        Self { stdout: stdout() }
+        Self {
+            stdout: stdout(),
+            window: Frame {
+                origin: Point::default(),
+                size: crossterm::terminal::size()
+                    .map(|(w, h)| Size::new(w, h))
+                    .unwrap_or_default(),
+            },
+        }
     }
 }
 
@@ -59,10 +68,19 @@ impl RenderTarget<char> for CrosstermRenderTarget {
     }
 
     fn draw(&mut self, point: crate::primitives::Point, item: char) {
+        let draw_point = point + self.window.origin;
         self.stdout
-            .queue(cursor::MoveTo(point.x as u16, point.y as u16))
+            .queue(cursor::MoveTo(draw_point.x as u16, draw_point.y as u16))
             .unwrap()
             .queue(style::PrintStyledContent(item.to_string().green()))
             .unwrap();
+    }
+
+    fn set_window(&mut self, frame: Frame) {
+        self.window = frame;
+    }
+
+    fn window(&self) -> Frame {
+        self.window
     }
 }

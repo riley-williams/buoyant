@@ -3,9 +3,10 @@ use core::cmp::{max, min};
 use crate::{
     environment::Environment,
     layout::{Layout, LayoutDirection, ResolvedLayout, VerticalAlignment},
+    pixel::RenderUnit,
     primitives::{Point, Size},
     render::Render,
-    render_target::{Proxy, RenderTarget},
+    render_target::RenderTarget,
 };
 
 pub struct HStack<T> {
@@ -105,6 +106,7 @@ impl<'a, Pixel, U: Layout, V: Layout>
 where
     U: Render<Pixel, U::Sublayout<'a>>,
     V: Render<Pixel, V::Sublayout<'a>>,
+    Pixel: RenderUnit,
 {
     fn render(
         &self,
@@ -116,25 +118,32 @@ where
         env: &dyn Environment,
     ) {
         let env = HorizontalEnvironment::from(env);
+        let original_window = target.window();
+        let mut width = 0;
 
-        let mut proxy = Proxy::new(
-            target,
-            Point::new(
-                0,
-                self.alignment.align(
-                    layout.resolved_size.height as i16,
-                    layout.sublayouts.0.resolved_size.height as i16,
-                ),
+        let offset = Point::new(
+            width,
+            self.alignment.align(
+                layout.resolved_size.height as i16,
+                layout.sublayouts.0.resolved_size.height as i16,
             ),
         );
-        self.items.0.render(&mut proxy, &layout.sublayouts.0, &env);
 
-        proxy.origin.x += (layout.sublayouts.0.resolved_size.width + self.spacing) as i16;
-        proxy.origin.y = self.alignment.align(
-            layout.resolved_size.height as i16,
-            layout.sublayouts.1.resolved_size.height as i16,
+        target.set_window_origin(original_window.origin + offset);
+        self.items.0.render(target, &layout.sublayouts.0, &env);
+
+        width += (layout.sublayouts.0.resolved_size.width + self.spacing) as i16;
+        let offset = Point::new(
+            width,
+            self.alignment.align(
+                layout.resolved_size.height as i16,
+                layout.sublayouts.1.resolved_size.height as i16,
+            ),
         );
-        self.items.1.render(&mut proxy, &layout.sublayouts.1, &env);
+
+        target.set_window_origin(original_window.origin + offset);
+        self.items.1.render(target, &layout.sublayouts.1, &env);
+        target.set_window(original_window);
     }
 }
 
@@ -209,6 +218,7 @@ where
     U: Render<Pixel, U::Sublayout<'a>>,
     V: Render<Pixel, V::Sublayout<'a>>,
     W: Render<Pixel, W::Sublayout<'a>>,
+    Pixel: RenderUnit,
 {
     fn render(
         &self,
@@ -221,31 +231,44 @@ where
         env: &dyn Environment,
     ) {
         let env = HorizontalEnvironment::from(env);
-        let mut proxy = Proxy::new(
-            target,
-            Point::new(
-                0,
-                self.alignment.align(
-                    layout.resolved_size.height as i16,
-                    layout.sublayouts.0.resolved_size.height as i16,
-                ),
+        let original_window = target.window();
+        let mut width = 0;
+
+        let offset = Point::new(
+            width,
+            self.alignment.align(
+                layout.resolved_size.height as i16,
+                layout.sublayouts.0.resolved_size.height as i16,
             ),
         );
-        self.items.0.render(&mut proxy, &layout.sublayouts.0, &env);
 
-        proxy.origin.x += (layout.sublayouts.0.resolved_size.width + self.spacing) as i16;
-        proxy.origin.y = self.alignment.align(
-            layout.resolved_size.height as i16,
-            layout.sublayouts.1.resolved_size.height as i16,
-        );
-        self.items.1.render(&mut proxy, &layout.sublayouts.1, &env);
+        target.set_window_origin(original_window.origin + offset);
+        self.items.0.render(target, &layout.sublayouts.0, &env);
 
-        proxy.origin.x += (layout.sublayouts.1.resolved_size.width + self.spacing) as i16;
-        proxy.origin.y = self.alignment.align(
-            layout.resolved_size.height as i16,
-            layout.sublayouts.2.resolved_size.height as i16,
+        width += (layout.sublayouts.0.resolved_size.width + self.spacing) as i16;
+        let offset = Point::new(
+            width,
+            self.alignment.align(
+                layout.resolved_size.height as i16,
+                layout.sublayouts.1.resolved_size.height as i16,
+            ),
         );
-        self.items.2.render(&mut proxy, &layout.sublayouts.2, &env);
+
+        target.set_window_origin(original_window.origin + offset);
+        self.items.1.render(target, &layout.sublayouts.1, &env);
+
+        width += (layout.sublayouts.1.resolved_size.width + self.spacing) as i16;
+        let offset = Point::new(
+            width,
+            self.alignment.align(
+                layout.resolved_size.height as i16,
+                layout.sublayouts.2.resolved_size.height as i16,
+            ),
+        );
+
+        target.set_window_origin(original_window.origin + offset);
+        self.items.2.render(target, &layout.sublayouts.2, &env);
+        target.set_window(original_window);
     }
 }
 

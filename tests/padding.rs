@@ -19,8 +19,11 @@ fn test_clipped_text_trails_correctly() {
         Spacer::default(),
         Padding::new(
             2,
-            Text::char("Padding respects\nparent alignment", &font)
-                .multiline_text_alignment(HorizontalTextAlignment::Center),
+            Text::char(
+                "Padding respects\nparent alignment\nshouldnt affect alignment",
+                &font,
+            )
+            .multiline_text_alignment(HorizontalTextAlignment::Trailing),
         ),
         Divider::default(),
     );
