@@ -10,6 +10,6 @@ pub trait Render<Pixel: RenderUnit, Sublayout: Clone>: PartialEq {
         &self,
         target: &mut impl RenderTarget<Pixel>,
         layout: &ResolvedLayout<Sublayout>,
-        env: &dyn Environment,
+        env: &impl Environment,
     );
 }

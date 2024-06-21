@@ -1,7 +1,7 @@
 use std::iter::zip;
 
 use buoyant::{
-    environment::Environment,
+    environment::DefaultEnvironment,
     font::{CharacterFont, TerminalChar},
     layout::Layout as _,
     primitives::Size,
@@ -25,9 +25,6 @@ impl CharacterFont for ArbitraryFont {
     }
 }
 
-struct TestEnv;
-impl Environment for TestEnv {}
-
 #[test]
 fn test_single_character() {
     let font = ArbitraryFont {
@@ -36,7 +33,7 @@ fn test_single_character() {
     };
     let text = Text::char("A", &font);
     let offer = Size::new(100, 100);
-    let layout = text.layout(offer, &TestEnv);
+    let layout = text.layout(offer, &DefaultEnvironment);
     assert_eq!(layout.resolved_size, Size::new(5, 10));
 }
 
@@ -48,7 +45,7 @@ fn test_single_character_constrained() {
     };
     let text = Text::char("A", &font);
     let offer = Size::new(4, 10);
-    let layout = text.layout(offer, &TestEnv);
+    let layout = text.layout(offer, &DefaultEnvironment);
     assert_eq!(layout.resolved_size, Size::new(5, 10));
 }
 
@@ -60,7 +57,7 @@ fn test_text_layout() {
     };
     let text = Text::char("Hello, world!", &font);
     let offer = Size::new(100, 100);
-    let layout = text.layout(offer, &TestEnv);
+    let layout = text.layout(offer, &DefaultEnvironment);
     assert_eq!(layout.resolved_size, Size::new(5 * 13, 10));
 }
 
@@ -72,7 +69,7 @@ fn test_text_layout_wraps() {
     };
     let text = Text::char("Hello, world!", &font);
     let offer = Size::new(50, 100);
-    let layout = text.layout(offer, &TestEnv);
+    let layout = text.layout(offer, &DefaultEnvironment);
     assert_eq!(layout.resolved_size, Size::new(6 * 5, 20));
 }
 
@@ -84,7 +81,7 @@ fn test_wraps_partial_words() {
     };
     let text = Text::char("123412341234", &font);
     let offer = Size::new(20, 100);
-    let layout = text.layout(offer, &TestEnv);
+    let layout = text.layout(offer, &DefaultEnvironment);
     assert_eq!(layout.resolved_size, Size::new(20, 30));
 }
 
@@ -96,13 +93,13 @@ fn test_newline() {
     };
     let text = Text::char("1234\n12\n\n123\n", &font);
     let offer = Size::new(25, 100);
-    let layout = text.layout(offer, &TestEnv);
+    let layout = text.layout(offer, &DefaultEnvironment);
     assert_eq!(layout.resolved_size, Size::new(20, 40));
 }
 
 #[test]
 fn test_render_wrapping_leading() {
-    let env = TestEnv {};
+    let env = DefaultEnvironment;
     let font = TerminalChar {};
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let text = Text::char("This is a lengthy text here", &font);
@@ -117,7 +114,7 @@ fn test_render_wrapping_leading() {
 
 #[test]
 fn test_render_wrapping_center_even() {
-    let env = TestEnv {};
+    let env = DefaultEnvironment;
     let font = TerminalChar {};
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let text = Text::char("This is a lengthy text here", &font)
@@ -133,7 +130,7 @@ fn test_render_wrapping_center_even() {
 
 #[test]
 fn test_render_wrapping_center_odd() {
-    let env = TestEnv {};
+    let env = DefaultEnvironment;
     let font = TerminalChar {};
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let text = Text::char("This is a lengthy text 12345", &font)
@@ -149,7 +146,7 @@ fn test_render_wrapping_center_odd() {
 
 #[test]
 fn test_render_wrapping_trailing() {
-    let env = TestEnv {};
+    let env = DefaultEnvironment;
     let font = TerminalChar {};
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let text = Text::char("This is a lengthy text here", &font)
@@ -172,7 +169,7 @@ fn test_clipped_text_is_centered_correctly() {
     )
     .multiline_text_alignment(HorizontalTextAlignment::Center);
 
-    let env = TestEnv {};
+    let env = DefaultEnvironment;
     let mut buffer = FixedTextBuffer::<40, 2>::default();
 
     let layout = text.layout(buffer.size(), &env);
@@ -199,7 +196,7 @@ fn test_clipped_text_trails_correctly() {
     )
     .multiline_text_alignment(HorizontalTextAlignment::Trailing);
 
-    let env = TestEnv {};
+    let env = DefaultEnvironment;
     let mut buffer = FixedTextBuffer::<40, 2>::default();
 
     let layout = text.layout(buffer.size(), &env);

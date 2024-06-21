@@ -36,7 +36,7 @@ impl<'a, F> PartialEq for Text<'a, F> {
 impl<'a, F: CharacterFont> Layout for Text<'a, F> {
     type Sublayout<'b> = () where Self: 'b;
 
-    fn layout(&self, offer: Size, _env: &dyn Environment) -> ResolvedLayout<()> {
+    fn layout(&self, offer: Size, _env: &impl Environment) -> ResolvedLayout<()> {
         if offer.area() == 0 {
             return ResolvedLayout {
                 sublayouts: (),
@@ -132,7 +132,7 @@ impl<'a, F: CharacterFont> Render<char, ()> for Text<'a, F> {
         &self,
         target: &mut impl RenderTarget<char>,
         layout: &ResolvedLayout<()>,
-        _env: &dyn Environment,
+        _env: &impl Environment,
     ) {
         if layout.resolved_size.area() == 0 {
             return;

@@ -15,24 +15,34 @@ pub struct HStack<T> {
     spacing: u16,
 }
 
-struct HorizontalEnvironment<'a> {
-    environment: &'a dyn Environment,
+struct HorizontalEnvironment<'a, T> {
+    inner_environment: &'a T,
 }
 
 // TODO: NOT a sustainable pattern, considering the defaults set on the environment.
 // Maybe this is one reason why Apple uses the roundabout EnvironmentKey?
-impl Environment for HorizontalEnvironment<'_> {
+impl<T: Environment> Environment for HorizontalEnvironment<'_, T> {
     fn alignment(&self) -> crate::layout::Alignment {
-        self.environment.alignment()
+        self.inner_environment.alignment()
     }
     fn layout_direction(&self) -> LayoutDirection {
         LayoutDirection::Horizontal
     }
+
+    fn foreground_style(&self) -> impl crate::environment::ColorStyle {
+        self.inner_environment.foreground_style()
+    }
+
+    fn background_style(&self) -> impl crate::environment::ColorStyle {
+        self.inner_environment.background_style()
+    }
 }
 
-impl<'a> From<&'a dyn Environment> for HorizontalEnvironment<'a> {
-    fn from(environment: &'a dyn Environment) -> Self {
-        Self { environment }
+impl<'a, T: Environment> From<&'a T> for HorizontalEnvironment<'a, T> {
+    fn from(environment: &'a T) -> Self {
+        Self {
+            inner_environment: environment,
+        }
     }
 }
 
@@ -68,7 +78,7 @@ impl<U: Layout, V: Layout> Layout for HStack<(U, V)> {
         ResolvedLayout<V::Sublayout<'a>>,
     ) where U: 'a, V: 'a;
 
-    fn layout(&self, offer: Size, env: &dyn Environment) -> ResolvedLayout<Self::Sublayout<'_>> {
+    fn layout(&self, offer: Size, env: &impl Environment) -> ResolvedLayout<Self::Sublayout<'_>> {
         const N: usize = 2;
         let mut c0: Option<ResolvedLayout<U::Sublayout<'_>>> = None;
         let mut c1: Option<ResolvedLayout<V::Sublayout<'_>>> = None;
@@ -121,7 +131,7 @@ where
             ResolvedLayout<U::Sublayout<'a>>,
             ResolvedLayout<V::Sublayout<'a>>,
         )>,
-        env: &dyn Environment,
+        env: &impl Environment,
     ) {
         let env = HorizontalEnvironment::from(env);
         let original_window = target.window();
@@ -170,7 +180,7 @@ impl<U: Layout, V: Layout, W: Layout> Layout for HStack<(U, V, W)> {
         ResolvedLayout<W::Sublayout<'a>>,
     ) where U: 'a, V: 'a, W: 'a;
 
-    fn layout(&self, offer: Size, env: &dyn Environment) -> ResolvedLayout<Self::Sublayout<'_>> {
+    fn layout(&self, offer: Size, env: &impl Environment) -> ResolvedLayout<Self::Sublayout<'_>> {
         const N: usize = 3;
         let mut c0: Option<ResolvedLayout<U::Sublayout<'_>>> = None;
         let mut c1: Option<ResolvedLayout<V::Sublayout<'_>>> = None;
@@ -234,7 +244,7 @@ where
             ResolvedLayout<V::Sublayout<'a>>,
             ResolvedLayout<W::Sublayout<'a>>,
         )>,
-        env: &dyn Environment,
+        env: &impl Environment,
     ) {
         let env = HorizontalEnvironment::from(env);
         let original_window = target.window();

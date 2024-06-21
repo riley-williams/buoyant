@@ -1,4 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
+#![feature(type_alias_impl_trait)]
 
 pub mod environment;
 pub mod font;

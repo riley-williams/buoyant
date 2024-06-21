@@ -1,28 +1,18 @@
-use buoyant::environment::Environment;
 use buoyant::font::TerminalChar;
 use buoyant::layout::{Layout, LayoutDirection};
 use buoyant::primitives::Size;
 use buoyant::render::Render;
 use buoyant::render_target::{FixedTextBuffer, RenderTarget};
 use buoyant::view::{HStack, Spacer, Text};
+use common::TestEnv;
 
-struct TestEnv {
-    direction: LayoutDirection,
-}
-
-impl Environment for TestEnv {
-    fn layout_direction(&self) -> LayoutDirection {
-        self.direction
-    }
-}
+mod common;
 
 #[test]
 fn test_horizontal_layout() {
     let spacer = Spacer::default();
     let offer = Size::new(10, 10);
-    let env = TestEnv {
-        direction: LayoutDirection::Horizontal,
-    };
+    let env = TestEnv::default().with_direction(LayoutDirection::Horizontal);
     let layout = spacer.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(10, 0));
 }
@@ -31,9 +21,7 @@ fn test_horizontal_layout() {
 fn test_vertical_layout() {
     let spacer = Spacer::default();
     let offer = Size::new(10, 10);
-    let env = TestEnv {
-        direction: LayoutDirection::Vertical,
-    };
+    let env = TestEnv::default().with_direction(LayoutDirection::Vertical);
     let layout = spacer.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(0, 10));
 }
@@ -43,9 +31,7 @@ fn test_render_fills_stack() {
     let font = TerminalChar {};
     let hstack = HStack::two(Spacer::default(), Text::char("67", &font)).spacing(1);
     let mut buffer = FixedTextBuffer::<9, 1>::default();
-    let env = TestEnv {
-        direction: LayoutDirection::Horizontal,
-    };
+    let env = TestEnv::default().with_direction(LayoutDirection::Horizontal);
     let layout = hstack.layout(buffer.size(), &env);
     hstack.render(&mut buffer, &layout, &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "       67");

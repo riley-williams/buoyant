@@ -1,5 +1,5 @@
 use buoyant::{
-    environment::Environment,
+    environment::DefaultEnvironment,
     font::TerminalChar,
     layout::{Layout, VerticalAlignment},
     primitives::Size,
@@ -15,7 +15,7 @@ fn main() {
     let mut size = target.size();
     println!("Size {:?}", size);
 
-    let env = TestEnv {};
+    let env = DefaultEnvironment;
 
     let font = TerminalChar {};
     let stack = VStack::three(
@@ -59,6 +59,3 @@ fn main() {
         }
     }
 }
-
-struct TestEnv;
-impl Environment for TestEnv {}

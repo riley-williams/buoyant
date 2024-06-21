@@ -1,16 +1,13 @@
 use std::iter::zip;
 
 use buoyant::{
-    environment::Environment,
+    environment::DefaultEnvironment,
     font::TerminalChar,
     layout::Layout,
     render::Render,
     render_target::{FixedTextBuffer, RenderTarget},
     view::{Divider, HorizontalTextAlignment, Padding, Spacer, Text, VStack},
 };
-
-struct TestEnv {}
-impl Environment for TestEnv {}
 
 #[test]
 fn test_clipped_text_trails_correctly() {
@@ -28,7 +25,7 @@ fn test_clipped_text_trails_correctly() {
         Divider::default(),
     );
 
-    let env = TestEnv {};
+    let env = DefaultEnvironment;
     let mut buffer = FixedTextBuffer::<30, 7>::default();
 
     let layout = text.layout(buffer.size(), &env);

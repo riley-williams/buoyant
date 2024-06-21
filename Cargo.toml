@@ -24,6 +24,7 @@ embedded-graphics = ["dep:embedded-graphics"]
 crossterm = { version = "0.27", optional = true }
 unicode-segmentation = { version = "1.11", optional = true }
 embedded-graphics = { version = "0.8", optional = true }
+rgb = "0.8.37"
 
 [profile.release]
 debug = true

@@ -30,7 +30,7 @@ impl PartialEq for Divider {
 
 impl Layout for Divider {
     type Sublayout<'a> = ();
-    fn layout(&self, offer: Size, env: &dyn Environment) -> ResolvedLayout<()> {
+    fn layout(&self, offer: Size, env: &impl Environment) -> ResolvedLayout<()> {
         let size = match env.layout_direction() {
             LayoutDirection::Horizontal => Size::new(self.weight, offer.height),
             LayoutDirection::Vertical => Size::new(offer.width, self.weight),
@@ -51,7 +51,7 @@ impl Render<char, ()> for Divider {
         &self,
         target: &mut impl RenderTarget<char>,
         layout: &ResolvedLayout<()>,
-        env: &dyn Environment,
+        env: &impl Environment,
     ) {
         match env.layout_direction() {
             LayoutDirection::Horizontal => {
@@ -71,26 +71,16 @@ impl Render<char, ()> for Divider {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::environment::mock::TestEnv;
     use crate::layout::{Layout, LayoutDirection};
     use crate::primitives::Size;
     use crate::render_target::FixedTextBuffer;
-
-    struct TestEnv {
-        direction: LayoutDirection,
-    }
-    impl Environment for TestEnv {
-        fn layout_direction(&self) -> LayoutDirection {
-            self.direction
-        }
-    }
 
     #[test]
     fn test_horizontal_layout() {
         let divider = Divider::new(2);
         let offer = Size::new(100, 100);
-        let env = TestEnv {
-            direction: LayoutDirection::Horizontal,
-        };
+        let env = TestEnv::default().with_direction(LayoutDirection::Horizontal);
         let layout = divider.layout(offer, &env);
         assert_eq!(layout.resolved_size, Size::new(2, 100));
     }
@@ -99,9 +89,7 @@ mod tests {
     fn test_vertical_layout() {
         let divider = Divider::new(2);
         let offer = Size::new(100, 100);
-        let env = TestEnv {
-            direction: LayoutDirection::Vertical,
-        };
+        let env = TestEnv::default().with_direction(LayoutDirection::Vertical);
         let layout = divider.layout(offer, &env);
         assert_eq!(layout.resolved_size, Size::new(100, 2));
     }
@@ -110,9 +98,7 @@ mod tests {
     fn test_horizontal_render() {
         let divider = Divider::new(1);
         let mut buffer = FixedTextBuffer::<5, 5>::default();
-        let env = TestEnv {
-            direction: LayoutDirection::Horizontal,
-        };
+        let env = TestEnv::default().with_direction(LayoutDirection::Horizontal);
         let layout = divider.layout(buffer.size(), &env);
         divider.render(&mut buffer, &layout, &env);
         assert_eq!(buffer.text[0][0], '|');
@@ -124,9 +110,7 @@ mod tests {
     fn test_vertical_render() {
         let divider = Divider::new(1);
         let mut buffer = FixedTextBuffer::<5, 5>::default();
-        let env = TestEnv {
-            direction: LayoutDirection::Vertical,
-        };
+        let env = TestEnv::default().with_direction(LayoutDirection::Vertical);
         let layout = divider.layout(buffer.size(), &env);
         divider.render(&mut buffer, &layout, &env);
         assert_eq!(buffer.text[0][0], '-');

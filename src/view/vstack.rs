@@ -15,22 +15,33 @@ pub struct VStack<T> {
     spacing: u16,
 }
 
-struct VerticalEnvironment<'a> {
-    environment: &'a dyn Environment,
+struct VerticalEnvironment<'a, T> {
+    inner_environment: &'a T,
 }
 
-impl Environment for VerticalEnvironment<'_> {
+impl<T: Environment> Environment for VerticalEnvironment<'_, T> {
     fn alignment(&self) -> crate::layout::Alignment {
-        self.environment.alignment()
+        self.inner_environment.alignment()
     }
+
     fn layout_direction(&self) -> LayoutDirection {
         LayoutDirection::Vertical
     }
+
+    fn foreground_style(&self) -> impl crate::environment::ColorStyle {
+        self.inner_environment.foreground_style()
+    }
+
+    fn background_style(&self) -> impl crate::environment::ColorStyle {
+        self.inner_environment.background_style()
+    }
 }
 
-impl<'a> From<&'a dyn Environment> for VerticalEnvironment<'a> {
-    fn from(environment: &'a dyn Environment) -> Self {
-        Self { environment }
+impl<'a, T: Environment> From<&'a T> for VerticalEnvironment<'a, T> {
+    fn from(environment: &'a T) -> Self {
+        Self {
+            inner_environment: environment,
+        }
     }
 }
 
@@ -66,7 +77,7 @@ impl<U: Layout, V: Layout> Layout for VStack<(U, V)> {
         ResolvedLayout<V::Sublayout<'a>>,
     ) where U: 'a, V: 'a;
 
-    fn layout(&self, offer: Size, env: &dyn Environment) -> ResolvedLayout<Self::Sublayout<'_>> {
+    fn layout(&self, offer: Size, env: &impl Environment) -> ResolvedLayout<Self::Sublayout<'_>> {
         const N: usize = 2;
         let env = &VerticalEnvironment::from(env);
         let mut c0: Option<ResolvedLayout<U::Sublayout<'_>>> = None;
@@ -118,7 +129,7 @@ where
             ResolvedLayout<U::Sublayout<'a>>,
             ResolvedLayout<V::Sublayout<'a>>,
         )>,
-        env: &dyn Environment,
+        env: &impl Environment,
     ) {
         let env = &VerticalEnvironment::from(env);
 
@@ -170,7 +181,7 @@ impl<U: Layout, V: Layout, W: Layout> Layout for VStack<(U, V, W)> {
         ResolvedLayout<W::Sublayout<'a>>,
     ) where U: 'a, V: 'a, W: 'a;
 
-    fn layout(&self, offer: Size, env: &dyn Environment) -> ResolvedLayout<Self::Sublayout<'_>> {
+    fn layout(&self, offer: Size, env: &impl Environment) -> ResolvedLayout<Self::Sublayout<'_>> {
         const N: usize = 3;
         let env = &VerticalEnvironment::from(env);
 
@@ -234,7 +245,7 @@ where
             ResolvedLayout<V::Sublayout<'a>>,
             ResolvedLayout<W::Sublayout<'a>>,
         )>,
-        env: &dyn Environment,
+        env: &impl Environment,
     ) {
         let env = &VerticalEnvironment::from(env);
 

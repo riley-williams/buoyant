@@ -14,7 +14,7 @@ pub struct Spacer {
 
 impl Layout for Spacer {
     type Sublayout<'a> = ();
-    fn layout(&self, offer: Size, env: &dyn Environment) -> ResolvedLayout<()> {
+    fn layout(&self, offer: Size, env: &impl Environment) -> ResolvedLayout<()> {
         let size = match env.layout_direction() {
             LayoutDirection::Horizontal => {
                 Size::new(core::cmp::max(offer.width, self.min_length), 0)
@@ -40,7 +40,7 @@ impl<Pixel: RenderUnit, Sublayout: Clone> Render<Pixel, Sublayout> for Spacer {
         &self,
         _target: &mut impl RenderTarget<Pixel>,
         _layout: &ResolvedLayout<Sublayout>,
-        _env: &dyn Environment,
+        _env: &impl Environment,
     ) {
     }
 }
