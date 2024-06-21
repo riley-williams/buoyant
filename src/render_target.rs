@@ -48,13 +48,4 @@ where
             size: parent_frame.size,
         });
     }
-
-    /// Resize the window. The window origin will not be changed.
-    fn resize_window(&mut self, size: Size) {
-        let parent_frame = self.window();
-        self.set_window(Frame {
-            origin: parent_frame.origin,
-            size,
-        });
-    }
 }

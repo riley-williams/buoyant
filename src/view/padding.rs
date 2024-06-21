@@ -21,6 +21,12 @@ impl<T> Padding<T> {
     }
 }
 
+impl<T> PartialEq for Padding<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.padding == other.padding
+    }
+}
+
 impl<V: Layout> Layout for Padding<V> {
     type Sublayout<'a> = ResolvedLayout<V::Sublayout<'a>> where V: 'a;
 

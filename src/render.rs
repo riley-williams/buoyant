@@ -4,7 +4,7 @@ use crate::{
 };
 
 /// A view that can be rendered to pixels
-pub trait Render<Pixel: RenderUnit, Sublayout> {
+pub trait Render<Pixel: RenderUnit, Sublayout: Clone>: PartialEq {
     /// Render the view to the screen
     fn render(
         &self,

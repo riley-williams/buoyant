@@ -7,7 +7,7 @@ use crate::{
     render_target::RenderTarget,
 };
 
-#[derive(Default)]
+#[derive(Default, PartialEq)]
 pub struct Spacer {
     min_length: u16,
 }
@@ -35,7 +35,7 @@ impl Layout for Spacer {
     }
 }
 
-impl<Pixel: RenderUnit, Sublayout> Render<Pixel, Sublayout> for Spacer {
+impl<Pixel: RenderUnit, Sublayout: Clone> Render<Pixel, Sublayout> for Spacer {
     fn render(
         &self,
         _target: &mut impl RenderTarget<Pixel>,

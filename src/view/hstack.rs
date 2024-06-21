@@ -16,7 +16,7 @@ pub struct HStack<T> {
 }
 
 struct HorizontalEnvironment<'a> {
-    pub environment: &'a dyn Environment,
+    environment: &'a dyn Environment,
 }
 
 // TODO: NOT a sustainable pattern, considering the defaults set on the environment.
@@ -43,6 +43,12 @@ impl<T> HStack<T> {
 
     pub fn alignment(self, alignment: VerticalAlignment) -> Self {
         Self { alignment, ..self }
+    }
+}
+
+impl<T> PartialEq for HStack<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.spacing == other.spacing && self.alignment == other.alignment
     }
 }
 

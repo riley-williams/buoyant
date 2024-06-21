@@ -22,6 +22,12 @@ impl Default for Divider {
     }
 }
 
+impl PartialEq for Divider {
+    fn eq(&self, other: &Self) -> bool {
+        self.weight == other.weight
+    }
+}
+
 impl Layout for Divider {
     type Sublayout<'a> = ();
     fn layout(&self, offer: Size, env: &dyn Environment) -> ResolvedLayout<()> {

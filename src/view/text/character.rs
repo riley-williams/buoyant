@@ -26,6 +26,13 @@ impl<'a, F: CharacterFont> Text<'a, F> {
     }
 }
 
+// TODO: I guess it won't update for font changes...idk what I'm doing
+impl<'a, F> PartialEq for Text<'a, F> {
+    fn eq(&self, other: &Self) -> bool {
+        self.text == other.text
+    }
+}
+
 impl<'a, F: CharacterFont> Layout for Text<'a, F> {
     type Sublayout<'b> = () where Self: 'b;
 

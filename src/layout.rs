@@ -58,13 +58,14 @@ impl VerticalAlignment {
     }
 }
 
-pub struct ResolvedLayout<C> {
+#[derive(Clone)]
+pub struct ResolvedLayout<C: Clone> {
     pub sublayouts: C,
     pub resolved_size: Size,
 }
 
 pub trait Layout: Sized {
-    type Sublayout<'a>
+    type Sublayout<'a>: Clone
     where
         Self: 'a;
     /// The size of the view given the offer

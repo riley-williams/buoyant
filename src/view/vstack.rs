@@ -16,7 +16,7 @@ pub struct VStack<T> {
 }
 
 struct VerticalEnvironment<'a> {
-    pub environment: &'a dyn Environment,
+    environment: &'a dyn Environment,
 }
 
 impl Environment for VerticalEnvironment<'_> {
@@ -31,6 +31,12 @@ impl Environment for VerticalEnvironment<'_> {
 impl<'a> From<&'a dyn Environment> for VerticalEnvironment<'a> {
     fn from(environment: &'a dyn Environment) -> Self {
         Self { environment }
+    }
+}
+
+impl<T> PartialEq for VStack<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.spacing == other.spacing && self.alignment == other.alignment
     }
 }
 
