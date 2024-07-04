@@ -1,5 +1,7 @@
+use crossterm::style::{StyledContent, Stylize as _};
+
 use crate::{
-    environment::Environment,
+    environment::{ColorStyle as _, Environment},
     layout::{Layout, LayoutDirection, ResolvedLayout},
     primitives::{Point, Size},
     render::Render,
@@ -62,6 +64,34 @@ impl Render<char, ()> for Divider {
             LayoutDirection::Vertical => {
                 for x in 0..layout.resolved_size.width {
                     target.draw(Point::new(x as i16, 0), '-');
+                }
+            }
+        }
+    }
+}
+impl<'a> Render<StyledContent<&'a str>, ()> for Divider {
+    fn render(
+        &self,
+        target: &mut impl RenderTarget<StyledContent<&'a str>>,
+        layout: &ResolvedLayout<()>,
+        env: &impl Environment,
+    ) {
+        let foreground_color = env.foreground_style().shade_pixel(0, 0, Size::new(0, 0));
+        let color = crossterm::style::Color::Rgb {
+            r: foreground_color.r,
+            g: foreground_color.g,
+            b: foreground_color.b,
+        };
+
+        match env.layout_direction() {
+            LayoutDirection::Horizontal => {
+                for y in 0..layout.resolved_size.height {
+                    target.draw(Point::new(0, y as i16), "|".with(color));
+                }
+            }
+            LayoutDirection::Vertical => {
+                for x in 0..layout.resolved_size.width {
+                    target.draw(Point::new(x as i16, 0), "-".with(color));
                 }
             }
         }

@@ -1,7 +1,6 @@
-#[cfg(feature = "crossterm")]
+use crossterm::style::StyledContent;
 use crossterm::{
-    cursor, execute,
-    style::{self, Stylize},
+    cursor, execute, style,
     terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
     ExecutableCommand, QueueableCommand,
 };
@@ -53,7 +52,7 @@ impl Drop for CrosstermRenderTarget {
     }
 }
 
-impl RenderTarget<char> for CrosstermRenderTarget {
+impl RenderTarget<StyledContent<&'_ str>> for CrosstermRenderTarget {
     fn size(&self) -> Size {
         crossterm::terminal::size()
             .map(|(w, h)| Size::new(w, h))
@@ -67,12 +66,12 @@ impl RenderTarget<char> for CrosstermRenderTarget {
             .unwrap();
     }
 
-    fn draw(&mut self, point: crate::primitives::Point, item: char) {
+    fn draw(&mut self, point: crate::primitives::Point, item: StyledContent<&'_ str>) {
         let draw_point = point + self.window.origin;
         self.stdout
             .queue(cursor::MoveTo(draw_point.x as u16, draw_point.y as u16))
             .unwrap()
-            .queue(style::PrintStyledContent(item.to_string().green()))
+            .queue(style::PrintStyledContent(item))
             .unwrap();
     }
 

@@ -5,9 +5,13 @@ use buoyant::{
     primitives::Size,
     render::Render,
     render_target::{CrosstermRenderTarget, RenderTarget},
-    view::{Divider, HStack, HorizontalTextAlignment, Padding, Spacer, Text, VStack},
+    view::{
+        foreground_style::ForegroundStyle, Divider, HStack, HorizontalTextAlignment, Padding,
+        Spacer, Text, VStack,
+    },
 };
 use crossterm::event::{read, Event};
+use rgb::RGB8;
 
 fn main() {
     let mut target = CrosstermRenderTarget::default();
@@ -20,32 +24,35 @@ fn main() {
     let env = DefaultEnvironment;
     let font = TerminalChar {};
     let stack = VStack::three(
-    HStack::three(
-        Text::char(
-            "This text is centered horizontally in the middle of its space\nThe stack however, has bottom alignment.",
-            &font,
+        HStack::three(
+            ForegroundStyle::new(
+                RGB8::new(255, 0, 0),
+                Text::char(
+                    "This red text is aligned to the leading edge of its space\nThe stack however, has bottom alignment.",
+                    &font,
+                )
+                .multiline_text_alignment(HorizontalTextAlignment::Leading),
+            ),
+            Spacer::default(),
+            Text::char(
+                "This text is aligned to the right, with trailing multi-line text alignment",
+                &font,
+            )
+            .multiline_text_alignment(HorizontalTextAlignment::Trailing),
+        )
+        .spacing(1)
+        .alignment(VerticalAlignment::Bottom),
+        Divider::default(),
+        VStack::three(
+            Spacer::default(),
+            Padding::new(2,
+                Text::char(
+                    "This is several lines of text.\nEach line is centered in the available space.\n Spacers are used to fill all the remaining verical space and align the content within it.\n2 points of padding are around this text",
+                    &font,
                 )
                 .multiline_text_alignment(HorizontalTextAlignment::Center),
-        Spacer::default(),
-        Text::char(
-            "This text is aligned to the right, with trailing multi-line text alignment",
-            &font,
-                )
-                .multiline_text_alignment(HorizontalTextAlignment::Trailing),
-            )
-            .spacing(1)
-            .alignment(VerticalAlignment::Bottom),
-    Divider::default(),
-    VStack::three(
-        Spacer::default(),
-        Padding::new(2,
-            Text::char(
-                "This is several lines of text.\nEach line is centered in the available space.\n Spacers are used to fill all the remaining verical space and align the content within it.\n2 points of padding are around this text",
-                &font,
-                    )
-                    .multiline_text_alignment(HorizontalTextAlignment::Center),
-                ),
-        Divider::default(),
+            ),
+            Divider::default(),
         ),
     );
 

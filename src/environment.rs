@@ -1,3 +1,5 @@
+use rgb::RGB8;
+
 use crate::{
     layout::{Alignment, LayoutDirection},
     primitives::Size,
@@ -11,13 +13,13 @@ pub trait Environment {
     fn background_style(&self) -> impl ColorStyle;
 }
 
-pub trait ColorStyle: Clone + Copy {
+pub trait ColorStyle: Clone + Copy + PartialEq {
     /// Shade a pixel at the given relative coordinates
-    fn shade_pixel(&self, x: u16, y: u16, in_bounds: Size) -> rgb::RGB8;
+    fn shade_pixel(&self, x: u16, y: u16, in_bounds: Size) -> RGB8;
 }
 
-impl ColorStyle for rgb::RGB8 {
-    fn shade_pixel(&self, _: u16, _: u16, _: Size) -> rgb::RGB8 {
+impl ColorStyle for RGB8 {
+    fn shade_pixel(&self, _: u16, _: u16, _: Size) -> RGB8 {
         *self
     }
 }
@@ -34,23 +36,25 @@ impl Environment for DefaultEnvironment {
     }
 
     fn foreground_style(&self) -> impl ColorStyle {
-        rgb::RGB8::new(255, 255, 255)
+        RGB8::new(255, 255, 255)
     }
 
     fn background_style(&self) -> impl ColorStyle {
-        rgb::RGB8::new(0, 0, 0)
+        RGB8::new(0, 0, 0)
     }
 }
 
 #[cfg(test)]
 pub(crate) mod mock {
+    use rgb::RGB8;
+
     use super::*;
 
     pub struct TestEnv {
         pub direction: LayoutDirection,
         pub alignment: Alignment,
-        pub foreground_style: rgb::RGB8,
-        pub background_style: rgb::RGB8,
+        pub foreground_style: RGB8,
+        pub background_style: RGB8,
     }
 
     impl Environment for TestEnv {
@@ -76,8 +80,8 @@ pub(crate) mod mock {
             Self {
                 direction: LayoutDirection::Horizontal,
                 alignment: Alignment::default(),
-                foreground_style: rgb::RGB8::new(255, 255, 255),
-                background_style: rgb::RGB8::new(0, 0, 0),
+                foreground_style: RGB8::new(255, 255, 255),
+                background_style: RGB8::new(0, 0, 0),
             }
         }
     }
