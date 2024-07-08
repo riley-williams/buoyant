@@ -2,12 +2,13 @@
 use crossterm::style::{StyledContent, Stylize};
 
 use crate::{
-    environment::{ColorStyle, Environment},
+    environment::Environment,
     font::CharacterFont,
     layout::{Layout, ResolvedLayout},
     primitives::{Point, Size},
     render::Render,
     render_target::RenderTarget,
+    style::color_style::ColorStyle,
 };
 use core::cmp::max;
 

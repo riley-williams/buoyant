@@ -1,6 +1,7 @@
 use buoyant::{
-    environment::{ColorStyle, Environment},
+    environment::Environment,
     layout::{Alignment, LayoutDirection},
+    style::color_style::ColorStyle,
 };
 
 pub struct TestEnv {

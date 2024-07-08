@@ -1,10 +1,11 @@
 use crate::{
-    environment::{ColorStyle, Environment},
+    environment::Environment,
     layout::{Layout, ResolvedLayout},
     pixel::RenderUnit,
     primitives::Size,
     render::Render,
     render_target::RenderTarget,
+    style::color_style::ColorStyle,
 };
 
 /// Sets a foreground style

@@ -7,6 +7,7 @@ use crate::{
     primitives::{Point, Size},
     render::Render,
     render_target::RenderTarget,
+    style::color_style::ColorStyle,
 };
 
 pub struct VStack<T> {
@@ -28,11 +29,11 @@ impl<T: Environment> Environment for VerticalEnvironment<'_, T> {
         LayoutDirection::Vertical
     }
 
-    fn foreground_style(&self) -> impl crate::environment::ColorStyle {
+    fn foreground_style(&self) -> impl ColorStyle {
         self.inner_environment.foreground_style()
     }
 
-    fn background_style(&self) -> impl crate::environment::ColorStyle {
+    fn background_style(&self) -> impl ColorStyle {
         self.inner_environment.background_style()
     }
 }

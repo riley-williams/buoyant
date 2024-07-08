@@ -12,11 +12,18 @@ impl Size {
     }
 
     /// Returns the smallest size that contains both sizes.
-    #[inline]
     pub fn union(&self, rhs: Size) -> Size {
         Size {
             width: max(self.width, rhs.width),
             height: max(self.height, rhs.height),
+        }
+    }
+
+    /// Returns the overlapping area of the two sizes, which is the min of the two dimensions.
+    pub fn intersection(&self, rhs: Size) -> Size {
+        Size {
+            width: self.width.min(rhs.width),
+            height: self.height.min(rhs.height),
         }
     }
 

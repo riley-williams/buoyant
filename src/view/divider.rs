@@ -1,11 +1,12 @@
 use crossterm::style::{StyledContent, Stylize as _};
 
 use crate::{
-    environment::{ColorStyle as _, Environment},
+    environment::Environment,
     layout::{Layout, LayoutDirection, ResolvedLayout},
     primitives::{Point, Size},
     render::Render,
     render_target::RenderTarget,
+    style::color_style::ColorStyle,
 };
 
 pub struct Divider {

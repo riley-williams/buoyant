@@ -2,7 +2,7 @@ use rgb::RGB8;
 
 use crate::{
     layout::{Alignment, LayoutDirection},
-    primitives::Size,
+    style::color_style::ColorStyle,
 };
 
 pub trait Environment {
@@ -11,17 +11,6 @@ pub trait Environment {
 
     fn foreground_style(&self) -> impl ColorStyle;
     fn background_style(&self) -> impl ColorStyle;
-}
-
-pub trait ColorStyle: Clone + Copy + PartialEq {
-    /// Shade a pixel at the given relative coordinates
-    fn shade_pixel(&self, x: u16, y: u16, in_bounds: Size) -> RGB8;
-}
-
-impl ColorStyle for RGB8 {
-    fn shade_pixel(&self, _: u16, _: u16, _: Size) -> RGB8 {
-        *self
-    }
 }
 
 pub struct DefaultEnvironment;
@@ -47,6 +36,8 @@ impl Environment for DefaultEnvironment {
 #[cfg(test)]
 pub(crate) mod mock {
     use rgb::RGB8;
+
+    use crate::style::color_style::ColorStyle;
 
     use super::*;
 

@@ -3,6 +3,11 @@ mod crossterm_render_target;
 #[cfg(feature = "crossterm")]
 pub use crossterm_render_target::CrosstermRenderTarget;
 
+#[cfg(feature = "embedded-graphics")]
+mod embedded_display_render_target;
+#[cfg(feature = "embedded-graphics")]
+pub use embedded_display_render_target::EmbeddedDisplayRenderTarget;
+
 mod fixed_text_buffer;
 pub use fixed_text_buffer::FixedTextBuffer;
 

@@ -5,9 +5,10 @@ use buoyant::{
     primitives::Size,
     render::Render,
     render_target::{CrosstermRenderTarget, RenderTarget},
+    style::horizontal_gradient::HorizontalGradient,
     view::{
-        foreground_style::ForegroundStyle, Divider, HStack, HorizontalTextAlignment, Padding,
-        Spacer, Text, VStack,
+        foreground_style::ForegroundStyle, rectangle::Rectangle, Divider, HStack,
+        HorizontalTextAlignment, Padding, Spacer, Text, VStack, ZStack,
     },
 };
 use crossterm::event::{read, Event};
@@ -44,13 +45,25 @@ fn main() {
         .alignment(VerticalAlignment::Bottom),
         Divider::default(),
         VStack::three(
-            Spacer::default(),
-            Padding::new(2,
+            ZStack::two(
+                ForegroundStyle::new(
+                    HorizontalGradient::new(
+                        RGB8::new(0, 255, 0),
+                        RGB8::new(0, 0, 255)
+                        ),
+                    Rectangle::new(0),
+                ),
                 Text::char(
-                    "This is several lines of text.\nEach line is centered in the available space.\n Spacers are used to fill all the remaining verical space and align the content within it.\n2 points of padding are around this text",
+                    "This is a fancy rectangle",
                     &font,
                 )
-                .multiline_text_alignment(HorizontalTextAlignment::Center),
+            ),
+                        Padding::new(2,
+                Text::char(
+                    "This is several lines of text.\nEach line is centered in the available space.\n The rectangle fills all the remaining verical space and align the content within it.\n2 points of padding are around this text",
+                    &font,
+                )
+                .multiline_text_alignment(HorizontalTextAlignment::Center)
             ),
             Divider::default(),
         ),

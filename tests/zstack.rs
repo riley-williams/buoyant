@@ -1,0 +1,211 @@
+use buoyant::environment::DefaultEnvironment;
+use buoyant::font::TerminalChar;
+use buoyant::layout::{HorizontalAlignment, Layout, VerticalAlignment};
+use buoyant::primitives::Size;
+use buoyant::render::Render;
+use buoyant::render_target::{FixedTextBuffer, RenderTarget as _};
+use buoyant::view::{Divider, Padding, Spacer, Text, ZStack};
+
+#[test]
+fn test_layout_fills_two() {
+    let stack = ZStack::two(Spacer::default(), Divider::default());
+    let offer = Size::new(100, 42);
+    let env = DefaultEnvironment;
+    let layout = stack.layout(offer, &env);
+    assert_eq!(layout.resolved_size, Size::new(100, 42));
+}
+
+#[test]
+fn test_oversized_layout_2() {
+    let stack = ZStack::two(Padding::new(2, Divider::default()), Spacer::default());
+    let offer = Size::new(0, 10);
+    let env = DefaultEnvironment;
+    let layout = stack.layout(offer, &env);
+    assert_eq!(layout.resolved_size, Size::new(0, 10));
+}
+
+#[test]
+fn test_render_two_centered_overlap() {
+    let font = TerminalChar {};
+    let stack = ZStack::two(Text::char("aa\nbb\ncc", &font), Text::char("test", &font));
+    let env = DefaultEnvironment;
+    let mut buffer = FixedTextBuffer::<6, 5>::default();
+    let layout = stack.layout(buffer.size(), &env);
+    stack.render(&mut buffer, &layout, &env);
+    assert_eq!(buffer.text[0].iter().collect::<String>(), " aa   ");
+    assert_eq!(buffer.text[1].iter().collect::<String>(), "test  ");
+    assert_eq!(buffer.text[2].iter().collect::<String>(), " cc   ");
+    assert_eq!(buffer.text[3].iter().collect::<String>(), "      ");
+    assert_eq!(buffer.text[4].iter().collect::<String>(), "      ");
+}
+
+#[test]
+fn test_render_two_centered() {
+    let font = TerminalChar {};
+    let stack = ZStack::two(Text::char("test", &font), Text::char("aa\nbb\ncc", &font));
+    let env = DefaultEnvironment;
+    let mut buffer = FixedTextBuffer::<6, 5>::default();
+    let layout = stack.layout(buffer.size(), &env);
+    stack.render(&mut buffer, &layout, &env);
+    assert_eq!(buffer.text[0].iter().collect::<String>(), " aa   ");
+    assert_eq!(buffer.text[1].iter().collect::<String>(), "tbbt  ");
+    assert_eq!(buffer.text[2].iter().collect::<String>(), " cc   ");
+    assert_eq!(buffer.text[3].iter().collect::<String>(), "      ");
+    assert_eq!(buffer.text[4].iter().collect::<String>(), "      ");
+}
+
+#[test]
+fn test_render_two_top_center_alignment() {
+    let font = TerminalChar {};
+    let stack = ZStack::two(
+        Text::char("a a a\nb b b\nc c c", &font),
+        Text::char("xxx", &font),
+    )
+    .vertical_alignment(VerticalAlignment::Top);
+    let env = DefaultEnvironment;
+    let mut buffer = FixedTextBuffer::<6, 5>::default();
+    let layout = stack.layout(buffer.size(), &env);
+    stack.render(&mut buffer, &layout, &env);
+    assert_eq!(buffer.text[0].iter().collect::<String>(), "axxxa ");
+    assert_eq!(buffer.text[1].iter().collect::<String>(), "b b b ");
+    assert_eq!(buffer.text[2].iter().collect::<String>(), "c c c ");
+    assert_eq!(buffer.text[3].iter().collect::<String>(), "      ");
+    assert_eq!(buffer.text[4].iter().collect::<String>(), "      ");
+}
+
+#[test]
+fn test_render_two_top_leading_alignment() {
+    let font = TerminalChar {};
+    let stack = ZStack::two(
+        Text::char("a a a\nb b b\nc c c", &font),
+        Text::char("xxx", &font),
+    )
+    .vertical_alignment(VerticalAlignment::Top)
+    .horizontal_alignment(HorizontalAlignment::Leading);
+    let env = DefaultEnvironment;
+    let mut buffer = FixedTextBuffer::<6, 5>::default();
+    let layout = stack.layout(buffer.size(), &env);
+    stack.render(&mut buffer, &layout, &env);
+    assert_eq!(buffer.text[0].iter().collect::<String>(), "xxx a ");
+    assert_eq!(buffer.text[1].iter().collect::<String>(), "b b b ");
+    assert_eq!(buffer.text[2].iter().collect::<String>(), "c c c ");
+    assert_eq!(buffer.text[3].iter().collect::<String>(), "      ");
+    assert_eq!(buffer.text[4].iter().collect::<String>(), "      ");
+}
+
+#[test]
+fn test_render_two_top_trailing_alignment() {
+    let font = TerminalChar {};
+    let stack = ZStack::two(
+        Text::char("a a a\nb b b\nc c c", &font),
+        Text::char("xxx", &font),
+    )
+    .vertical_alignment(VerticalAlignment::Top)
+    .horizontal_alignment(HorizontalAlignment::Trailing);
+    let env = DefaultEnvironment;
+    let mut buffer = FixedTextBuffer::<6, 5>::default();
+    let layout = stack.layout(buffer.size(), &env);
+    stack.render(&mut buffer, &layout, &env);
+    assert_eq!(buffer.text[0].iter().collect::<String>(), "a xxx ");
+    assert_eq!(buffer.text[1].iter().collect::<String>(), "b b b ");
+    assert_eq!(buffer.text[2].iter().collect::<String>(), "c c c ");
+    assert_eq!(buffer.text[3].iter().collect::<String>(), "      ");
+    assert_eq!(buffer.text[4].iter().collect::<String>(), "      ");
+}
+
+#[test]
+fn test_render_two_center_leading_alignment() {
+    let font = TerminalChar {};
+    let stack = ZStack::two(
+        Text::char("a a a\nb b b\nc c c", &font),
+        Text::char("xxx", &font),
+    )
+    .horizontal_alignment(HorizontalAlignment::Leading);
+    let env = DefaultEnvironment;
+    let mut buffer = FixedTextBuffer::<6, 5>::default();
+    let layout = stack.layout(buffer.size(), &env);
+    stack.render(&mut buffer, &layout, &env);
+    assert_eq!(buffer.text[0].iter().collect::<String>(), "a a a ");
+    assert_eq!(buffer.text[1].iter().collect::<String>(), "xxx b ");
+    assert_eq!(buffer.text[2].iter().collect::<String>(), "c c c ");
+    assert_eq!(buffer.text[3].iter().collect::<String>(), "      ");
+    assert_eq!(buffer.text[4].iter().collect::<String>(), "      ");
+}
+
+#[test]
+fn test_render_two_center_trailing_alignment() {
+    let font = TerminalChar {};
+    let stack = ZStack::two(
+        Text::char("a a a\nb b b\nc c c", &font),
+        Text::char("xxx", &font),
+    )
+    .horizontal_alignment(HorizontalAlignment::Trailing);
+    let env = DefaultEnvironment;
+    let mut buffer = FixedTextBuffer::<6, 5>::default();
+    let layout = stack.layout(buffer.size(), &env);
+    stack.render(&mut buffer, &layout, &env);
+    assert_eq!(buffer.text[0].iter().collect::<String>(), "a a a ");
+    assert_eq!(buffer.text[1].iter().collect::<String>(), "b xxx ");
+    assert_eq!(buffer.text[2].iter().collect::<String>(), "c c c ");
+    assert_eq!(buffer.text[3].iter().collect::<String>(), "      ");
+    assert_eq!(buffer.text[4].iter().collect::<String>(), "      ");
+}
+
+#[test]
+fn test_render_two_bottom_leading_alignment() {
+    let font = TerminalChar {};
+    let stack = ZStack::two(
+        Text::char("a a a\nb b b\nc c c", &font),
+        Text::char("xxx", &font),
+    )
+    .vertical_alignment(VerticalAlignment::Bottom)
+    .horizontal_alignment(HorizontalAlignment::Leading);
+    let env = DefaultEnvironment;
+    let mut buffer = FixedTextBuffer::<6, 5>::default();
+    let layout = stack.layout(buffer.size(), &env);
+    stack.render(&mut buffer, &layout, &env);
+    assert_eq!(buffer.text[0].iter().collect::<String>(), "a a a ");
+    assert_eq!(buffer.text[1].iter().collect::<String>(), "b b b ");
+    assert_eq!(buffer.text[2].iter().collect::<String>(), "xxx c ");
+    assert_eq!(buffer.text[3].iter().collect::<String>(), "      ");
+    assert_eq!(buffer.text[4].iter().collect::<String>(), "      ");
+}
+
+#[test]
+fn test_render_two_bottom_center_alignment() {
+    let font = TerminalChar {};
+    let stack = ZStack::two(
+        Text::char("a a a\nb b b\nc c c", &font),
+        Text::char("xxx", &font),
+    )
+    .vertical_alignment(VerticalAlignment::Bottom);
+    let env = DefaultEnvironment;
+    let mut buffer = FixedTextBuffer::<6, 5>::default();
+    let layout = stack.layout(buffer.size(), &env);
+    stack.render(&mut buffer, &layout, &env);
+    assert_eq!(buffer.text[0].iter().collect::<String>(), "a a a ");
+    assert_eq!(buffer.text[1].iter().collect::<String>(), "b b b ");
+    assert_eq!(buffer.text[2].iter().collect::<String>(), "cxxxc ");
+    assert_eq!(buffer.text[3].iter().collect::<String>(), "      ");
+    assert_eq!(buffer.text[4].iter().collect::<String>(), "      ");
+}
+
+#[test]
+fn test_render_two_bottom_trailing_alignment() {
+    let font = TerminalChar {};
+    let stack = ZStack::two(
+        Text::char("a a a\nb b b\nc c c", &font),
+        Text::char("xxx", &font),
+    )
+    .vertical_alignment(VerticalAlignment::Bottom)
+    .horizontal_alignment(HorizontalAlignment::Trailing);
+    let env = DefaultEnvironment;
+    let mut buffer = FixedTextBuffer::<6, 5>::default();
+    let layout = stack.layout(buffer.size(), &env);
+    stack.render(&mut buffer, &layout, &env);
+    assert_eq!(buffer.text[0].iter().collect::<String>(), "a a a ");
+    assert_eq!(buffer.text[1].iter().collect::<String>(), "b b b ");
+    assert_eq!(buffer.text[2].iter().collect::<String>(), "c xxx ");
+    assert_eq!(buffer.text[3].iter().collect::<String>(), "      ");
+    assert_eq!(buffer.text[4].iter().collect::<String>(), "      ");
+}

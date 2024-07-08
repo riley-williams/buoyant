@@ -8,4 +8,5 @@ pub mod pixel;
 pub mod primitives;
 pub mod render;
 pub mod render_target;
+pub mod style;
 pub mod view;
