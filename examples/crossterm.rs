@@ -34,7 +34,8 @@ fn main() {
                 "This text is aligned to the right, with trailing multi-line text alignment",
                 &font,
             )
-            .multiline_text_alignment(HorizontalTextAlignment::Trailing),
+            .multiline_text_alignment(HorizontalTextAlignment::Trailing)
+            .flex_frame(Some(10), Some(35), None, None, None, None),
         )
         .spacing(1)
         .alignment(VerticalAlignment::Bottom),
@@ -43,13 +44,13 @@ fn main() {
             ZStack::two(
                 Rectangle::new(0)
                     .foreground_style(HorizontalGradient::new(
-                        RGB8::new(0, 255, 0),
-                        RGB8::new(0, 0, 255)
+                        RGB8::new(127, 255, 0),
+                        RGB8::new(20, 0, 255)
                         )),
                 Text::char(
-                    "This is a fancy rectangle",
+                    "This is in a fixed size box",
                     &font,
-                ),
+                ).frame(Some(10), Some(10), None, None),
             ),
             Text::char(
                 "This is several lines of text.\nEach line is centered in the available space.\n The rectangle fills all the remaining verical space and align the content within it.\n2 points of padding are around this text",
