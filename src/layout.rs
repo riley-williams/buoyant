@@ -1,13 +1,4 @@
-use crate::primitives::Size;
-
-pub trait Environment {
-    fn layout_direction(&self) -> LayoutDirection {
-        LayoutDirection::default()
-    }
-    fn alignment(&self) -> Alignment {
-        Alignment::default()
-    }
-}
+use crate::{environment::Environment, primitives::Size};
 
 #[derive(Clone, Copy, Debug, PartialEq, Default)]
 pub enum LayoutDirection {
@@ -67,17 +58,16 @@ impl VerticalAlignment {
     }
 }
 
-pub struct ResolvedLayout<C> {
+#[derive(Clone)]
+pub struct ResolvedLayout<C: Clone> {
     pub sublayouts: C,
     pub resolved_size: Size,
 }
 
 pub trait Layout: Sized {
-    type Sublayout<'a>
-    where
-        Self: 'a;
+    type Sublayout: Clone;
     /// The size of the view given the offer
-    fn layout(&self, offer: Size, env: &dyn Environment) -> ResolvedLayout<Self::Sublayout<'_>>;
+    fn layout(&self, offer: Size, env: &impl Environment) -> ResolvedLayout<Self::Sublayout>;
     /// The layout priority of the view. Higher priority views are more likely to be given the size they want
     fn priority(&self) -> i8 {
         0

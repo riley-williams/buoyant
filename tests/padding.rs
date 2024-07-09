@@ -1,30 +1,29 @@
 use std::iter::zip;
 
 use buoyant::{
+    environment::DefaultEnvironment,
     font::TerminalChar,
-    layout::{Environment, Layout},
+    layout::Layout,
     render::Render,
     render_target::{FixedTextBuffer, RenderTarget},
-    view::{Divider, HorizontalTextAlignment, Padding, Spacer, Text, VStack},
+    view::{Divider, HorizontalTextAlignment, Spacer, Text, VStack, View},
 };
-
-struct TestEnv {}
-impl Environment for TestEnv {}
 
 #[test]
 fn test_clipped_text_trails_correctly() {
     let font = TerminalChar {};
     let text = VStack::three(
         Spacer::default(),
-        Padding::new(
-            2,
-            Text::char("Padding respects\nparent alignment", &font)
-                .multiline_text_alignment(HorizontalTextAlignment::Center),
-        ),
+        Text::char(
+            "Padding respects\nparent alignment\nshouldnt affect alignment",
+            &font,
+        )
+        .multiline_text_alignment(HorizontalTextAlignment::Trailing)
+        .padding(2),
         Divider::default(),
     );
 
-    let env = TestEnv {};
+    let env = DefaultEnvironment;
     let mut buffer = FixedTextBuffer::<30, 7>::default();
 
     let layout = text.layout(buffer.size(), &env);

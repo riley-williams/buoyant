@@ -1,29 +1,27 @@
 use std::iter::zip;
 
+use buoyant::environment::DefaultEnvironment;
 use buoyant::font::TerminalChar;
-use buoyant::layout::{Environment, Layout, VerticalAlignment};
+use buoyant::layout::{Layout, VerticalAlignment};
 use buoyant::primitives::Size;
 use buoyant::render::Render;
 use buoyant::render_target::{FixedTextBuffer, RenderTarget};
-use buoyant::view::{Divider, HStack, Padding, Spacer, Text};
-
-struct TestEnv {}
-impl Environment for TestEnv {}
+use buoyant::view::{Divider, HStack, Spacer, Text, View};
 
 #[test]
 fn test_greedy_layout_2() {
     let hstack = HStack::two(Spacer::default(), Spacer::default());
     let offer = Size::new(100, 100);
-    let env = TestEnv {};
+    let env = DefaultEnvironment;
     let layout = hstack.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(100, 0));
 }
 
 #[test]
 fn test_oversized_layout_2() {
-    let vstack = HStack::two(Padding::new(2, Divider::default()), Spacer::default());
+    let vstack = HStack::two(Divider::default().padding(2), Spacer::default());
     let offer = Size::new(10, 0);
-    let env = TestEnv {};
+    let env = DefaultEnvironment;
     let layout = vstack.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(10, 0));
 }
@@ -32,11 +30,11 @@ fn test_oversized_layout_2() {
 fn test_oversized_layout_3() {
     let vstack = HStack::three(
         Divider::default(),
-        Padding::new(2, Divider::default()),
+        Divider::default().padding(2),
         Spacer::default(),
     );
     let offer = Size::new(10, 0);
-    let env = TestEnv {};
+    let env = DefaultEnvironment;
     let layout = vstack.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(10, 0));
 }
@@ -46,7 +44,7 @@ fn test_undersized_layout_2() {
     let font = TerminalChar {};
     let hstack = HStack::two(Text::char("123", &font), Text::char("4567", &font)).spacing(1);
     let offer = Size::new(50, 1);
-    let env = TestEnv {};
+    let env = DefaultEnvironment;
     let layout = hstack.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(8, 1));
 }
@@ -56,7 +54,7 @@ fn test_horizontal_render_2() {
     let font = TerminalChar {};
     let hstack = HStack::two(Text::char("123", &font), Text::char("4567", &font)).spacing(1);
     let mut buffer = FixedTextBuffer::<9, 1>::default();
-    let env = TestEnv {};
+    let env = DefaultEnvironment;
     let layout = hstack.layout(buffer.size(), &env);
     hstack.render(&mut buffer, &layout, &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "123 4567 ");
@@ -71,7 +69,7 @@ fn test_undersized_layout_3_left_pad() {
         Spacer::default(),
     );
     let offer = Size::new(10, 1);
-    let env = TestEnv {};
+    let env = DefaultEnvironment;
     let layout = hstack.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(10, 1));
     let mut buffer = FixedTextBuffer::<10, 1>::default();
@@ -89,7 +87,7 @@ fn test_undersized_layout_3_right_pad_space() {
     )
     .spacing(1);
     let offer = Size::new(10, 1);
-    let env = TestEnv {};
+    let env = DefaultEnvironment;
     let layout = hstack.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(10, 1));
     let mut buffer = FixedTextBuffer::<10, 1>::default();
@@ -109,7 +107,7 @@ fn test_oversized_layout_3_leading_pad_space() {
     )
     .spacing(1);
     let offer = Size::new(10, 1);
-    let env = TestEnv {};
+    let env = DefaultEnvironment;
     let layout = hstack.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(10, 1));
     let mut buffer = FixedTextBuffer::<10, 1>::default();
@@ -127,7 +125,7 @@ fn test_undersized_layout_3_middle_pad() {
         Text::char("5678", &font),
     );
     let offer = Size::new(10, 1);
-    let env = TestEnv {};
+    let env = DefaultEnvironment;
     let layout = hstack.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(10, 1));
     let mut buffer = FixedTextBuffer::<10, 1>::default();
@@ -147,7 +145,7 @@ fn test_oversized_layout_3_middle_pad_space() {
     )
     .spacing(1);
     let offer = Size::new(10, 1);
-    let env = TestEnv {};
+    let env = DefaultEnvironment;
     let layout = hstack.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(10, 1));
     let mut buffer = FixedTextBuffer::<10, 1>::default();
@@ -167,7 +165,7 @@ fn test_oversized_layout_3_trailing_pad_space() {
     )
     .spacing(1);
     let offer = Size::new(10, 1);
-    let env = TestEnv {};
+    let env = DefaultEnvironment;
     let layout = hstack.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(10, 1));
     let mut buffer = FixedTextBuffer::<10, 1>::default();
@@ -185,7 +183,7 @@ fn test_layout_3_remainder_allocation() {
         Text::char("bbb", &font),
         Text::char("ccc", &font),
     );
-    let env = TestEnv {};
+    let env = DefaultEnvironment;
     let mut buffer = FixedTextBuffer::<10, 1>::default();
     let offer = Size::new(7, 1);
     let layout = hstack.layout(offer, &env);
@@ -223,7 +221,7 @@ fn test_layout_3_vertical_alignment_bottom() {
     )
     .alignment(VerticalAlignment::Bottom)
     .spacing(1);
-    let env = TestEnv {};
+    let env = DefaultEnvironment;
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = hstack.layout(buffer.size(), &env);
     hstack.render(&mut buffer, &layout, &env);
@@ -246,7 +244,7 @@ fn test_layout_3_vertical_alignment_center() {
     )
     .alignment(VerticalAlignment::Center)
     .spacing(1);
-    let env = TestEnv {};
+    let env = DefaultEnvironment;
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = hstack.layout(buffer.size(), &env);
     hstack.render(&mut buffer, &layout, &env);
@@ -269,7 +267,7 @@ fn test_layout_3_vertical_alignment_top() {
     )
     .alignment(VerticalAlignment::Top)
     .spacing(1);
-    let env = TestEnv {};
+    let env = DefaultEnvironment;
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = hstack.layout(buffer.size(), &env);
     hstack.render(&mut buffer, &layout, &env);
@@ -293,7 +291,7 @@ fn test_minimal_offer_extra_space_1() {
     .alignment(VerticalAlignment::Top)
     .spacing(1);
 
-    let env = TestEnv {};
+    let env = DefaultEnvironment;
     let mut buffer = FixedTextBuffer::<19, 5>::default();
 
     let layout = hstack.layout(buffer.size(), &env);

@@ -1,10 +1,13 @@
 use core::cmp::{max, min};
 
 use crate::{
-    layout::{Environment, HorizontalAlignment, Layout, LayoutDirection, ResolvedLayout},
+    environment::Environment,
+    layout::{HorizontalAlignment, Layout, LayoutDirection, ResolvedLayout},
+    pixel::RenderUnit,
     primitives::{Point, Size},
     render::Render,
-    render_target::{Proxy, RenderTarget},
+    render_target::RenderTarget,
+    style::color_style::ColorStyle,
 };
 
 pub struct VStack<T> {
@@ -13,22 +16,39 @@ pub struct VStack<T> {
     spacing: u16,
 }
 
-struct VerticalEnvironment<'a> {
-    pub environment: &'a dyn Environment,
+struct VerticalEnvironment<'a, T> {
+    inner_environment: &'a T,
 }
 
-impl Environment for VerticalEnvironment<'_> {
+impl<T: Environment> Environment for VerticalEnvironment<'_, T> {
     fn alignment(&self) -> crate::layout::Alignment {
-        self.environment.alignment()
+        self.inner_environment.alignment()
     }
+
     fn layout_direction(&self) -> LayoutDirection {
         LayoutDirection::Vertical
     }
+
+    fn foreground_style(&self) -> impl ColorStyle {
+        self.inner_environment.foreground_style()
+    }
+
+    fn background_style(&self) -> impl ColorStyle {
+        self.inner_environment.background_style()
+    }
 }
 
-impl<'a> From<&'a dyn Environment> for VerticalEnvironment<'a> {
-    fn from(environment: &'a dyn Environment) -> Self {
-        Self { environment }
+impl<'a, T: Environment> From<&'a T> for VerticalEnvironment<'a, T> {
+    fn from(environment: &'a T) -> Self {
+        Self {
+            inner_environment: environment,
+        }
+    }
+}
+
+impl<T> PartialEq for VStack<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.spacing == other.spacing && self.alignment == other.alignment
     }
 }
 
@@ -53,16 +73,13 @@ impl<U, V> VStack<(U, V)> {
 }
 
 impl<U: Layout, V: Layout> Layout for VStack<(U, V)> {
-    type Sublayout<'a> = (
-        ResolvedLayout<U::Sublayout<'a>>,
-        ResolvedLayout<V::Sublayout<'a>>,
-    ) where U: 'a, V: 'a;
+    type Sublayout = (ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>);
 
-    fn layout(&self, offer: Size, env: &dyn Environment) -> ResolvedLayout<Self::Sublayout<'_>> {
+    fn layout(&self, offer: Size, env: &impl Environment) -> ResolvedLayout<Self::Sublayout> {
         const N: usize = 2;
         let env = &VerticalEnvironment::from(env);
-        let mut c0: Option<ResolvedLayout<U::Sublayout<'_>>> = None;
-        let mut c1: Option<ResolvedLayout<V::Sublayout<'_>>> = None;
+        let mut c0: Option<ResolvedLayout<U::Sublayout>> = None;
+        let mut c1: Option<ResolvedLayout<V::Sublayout>> = None;
 
         let mut f0 = |size: Size| {
             let layout = self.items.0.layout(size, env);
@@ -90,46 +107,49 @@ impl<U: Layout, V: Layout> Layout for VStack<(U, V)> {
     }
 }
 
-impl<'a, Pixel, U: Layout, V: Layout>
-    Render<
-        Pixel,
-        (
-            ResolvedLayout<U::Sublayout<'a>>,
-            ResolvedLayout<V::Sublayout<'a>>,
-        ),
-    > for VStack<(U, V)>
+impl<Pixel, U: Layout, V: Layout>
+    Render<Pixel, (ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>)> for VStack<(U, V)>
 where
-    U: Render<Pixel, U::Sublayout<'a>>,
-    V: Render<Pixel, V::Sublayout<'a>>,
+    U: Render<Pixel, U::Sublayout>,
+    V: Render<Pixel, V::Sublayout>,
+    Pixel: RenderUnit,
 {
     fn render(
         &self,
         target: &mut impl RenderTarget<Pixel>,
-        layout: &ResolvedLayout<(
-            ResolvedLayout<U::Sublayout<'a>>,
-            ResolvedLayout<V::Sublayout<'a>>,
-        )>,
-        env: &dyn Environment,
+        layout: &ResolvedLayout<(ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>)>,
+        env: &impl Environment,
     ) {
         let env = &VerticalEnvironment::from(env);
-        let mut proxy = Proxy::new(
-            target,
-            Point::new(
-                self.alignment.align(
-                    layout.resolved_size.width as i16,
-                    layout.sublayouts.0.resolved_size.width as i16,
-                ),
-                0,
-            ),
-        );
-        self.items.0.render(&mut proxy, &layout.sublayouts.0, env);
 
-        proxy.origin.x = self.alignment.align(
-            layout.resolved_size.width as i16,
-            layout.sublayouts.1.resolved_size.width as i16,
+        let original_window = target.window();
+        let mut height = 0;
+
+        target.set_window_origin(
+            original_window.origin
+                + Point::new(
+                    self.alignment.align(
+                        layout.resolved_size.width as i16,
+                        layout.sublayouts.0.resolved_size.width as i16,
+                    ),
+                    height,
+                ),
         );
-        proxy.origin.y += (layout.sublayouts.0.resolved_size.height + self.spacing) as i16;
-        self.items.1.render(&mut proxy, &layout.sublayouts.1, env);
+
+        self.items.0.render(target, &layout.sublayouts.0, env);
+
+        height += (layout.sublayouts.0.resolved_size.height + self.spacing) as i16;
+        target.set_window_origin(Point::new(
+            original_window.origin.x
+                + self.alignment.align(
+                    layout.resolved_size.width as i16,
+                    layout.sublayouts.1.resolved_size.width as i16,
+                ),
+            height,
+        ));
+
+        self.items.1.render(target, &layout.sublayouts.1, env);
+        target.set_window(original_window);
     }
 }
 
@@ -144,19 +164,19 @@ impl<U, V, W> VStack<(U, V, W)> {
 }
 
 impl<U: Layout, V: Layout, W: Layout> Layout for VStack<(U, V, W)> {
-    type Sublayout<'a> = (
-        ResolvedLayout<U::Sublayout<'a>>,
-        ResolvedLayout<V::Sublayout<'a>>,
-        ResolvedLayout<W::Sublayout<'a>>,
-    ) where U: 'a, V: 'a, W: 'a;
+    type Sublayout = (
+        ResolvedLayout<U::Sublayout>,
+        ResolvedLayout<V::Sublayout>,
+        ResolvedLayout<W::Sublayout>,
+    );
 
-    fn layout(&self, offer: Size, env: &dyn Environment) -> ResolvedLayout<Self::Sublayout<'_>> {
+    fn layout(&self, offer: Size, env: &impl Environment) -> ResolvedLayout<Self::Sublayout> {
         const N: usize = 3;
         let env = &VerticalEnvironment::from(env);
 
-        let mut c0: Option<ResolvedLayout<U::Sublayout<'_>>> = None;
-        let mut c1: Option<ResolvedLayout<V::Sublayout<'_>>> = None;
-        let mut c2: Option<ResolvedLayout<W::Sublayout<'_>>> = None;
+        let mut c0: Option<ResolvedLayout<U::Sublayout>> = None;
+        let mut c1: Option<ResolvedLayout<V::Sublayout>> = None;
+        let mut c2: Option<ResolvedLayout<W::Sublayout>> = None;
 
         let mut f0 = |size: Size| {
             let layout = self.items.0.layout(size, env);
@@ -191,56 +211,76 @@ impl<U: Layout, V: Layout, W: Layout> Layout for VStack<(U, V, W)> {
     }
 }
 
-impl<'a, Pixel, U: Layout, V: Layout, W: Layout>
+impl<Pixel, U: Layout, V: Layout, W: Layout>
     Render<
         Pixel,
         (
-            ResolvedLayout<U::Sublayout<'a>>,
-            ResolvedLayout<V::Sublayout<'a>>,
-            ResolvedLayout<W::Sublayout<'a>>,
+            ResolvedLayout<U::Sublayout>,
+            ResolvedLayout<V::Sublayout>,
+            ResolvedLayout<W::Sublayout>,
         ),
     > for VStack<(U, V, W)>
 where
-    U: Render<Pixel, U::Sublayout<'a>>,
-    V: Render<Pixel, V::Sublayout<'a>>,
-    W: Render<Pixel, W::Sublayout<'a>>,
+    U: Render<Pixel, U::Sublayout>,
+    V: Render<Pixel, V::Sublayout>,
+    W: Render<Pixel, W::Sublayout>,
+    Pixel: RenderUnit,
 {
     fn render(
         &self,
         target: &mut impl RenderTarget<Pixel>,
         layout: &ResolvedLayout<(
-            ResolvedLayout<U::Sublayout<'a>>,
-            ResolvedLayout<V::Sublayout<'a>>,
-            ResolvedLayout<W::Sublayout<'a>>,
+            ResolvedLayout<U::Sublayout>,
+            ResolvedLayout<V::Sublayout>,
+            ResolvedLayout<W::Sublayout>,
         )>,
-        env: &dyn Environment,
+        env: &impl Environment,
     ) {
         let env = &VerticalEnvironment::from(env);
-        let mut proxy = Proxy::new(
-            target,
-            Point::new(
-                self.alignment.align(
-                    layout.resolved_size.width as i16,
-                    layout.sublayouts.0.resolved_size.width as i16,
+
+        let original_window = target.window();
+        let mut height = 0;
+
+        target.set_window_origin(
+            original_window.origin
+                + Point::new(
+                    self.alignment.align(
+                        layout.resolved_size.width as i16,
+                        layout.sublayouts.0.resolved_size.width as i16,
+                    ),
+                    height,
                 ),
-                0,
-            ),
         );
-        self.items.0.render(&mut proxy, &layout.sublayouts.0, env);
+        self.items.0.render(target, &layout.sublayouts.0, env);
 
-        proxy.origin.x = self.alignment.align(
-            layout.resolved_size.width as i16,
-            layout.sublayouts.1.resolved_size.width as i16,
+        height += (layout.sublayouts.0.resolved_size.height + self.spacing) as i16;
+        target.set_window_origin(
+            original_window.origin
+                + Point::new(
+                    self.alignment.align(
+                        layout.resolved_size.width as i16,
+                        layout.sublayouts.1.resolved_size.width as i16,
+                    ),
+                    height,
+                ),
         );
-        proxy.origin.y += (layout.sublayouts.0.resolved_size.height + self.spacing) as i16;
-        self.items.1.render(&mut proxy, &layout.sublayouts.1, env);
 
-        proxy.origin.x = self.alignment.align(
-            layout.resolved_size.width as i16,
-            layout.sublayouts.2.resolved_size.width as i16,
+        self.items.1.render(target, &layout.sublayouts.1, env);
+
+        height += (layout.sublayouts.1.resolved_size.height + self.spacing) as i16;
+        target.set_window_origin(
+            original_window.origin
+                + Point::new(
+                    self.alignment.align(
+                        layout.resolved_size.width as i16,
+                        layout.sublayouts.2.resolved_size.width as i16,
+                    ),
+                    height,
+                ),
         );
-        proxy.origin.y += (layout.sublayouts.1.resolved_size.height + self.spacing) as i16;
-        self.items.2.render(&mut proxy, &layout.sublayouts.2, env);
+        self.items.2.render(target, &layout.sublayouts.2, env);
+
+        target.set_window(original_window);
     }
 }
 

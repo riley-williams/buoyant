@@ -1,8 +1,10 @@
 use crate::{
-    layout::{Environment, Layout, ResolvedLayout},
+    environment::Environment,
+    layout::{Layout, ResolvedLayout},
+    pixel::RenderUnit,
     primitives::{Point, Size},
     render::Render,
-    render_target::{Proxy, RenderTarget},
+    render_target::RenderTarget,
 };
 
 /// A view that adds padding around a child view.
@@ -19,10 +21,16 @@ impl<T> Padding<T> {
     }
 }
 
-impl<V: Layout> Layout for Padding<V> {
-    type Sublayout<'a> = ResolvedLayout<V::Sublayout<'a>> where V: 'a;
+impl<T> PartialEq for Padding<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.padding == other.padding
+    }
+}
 
-    fn layout(&self, offer: Size, env: &dyn Environment) -> ResolvedLayout<Self::Sublayout<'_>> {
+impl<V: Layout> Layout for Padding<V> {
+    type Sublayout = ResolvedLayout<V::Sublayout>;
+
+    fn layout(&self, offer: Size, env: &impl Environment) -> ResolvedLayout<Self::Sublayout> {
         let padded_offer = Size::new(
             offer.width.saturating_sub(2 * self.padding),
             offer.height.saturating_sub(2 * self.padding),
@@ -37,23 +45,22 @@ impl<V: Layout> Layout for Padding<V> {
     }
 }
 
-impl<'a, Pixel, View: Layout> Render<Pixel, ResolvedLayout<View::Sublayout<'a>>> for Padding<View>
+impl<Pixel, View: Layout> Render<Pixel, ResolvedLayout<View::Sublayout>> for Padding<View>
 where
-    View: Render<Pixel, View::Sublayout<'a>>,
+    View: Render<Pixel, View::Sublayout>,
+    Pixel: RenderUnit,
 {
     fn render(
         &self,
         target: &mut impl RenderTarget<Pixel>,
-        layout: &ResolvedLayout<ResolvedLayout<View::Sublayout<'a>>>,
-        env: &dyn Environment,
+        layout: &ResolvedLayout<ResolvedLayout<View::Sublayout>>,
+        env: &impl Environment,
     ) {
-        let mut proxy = Proxy::new(
-            target,
-            Point {
-                x: self.padding as i16,
-                y: self.padding as i16,
-            },
+        let original_window = target.window();
+        target.set_window_origin(
+            original_window.origin + Point::new(self.padding as i16, self.padding as i16),
         );
-        self.child.render(&mut proxy, &layout.sublayouts, env);
+        self.child.render(target, &layout.sublayouts, env);
+        target.set_window(original_window);
     }
 }

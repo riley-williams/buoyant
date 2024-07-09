@@ -1,18 +1,20 @@
 use crate::{
-    layout::{Environment, Layout, LayoutDirection, ResolvedLayout},
+    environment::Environment,
+    layout::{Layout, LayoutDirection, ResolvedLayout},
+    pixel::RenderUnit,
     primitives::Size,
     render::Render,
     render_target::RenderTarget,
 };
 
-#[derive(Default)]
+#[derive(Default, PartialEq)]
 pub struct Spacer {
     min_length: u16,
 }
 
 impl Layout for Spacer {
-    type Sublayout<'a> = ();
-    fn layout(&self, offer: Size, env: &dyn Environment) -> ResolvedLayout<()> {
+    type Sublayout = ();
+    fn layout(&self, offer: Size, env: &impl Environment) -> ResolvedLayout<()> {
         let size = match env.layout_direction() {
             LayoutDirection::Horizontal => {
                 Size::new(core::cmp::max(offer.width, self.min_length), 0)
@@ -33,12 +35,12 @@ impl Layout for Spacer {
     }
 }
 
-impl<Pixel, Sublayout> Render<Pixel, Sublayout> for Spacer {
+impl<Pixel: RenderUnit, Sublayout: Clone> Render<Pixel, Sublayout> for Spacer {
     fn render(
         &self,
         _target: &mut impl RenderTarget<Pixel>,
         _layout: &ResolvedLayout<Sublayout>,
-        _env: &dyn Environment,
+        _env: &impl Environment,
     ) {
     }
 }

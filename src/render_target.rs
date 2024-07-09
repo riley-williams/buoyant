@@ -1,10 +1,20 @@
-mod crossterm_target;
-pub use crossterm_target::CrosstermRenderTarget;
+#[cfg(feature = "crossterm")]
+mod crossterm_render_target;
+#[cfg(feature = "crossterm")]
+pub use crossterm_render_target::CrosstermRenderTarget;
+
+#[cfg(feature = "embedded-graphics")]
+mod embedded_display_render_target;
+#[cfg(feature = "embedded-graphics")]
+pub use embedded_display_render_target::EmbeddedDisplayRenderTarget;
 
 mod fixed_text_buffer;
 pub use fixed_text_buffer::FixedTextBuffer;
 
-use crate::primitives::{Point, Size};
+use crate::{
+    pixel::RenderUnit,
+    primitives::{Frame, Point, Size},
+};
 
 /// A target that can render pixels.
 ///
@@ -16,7 +26,10 @@ use crate::primitives::{Point, Size};
 /// do not render pixels, so their default Render impl is sufficient.
 /// For other types such as Text, Divider, etc., you will need to implement
 /// Render for your target Pixel type.
-pub trait RenderTarget<Pixel> {
+pub trait RenderTarget<Pixel>
+where
+    Pixel: RenderUnit,
+{
     /// The size of the render target
     fn size(&self) -> Size;
 
@@ -25,60 +38,19 @@ pub trait RenderTarget<Pixel> {
 
     /// Draw a pixel to the render target
     fn draw(&mut self, point: Point, item: Pixel);
-}
 
-#[derive(Debug, PartialEq)]
-pub struct Proxy<'a, T> {
-    target: &'a mut T,
-    pub origin: Point,
-}
+    /// Set the window frame. Draw commands will be drawn inside this frame
+    fn set_window(&mut self, frame: Frame);
 
-impl<'a, T> Proxy<'a, T> {
-    pub fn new(target: &'a mut T, origin: Point) -> Self {
-        Proxy { target, origin }
-    }
-}
+    /// Get the current window frame
+    fn window(&self) -> Frame;
 
-impl<'a, T: RenderTarget<I>, I> RenderTarget<I> for Proxy<'a, T> {
-    fn size(&self) -> Size {
-        self.target.size()
-    }
-    fn clear(&mut self) {
-        self.target.clear()
-    }
-
-    fn draw(&mut self, point: Point, item: I) {
-        self.target.draw(point + self.origin, item)
-    }
-}
-
-pub struct ClippingProxy<'a, T> {
-    target: &'a mut T,
-    pub origin: Point,
-    pub size: Size,
-}
-
-impl<'a, T> ClippingProxy<'a, T> {
-    pub fn new(target: &'a mut T, origin: Point, size: Size) -> Self {
-        Self {
-            target,
+    /// Sets the origin of the window frame. The window size will not be changed.
+    fn set_window_origin(&mut self, origin: Point) {
+        let parent_frame = self.window();
+        self.set_window(Frame {
             origin,
-            size,
-        }
-    }
-}
-
-impl<'a, T: RenderTarget<I>, I> RenderTarget<I> for ClippingProxy<'a, T> {
-    fn size(&self) -> Size {
-        self.target.size()
-    }
-    fn clear(&mut self) {
-        self.target.clear()
-    }
-
-    fn draw(&mut self, point: Point, item: I) {
-        if self.size.contains(point) {
-            self.target.draw(point + self.origin, item)
-        }
+            size: parent_frame.size,
+        });
     }
 }
