@@ -49,6 +49,9 @@ fn main() {
 
     println!("View size {}", std::mem::size_of_val(&stack));
     println!("Env size {}", std::mem::size_of_val(&env));
+    let sample_layout = stack.layout(size, &env);
+    println!("Layout size {}", std::mem::size_of_val(&sample_layout));
+
     target.clear();
     for width in 1..100 {
         for height in 1..100 {

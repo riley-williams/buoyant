@@ -4,9 +4,10 @@ use buoyant::{
     environment::DefaultEnvironment,
     font::TerminalChar,
     layout::Layout,
+    primitives::Size,
     render::Render,
     render_target::{FixedTextBuffer, RenderTarget},
-    view::{Divider, HorizontalTextAlignment, Spacer, Text, VStack, View},
+    view::{Divider, HorizontalTextAlignment, Rectangle, Spacer, Text, VStack, View},
 };
 
 #[test]
@@ -42,4 +43,18 @@ fn test_clipped_text_trails_correctly() {
     zip(lines.iter(), buffer.text.iter()).for_each(|(expected, actual)| {
         assert_eq!(actual.iter().collect::<String>(), *expected);
     });
+}
+
+#[test]
+fn test_padding_is_oversized_for_oversized_child() {
+    let text = Rectangle::new(0)
+        .frame(Some(10), Some(10), None, None)
+        .padding(2);
+
+    let env = DefaultEnvironment;
+
+    assert_eq!(
+        text.layout(Size::new(1, 1), &env).resolved_size,
+        Size::new(14, 14)
+    );
 }
