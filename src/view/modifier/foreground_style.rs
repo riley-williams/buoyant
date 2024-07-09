@@ -22,9 +22,9 @@ impl<V, Style: ColorStyle> ForegroundStyle<V, Style> {
 }
 
 impl<Inner: Layout, Style: ColorStyle> Layout for ForegroundStyle<Inner, Style> {
-    type Sublayout<'a> = Inner::Sublayout<'a> where Inner: 'a, Style: 'a;
+    type Sublayout = Inner::Sublayout;
 
-    fn layout(&self, offer: Size, env: &impl Environment) -> ResolvedLayout<Self::Sublayout<'_>> {
+    fn layout(&self, offer: Size, env: &impl Environment) -> ResolvedLayout<Self::Sublayout> {
         let modified_env = ForegroundStyleEnv {
             style: self.style,
             wrapped_env: env,
@@ -33,16 +33,16 @@ impl<Inner: Layout, Style: ColorStyle> Layout for ForegroundStyle<Inner, Style> 
     }
 }
 
-impl<'a, Pixel, Inner, Style> Render<Pixel, Inner::Sublayout<'a>> for ForegroundStyle<Inner, Style>
+impl<Pixel, Inner, Style> Render<Pixel, Inner::Sublayout> for ForegroundStyle<Inner, Style>
 where
-    Inner: Layout + Render<Pixel, Inner::Sublayout<'a>>,
+    Inner: Layout + Render<Pixel, Inner::Sublayout>,
     Pixel: RenderUnit,
     Style: ColorStyle,
 {
     fn render(
         &self,
         target: &mut impl RenderTarget<Pixel>,
-        layout: &ResolvedLayout<Inner::Sublayout<'a>>,
+        layout: &ResolvedLayout<Inner::Sublayout>,
         env: &impl Environment,
     ) {
         let modified_env = ForegroundStyleEnv {

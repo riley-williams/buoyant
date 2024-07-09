@@ -28,9 +28,9 @@ impl<T> PartialEq for Padding<T> {
 }
 
 impl<V: Layout> Layout for Padding<V> {
-    type Sublayout<'a> = ResolvedLayout<V::Sublayout<'a>> where V: 'a;
+    type Sublayout = ResolvedLayout<V::Sublayout>;
 
-    fn layout(&self, offer: Size, env: &impl Environment) -> ResolvedLayout<Self::Sublayout<'_>> {
+    fn layout(&self, offer: Size, env: &impl Environment) -> ResolvedLayout<Self::Sublayout> {
         let padded_offer = Size::new(
             offer.width.saturating_sub(2 * self.padding),
             offer.height.saturating_sub(2 * self.padding),
@@ -45,15 +45,15 @@ impl<V: Layout> Layout for Padding<V> {
     }
 }
 
-impl<'a, Pixel, View: Layout> Render<Pixel, ResolvedLayout<View::Sublayout<'a>>> for Padding<View>
+impl<Pixel, View: Layout> Render<Pixel, ResolvedLayout<View::Sublayout>> for Padding<View>
 where
-    View: Render<Pixel, View::Sublayout<'a>>,
+    View: Render<Pixel, View::Sublayout>,
     Pixel: RenderUnit,
 {
     fn render(
         &self,
         target: &mut impl RenderTarget<Pixel>,
-        layout: &ResolvedLayout<ResolvedLayout<View::Sublayout<'a>>>,
+        layout: &ResolvedLayout<ResolvedLayout<View::Sublayout>>,
         env: &impl Environment,
     ) {
         let original_window = target.window();

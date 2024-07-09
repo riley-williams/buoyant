@@ -48,7 +48,7 @@ This is a library for writing and rendering SwiftUI-like layouts in Rust.
   of the parent offer, attempting to respect word boundaries. Options
   are available for multiline text alignment.
 
-- `HStack`, `VStack`: Views that stack their children horizontally or
+- `HStack`, `VStack`, `ZStack`: Views that stack their children horizontally or
   vertically. The size of the stack is determined by the size of the
   children. Alignment and spacing options are available.
 
@@ -63,6 +63,9 @@ This is a library for writing and rendering SwiftUI-like layouts in Rust.
 - `Padding`: A view that adds padding around its child view. This is
   equivalent to the SwiftUI `padding` modifier.
 
+- `Rectangle`: A view that renders a rectangle. The rectangle is
+  filled with the foreground color.
+
 ## Available render targets
 
 - `TextBuffer`: A basic fixed-size `char` buffer. Does not respect graphemes.
@@ -70,12 +73,10 @@ This is a library for writing and rendering SwiftUI-like layouts in Rust.
 
 ## Roadmap
 
-- crossterm rendering
 - embedded-graphics trait implementations
 - Layout reuse
 - Animations
 - click/tap routing
-- Examples!
 
 ## Usage notes
 

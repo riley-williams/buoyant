@@ -6,7 +6,7 @@ use buoyant::layout::{Layout, VerticalAlignment};
 use buoyant::primitives::Size;
 use buoyant::render::Render;
 use buoyant::render_target::{FixedTextBuffer, RenderTarget};
-use buoyant::view::{Divider, HStack, Padding, Spacer, Text};
+use buoyant::view::{Divider, HStack, Spacer, Text, View};
 
 #[test]
 fn test_greedy_layout_2() {
@@ -19,7 +19,7 @@ fn test_greedy_layout_2() {
 
 #[test]
 fn test_oversized_layout_2() {
-    let vstack = HStack::two(Padding::new(2, Divider::default()), Spacer::default());
+    let vstack = HStack::two(Divider::default().padding(2), Spacer::default());
     let offer = Size::new(10, 0);
     let env = DefaultEnvironment;
     let layout = vstack.layout(offer, &env);
@@ -30,7 +30,7 @@ fn test_oversized_layout_2() {
 fn test_oversized_layout_3() {
     let vstack = HStack::three(
         Divider::default(),
-        Padding::new(2, Divider::default()),
+        Divider::default().padding(2),
         Spacer::default(),
     );
     let offer = Size::new(10, 0);

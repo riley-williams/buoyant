@@ -47,12 +47,9 @@ impl<U, V> ZStack<(U, V)> {
 }
 
 impl<U: Layout, V: Layout> Layout for ZStack<(U, V)> {
-    type Sublayout<'a> = (
-        ResolvedLayout<U::Sublayout<'a>>,
-        ResolvedLayout<V::Sublayout<'a>>,
-    ) where U: 'a, V: 'a;
+    type Sublayout = (ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>);
 
-    fn layout(&self, offer: Size, env: &impl Environment) -> ResolvedLayout<Self::Sublayout<'_>> {
+    fn layout(&self, offer: Size, env: &impl Environment) -> ResolvedLayout<Self::Sublayout> {
         let layout0 = self.items.0.layout(offer, env);
         let layout1 = self.items.1.layout(offer, env);
         let size = layout0.resolved_size.union(layout1.resolved_size);
@@ -64,26 +61,17 @@ impl<U: Layout, V: Layout> Layout for ZStack<(U, V)> {
     }
 }
 
-impl<'a, Pixel, U: Layout, V: Layout>
-    Render<
-        Pixel,
-        (
-            ResolvedLayout<U::Sublayout<'a>>,
-            ResolvedLayout<V::Sublayout<'a>>,
-        ),
-    > for ZStack<(U, V)>
+impl<Pixel, U: Layout, V: Layout>
+    Render<Pixel, (ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>)> for ZStack<(U, V)>
 where
-    U: Render<Pixel, U::Sublayout<'a>>,
-    V: Render<Pixel, V::Sublayout<'a>>,
+    U: Render<Pixel, U::Sublayout>,
+    V: Render<Pixel, V::Sublayout>,
     Pixel: RenderUnit,
 {
     fn render(
         &self,
         target: &mut impl RenderTarget<Pixel>,
-        layout: &ResolvedLayout<(
-            ResolvedLayout<U::Sublayout<'a>>,
-            ResolvedLayout<V::Sublayout<'a>>,
-        )>,
+        layout: &ResolvedLayout<(ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>)>,
         env: &impl Environment,
     ) {
         let original_window = target.window();

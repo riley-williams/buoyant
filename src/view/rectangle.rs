@@ -21,13 +21,13 @@ impl Rectangle {
 }
 
 impl Layout for Rectangle {
-    type Sublayout<'a> = ();
+    type Sublayout = ();
 
     fn layout(
         &self,
         offer: Size,
         _: &impl crate::environment::Environment,
-    ) -> ResolvedLayout<Self::Sublayout<'_>> {
+    ) -> ResolvedLayout<Self::Sublayout> {
         ResolvedLayout {
             sublayouts: (),
             resolved_size: offer,

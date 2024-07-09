@@ -5,7 +5,7 @@ use buoyant::{
     primitives::Size,
     render::Render,
     render_target::{FixedTextBuffer, RenderTarget},
-    view::{Divider, HStack, HorizontalTextAlignment, Padding, Spacer, Text, VStack},
+    view::{Divider, HStack, HorizontalTextAlignment, Spacer, Text, VStack, View},
 };
 
 fn main() {
@@ -37,13 +37,12 @@ fn main() {
     Divider::default(),
     VStack::three(
         Spacer::default(),
-        Padding::new(2,
-            Text::char(
-                "This is several lines of text.\nEach line is centered in the available space.\n Spacers are used to fill all the remaining verical space and align the content within it.\n2 points of padding are around this text",
-                &font,
-                    )
-                    .multiline_text_alignment(HorizontalTextAlignment::Center),
-                ),
+        Text::char(
+            "This is several lines of text.\nEach line is centered in the available space.\n Spacers are used to fill all the remaining verical space and align the content within it.\n2 points of padding are around this text",
+            &font,
+        )
+            .multiline_text_alignment(HorizontalTextAlignment::Center)
+            .padding(2),
         Divider::default(),
         ),
     );

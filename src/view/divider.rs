@@ -32,7 +32,7 @@ impl PartialEq for Divider {
 }
 
 impl Layout for Divider {
-    type Sublayout<'a> = ();
+    type Sublayout = ();
     fn layout(&self, offer: Size, env: &impl Environment) -> ResolvedLayout<()> {
         let size = match env.layout_direction() {
             LayoutDirection::Horizontal => Size::new(self.weight, offer.height),

@@ -1,3 +1,4 @@
+use buoyant::view::View;
 use buoyant::{
     environment::DefaultEnvironment,
     font::TerminalChar,
@@ -6,10 +7,7 @@ use buoyant::{
     render::Render,
     render_target::{CrosstermRenderTarget, RenderTarget},
     style::horizontal_gradient::HorizontalGradient,
-    view::{
-        foreground_style::ForegroundStyle, rectangle::Rectangle, Divider, HStack,
-        HorizontalTextAlignment, Padding, Spacer, Text, VStack, ZStack,
-    },
+    view::{Divider, HStack, HorizontalTextAlignment, Rectangle, Spacer, Text, VStack, ZStack},
 };
 use crossterm::event::{read, Event};
 use rgb::RGB8;
@@ -26,14 +24,11 @@ fn main() {
     let font = TerminalChar {};
     let stack = VStack::three(
         HStack::three(
-            ForegroundStyle::new(
-                RGB8::new(255, 0, 0),
-                Text::char(
-                    "This red text is aligned to the leading edge of its space\nThe stack however, has bottom alignment.",
-                    &font,
-                )
-                .multiline_text_alignment(HorizontalTextAlignment::Leading),
-            ),
+            Text::char(
+                "This red text is aligned to the leading edge of its space\nThe stack however, has bottom alignment.",
+                &font,
+            )
+                .multiline_text_alignment(HorizontalTextAlignment::Leading).foreground_style(RGB8::new(255, 0, 0)),
             Spacer::default(),
             Text::char(
                 "This text is aligned to the right, with trailing multi-line text alignment",
@@ -46,25 +41,22 @@ fn main() {
         Divider::default(),
         VStack::three(
             ZStack::two(
-                ForegroundStyle::new(
-                    HorizontalGradient::new(
+                Rectangle::new(0)
+                    .foreground_style(HorizontalGradient::new(
                         RGB8::new(0, 255, 0),
                         RGB8::new(0, 0, 255)
-                        ),
-                    Rectangle::new(0),
-                ),
+                        )),
                 Text::char(
                     "This is a fancy rectangle",
                     &font,
-                )
+                ),
             ),
-                        Padding::new(2,
-                Text::char(
-                    "This is several lines of text.\nEach line is centered in the available space.\n The rectangle fills all the remaining verical space and align the content within it.\n2 points of padding are around this text",
-                    &font,
-                )
+            Text::char(
+                "This is several lines of text.\nEach line is centered in the available space.\n The rectangle fills all the remaining verical space and align the content within it.\n2 points of padding are around this text",
+                &font,
+            )
                 .multiline_text_alignment(HorizontalTextAlignment::Center)
-            ),
+                .padding(2),
             Divider::default(),
         ),
     );

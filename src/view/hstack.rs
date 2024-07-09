@@ -74,15 +74,12 @@ impl<U, V> HStack<(U, V)> {
 }
 
 impl<U: Layout, V: Layout> Layout for HStack<(U, V)> {
-    type Sublayout<'a> = (
-        ResolvedLayout<U::Sublayout<'a>>,
-        ResolvedLayout<V::Sublayout<'a>>,
-    ) where U: 'a, V: 'a;
+    type Sublayout = (ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>);
 
-    fn layout(&self, offer: Size, env: &impl Environment) -> ResolvedLayout<Self::Sublayout<'_>> {
+    fn layout(&self, offer: Size, env: &impl Environment) -> ResolvedLayout<Self::Sublayout> {
         const N: usize = 2;
-        let mut c0: Option<ResolvedLayout<U::Sublayout<'_>>> = None;
-        let mut c1: Option<ResolvedLayout<V::Sublayout<'_>>> = None;
+        let mut c0: Option<ResolvedLayout<U::Sublayout>> = None;
+        let mut c1: Option<ResolvedLayout<V::Sublayout>> = None;
 
         let env = HorizontalEnvironment::from(env);
 
@@ -112,26 +109,17 @@ impl<U: Layout, V: Layout> Layout for HStack<(U, V)> {
     }
 }
 
-impl<'a, Pixel, U: Layout, V: Layout>
-    Render<
-        Pixel,
-        (
-            ResolvedLayout<U::Sublayout<'a>>,
-            ResolvedLayout<V::Sublayout<'a>>,
-        ),
-    > for HStack<(U, V)>
+impl<Pixel, U: Layout, V: Layout>
+    Render<Pixel, (ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>)> for HStack<(U, V)>
 where
-    U: Render<Pixel, U::Sublayout<'a>>,
-    V: Render<Pixel, V::Sublayout<'a>>,
+    U: Render<Pixel, U::Sublayout>,
+    V: Render<Pixel, V::Sublayout>,
     Pixel: RenderUnit,
 {
     fn render(
         &self,
         target: &mut impl RenderTarget<Pixel>,
-        layout: &ResolvedLayout<(
-            ResolvedLayout<U::Sublayout<'a>>,
-            ResolvedLayout<V::Sublayout<'a>>,
-        )>,
+        layout: &ResolvedLayout<(ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>)>,
         env: &impl Environment,
     ) {
         let env = HorizontalEnvironment::from(env);
@@ -175,17 +163,17 @@ impl<U, V, W> HStack<(U, V, W)> {
 }
 
 impl<U: Layout, V: Layout, W: Layout> Layout for HStack<(U, V, W)> {
-    type Sublayout<'a> = (
-        ResolvedLayout<U::Sublayout<'a>>,
-        ResolvedLayout<V::Sublayout<'a>>,
-        ResolvedLayout<W::Sublayout<'a>>,
-    ) where U: 'a, V: 'a, W: 'a;
+    type Sublayout = (
+        ResolvedLayout<U::Sublayout>,
+        ResolvedLayout<V::Sublayout>,
+        ResolvedLayout<W::Sublayout>,
+    );
 
-    fn layout(&self, offer: Size, env: &impl Environment) -> ResolvedLayout<Self::Sublayout<'_>> {
+    fn layout(&self, offer: Size, env: &impl Environment) -> ResolvedLayout<Self::Sublayout> {
         const N: usize = 3;
-        let mut c0: Option<ResolvedLayout<U::Sublayout<'_>>> = None;
-        let mut c1: Option<ResolvedLayout<V::Sublayout<'_>>> = None;
-        let mut c2: Option<ResolvedLayout<W::Sublayout<'_>>> = None;
+        let mut c0: Option<ResolvedLayout<U::Sublayout>> = None;
+        let mut c1: Option<ResolvedLayout<V::Sublayout>> = None;
+        let mut c2: Option<ResolvedLayout<W::Sublayout>> = None;
 
         let env = HorizontalEnvironment::from(env);
 
@@ -222,28 +210,28 @@ impl<U: Layout, V: Layout, W: Layout> Layout for HStack<(U, V, W)> {
     }
 }
 
-impl<'a, Pixel, U: Layout, V: Layout, W: Layout>
+impl<Pixel, U: Layout, V: Layout, W: Layout>
     Render<
         Pixel,
         (
-            ResolvedLayout<U::Sublayout<'a>>,
-            ResolvedLayout<V::Sublayout<'a>>,
-            ResolvedLayout<W::Sublayout<'a>>,
+            ResolvedLayout<U::Sublayout>,
+            ResolvedLayout<V::Sublayout>,
+            ResolvedLayout<W::Sublayout>,
         ),
     > for HStack<(U, V, W)>
 where
-    U: Render<Pixel, U::Sublayout<'a>>,
-    V: Render<Pixel, V::Sublayout<'a>>,
-    W: Render<Pixel, W::Sublayout<'a>>,
+    U: Render<Pixel, U::Sublayout>,
+    V: Render<Pixel, V::Sublayout>,
+    W: Render<Pixel, W::Sublayout>,
     Pixel: RenderUnit,
 {
     fn render(
         &self,
         target: &mut impl RenderTarget<Pixel>,
         layout: &ResolvedLayout<(
-            ResolvedLayout<U::Sublayout<'a>>,
-            ResolvedLayout<V::Sublayout<'a>>,
-            ResolvedLayout<W::Sublayout<'a>>,
+            ResolvedLayout<U::Sublayout>,
+            ResolvedLayout<V::Sublayout>,
+            ResolvedLayout<W::Sublayout>,
         )>,
         env: &impl Environment,
     ) {

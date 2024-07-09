@@ -4,7 +4,7 @@ use buoyant::layout::{HorizontalAlignment, Layout, VerticalAlignment};
 use buoyant::primitives::Size;
 use buoyant::render::Render;
 use buoyant::render_target::{FixedTextBuffer, RenderTarget as _};
-use buoyant::view::{Divider, Padding, Spacer, Text, ZStack};
+use buoyant::view::{Divider, Spacer, Text, View, ZStack};
 
 #[test]
 fn test_layout_fills_two() {
@@ -17,7 +17,7 @@ fn test_layout_fills_two() {
 
 #[test]
 fn test_oversized_layout_2() {
-    let stack = ZStack::two(Padding::new(2, Divider::default()), Spacer::default());
+    let stack = ZStack::two(Divider::default().padding(2), Spacer::default());
     let offer = Size::new(0, 10);
     let env = DefaultEnvironment;
     let layout = stack.layout(offer, &env);

@@ -13,7 +13,7 @@ pub struct Spacer {
 }
 
 impl Layout for Spacer {
-    type Sublayout<'a> = ();
+    type Sublayout = ();
     fn layout(&self, offer: Size, env: &impl Environment) -> ResolvedLayout<()> {
         let size = match env.layout_direction() {
             LayoutDirection::Horizontal => {

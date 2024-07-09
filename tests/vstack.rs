@@ -4,7 +4,7 @@ use buoyant::layout::{HorizontalAlignment, Layout, VerticalAlignment};
 use buoyant::primitives::Size;
 use buoyant::render::Render;
 use buoyant::render_target::{FixedTextBuffer, RenderTarget as _};
-use buoyant::view::{Divider, HStack, HorizontalTextAlignment, Padding, Spacer, Text, VStack};
+use buoyant::view::{Divider, HStack, HorizontalTextAlignment, Spacer, Text, VStack, View};
 
 fn collect_text<const W: usize, const H: usize>(buffer: &FixedTextBuffer<W, H>) -> String {
     buffer
@@ -25,7 +25,7 @@ fn test_greedy_layout_2() {
 
 #[test]
 fn test_oversized_layout_2() {
-    let vstack = VStack::two(Padding::new(2, Divider::default()), Spacer::default());
+    let vstack = VStack::two(Divider::default().padding(2), Spacer::default());
     let offer = Size::new(0, 10);
     let env = DefaultEnvironment;
     let layout = vstack.layout(offer, &env);
@@ -36,7 +36,7 @@ fn test_oversized_layout_2() {
 fn test_oversized_layout_3() {
     let vstack = VStack::three(
         Divider::default(),
-        Padding::new(2, Divider::default()),
+        Divider::default().padding(2),
         Spacer::default(),
     );
     let offer = Size::new(0, 10);
@@ -323,13 +323,12 @@ fn test_flexible_layout_fills_frame_10k() {
     Divider::default(),
     VStack::three(
         Spacer::default(),
-        Padding::new(2,
-            Text::char(
-                "This is several lines of text.\nEach line is centered in the available space.\n Spacers are used to fill all the remaining verical space and align the content within it.\n2 points of padding are around this text",
-                &font,
-                    )
-                    .multiline_text_alignment(HorizontalTextAlignment::Center),
-                ),
+        Text::char(
+            "This is several lines of text.\nEach line is centered in the available space.\n Spacers are used to fill all the remaining verical space and align the content within it.\n2 points of padding are around this text",
+            &font,
+        )
+            .multiline_text_alignment(HorizontalTextAlignment::Center)
+            .padding(2),
         Divider::default(),
         ),
     );

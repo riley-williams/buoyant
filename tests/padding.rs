@@ -6,7 +6,7 @@ use buoyant::{
     layout::Layout,
     render::Render,
     render_target::{FixedTextBuffer, RenderTarget},
-    view::{Divider, HorizontalTextAlignment, Padding, Spacer, Text, VStack},
+    view::{Divider, HorizontalTextAlignment, Spacer, Text, VStack, View},
 };
 
 #[test]
@@ -14,14 +14,12 @@ fn test_clipped_text_trails_correctly() {
     let font = TerminalChar {};
     let text = VStack::three(
         Spacer::default(),
-        Padding::new(
-            2,
-            Text::char(
-                "Padding respects\nparent alignment\nshouldnt affect alignment",
-                &font,
-            )
-            .multiline_text_alignment(HorizontalTextAlignment::Trailing),
-        ),
+        Text::char(
+            "Padding respects\nparent alignment\nshouldnt affect alignment",
+            &font,
+        )
+        .multiline_text_alignment(HorizontalTextAlignment::Trailing)
+        .padding(2),
         Divider::default(),
     );
 
