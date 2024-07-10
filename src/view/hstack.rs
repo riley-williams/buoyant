@@ -33,10 +33,6 @@ impl<T: Environment> Environment for HorizontalEnvironment<'_, T> {
     fn foreground_style(&self) -> impl ColorStyle {
         self.inner_environment.foreground_style()
     }
-
-    fn background_style(&self) -> impl ColorStyle {
-        self.inner_environment.background_style()
-    }
 }
 
 impl<'a, T: Environment> From<&'a T> for HorizontalEnvironment<'a, T> {

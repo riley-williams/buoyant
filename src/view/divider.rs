@@ -1,12 +1,9 @@
-use crossterm::style::{StyledContent, Stylize as _};
-
 use crate::{
     environment::Environment,
     layout::{Layout, LayoutDirection, ResolvedLayout},
     primitives::{Point, Size},
     render::Render,
     render_target::RenderTarget,
-    style::color_style::ColorStyle,
 };
 
 pub struct Divider {
@@ -70,6 +67,14 @@ impl Render<char, ()> for Divider {
         }
     }
 }
+
+#[cfg(feature = "crossterm")]
+use crossterm::style::{StyledContent, Stylize};
+
+#[cfg(feature = "crossterm")]
+use crate::style::color_style::ColorStyle;
+
+#[cfg(feature = "crossterm")]
 impl<'a> Render<StyledContent<&'a str>, ()> for Divider {
     fn render(
         &self,

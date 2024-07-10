@@ -6,7 +6,7 @@ use buoyant::layout::{Layout, VerticalAlignment};
 use buoyant::primitives::Size;
 use buoyant::render::Render;
 use buoyant::render_target::{FixedTextBuffer, RenderTarget};
-use buoyant::view::{Divider, HStack, Spacer, Text, View};
+use buoyant::view::{Divider, HStack, Spacer, Text, ViewExtensions};
 
 #[test]
 fn test_greedy_layout_2() {

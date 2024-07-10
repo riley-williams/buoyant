@@ -71,8 +71,4 @@ impl<E: Environment, Style: ColorStyle> Environment for ForegroundStyleEnv<'_, E
     fn foreground_style(&self) -> impl ColorStyle {
         self.style
     }
-
-    fn background_style(&self) -> impl ColorStyle {
-        self.wrapped_env.background_style()
-    }
 }

@@ -1,6 +1,6 @@
 [package]
 name = "buoyant"
-version = "0.1.4"
+version = "0.1.5"
 authors = ["Riley Williams"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
@@ -14,15 +14,13 @@ exclude = [".github"]
 maintenance = { status = "experimental" }
 
 [features]
-default = ["std", "crossterm", "unicode"]
+default = ["std", "crossterm"]
 std = []
-crossterm = ["dep:crossterm"]
-unicode = ["dep:unicode-segmentation"]
+crossterm = ["dep:crossterm", "std"]
 embedded-graphics = ["dep:embedded-graphics"]
 
 [dependencies]
 crossterm = { version = "0.27", optional = true }
-unicode-segmentation = { version = "1.11", optional = true }
 embedded-graphics = { version = "0.8", optional = true }
 rgb = "0.8.40"
 

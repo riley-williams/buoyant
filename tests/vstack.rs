@@ -4,7 +4,9 @@ use buoyant::layout::{HorizontalAlignment, Layout, VerticalAlignment};
 use buoyant::primitives::Size;
 use buoyant::render::Render;
 use buoyant::render_target::{FixedTextBuffer, RenderTarget as _};
-use buoyant::view::{Divider, HStack, HorizontalTextAlignment, Spacer, Text, VStack, View};
+use buoyant::view::{
+    Divider, HStack, HorizontalTextAlignment, Spacer, Text, VStack, ViewExtensions,
+};
 
 fn collect_text<const W: usize, const H: usize>(buffer: &FixedTextBuffer<W, H>) -> String {
     buffer

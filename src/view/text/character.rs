@@ -1,6 +1,3 @@
-#[cfg(feature = "crossterm")]
-use crossterm::style::{StyledContent, Stylize};
-
 use crate::{
     environment::Environment,
     font::CharacterFont,
@@ -8,7 +5,6 @@ use crate::{
     primitives::{Point, Size},
     render::Render,
     render_target::RenderTarget,
-    style::color_style::ColorStyle,
 };
 use core::cmp::max;
 
@@ -227,6 +223,12 @@ impl<'a, F: CharacterFont> Render<char, ()> for Text<'a, F> {
         }
     }
 }
+
+#[cfg(feature = "crossterm")]
+use crate::style::color_style::ColorStyle;
+
+#[cfg(feature = "crossterm")]
+use crossterm::style::{StyledContent, Stylize};
 
 #[cfg(feature = "crossterm")]
 impl<'a, F: CharacterFont> Render<StyledContent<&'a str>, ()> for Text<'a, F> {

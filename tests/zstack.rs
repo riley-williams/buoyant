@@ -4,7 +4,7 @@ use buoyant::layout::{HorizontalAlignment, Layout, VerticalAlignment};
 use buoyant::primitives::Size;
 use buoyant::render::Render;
 use buoyant::render_target::{FixedTextBuffer, RenderTarget as _};
-use buoyant::view::{Divider, Spacer, Text, View, ZStack};
+use buoyant::view::{Divider, Spacer, Text, ViewExtensions, ZStack};
 
 #[test]
 fn test_layout_fills_two() {
