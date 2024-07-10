@@ -5,7 +5,6 @@
 - [Buoyant](#buoyant)
   - [Goals](#goals)
   - [Layout and rendering](#layout-and-rendering)
-  - [Available views](#available-views)
   - [Available render targets](#available-render-targets)
   - [Roadmap](#roadmap)
   - [Usage notes](#usage-notes)
@@ -21,69 +20,52 @@ This is a library for writing and rendering SwiftUI-like layouts in Rust.
   - Zero heap allocation
   - Minimal memory footprint
   - Immediate mode, CPU rendering
-- Support for both text-based and pixel-based rendering and layout
-  through the use of generic traits
+- Support for both character-based and pixel-based rendering and layout
 - Ability to support a variety of render devices (e.g., terminal,
   framebuffer, SPI display, ...)
 
 ## Layout and rendering
 
-- **View definition:** This follows the SwiftUI model of defining the
-  view hierarchy entirely withing the type system.
-
-- **Layout:** The view object is passed through the layout engine,
-  which computes the size of each view. Just like SwiftUI, the parent
-  offers a size, but children are free to choose their own size. This
-  produces a statically typed layout tree that mirrors the structure
-  of the view definition.
-
-- **Render:** The render target is passed to the layout, and the layout
-  engine renders the view hierarchy to the target. Minor layout
-  computations such as text wrapping may be repeated, depending on the
-  available cache size.
-
-## Available views
-
-- `Text`: A view that renders text. The text is wrapped to the width
-  of the parent offer, attempting to respect word boundaries. Options
-  are available for multiline text alignment.
-
-- `HStack`, `VStack`, `ZStack`: Views that stack their children horizontally or
-  vertically. The size of the stack is determined by the size of the
-  children. Alignment and spacing options are available.
-
-- `Spacer`: A view that takes up all available space in the parent
-  view. It is aware of the layout direction it was presented in, and
-  will expand in the appropriate dimension.
-
-- `Divider`: A view that renders a horizontal or vertical line. Like
-  `Spacer`, it is aware of the layout direction it was presented in,
-  and will render as a line in the appropriate dimension.
-
-- `Padding`: A view that adds padding around its child view. This is
-  equivalent to the SwiftUI `padding` modifier.
-
-- `Rectangle`: A view that renders a rectangle. The rectangle is
-  filled with the foreground color.
+Layout code is shared across all pixel types. Views produce a layout
+which can then be rendered to a render target, calling the rendering code
+specific to the render target's pixel type.
 
 ## Available render targets
 
 - `TextBuffer`: A basic fixed-size `char` buffer. Does not respect graphemes.
   This is primarily useful for testing and debugging.
 
+- `CrossTerm`: Renders colored character-pixels to a terminal using
+  the `crossterm` crate.
+
 ## Roadmap
 
+Right now, all the core components exist to build and render static views.
+
+These are the planned features, in order of priority:
+
 - embedded-graphics trait implementations
-- Layout reuse
-- Animations
-- click/tap routing
+- More robust Font support
+  - embedded-graphics fonts
+  - Embedded SPI displays with built-in fonts
+- State management
+  - Layout reuse
+  - Animations
+- Interactivity
+  - click/tap routing
+  - focus management / keyboard input
+
+These things would be nice:
+
+- Unicode / grapheme support for proper text handling outside embedded
 
 ## Usage notes
 
-It is a work in progress and should not be used in production.
+This project is a work in progress and should not be used in production.
 
 At this point in time, all public API should be considered unstable,
-and this library does not yet respect SemVer.
+and this library does not yet respect SemVer. Yeah I should have
+started at 0.0.x. Sorry.
 
 ## License
 
