@@ -20,7 +20,7 @@ pub use zstack::ZStack;
 
 use modifier::{FixedFrame, FlexFrame, ForegroundStyle, Padding};
 
-pub trait View: Sized {
+pub trait ViewExtensions: Sized {
     fn padding(self, amount: u16) -> Padding<Self> {
         Padding::new(amount, self)
     }
@@ -69,4 +69,4 @@ pub trait View: Sized {
     }
 }
 
-impl<T: crate::layout::Layout> View for T {}
+impl<T: crate::layout::Layout> ViewExtensions for T {}

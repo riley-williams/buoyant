@@ -7,7 +7,7 @@ use buoyant::{
     primitives::Size,
     render::Render,
     render_target::{FixedTextBuffer, RenderTarget},
-    view::{Divider, HorizontalTextAlignment, Rectangle, Spacer, Text, VStack, View},
+    view::{Divider, HorizontalTextAlignment, Rectangle, Spacer, Text, VStack, ViewExtensions},
 };
 
 #[test]
@@ -47,9 +47,7 @@ fn test_clipped_text_trails_correctly() {
 
 #[test]
 fn test_padding_is_oversized_for_oversized_child() {
-    let text = Rectangle::new(0)
-        .frame(Some(10), Some(10), None, None)
-        .padding(2);
+    let text = Rectangle.frame(Some(10), Some(10), None, None).padding(2);
 
     let env = DefaultEnvironment;
 

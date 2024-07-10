@@ -1,4 +1,4 @@
-use buoyant::view::View;
+use buoyant::view::ViewExtensions;
 use buoyant::{
     environment::DefaultEnvironment,
     font::TerminalChar,
@@ -42,7 +42,7 @@ fn main() {
         Divider::default(),
         VStack::three(
             ZStack::two(
-                Rectangle::new(0)
+                Rectangle
                     .foreground_style(HorizontalGradient::new(
                         RGB8::new(127, 255, 0),
                         RGB8::new(20, 0, 255)

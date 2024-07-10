@@ -9,16 +9,8 @@ use crate::{
     style::color_style::ColorStyle as _,
 };
 
-#[derive(Debug, Copy, Clone, PartialEq)]
-pub struct Rectangle {
-    corner_radius: u16,
-}
-
-impl Rectangle {
-    pub fn new(corner_radius: u16) -> Self {
-        Self { corner_radius }
-    }
-}
+#[derive(Debug, Copy, Clone, PartialEq, Default)]
+pub struct Rectangle;
 
 impl Layout for Rectangle {
     type Sublayout = ();

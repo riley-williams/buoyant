@@ -10,7 +10,6 @@ pub trait Environment {
     fn alignment(&self) -> Alignment;
 
     fn foreground_style(&self) -> impl ColorStyle;
-    fn background_style(&self) -> impl ColorStyle;
 }
 
 pub struct DefaultEnvironment;
@@ -27,10 +26,6 @@ impl Environment for DefaultEnvironment {
     fn foreground_style(&self) -> impl ColorStyle {
         RGB8::new(255, 255, 255)
     }
-
-    fn background_style(&self) -> impl ColorStyle {
-        RGB8::new(0, 0, 0)
-    }
 }
 
 #[cfg(test)]
@@ -45,7 +40,6 @@ pub(crate) mod mock {
         pub direction: LayoutDirection,
         pub alignment: Alignment,
         pub foreground_style: RGB8,
-        pub background_style: RGB8,
     }
 
     impl Environment for TestEnv {
@@ -60,10 +54,6 @@ pub(crate) mod mock {
         fn foreground_style(&self) -> impl ColorStyle {
             self.foreground_style
         }
-
-        fn background_style(&self) -> impl ColorStyle {
-            self.background_style
-        }
     }
 
     impl Default for TestEnv {
@@ -72,7 +62,6 @@ pub(crate) mod mock {
                 direction: LayoutDirection::Horizontal,
                 alignment: Alignment::default(),
                 foreground_style: RGB8::new(255, 255, 255),
-                background_style: RGB8::new(0, 0, 0),
             }
         }
     }
