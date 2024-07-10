@@ -16,7 +16,7 @@ maintenance = { status = "experimental" }
 [features]
 default = ["std", "crossterm"]
 std = []
-crossterm = ["dep:crossterm"]
+crossterm = ["dep:crossterm", "std"]
 embedded-graphics = ["dep:embedded-graphics"]
 
 [dependencies]

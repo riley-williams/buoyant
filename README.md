@@ -45,6 +45,7 @@ Right now, all the core components exist to build and render static views.
 These are the planned features, in order of priority:
 
 - embedded-graphics trait implementations
+- default pixel rendering for pixel-based render targets
 - More robust Font support
   - embedded-graphics fonts
   - Embedded SPI displays with built-in fonts

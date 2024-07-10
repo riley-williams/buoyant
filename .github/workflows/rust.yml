@@ -2,9 +2,9 @@ name: Rust
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 env:
   CARGO_TERM_COLOR: always
@@ -33,8 +33,7 @@ jobs:
         run: cargo install clippy-sarif sarif-fmt
 
       - name: Run clippy
-        run:
-          cargo clippy
+        run: cargo clippy
           --all-features
           --message-format=json | clippy-sarif | tee rust-clippy-results.sarif | sarif-fmt
         continue-on-error: true
@@ -46,12 +45,23 @@ jobs:
           wait-for-processing: true
 
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Build
-      run: cargo build --verbose
-    - name: Run tests
-      run: cargo test --verbose
+      - uses: actions/checkout@v4
+      - name: Build
+        run: cargo build --verbose
+      - name: Run tests
+        run: cargo test --verbose
+  check-features:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check No Features
+        run: cargo check --no-default-features
+      - name: Check Crossterm
+        run: cargo check --no-default-features --features "crossterm"
+      - name: Check Embedded Graphics
+        run: cargo check --no-default-features --features "embedded-graphics"
+      - name: Check all features
+        run: cargo check --all-features

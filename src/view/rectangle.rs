@@ -1,12 +1,8 @@
-#[cfg(feature = "crossterm")]
-use crossterm::style::Stylize as _;
-
 use crate::{
     layout::{Layout, ResolvedLayout},
     primitives::{Point, Size},
     render::Render,
     render_target::RenderTarget,
-    style::color_style::ColorStyle as _,
 };
 
 #[derive(Debug, Copy, Clone, PartialEq, Default)]
@@ -48,6 +44,12 @@ impl Render<char, ()> for Rectangle {
         }
     }
 }
+
+#[cfg(feature = "crossterm")]
+use crate::style::color_style::ColorStyle;
+
+#[cfg(feature = "crossterm")]
+use crossterm::style::Stylize;
 
 #[cfg(feature = "crossterm")]
 impl<'a> Render<crossterm::style::StyledContent<&'a str>, ()> for Rectangle {
