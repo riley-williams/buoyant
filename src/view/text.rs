@@ -1,8 +1,5 @@
 mod character;
 
-#[cfg(feature = "unicode")]
-mod unicode;
-
 pub struct Text<'a, F> {
     pub(crate) text: &'a str,
     pub(crate) font: &'a F,
