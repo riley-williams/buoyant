@@ -1,7 +1,7 @@
 use crate::{
-    environment::Environment,
+    environment::{LayoutEnvironment, RenderEnvironment},
     layout::{Layout, ResolvedLayout},
-    pixel::RenderUnit,
+    pixel::ColorValue,
     primitives::Size,
     render::Render,
     render_target::RenderTarget,
@@ -24,7 +24,7 @@ impl<V, Style: ColorStyle> ForegroundStyle<V, Style> {
 impl<Inner: Layout, Style: ColorStyle> Layout for ForegroundStyle<Inner, Style> {
     type Sublayout = Inner::Sublayout;
 
-    fn layout(&self, offer: Size, env: &impl Environment) -> ResolvedLayout<Self::Sublayout> {
+    fn layout(&self, offer: Size, env: &impl LayoutEnvironment) -> ResolvedLayout<Self::Sublayout> {
         let modified_env = ForegroundStyleEnv {
             style: self.style,
             wrapped_env: env,
@@ -36,14 +36,14 @@ impl<Inner: Layout, Style: ColorStyle> Layout for ForegroundStyle<Inner, Style> 
 impl<Pixel, Inner, Style> Render<Pixel, Inner::Sublayout> for ForegroundStyle<Inner, Style>
 where
     Inner: Layout + Render<Pixel, Inner::Sublayout>,
-    Pixel: RenderUnit,
-    Style: ColorStyle,
+    Pixel: ColorValue,
+    Style: ColorStyle<Color = Pixel>,
 {
     fn render(
         &self,
         target: &mut impl RenderTarget<Pixel>,
         layout: &ResolvedLayout<Inner::Sublayout>,
-        env: &impl Environment,
+        env: &impl RenderEnvironment<Pixel>,
     ) {
         let modified_env = ForegroundStyleEnv {
             style: self.style,
@@ -59,7 +59,9 @@ struct ForegroundStyleEnv<'a, Env, Style> {
     wrapped_env: &'a Env,
 }
 
-impl<E: Environment, Style: ColorStyle> Environment for ForegroundStyleEnv<'_, E, Style> {
+impl<E: LayoutEnvironment, Style: ColorStyle> LayoutEnvironment
+    for ForegroundStyleEnv<'_, E, Style>
+{
     fn layout_direction(&self) -> crate::layout::LayoutDirection {
         self.wrapped_env.layout_direction()
     }
@@ -67,8 +69,12 @@ impl<E: Environment, Style: ColorStyle> Environment for ForegroundStyleEnv<'_, E
     fn alignment(&self) -> crate::layout::Alignment {
         self.wrapped_env.alignment()
     }
+}
 
-    fn foreground_style(&self) -> impl ColorStyle {
+impl<E: RenderEnvironment<Style::Color>, Style: ColorStyle> RenderEnvironment<Style::Color>
+    for ForegroundStyleEnv<'_, E, Style>
+{
+    fn foreground_style(&self) -> impl ColorStyle<Color = Style::Color> {
         self.style
     }
 }

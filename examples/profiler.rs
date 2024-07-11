@@ -15,7 +15,7 @@ fn main() {
     let mut size = target.size();
     println!("Size {:?}", size);
 
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::new(' ');
 
     let font = TerminalChar {};
     let stack = VStack::three(

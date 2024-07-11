@@ -1,4 +1,4 @@
-use crate::{environment::Environment, primitives::Size};
+use crate::{environment::LayoutEnvironment, primitives::Size};
 
 #[derive(Clone, Copy, Debug, PartialEq, Default)]
 pub enum LayoutDirection {
@@ -67,7 +67,7 @@ pub struct ResolvedLayout<C: Clone> {
 pub trait Layout: Sized {
     type Sublayout: Clone;
     /// The size of the view given the offer
-    fn layout(&self, offer: Size, env: &impl Environment) -> ResolvedLayout<Self::Sublayout>;
+    fn layout(&self, offer: Size, env: &impl LayoutEnvironment) -> ResolvedLayout<Self::Sublayout>;
     /// The layout priority of the view. Higher priority views are more likely to be given the size they want
     fn priority(&self) -> i8 {
         0

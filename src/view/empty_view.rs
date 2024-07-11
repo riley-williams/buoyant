@@ -1,6 +1,6 @@
 use crate::{
     layout::{Layout, ResolvedLayout},
-    pixel::RenderUnit,
+    pixel::ColorValue,
     primitives::Size,
     render::Render,
     render_target::RenderTarget,
@@ -14,7 +14,7 @@ impl Layout for EmptyView {
     fn layout(
         &self,
         _: Size,
-        _: &impl crate::environment::Environment,
+        _: &impl crate::environment::LayoutEnvironment,
     ) -> ResolvedLayout<Self::Sublayout> {
         ResolvedLayout {
             sublayouts: (),
@@ -27,12 +27,12 @@ impl Layout for EmptyView {
     }
 }
 
-impl<Pixel: RenderUnit> Render<Pixel, ()> for EmptyView {
+impl<Pixel: ColorValue> Render<Pixel, ()> for EmptyView {
     fn render(
         &self,
         _: &mut impl RenderTarget<Pixel>,
         _: &ResolvedLayout<()>,
-        _: &impl crate::environment::Environment,
+        _: &impl crate::environment::RenderEnvironment<Pixel>,
     ) {
     }
 }

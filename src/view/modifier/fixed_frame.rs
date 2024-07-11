@@ -1,7 +1,7 @@
 use crate::{
-    environment::Environment,
+    environment::{LayoutEnvironment, RenderEnvironment},
     layout::{HorizontalAlignment, Layout, ResolvedLayout, VerticalAlignment},
-    pixel::RenderUnit,
+    pixel::ColorValue,
     primitives::{Point, Size},
     render::Render,
     render_target::RenderTarget,
@@ -45,7 +45,7 @@ impl<T> PartialEq for FixedFrame<T> {
 impl<V: Layout> Layout for FixedFrame<V> {
     type Sublayout = ResolvedLayout<V::Sublayout>;
 
-    fn layout(&self, offer: Size, env: &impl Environment) -> ResolvedLayout<Self::Sublayout> {
+    fn layout(&self, offer: Size, env: &impl LayoutEnvironment) -> ResolvedLayout<Self::Sublayout> {
         let modified_offer = Size::new(
             self.width.unwrap_or(offer.width),
             self.height.unwrap_or(offer.height),
@@ -65,13 +65,13 @@ impl<V: Layout> Layout for FixedFrame<V> {
 impl<Pixel, View: Layout> Render<Pixel, ResolvedLayout<View::Sublayout>> for FixedFrame<View>
 where
     View: Render<Pixel, View::Sublayout>,
-    Pixel: RenderUnit,
+    Pixel: ColorValue,
 {
     fn render(
         &self,
         target: &mut impl RenderTarget<Pixel>,
         layout: &ResolvedLayout<ResolvedLayout<View::Sublayout>>,
-        env: &impl Environment,
+        env: &impl RenderEnvironment<Pixel>,
     ) {
         let original_window = target.window();
         target.set_window_origin(

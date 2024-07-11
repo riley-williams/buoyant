@@ -1,6 +1,6 @@
 use crate::{
     layout::{Layout, ResolvedLayout},
-    pixel::RenderUnit,
+    pixel::ColorValue,
     render::Render,
 };
 
@@ -34,7 +34,7 @@ impl<U: Layout, V: Layout> Layout for ConditionalView<U, V> {
     fn layout(
         &self,
         offer: crate::primitives::Size,
-        env: &impl crate::environment::Environment,
+        env: &impl crate::environment::LayoutEnvironment,
     ) -> ResolvedLayout<Self::Sublayout> {
         if self.condition {
             let child_layout = self.true_view.layout(offer, env);
@@ -54,7 +54,7 @@ impl<U: Layout, V: Layout> Layout for ConditionalView<U, V> {
     }
 }
 
-impl<Pixel: RenderUnit, U: Layout, V: Layout>
+impl<Pixel: ColorValue, U: Layout, V: Layout>
     Render<Pixel, ConditionalViewLayout<ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>>>
     for ConditionalView<U, V>
 where
@@ -67,7 +67,7 @@ where
         layout: &ResolvedLayout<
             ConditionalViewLayout<ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>>,
         >,
-        env: &impl crate::environment::Environment,
+        env: &impl crate::environment::RenderEnvironment<Pixel>,
     ) {
         match &layout.sublayouts {
             ConditionalViewLayout::TrueLayout(true_layout) => {

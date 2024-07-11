@@ -1,9 +1,9 @@
 use core::cmp::{max, min};
 
 use crate::{
-    environment::Environment,
+    environment::{LayoutEnvironment, RenderEnvironment},
     layout::{HorizontalAlignment, Layout, LayoutDirection, ResolvedLayout},
-    pixel::RenderUnit,
+    pixel::ColorValue,
     primitives::{Point, Size},
     render::Render,
     render_target::RenderTarget,
@@ -20,7 +20,7 @@ struct VerticalEnvironment<'a, T> {
     inner_environment: &'a T,
 }
 
-impl<T: Environment> Environment for VerticalEnvironment<'_, T> {
+impl<T: LayoutEnvironment> LayoutEnvironment for VerticalEnvironment<'_, T> {
     fn alignment(&self) -> crate::layout::Alignment {
         self.inner_environment.alignment()
     }
@@ -28,13 +28,17 @@ impl<T: Environment> Environment for VerticalEnvironment<'_, T> {
     fn layout_direction(&self) -> LayoutDirection {
         LayoutDirection::Vertical
     }
+}
 
-    fn foreground_style(&self) -> impl ColorStyle {
+impl<Color: ColorValue, T: RenderEnvironment<Color>> RenderEnvironment<Color>
+    for VerticalEnvironment<'_, T>
+{
+    fn foreground_style(&self) -> impl ColorStyle<Color = Color> {
         self.inner_environment.foreground_style()
     }
 }
 
-impl<'a, T: Environment> From<&'a T> for VerticalEnvironment<'a, T> {
+impl<'a, T: LayoutEnvironment> From<&'a T> for VerticalEnvironment<'a, T> {
     fn from(environment: &'a T) -> Self {
         Self {
             inner_environment: environment,
@@ -71,7 +75,7 @@ impl<U, V> VStack<(U, V)> {
 impl<U: Layout, V: Layout> Layout for VStack<(U, V)> {
     type Sublayout = (ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>);
 
-    fn layout(&self, offer: Size, env: &impl Environment) -> ResolvedLayout<Self::Sublayout> {
+    fn layout(&self, offer: Size, env: &impl LayoutEnvironment) -> ResolvedLayout<Self::Sublayout> {
         const N: usize = 2;
         let env = &VerticalEnvironment::from(env);
         let mut c0: Option<ResolvedLayout<U::Sublayout>> = None;
@@ -108,13 +112,13 @@ impl<Pixel, U: Layout, V: Layout>
 where
     U: Render<Pixel, U::Sublayout>,
     V: Render<Pixel, V::Sublayout>,
-    Pixel: RenderUnit,
+    Pixel: ColorValue,
 {
     fn render(
         &self,
         target: &mut impl RenderTarget<Pixel>,
         layout: &ResolvedLayout<(ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>)>,
-        env: &impl Environment,
+        env: &impl RenderEnvironment<Pixel>,
     ) {
         let env = &VerticalEnvironment::from(env);
 
@@ -166,7 +170,7 @@ impl<U: Layout, V: Layout, W: Layout> Layout for VStack<(U, V, W)> {
         ResolvedLayout<W::Sublayout>,
     );
 
-    fn layout(&self, offer: Size, env: &impl Environment) -> ResolvedLayout<Self::Sublayout> {
+    fn layout(&self, offer: Size, env: &impl LayoutEnvironment) -> ResolvedLayout<Self::Sublayout> {
         const N: usize = 3;
         let env = &VerticalEnvironment::from(env);
 
@@ -220,7 +224,7 @@ where
     U: Render<Pixel, U::Sublayout>,
     V: Render<Pixel, V::Sublayout>,
     W: Render<Pixel, W::Sublayout>,
-    Pixel: RenderUnit,
+    Pixel: ColorValue,
 {
     fn render(
         &self,
@@ -230,7 +234,7 @@ where
             ResolvedLayout<V::Sublayout>,
             ResolvedLayout<W::Sublayout>,
         )>,
-        env: &impl Environment,
+        env: &impl RenderEnvironment<Pixel>,
     ) {
         let env = &VerticalEnvironment::from(env);
 

@@ -1,3 +1,4 @@
+use buoyant::pixel::CrosstermColorSymbol;
 use buoyant::view::ViewExtensions;
 use buoyant::{
     environment::DefaultEnvironment,
@@ -10,7 +11,6 @@ use buoyant::{
     view::{Divider, HStack, HorizontalTextAlignment, Rectangle, Spacer, Text, VStack, ZStack},
 };
 use crossterm::event::{read, Event};
-use rgb::RGB8;
 
 fn main() {
     let mut target = CrosstermRenderTarget::default();
@@ -20,7 +20,7 @@ fn main() {
     let mut size = target.size();
     println!("Size {:?}", size);
 
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::new(CrosstermColorSymbol::new(' '));
     let font = TerminalChar {};
     let stack = VStack::three(
         HStack::three(
@@ -28,7 +28,11 @@ fn main() {
                 "This red text is aligned to the leading edge of its space\nThe stack however, has bottom alignment.",
                 &font,
             )
-                .multiline_text_alignment(HorizontalTextAlignment::Leading).foreground_style(RGB8::new(255, 0, 0)),
+                .multiline_text_alignment(HorizontalTextAlignment::Leading)
+                .foreground_style(
+                    CrosstermColorSymbol::new(' ')
+                        .with_foreground(crossterm::style::Color::Red)
+                ),
             Spacer::default(),
             Text::char(
                 "This text is aligned to the right, with trailing multi-line text alignment",
@@ -44,9 +48,12 @@ fn main() {
             ZStack::two(
                 Rectangle
                     .foreground_style(HorizontalGradient::new(
-                        RGB8::new(127, 255, 0),
-                        RGB8::new(20, 0, 255)
-                        )),
+                        CrosstermColorSymbol::new('#')
+                            .with_foreground(crossterm::style::Color::Rgb { r: 0, g: 255, b: 0 }),
+                        CrosstermColorSymbol::new('#')
+                            .with_foreground(crossterm::style::Color::Rgb { r: 127, g: 0, b: 255 }),
+                        )
+                    ),
                 Text::char(
                     "This is in a fixed size box",
                     &font,
@@ -58,7 +65,8 @@ fn main() {
             )
                 .multiline_text_alignment(HorizontalTextAlignment::Center)
                 .padding(2),
-            Divider::default(),
+            Divider::default()
+            .foreground_style(CrosstermColorSymbol::new(' ').with_foreground(crossterm::style::Color::DarkYellow))
         ),
     );
 

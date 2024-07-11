@@ -1,7 +1,7 @@
 use crate::{
-    environment::Environment,
+    environment::{LayoutEnvironment, RenderEnvironment},
     layout::{HorizontalAlignment, Layout, ResolvedLayout, VerticalAlignment},
-    pixel::RenderUnit,
+    pixel::ColorValue,
     primitives::{Point, Size},
     render::Render,
     render_target::RenderTarget,
@@ -49,7 +49,7 @@ impl<U, V> ZStack<(U, V)> {
 impl<U: Layout, V: Layout> Layout for ZStack<(U, V)> {
     type Sublayout = (ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>);
 
-    fn layout(&self, offer: Size, env: &impl Environment) -> ResolvedLayout<Self::Sublayout> {
+    fn layout(&self, offer: Size, env: &impl LayoutEnvironment) -> ResolvedLayout<Self::Sublayout> {
         let layout0 = self.items.0.layout(offer, env);
         let layout1 = self.items.1.layout(offer, env);
         let size = layout0.resolved_size.union(layout1.resolved_size);
@@ -66,13 +66,13 @@ impl<Pixel, U: Layout, V: Layout>
 where
     U: Render<Pixel, U::Sublayout>,
     V: Render<Pixel, V::Sublayout>,
-    Pixel: RenderUnit,
+    Pixel: ColorValue,
 {
     fn render(
         &self,
         target: &mut impl RenderTarget<Pixel>,
         layout: &ResolvedLayout<(ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>)>,
-        env: &impl Environment,
+        env: &impl RenderEnvironment<Pixel>,
     ) {
         let original_window = target.window();
 

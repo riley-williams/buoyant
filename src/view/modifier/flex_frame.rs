@@ -1,7 +1,7 @@
 use crate::{
-    environment::Environment,
+    environment::{LayoutEnvironment, RenderEnvironment},
     layout::{HorizontalAlignment, Layout, ResolvedLayout, VerticalAlignment},
-    pixel::RenderUnit,
+    pixel::ColorValue,
     primitives::{Point, Size},
     render::Render,
     render_target::RenderTarget,
@@ -53,7 +53,7 @@ impl<T> PartialEq for FlexFrame<T> {
 impl<V: Layout> Layout for FlexFrame<V> {
     type Sublayout = ResolvedLayout<V::Sublayout>;
 
-    fn layout(&self, offer: Size, env: &impl Environment) -> ResolvedLayout<Self::Sublayout> {
+    fn layout(&self, offer: Size, env: &impl LayoutEnvironment) -> ResolvedLayout<Self::Sublayout> {
         let min_width = self.min_width.unwrap_or(0);
         let max_width = self.max_width.unwrap_or(offer.width);
         let min_height = self.min_height.unwrap_or(0);
@@ -65,22 +65,18 @@ impl<V: Layout> Layout for FlexFrame<V> {
         );
         let child_layout = self.child.layout(modified_offer, env);
 
-        // clamp the child layout size to the min/max constraints
-        let max_width = self.max_width.unwrap_or(child_layout.resolved_size.width);
-        let max_height = self.max_height.unwrap_or(child_layout.resolved_size.height);
+        let width = self
+            .max_width
+            .unwrap_or(child_layout.resolved_size.width)
+            .min(offer.width)
+            .max(self.min_width.unwrap_or(child_layout.resolved_size.width));
+        let height = self
+            .max_height
+            .unwrap_or(child_layout.resolved_size.height)
+            .min(offer.height)
+            .max(self.min_height.unwrap_or(child_layout.resolved_size.height));
 
-        let resolved_size = Size::new(
-            child_layout
-                .resolved_size
-                .width
-                .min(max_width)
-                .max(min_width),
-            child_layout
-                .resolved_size
-                .height
-                .min(max_height)
-                .max(min_height),
-        );
+        let resolved_size = Size::new(width, height);
         ResolvedLayout {
             sublayouts: child_layout,
             resolved_size,
@@ -91,13 +87,13 @@ impl<V: Layout> Layout for FlexFrame<V> {
 impl<Pixel, View: Layout> Render<Pixel, ResolvedLayout<View::Sublayout>> for FlexFrame<View>
 where
     View: Render<Pixel, View::Sublayout>,
-    Pixel: RenderUnit,
+    Pixel: ColorValue,
 {
     fn render(
         &self,
         target: &mut impl RenderTarget<Pixel>,
         layout: &ResolvedLayout<ResolvedLayout<View::Sublayout>>,
-        env: &impl Environment,
+        env: &impl RenderEnvironment<Pixel>,
     ) {
         let original_window = target.window();
         target.set_window_origin(

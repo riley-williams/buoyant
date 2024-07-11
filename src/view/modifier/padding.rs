@@ -1,7 +1,7 @@
 use crate::{
-    environment::Environment,
+    environment::{LayoutEnvironment, RenderEnvironment},
     layout::{Layout, ResolvedLayout},
-    pixel::RenderUnit,
+    pixel::ColorValue,
     primitives::{Point, Size},
     render::Render,
     render_target::RenderTarget,
@@ -30,7 +30,7 @@ impl<T> PartialEq for Padding<T> {
 impl<V: Layout> Layout for Padding<V> {
     type Sublayout = ResolvedLayout<V::Sublayout>;
 
-    fn layout(&self, offer: Size, env: &impl Environment) -> ResolvedLayout<Self::Sublayout> {
+    fn layout(&self, offer: Size, env: &impl LayoutEnvironment) -> ResolvedLayout<Self::Sublayout> {
         let padded_offer = Size::new(
             offer.width.saturating_sub(2 * self.padding),
             offer.height.saturating_sub(2 * self.padding),
@@ -48,13 +48,13 @@ impl<V: Layout> Layout for Padding<V> {
 impl<Pixel, View: Layout> Render<Pixel, ResolvedLayout<View::Sublayout>> for Padding<View>
 where
     View: Render<Pixel, View::Sublayout>,
-    Pixel: RenderUnit,
+    Pixel: ColorValue,
 {
     fn render(
         &self,
         target: &mut impl RenderTarget<Pixel>,
         layout: &ResolvedLayout<ResolvedLayout<View::Sublayout>>,
-        env: &impl Environment,
+        env: &impl RenderEnvironment<Pixel>,
     ) {
         let original_window = target.window();
         target.set_window_origin(

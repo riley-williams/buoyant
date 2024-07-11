@@ -1,7 +1,8 @@
 use crate::{
-    environment::Environment,
+    environment::{LayoutEnvironment, RenderEnvironment},
     font::CharacterFont,
     layout::{Layout, ResolvedLayout},
+    pixel::CrosstermColorSymbol,
     primitives::{Point, Size},
     render::Render,
     render_target::RenderTarget,
@@ -32,10 +33,12 @@ impl<'a, F> PartialEq for Text<'a, F> {
     }
 }
 
+// TODO: consolidate the layout implementations
+
 impl<'a, F: CharacterFont> Layout for Text<'a, F> {
     type Sublayout = ();
 
-    fn layout(&self, offer: Size, _env: &impl Environment) -> ResolvedLayout<()> {
+    fn layout(&self, offer: Size, _env: &impl LayoutEnvironment) -> ResolvedLayout<()> {
         if offer.area() == 0 {
             return ResolvedLayout {
                 sublayouts: (),
@@ -131,7 +134,7 @@ impl<'a, F: CharacterFont> Render<char, ()> for Text<'a, F> {
         &self,
         target: &mut impl RenderTarget<char>,
         layout: &ResolvedLayout<()>,
-        _env: &impl Environment,
+        _env: &impl RenderEnvironment<char>,
     ) {
         if layout.resolved_size.area() == 0 {
             return;
@@ -228,15 +231,12 @@ impl<'a, F: CharacterFont> Render<char, ()> for Text<'a, F> {
 use crate::style::color_style::ColorStyle;
 
 #[cfg(feature = "crossterm")]
-use crossterm::style::{StyledContent, Stylize};
-
-#[cfg(feature = "crossterm")]
-impl<'a, F: CharacterFont> Render<StyledContent<&'a str>, ()> for Text<'a, F> {
+impl<'a, F: CharacterFont> Render<CrosstermColorSymbol, ()> for Text<'a, F> {
     fn render(
         &self,
-        target: &mut impl RenderTarget<StyledContent<&'a str>>,
+        target: &mut impl RenderTarget<CrosstermColorSymbol>,
         layout: &ResolvedLayout<()>,
-        env: &impl Environment,
+        env: &impl RenderEnvironment<CrosstermColorSymbol>,
     ) {
         if layout.resolved_size.area() == 0 {
             return;
@@ -315,16 +315,18 @@ impl<'a, F: CharacterFont> Render<StyledContent<&'a str>, ()> for Text<'a, F> {
                 .alignment
                 .align(layout.resolved_size.width as i16, whole_width_points as i16);
 
-            let foreground_color = env.foreground_style().shade_pixel(0, 0, Size::new(0, 0));
-            let color = crossterm::style::Color::Rgb {
-                r: foreground_color.r,
-                g: foreground_color.g,
-                b: foreground_color.b,
-            };
-            target.draw(
-                Point::new(x, consumed_height as i16),
-                remaining_slice[..last_renderable_index].with(color),
-            );
+            for (i, character) in remaining_slice[..last_renderable_index].chars().enumerate() {
+                let x = x + i as i16;
+                let mut foreground_color = env.foreground_style().shade_pixel(
+                    x as u16,
+                    consumed_height,
+                    layout.resolved_size,
+                );
+
+                foreground_color.character = character;
+
+                target.draw(Point::new(x, consumed_height as i16), foreground_color);
+            }
 
             consumed_height += 1;
 

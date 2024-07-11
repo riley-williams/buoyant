@@ -1,20 +1,29 @@
-use rgb::RGB8;
-
 use crate::{
     layout::{Alignment, LayoutDirection},
+    pixel::ColorValue,
     style::color_style::ColorStyle,
 };
 
-pub trait Environment {
+pub trait LayoutEnvironment {
     fn layout_direction(&self) -> LayoutDirection;
     fn alignment(&self) -> Alignment;
-
-    fn foreground_style(&self) -> impl ColorStyle;
 }
 
-pub struct DefaultEnvironment;
+pub trait RenderEnvironment<C: ColorValue>: LayoutEnvironment {
+    fn foreground_style(&self) -> impl ColorStyle<Color = C>;
+}
 
-impl Environment for DefaultEnvironment {
+pub struct DefaultEnvironment<Color: ColorValue> {
+    foreground_color: Color,
+}
+
+impl<Color: ColorValue> DefaultEnvironment<Color> {
+    pub fn new(foreground_color: Color) -> Self {
+        Self { foreground_color }
+    }
+}
+
+impl<Color: ColorValue> LayoutEnvironment for DefaultEnvironment<Color> {
     fn layout_direction(&self) -> LayoutDirection {
         LayoutDirection::default()
     }
@@ -22,27 +31,27 @@ impl Environment for DefaultEnvironment {
     fn alignment(&self) -> Alignment {
         Alignment::default()
     }
+}
 
-    fn foreground_style(&self) -> impl ColorStyle {
-        RGB8::new(255, 255, 255)
+impl<C: ColorValue> RenderEnvironment<C> for DefaultEnvironment<C> {
+    fn foreground_style(&self) -> impl ColorStyle<Color = C> {
+        self.foreground_color
     }
 }
 
 #[cfg(test)]
 pub(crate) mod mock {
-    use rgb::RGB8;
-
     use crate::style::color_style::ColorStyle;
 
     use super::*;
 
-    pub struct TestEnv {
+    pub struct TestEnv<Color: ColorValue> {
         pub direction: LayoutDirection,
         pub alignment: Alignment,
-        pub foreground_style: RGB8,
+        pub foreground_style: Color,
     }
 
-    impl Environment for TestEnv {
+    impl<Color: ColorValue> LayoutEnvironment for TestEnv<Color> {
         fn layout_direction(&self) -> LayoutDirection {
             self.direction
         }
@@ -50,23 +59,25 @@ pub(crate) mod mock {
         fn alignment(&self) -> Alignment {
             self.alignment
         }
+    }
 
-        fn foreground_style(&self) -> impl ColorStyle {
+    impl<Color: ColorValue> RenderEnvironment<Color> for TestEnv<Color> {
+        fn foreground_style(&self) -> impl ColorStyle<Color = Color> {
             self.foreground_style
         }
     }
 
-    impl Default for TestEnv {
+    impl<C: ColorValue + Default> Default for TestEnv<C> {
         fn default() -> Self {
             Self {
                 direction: LayoutDirection::Horizontal,
                 alignment: Alignment::default(),
-                foreground_style: RGB8::new(255, 255, 255),
+                foreground_style: C::default(),
             }
         }
     }
 
-    impl TestEnv {
+    impl<C: ColorValue> TestEnv<C> {
         pub fn with_direction(mut self, direction: LayoutDirection) -> Self {
             self.direction = direction;
             self

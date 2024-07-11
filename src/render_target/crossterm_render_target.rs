@@ -1,4 +1,3 @@
-use crossterm::style::StyledContent;
 use crossterm::{
     cursor, execute, style,
     terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
@@ -8,6 +7,7 @@ use crossterm::{
 #[cfg(feature = "std")]
 use std::io::{stdout, Stdout, Write};
 
+use crate::pixel::CrosstermColorSymbol;
 use crate::primitives::{Frame, Point, Size};
 
 use super::RenderTarget;
@@ -52,7 +52,7 @@ impl Drop for CrosstermRenderTarget {
     }
 }
 
-impl RenderTarget<StyledContent<&'_ str>> for CrosstermRenderTarget {
+impl RenderTarget<CrosstermColorSymbol> for CrosstermRenderTarget {
     fn size(&self) -> Size {
         crossterm::terminal::size()
             .map(|(w, h)| Size::new(w, h))
@@ -66,12 +66,12 @@ impl RenderTarget<StyledContent<&'_ str>> for CrosstermRenderTarget {
             .unwrap();
     }
 
-    fn draw(&mut self, point: crate::primitives::Point, item: StyledContent<&'_ str>) {
+    fn draw(&mut self, point: crate::primitives::Point, item: CrosstermColorSymbol) {
         let draw_point = point + self.window.origin;
         self.stdout
             .queue(cursor::MoveTo(draw_point.x as u16, draw_point.y as u16))
             .unwrap()
-            .queue(style::PrintStyledContent(item))
+            .queue(style::PrintStyledContent(item.into()))
             .unwrap();
     }
 
