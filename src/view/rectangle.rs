@@ -60,10 +60,9 @@ impl Render<crate::pixel::CrosstermColorSymbol, ()> for Rectangle {
         let height = layout.resolved_size.height;
         for y in 0..height {
             for x in 0..width {
-                let mut foreground_color =
+                let foreground_color =
                     env.foreground_style()
                         .shade_pixel(x, y, layout.resolved_size);
-                foreground_color.character = '#';
                 target.draw(Point::new(x as i16, y as i16), foreground_color);
             }
         }

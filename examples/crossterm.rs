@@ -49,9 +49,11 @@ fn main() {
                 Rectangle
                     .foreground_style(HorizontalGradient::new(
                         CrosstermColorSymbol::new('#')
-                            .with_foreground(crossterm::style::Color::Rgb { r: 0, g: 255, b: 0 }),
-                        CrosstermColorSymbol::new('#')
-                            .with_foreground(crossterm::style::Color::Rgb { r: 127, g: 0, b: 255 }),
+                            .with_foreground(crossterm::style::Color::Rgb { r: 0, g: 255, b: 0 })
+                            .with_background(crossterm::style::Color::Rgb { r: 127, g: 0, b: 0 }),
+                        CrosstermColorSymbol::new('@')
+                            .with_foreground(crossterm::style::Color::Rgb { r: 127, g: 0, b: 255 })
+                            .with_background(crossterm::style::Color::Rgb { r: 0, g: 0, b: 127 }),
                         )
                     ),
                 Text::char(
@@ -72,6 +74,12 @@ fn main() {
 
     println!("View size {}", std::mem::size_of_val(&stack));
     println!("Env size {}", std::mem::size_of_val(&env));
+
+    let layout = stack.layout(target.size(), &env);
+    stack.render(&mut target, &layout, &env);
+
+    target.flush();
+
     loop {
         // `read()` blocks until an `Event` is available
         match read().unwrap() {
@@ -85,7 +93,6 @@ fn main() {
             Event::Mouse(_) => (),
             Event::Resize(width, height) => {
                 target.clear();
-                target.flush();
                 size = Size::new(width, height);
                 let layout = stack.layout(size, &env);
                 stack.render(&mut target, &layout, &env);
