@@ -1,7 +1,7 @@
 use embedded_graphics::{draw_target::DrawTarget, primitives::Rectangle};
 
 use crate::{
-    pixel::RenderUnit,
+    pixel::ColorValue,
     primitives::{Frame, Point, Size},
 };
 
@@ -15,7 +15,7 @@ pub struct EmbeddedDisplayRenderTarget<D> {
 impl<D, Pixel> RenderTarget<Pixel> for EmbeddedDisplayRenderTarget<D>
 where
     D: DrawTarget<Color = Pixel>,
-    Pixel: RenderUnit,
+    Pixel: ColorValue,
 {
     fn size(&self) -> Size {
         self.window.size

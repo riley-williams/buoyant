@@ -12,7 +12,7 @@ mod fixed_text_buffer;
 pub use fixed_text_buffer::FixedTextBuffer;
 
 use crate::{
-    pixel::RenderUnit,
+    pixel::ColorValue,
     primitives::{Frame, Point, Size},
 };
 
@@ -28,7 +28,7 @@ use crate::{
 /// Render for your target Pixel type.
 pub trait RenderTarget<Pixel>
 where
-    Pixel: RenderUnit,
+    Pixel: ColorValue,
 {
     /// The size of the render target
     fn size(&self) -> Size;

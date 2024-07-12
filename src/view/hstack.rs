@@ -1,9 +1,9 @@
 use core::cmp::{max, min};
 
 use crate::{
-    environment::Environment,
+    environment::{LayoutEnvironment, RenderEnvironment},
     layout::{Layout, LayoutDirection, ResolvedLayout, VerticalAlignment},
-    pixel::RenderUnit,
+    pixel::ColorValue,
     primitives::{Point, Size},
     render::Render,
     render_target::RenderTarget,
@@ -22,20 +22,24 @@ struct HorizontalEnvironment<'a, T> {
 
 // TODO: NOT a sustainable pattern, considering the defaults set on the environment.
 // Maybe this is one reason why Apple uses the roundabout EnvironmentKey?
-impl<T: Environment> Environment for HorizontalEnvironment<'_, T> {
+impl<T: LayoutEnvironment> LayoutEnvironment for HorizontalEnvironment<'_, T> {
     fn alignment(&self) -> crate::layout::Alignment {
         self.inner_environment.alignment()
     }
     fn layout_direction(&self) -> LayoutDirection {
         LayoutDirection::Horizontal
     }
+}
 
-    fn foreground_style(&self) -> impl ColorStyle {
+impl<Color: ColorValue, T: RenderEnvironment<Color>> RenderEnvironment<Color>
+    for HorizontalEnvironment<'_, T>
+{
+    fn foreground_style(&self) -> impl ColorStyle<Color = Color> {
         self.inner_environment.foreground_style()
     }
 }
 
-impl<'a, T: Environment> From<&'a T> for HorizontalEnvironment<'a, T> {
+impl<'a, T: LayoutEnvironment> From<&'a T> for HorizontalEnvironment<'a, T> {
     fn from(environment: &'a T) -> Self {
         Self {
             inner_environment: environment,
@@ -72,7 +76,7 @@ impl<U, V> HStack<(U, V)> {
 impl<U: Layout, V: Layout> Layout for HStack<(U, V)> {
     type Sublayout = (ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>);
 
-    fn layout(&self, offer: Size, env: &impl Environment) -> ResolvedLayout<Self::Sublayout> {
+    fn layout(&self, offer: Size, env: &impl LayoutEnvironment) -> ResolvedLayout<Self::Sublayout> {
         const N: usize = 2;
         let mut c0: Option<ResolvedLayout<U::Sublayout>> = None;
         let mut c1: Option<ResolvedLayout<V::Sublayout>> = None;
@@ -110,13 +114,13 @@ impl<Pixel, U: Layout, V: Layout>
 where
     U: Render<Pixel, U::Sublayout>,
     V: Render<Pixel, V::Sublayout>,
-    Pixel: RenderUnit,
+    Pixel: ColorValue,
 {
     fn render(
         &self,
         target: &mut impl RenderTarget<Pixel>,
         layout: &ResolvedLayout<(ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>)>,
-        env: &impl Environment,
+        env: &impl RenderEnvironment<Pixel>,
     ) {
         let env = HorizontalEnvironment::from(env);
         let original_window = target.window();
@@ -165,7 +169,7 @@ impl<U: Layout, V: Layout, W: Layout> Layout for HStack<(U, V, W)> {
         ResolvedLayout<W::Sublayout>,
     );
 
-    fn layout(&self, offer: Size, env: &impl Environment) -> ResolvedLayout<Self::Sublayout> {
+    fn layout(&self, offer: Size, env: &impl LayoutEnvironment) -> ResolvedLayout<Self::Sublayout> {
         const N: usize = 3;
         let mut c0: Option<ResolvedLayout<U::Sublayout>> = None;
         let mut c1: Option<ResolvedLayout<V::Sublayout>> = None;
@@ -219,7 +223,7 @@ where
     U: Render<Pixel, U::Sublayout>,
     V: Render<Pixel, V::Sublayout>,
     W: Render<Pixel, W::Sublayout>,
-    Pixel: RenderUnit,
+    Pixel: ColorValue,
 {
     fn render(
         &self,
@@ -229,7 +233,7 @@ where
             ResolvedLayout<V::Sublayout>,
             ResolvedLayout<W::Sublayout>,
         )>,
-        env: &impl Environment,
+        env: &impl RenderEnvironment<Pixel>,
     ) {
         let env = HorizontalEnvironment::from(env);
         let original_window = target.window();

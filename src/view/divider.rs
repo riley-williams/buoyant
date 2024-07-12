@@ -1,5 +1,5 @@
 use crate::{
-    environment::Environment,
+    environment::{LayoutEnvironment, RenderEnvironment},
     layout::{Layout, LayoutDirection, ResolvedLayout},
     primitives::{Point, Size},
     render::Render,
@@ -30,7 +30,7 @@ impl PartialEq for Divider {
 
 impl Layout for Divider {
     type Sublayout = ();
-    fn layout(&self, offer: Size, env: &impl Environment) -> ResolvedLayout<()> {
+    fn layout(&self, offer: Size, env: &impl LayoutEnvironment) -> ResolvedLayout<()> {
         let size = match env.layout_direction() {
             LayoutDirection::Horizontal => Size::new(self.weight, offer.height),
             LayoutDirection::Vertical => Size::new(offer.width, self.weight),
@@ -51,7 +51,7 @@ impl Render<char, ()> for Divider {
         &self,
         target: &mut impl RenderTarget<char>,
         layout: &ResolvedLayout<()>,
-        env: &impl Environment,
+        env: &impl RenderEnvironment<char>,
     ) {
         match env.layout_direction() {
             LayoutDirection::Horizontal => {
@@ -69,35 +69,30 @@ impl Render<char, ()> for Divider {
 }
 
 #[cfg(feature = "crossterm")]
-use crossterm::style::{StyledContent, Stylize};
+use crate::{pixel::CrosstermColorSymbol, style::color_style::ColorStyle};
 
 #[cfg(feature = "crossterm")]
-use crate::style::color_style::ColorStyle;
-
-#[cfg(feature = "crossterm")]
-impl<'a> Render<StyledContent<&'a str>, ()> for Divider {
+impl Render<CrosstermColorSymbol, ()> for Divider {
     fn render(
         &self,
-        target: &mut impl RenderTarget<StyledContent<&'a str>>,
+        target: &mut impl RenderTarget<CrosstermColorSymbol>,
         layout: &ResolvedLayout<()>,
-        env: &impl Environment,
+        env: &impl RenderEnvironment<CrosstermColorSymbol>,
     ) {
-        let foreground_color = env.foreground_style().shade_pixel(0, 0, Size::new(0, 0));
-        let color = crossterm::style::Color::Rgb {
-            r: foreground_color.r,
-            g: foreground_color.g,
-            b: foreground_color.b,
-        };
+        // TODO: we can make this rainbow
+        let mut color = env.foreground_style().shade_pixel(0, 0, Size::new(0, 0));
 
         match env.layout_direction() {
             LayoutDirection::Horizontal => {
+                color.character = '|';
                 for y in 0..layout.resolved_size.height {
-                    target.draw(Point::new(0, y as i16), "|".with(color));
+                    target.draw(Point::new(0, y as i16), color);
                 }
             }
             LayoutDirection::Vertical => {
+                color.character = '-';
                 for x in 0..layout.resolved_size.width {
-                    target.draw(Point::new(x as i16, 0), "-".with(color));
+                    target.draw(Point::new(x as i16, 0), color);
                 }
             }
         }
@@ -116,7 +111,7 @@ mod tests {
     fn test_horizontal_layout() {
         let divider = Divider::new(2);
         let offer = Size::new(100, 100);
-        let env = TestEnv::default().with_direction(LayoutDirection::Horizontal);
+        let env = TestEnv::<char>::default().with_direction(LayoutDirection::Horizontal);
         let layout = divider.layout(offer, &env);
         assert_eq!(layout.resolved_size, Size::new(2, 100));
     }
@@ -125,7 +120,7 @@ mod tests {
     fn test_vertical_layout() {
         let divider = Divider::new(2);
         let offer = Size::new(100, 100);
-        let env = TestEnv::default().with_direction(LayoutDirection::Vertical);
+        let env = TestEnv::<char>::default().with_direction(LayoutDirection::Vertical);
         let layout = divider.layout(offer, &env);
         assert_eq!(layout.resolved_size, Size::new(100, 2));
     }

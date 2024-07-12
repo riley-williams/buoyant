@@ -1,5 +1,5 @@
 use buoyant::{
-    environment::Environment,
+    environment::{LayoutEnvironment, RenderEnvironment},
     layout::{Alignment, LayoutDirection},
     style::color_style::ColorStyle,
 };
@@ -7,10 +7,10 @@ use buoyant::{
 pub struct TestEnv {
     pub direction: LayoutDirection,
     pub alignment: Alignment,
-    pub foreground_style: rgb::RGB8,
+    pub foreground_style: char,
 }
 
-impl Environment for TestEnv {
+impl LayoutEnvironment for TestEnv {
     fn layout_direction(&self) -> LayoutDirection {
         self.direction
     }
@@ -18,8 +18,10 @@ impl Environment for TestEnv {
     fn alignment(&self) -> Alignment {
         self.alignment
     }
+}
 
-    fn foreground_style(&self) -> impl ColorStyle {
+impl RenderEnvironment<char> for TestEnv {
+    fn foreground_style(&self) -> impl ColorStyle<Color = char> {
         self.foreground_style
     }
 }
@@ -29,7 +31,7 @@ impl Default for TestEnv {
         Self {
             direction: LayoutDirection::Horizontal,
             alignment: Alignment::default(),
-            foreground_style: rgb::RGB8::new(255, 255, 255),
+            foreground_style: ' ',
         }
     }
 }

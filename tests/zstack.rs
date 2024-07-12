@@ -10,7 +10,7 @@ use buoyant::view::{Divider, Spacer, Text, ViewExtensions, ZStack};
 fn test_layout_fills_two() {
     let stack = ZStack::two(Spacer::default(), Divider::default());
     let offer = Size::new(100, 42);
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::new(' ');
     let layout = stack.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(100, 42));
 }
@@ -19,7 +19,7 @@ fn test_layout_fills_two() {
 fn test_oversized_layout_2() {
     let stack = ZStack::two(Divider::default().padding(2), Spacer::default());
     let offer = Size::new(0, 10);
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::new(' ');
     let layout = stack.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(0, 10));
 }
@@ -28,7 +28,7 @@ fn test_oversized_layout_2() {
 fn test_render_two_centered_overlap() {
     let font = TerminalChar {};
     let stack = ZStack::two(Text::char("aa\nbb\ncc", &font), Text::char("test", &font));
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::new(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = stack.layout(buffer.size(), &env);
     stack.render(&mut buffer, &layout, &env);
@@ -43,7 +43,7 @@ fn test_render_two_centered_overlap() {
 fn test_render_two_centered() {
     let font = TerminalChar {};
     let stack = ZStack::two(Text::char("test", &font), Text::char("aa\nbb\ncc", &font));
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::new(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = stack.layout(buffer.size(), &env);
     stack.render(&mut buffer, &layout, &env);
@@ -62,7 +62,7 @@ fn test_render_two_top_center_alignment() {
         Text::char("xxx", &font),
     )
     .vertical_alignment(VerticalAlignment::Top);
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::new(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = stack.layout(buffer.size(), &env);
     stack.render(&mut buffer, &layout, &env);
@@ -82,7 +82,7 @@ fn test_render_two_top_leading_alignment() {
     )
     .vertical_alignment(VerticalAlignment::Top)
     .horizontal_alignment(HorizontalAlignment::Leading);
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::new(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = stack.layout(buffer.size(), &env);
     stack.render(&mut buffer, &layout, &env);
@@ -102,7 +102,7 @@ fn test_render_two_top_trailing_alignment() {
     )
     .vertical_alignment(VerticalAlignment::Top)
     .horizontal_alignment(HorizontalAlignment::Trailing);
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::new(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = stack.layout(buffer.size(), &env);
     stack.render(&mut buffer, &layout, &env);
@@ -121,7 +121,7 @@ fn test_render_two_center_leading_alignment() {
         Text::char("xxx", &font),
     )
     .horizontal_alignment(HorizontalAlignment::Leading);
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::new(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = stack.layout(buffer.size(), &env);
     stack.render(&mut buffer, &layout, &env);
@@ -140,7 +140,7 @@ fn test_render_two_center_trailing_alignment() {
         Text::char("xxx", &font),
     )
     .horizontal_alignment(HorizontalAlignment::Trailing);
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::new(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = stack.layout(buffer.size(), &env);
     stack.render(&mut buffer, &layout, &env);
@@ -160,7 +160,7 @@ fn test_render_two_bottom_leading_alignment() {
     )
     .vertical_alignment(VerticalAlignment::Bottom)
     .horizontal_alignment(HorizontalAlignment::Leading);
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::new(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = stack.layout(buffer.size(), &env);
     stack.render(&mut buffer, &layout, &env);
@@ -179,7 +179,7 @@ fn test_render_two_bottom_center_alignment() {
         Text::char("xxx", &font),
     )
     .vertical_alignment(VerticalAlignment::Bottom);
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::new(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = stack.layout(buffer.size(), &env);
     stack.render(&mut buffer, &layout, &env);
@@ -199,7 +199,7 @@ fn test_render_two_bottom_trailing_alignment() {
     )
     .vertical_alignment(VerticalAlignment::Bottom)
     .horizontal_alignment(HorizontalAlignment::Trailing);
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::new(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = stack.layout(buffer.size(), &env);
     stack.render(&mut buffer, &layout, &env);
