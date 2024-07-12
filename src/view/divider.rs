@@ -1,7 +1,6 @@
 use crate::{
     environment::{LayoutEnvironment, RenderEnvironment},
     layout::{Layout, LayoutDirection, ResolvedLayout},
-    pixel::CrosstermColorSymbol,
     primitives::{Point, Size},
     render::Render,
     render_target::RenderTarget,
@@ -70,7 +69,7 @@ impl Render<char, ()> for Divider {
 }
 
 #[cfg(feature = "crossterm")]
-use crate::style::color_style::ColorStyle;
+use crate::{pixel::CrosstermColorSymbol, style::color_style::ColorStyle};
 
 #[cfg(feature = "crossterm")]
 impl Render<CrosstermColorSymbol, ()> for Divider {

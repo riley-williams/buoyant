@@ -2,7 +2,6 @@ use crate::{
     environment::{LayoutEnvironment, RenderEnvironment},
     font::CharacterFont,
     layout::{Layout, ResolvedLayout},
-    pixel::CrosstermColorSymbol,
     primitives::{Point, Size},
     render::Render,
     render_target::RenderTarget,
@@ -228,7 +227,7 @@ impl<'a, F: CharacterFont> Render<char, ()> for Text<'a, F> {
 }
 
 #[cfg(feature = "crossterm")]
-use crate::style::color_style::ColorStyle;
+use crate::{pixel::CrosstermColorSymbol, style::color_style::ColorStyle};
 
 #[cfg(feature = "crossterm")]
 impl<'a, F: CharacterFont> Render<CrosstermColorSymbol, ()> for Text<'a, F> {
