@@ -89,8 +89,10 @@ impl ColorValue for CrosstermColorSymbol {
 fn interpolate_crossterm_colors(
     from: Option<crossterm::style::Color>,
     to: Option<crossterm::style::Color>,
-    amount: f32,
+    mut amount: f32,
 ) -> Option<crossterm::style::Color> {
+    amount = amount.clamp(0.0, 1.0);
+    let inverse_amount = 1.0 - amount;
     match (from, to) {
         (
             Some(crossterm::style::Color::Rgb {
@@ -104,9 +106,9 @@ fn interpolate_crossterm_colors(
                 b: b2,
             }),
         ) => Some(crossterm::style::Color::Rgb {
-            r: (r1 as f32 + (r2 as f32 - r1 as f32) * amount).round() as u8,
-            g: (g1 as f32 + (g2 as f32 - g1 as f32) * amount).round() as u8,
-            b: (b1 as f32 + (b2 as f32 - b1 as f32) * amount).round() as u8,
+            r: (r1 as f32 * inverse_amount + r2 as f32 * amount) as u8,
+            g: (g1 as f32 * inverse_amount + g2 as f32 * amount) as u8,
+            b: (b1 as f32 * inverse_amount + b2 as f32 * amount) as u8,
         }),
         (Some(c1), Some(c2)) => {
             if amount < 0.5 {
@@ -122,10 +124,12 @@ fn interpolate_crossterm_colors(
 }
 
 impl ColorValue for rgb::RGB8 {
-    fn interpolate(from: Self, to: Self, amount: f32) -> Self {
-        let r = (from.r as f32 + (to.r as f32 - from.r as f32) * amount).round() as u8;
-        let g = (from.g as f32 + (to.g as f32 - from.g as f32) * amount).round() as u8;
-        let b = (from.b as f32 + (to.b as f32 - from.b as f32) * amount).round() as u8;
+    fn interpolate(from: Self, to: Self, mut amount: f32) -> Self {
+        amount = amount.clamp(0.0, 1.0);
+        let inverse_amount = 1.0 - amount;
+        let r = (from.r as f32 * inverse_amount + to.r as f32 * amount) as u8;
+        let g = (from.g as f32 * inverse_amount + to.g as f32 * amount) as u8;
+        let b = (from.b as f32 * inverse_amount + to.b as f32 * amount) as u8;
         rgb::RGB8 { r, g, b }
     }
 }
