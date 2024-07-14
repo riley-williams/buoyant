@@ -5,6 +5,7 @@ use crate::{
     primitives::{Point, Size},
     render::Render,
     render_target::RenderTarget,
+    style::color_style::ColorStyle,
 };
 
 pub struct Divider {
@@ -106,7 +107,7 @@ impl Render<char, ()> for Divider {
 }
 
 #[cfg(feature = "crossterm")]
-use crate::{pixel::CrosstermColorSymbol, style::color_style::ColorStyle};
+use crate::pixel::CrosstermColorSymbol;
 
 #[cfg(feature = "crossterm")]
 impl Render<CrosstermColorSymbol, ()> for Divider {
