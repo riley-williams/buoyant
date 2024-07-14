@@ -144,3 +144,18 @@ impl ColorValue for embedded_graphics::pixelcolor::BinaryColor {
         }
     }
 }
+
+#[cfg(feature = "embedded-graphics")]
+use embedded_graphics::pixelcolor::RgbColor;
+
+#[cfg(feature = "embedded-graphics")]
+impl ColorValue for embedded_graphics::pixelcolor::Rgb565 {
+    fn interpolate(from: Self, to: Self, mut amount: f32) -> Self {
+        amount = amount.clamp(0.0, 1.0);
+        let inverse_amount = 1.0 - amount;
+        let r = (from.r() as f32 * inverse_amount + to.r() as f32 * amount) as u8;
+        let g = (from.g() as f32 * inverse_amount + to.g() as f32 * amount) as u8;
+        let b = (from.b() as f32 * inverse_amount + to.b() as f32 * amount) as u8;
+        embedded_graphics::pixelcolor::Rgb565::new(r, g, b)
+    }
+}
