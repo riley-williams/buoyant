@@ -4,7 +4,7 @@ mod crossterm_render_target;
 pub use crossterm_render_target::CrosstermRenderTarget;
 
 #[cfg(feature = "embedded-graphics")]
-mod embedded_display_render_target;
+pub mod embedded_display_render_target;
 
 mod fixed_text_buffer;
 pub use fixed_text_buffer::FixedTextBuffer;
