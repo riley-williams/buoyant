@@ -3,9 +3,6 @@ mod crossterm_render_target;
 #[cfg(feature = "crossterm")]
 pub use crossterm_render_target::CrosstermRenderTarget;
 
-#[cfg(feature = "embedded-graphics")]
-pub mod embedded_display_render_target;
-
 mod fixed_text_buffer;
 pub use fixed_text_buffer::FixedTextBuffer;
 
@@ -36,4 +33,38 @@ where
 
     /// Draw a pixel to the render target
     fn draw(&mut self, point: Point, item: Pixel);
+}
+
+#[cfg(feature = "embedded-graphics")]
+use embedded_graphics::{draw_target::DrawTarget, primitives::Rectangle};
+
+#[cfg(feature = "embedded-graphics")]
+impl<D, Pixel> RenderTarget<Pixel> for D
+where
+    D: DrawTarget<Color = Pixel>,
+    Pixel: ColorValue,
+{
+    fn size(&self) -> Size {
+        self.bounding_box().size.into()
+    }
+
+    fn clear(&mut self) {
+        todo!()
+    }
+
+    fn draw(&mut self, point: Point, item: Pixel) {
+        _ = self.fill_solid(
+            &Rectangle::new(
+                embedded_graphics::geometry::Point {
+                    x: point.x as i32,
+                    y: point.y as i32,
+                },
+                embedded_graphics::geometry::Size {
+                    width: 1,
+                    height: 1,
+                },
+            ),
+            item,
+        );
+    }
 }
