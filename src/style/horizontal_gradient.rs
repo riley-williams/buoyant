@@ -8,13 +8,13 @@ pub struct HorizontalGradient<Color: ColorValue> {
     end: Color,
 }
 
-impl<Color: ColorValue + PartialEq> HorizontalGradient<Color> {
+impl<Color: ColorValue> HorizontalGradient<Color> {
     pub fn new(start: Color, end: Color) -> Self {
         Self { start, end }
     }
 }
 
-impl<C: ColorValue + PartialEq> ColorStyle for HorizontalGradient<C> {
+impl<C: ColorValue> ColorStyle for HorizontalGradient<C> {
     type Color = C;
 
     fn shade_pixel(&self, x: u16, _: u16, in_bounds: crate::primitives::Size) -> C {
