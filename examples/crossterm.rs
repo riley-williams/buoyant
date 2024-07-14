@@ -1,4 +1,5 @@
 use buoyant::pixel::CrosstermColorSymbol;
+use buoyant::primitives::Point;
 use buoyant::view::ViewExtensions;
 use buoyant::{
     environment::DefaultEnvironment,
@@ -38,11 +39,11 @@ fn main() {
                 "This text is aligned to the right, with trailing multi-line text alignment",
                 &font,
             )
-            .multiline_text_alignment(HorizontalTextAlignment::Trailing)
-            .flex_frame(Some(10), Some(35), None, None, None, None),
+                .multiline_text_alignment(HorizontalTextAlignment::Trailing)
+                .flex_frame(Some(10), Some(35), None, None, None, None),
         )
-        .spacing(1)
-        .alignment(VerticalAlignment::Bottom),
+            .spacing(1)
+            .alignment(VerticalAlignment::Bottom),
         Divider::default(),
         VStack::three(
             ZStack::two(
@@ -59,16 +60,24 @@ fn main() {
                 Text::char(
                     "This is in a fixed size box",
                     &font,
-                ).frame(Some(10), Some(10), None, None),
+                )
+                    .frame(Some(10), Some(10), None, None),
             ),
             Text::char(
-                "This is several lines of text.\nEach line is centered in the available space.\n The rectangle fills all the remaining verical space and align the content within it.\n2 points of padding are around this text",
+                "This is several lines of text.\nEach line is centered in the available space.\n The rectangle fills all the remaining verical space and aligns the content within it.\n2 points of padding are around this text",
                 &font,
             )
                 .multiline_text_alignment(HorizontalTextAlignment::Center)
+                .foreground_style(HorizontalGradient::new(
+                    CrosstermColorSymbol::new(' ')
+                        .with_foreground(crossterm::style::Color::Rgb { r: 0, g: 255, b: 255 }),
+                    CrosstermColorSymbol::new(' ')
+                        .with_foreground(crossterm::style::Color::Rgb { r: 255, g: 0, b: 255 })
+                    )
+                )
                 .padding(2),
             Divider::default()
-            .foreground_style(CrosstermColorSymbol::new(' ').with_foreground(crossterm::style::Color::DarkYellow))
+                .foreground_style(CrosstermColorSymbol::new(' ').with_foreground(crossterm::style::Color::DarkYellow))
         ),
     );
 
@@ -76,7 +85,7 @@ fn main() {
     println!("Env size {}", std::mem::size_of_val(&env));
 
     let layout = stack.layout(target.size(), &env);
-    stack.render(&mut target, &layout, &env);
+    stack.render(&mut target, &layout, Point::zero(), &env);
 
     target.flush();
 
@@ -95,7 +104,7 @@ fn main() {
                 target.clear();
                 size = Size::new(width, height);
                 let layout = stack.layout(size, &env);
-                stack.render(&mut target, &layout, &env);
+                stack.render(&mut target, &layout, Point::zero(), &env);
 
                 target.flush();
             }

@@ -2,7 +2,7 @@ use buoyant::{
     environment::DefaultEnvironment,
     font::TerminalChar,
     layout::{HorizontalAlignment, Layout, VerticalAlignment},
-    primitives::Size,
+    primitives::{Point, Size},
     render::Render,
     render_target::{FixedTextBuffer, RenderTarget},
     view::{Text, ViewExtensions},
@@ -70,7 +70,7 @@ fn test_render_frame_top_leading_alignment() {
     let env = DefaultEnvironment::new(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = content.layout(buffer.size(), &env);
-    content.render(&mut buffer, &layout, &env);
+    content.render(&mut buffer, &layout, Point::zero(), &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aa    ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "bb    ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "cc    ");
@@ -86,7 +86,7 @@ fn test_render_frame_top_center_alignment() {
     let env = DefaultEnvironment::new(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = content.layout(buffer.size(), &env);
-    content.render(&mut buffer, &layout, &env);
+    content.render(&mut buffer, &layout, Point::zero(), &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "  aa  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "  bb  ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "  cc  ");
@@ -106,7 +106,7 @@ fn test_render_frame_top_trailing_alignment() {
     let env = DefaultEnvironment::new(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = content.layout(buffer.size(), &env);
-    content.render(&mut buffer, &layout, &env);
+    content.render(&mut buffer, &layout, Point::zero(), &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "    aa");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "    bb");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "    cc");
@@ -126,7 +126,7 @@ fn test_render_frame_center_leading_alignment() {
     let env = DefaultEnvironment::new(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = content.layout(buffer.size(), &env);
-    content.render(&mut buffer, &layout, &env);
+    content.render(&mut buffer, &layout, Point::zero(), &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "aa    ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "bb    ");
@@ -141,7 +141,7 @@ fn test_render_frame_center_center_alignment() {
     let env = DefaultEnvironment::new(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = content.layout(buffer.size(), &env);
-    content.render(&mut buffer, &layout, &env);
+    content.render(&mut buffer, &layout, Point::zero(), &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "  aa  ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "  bb  ");
@@ -161,7 +161,7 @@ fn test_render_frame_center_trailing_alignment() {
     let env = DefaultEnvironment::new(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = content.layout(buffer.size(), &env);
-    content.render(&mut buffer, &layout, &env);
+    content.render(&mut buffer, &layout, Point::zero(), &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "    aa");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "    bb");
@@ -181,7 +181,7 @@ fn test_render_frame_bottom_leading_alignment() {
     let env = DefaultEnvironment::new(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = content.layout(buffer.size(), &env);
-    content.render(&mut buffer, &layout, &env);
+    content.render(&mut buffer, &layout, Point::zero(), &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "aa    ");
@@ -201,7 +201,7 @@ fn test_render_frame_bottom_center_alignment() {
     let env = DefaultEnvironment::new(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = content.layout(buffer.size(), &env);
-    content.render(&mut buffer, &layout, &env);
+    content.render(&mut buffer, &layout, Point::zero(), &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "  aa  ");
@@ -221,7 +221,7 @@ fn test_render_frame_bottom_trailing_alignment() {
     let env = DefaultEnvironment::new(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = content.layout(buffer.size(), &env);
-    content.render(&mut buffer, &layout, &env);
+    content.render(&mut buffer, &layout, Point::zero(), &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "    aa");

@@ -1,5 +1,5 @@
 use crate::{
-    environment::RenderEnvironment, layout::ResolvedLayout, pixel::ColorValue,
+    environment::RenderEnvironment, layout::ResolvedLayout, pixel::ColorValue, primitives::Point,
     render_target::RenderTarget,
 };
 
@@ -10,6 +10,7 @@ pub trait Render<Pixel: ColorValue, Sublayout: Clone>: PartialEq {
         &self,
         target: &mut impl RenderTarget<Pixel>,
         layout: &ResolvedLayout<Sublayout>,
+        origin: Point,
         env: &impl RenderEnvironment<Pixel>,
     );
 }

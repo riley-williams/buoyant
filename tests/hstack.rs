@@ -3,7 +3,7 @@ use std::iter::zip;
 use buoyant::environment::DefaultEnvironment;
 use buoyant::font::TerminalChar;
 use buoyant::layout::{Layout, VerticalAlignment};
-use buoyant::primitives::Size;
+use buoyant::primitives::{Point, Size};
 use buoyant::render::Render;
 use buoyant::render_target::{FixedTextBuffer, RenderTarget};
 use buoyant::view::{Divider, HStack, Spacer, Text, ViewExtensions};
@@ -56,7 +56,7 @@ fn test_horizontal_render_2() {
     let mut buffer = FixedTextBuffer::<9, 1>::default();
     let env = DefaultEnvironment::new(' ');
     let layout = hstack.layout(buffer.size(), &env);
-    hstack.render(&mut buffer, &layout, &env);
+    hstack.render(&mut buffer, &layout, Point::zero(), &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "123 4567 ");
 }
 
@@ -73,7 +73,7 @@ fn test_undersized_layout_3_left_pad() {
     let layout = hstack.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(10, 1));
     let mut buffer = FixedTextBuffer::<10, 1>::default();
-    hstack.render(&mut buffer, &layout, &env);
+    hstack.render(&mut buffer, &layout, Point::zero(), &env);
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "1234567   ");
 }
@@ -91,7 +91,7 @@ fn test_undersized_layout_3_right_pad_space() {
     let layout = hstack.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(10, 1));
     let mut buffer = FixedTextBuffer::<10, 1>::default();
-    hstack.render(&mut buffer, &layout, &env);
+    hstack.render(&mut buffer, &layout, Point::zero(), &env);
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "  234 5678");
 }
@@ -111,7 +111,7 @@ fn test_oversized_layout_3_leading_pad_space() {
     let layout = hstack.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(10, 1));
     let mut buffer = FixedTextBuffer::<10, 1>::default();
-    hstack.render(&mut buffer, &layout, &env);
+    hstack.render(&mut buffer, &layout, Point::zero(), &env);
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), " 234 56789");
 }
@@ -129,7 +129,7 @@ fn test_undersized_layout_3_middle_pad() {
     let layout = hstack.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(10, 1));
     let mut buffer = FixedTextBuffer::<10, 1>::default();
-    hstack.render(&mut buffer, &layout, &env);
+    hstack.render(&mut buffer, &layout, Point::zero(), &env);
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "234   5678");
 }
@@ -149,7 +149,7 @@ fn test_oversized_layout_3_middle_pad_space() {
     let layout = hstack.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(10, 1));
     let mut buffer = FixedTextBuffer::<10, 1>::default();
-    hstack.render(&mut buffer, &layout, &env);
+    hstack.render(&mut buffer, &layout, Point::zero(), &env);
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "234  56789");
 }
@@ -169,7 +169,7 @@ fn test_oversized_layout_3_trailing_pad_space() {
     let layout = hstack.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(10, 1));
     let mut buffer = FixedTextBuffer::<10, 1>::default();
-    hstack.render(&mut buffer, &layout, &env);
+    hstack.render(&mut buffer, &layout, Point::zero(), &env);
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "234 56789 ");
 }
@@ -187,25 +187,25 @@ fn test_layout_3_remainder_allocation() {
     let mut buffer = FixedTextBuffer::<10, 1>::default();
     let offer = Size::new(7, 1);
     let layout = hstack.layout(offer, &env);
-    hstack.render(&mut buffer, &layout, &env);
+    hstack.render(&mut buffer, &layout, Point::zero(), &env);
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aaabbcc   ");
 
     let offer = Size::new(8, 1);
     let layout = hstack.layout(offer, &env);
-    hstack.render(&mut buffer, &layout, &env);
+    hstack.render(&mut buffer, &layout, Point::zero(), &env);
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aaabbbcc  ");
 
     let offer = Size::new(9, 1);
     let layout = hstack.layout(offer, &env);
-    hstack.render(&mut buffer, &layout, &env);
+    hstack.render(&mut buffer, &layout, Point::zero(), &env);
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aaabbbccc ");
 
     let offer = Size::new(10, 1);
     let layout = hstack.layout(offer, &env);
-    hstack.render(&mut buffer, &layout, &env);
+    hstack.render(&mut buffer, &layout, Point::zero(), &env);
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aaabbbccc ");
 }
@@ -224,7 +224,7 @@ fn test_layout_3_vertical_alignment_bottom() {
     let env = DefaultEnvironment::new(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = hstack.layout(buffer.size(), &env);
-    hstack.render(&mut buffer, &layout, &env);
+    hstack.render(&mut buffer, &layout, Point::zero(), &env);
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "   |  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "   |  ");
@@ -247,7 +247,7 @@ fn test_layout_3_vertical_alignment_center() {
     let env = DefaultEnvironment::new(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = hstack.layout(buffer.size(), &env);
-    hstack.render(&mut buffer, &layout, &env);
+    hstack.render(&mut buffer, &layout, Point::zero(), &env);
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "   |  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "aa | c");
@@ -270,7 +270,7 @@ fn test_layout_3_vertical_alignment_top() {
     let env = DefaultEnvironment::new(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = hstack.layout(buffer.size(), &env);
-    hstack.render(&mut buffer, &layout, &env);
+    hstack.render(&mut buffer, &layout, Point::zero(), &env);
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aa | c");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "a  | c");
@@ -296,7 +296,7 @@ fn test_minimal_offer_extra_space_1() {
 
     let layout = hstack.layout(buffer.size(), &env);
 
-    hstack.render(&mut buffer, &layout, &env);
+    hstack.render(&mut buffer, &layout, Point::zero(), &env);
 
     let lines = [
         "a b c d e f g h i j",

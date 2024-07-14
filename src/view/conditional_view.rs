@@ -1,6 +1,7 @@
 use crate::{
     layout::{Layout, ResolvedLayout},
     pixel::ColorValue,
+    primitives::Point,
     render::Render,
 };
 
@@ -67,14 +68,15 @@ where
         layout: &ResolvedLayout<
             ConditionalViewLayout<ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>>,
         >,
+        origin: Point,
         env: &impl crate::environment::RenderEnvironment<Pixel>,
     ) {
         match &layout.sublayouts {
             ConditionalViewLayout::TrueLayout(true_layout) => {
-                self.true_view.render(target, true_layout, env)
+                self.true_view.render(target, true_layout, origin, env)
             }
             ConditionalViewLayout::FalseLayout(false_layout) => {
-                self.false_view.render(target, false_layout, env)
+                self.false_view.render(target, false_layout, origin, env)
             }
         }
     }

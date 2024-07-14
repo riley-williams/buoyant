@@ -1,24 +1,19 @@
-use embedded_graphics::{draw_target::DrawTarget, primitives::Rectangle};
+use embedded_graphics::{draw_target::DrawTarget, geometry::Dimensions, primitives::Rectangle};
 
 use crate::{
     pixel::ColorValue,
-    primitives::{Frame, Point, Size},
+    primitives::{Point, Size},
 };
 
 use super::RenderTarget;
 
-pub struct EmbeddedDisplayRenderTarget<D> {
-    display: D,
-    window: Frame,
-}
-
-impl<D, Pixel> RenderTarget<Pixel> for EmbeddedDisplayRenderTarget<D>
+impl<D, Pixel> RenderTarget<Pixel> for D
 where
-    D: DrawTarget<Color = Pixel>,
+    D: DrawTarget<Color = Pixel> + Dimensions,
     Pixel: ColorValue,
 {
     fn size(&self) -> Size {
-        self.window.size
+        self.bounding_box().size.into()
     }
 
     fn clear(&mut self) {
@@ -26,7 +21,7 @@ where
     }
 
     fn draw(&mut self, point: Point, item: Pixel) {
-        _ = self.display.fill_solid(
+        _ = self.fill_solid(
             &Rectangle::new(
                 embedded_graphics::geometry::Point {
                     x: point.x as i32,
@@ -39,13 +34,5 @@ where
             ),
             item,
         );
-    }
-
-    fn set_window(&mut self, frame: Frame) {
-        self.window = frame;
-    }
-
-    fn window(&self) -> Frame {
-        self.window
     }
 }

@@ -5,15 +5,13 @@ pub use crossterm_render_target::CrosstermRenderTarget;
 
 #[cfg(feature = "embedded-graphics")]
 mod embedded_display_render_target;
-#[cfg(feature = "embedded-graphics")]
-pub use embedded_display_render_target::EmbeddedDisplayRenderTarget;
 
 mod fixed_text_buffer;
 pub use fixed_text_buffer::FixedTextBuffer;
 
 use crate::{
     pixel::ColorValue,
-    primitives::{Frame, Point, Size},
+    primitives::{Point, Size},
 };
 
 /// A target that can render pixels.
@@ -38,19 +36,4 @@ where
 
     /// Draw a pixel to the render target
     fn draw(&mut self, point: Point, item: Pixel);
-
-    /// Set the window frame. Draw commands will be drawn inside this frame
-    fn set_window(&mut self, frame: Frame);
-
-    /// Get the current window frame
-    fn window(&self) -> Frame;
-
-    /// Sets the origin of the window frame. The window size will not be changed.
-    fn set_window_origin(&mut self, origin: Point) {
-        let parent_frame = self.window();
-        self.set_window(Frame {
-            origin,
-            size: parent_frame.size,
-        });
-    }
 }

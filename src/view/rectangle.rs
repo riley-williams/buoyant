@@ -1,8 +1,10 @@
 use crate::{
     layout::{Layout, ResolvedLayout},
+    pixel::ColorValue,
     primitives::{Point, Size},
     render::Render,
     render_target::RenderTarget,
+    style::color_style::ColorStyle,
 };
 
 #[derive(Debug, Copy, Clone, PartialEq, Default)]
@@ -23,68 +25,22 @@ impl Layout for Rectangle {
     }
 }
 
-impl Render<char, ()> for Rectangle {
-    fn render(
+impl<P: ColorValue> Render<P, ()> for Rectangle {
+    default fn render(
         &self,
-        target: &mut impl RenderTarget<char>,
+        target: &mut impl RenderTarget<P>,
         layout: &ResolvedLayout<()>,
-        _: &impl crate::environment::LayoutEnvironment,
+        origin: Point,
+        env: &impl crate::environment::RenderEnvironment<P>,
     ) {
         let width = layout.resolved_size.width;
         let height = layout.resolved_size.height;
-        for y in 0..height {
-            for x in 0..width {
-                let c = if x == 0 || x == width - 1 || y == 0 || y == height - 1 {
-                    '#'
-                } else {
-                    ' '
-                };
-                target.draw(Point::new(x as i16, y as i16), c);
-            }
-        }
-    }
-}
-
-#[cfg(feature = "crossterm")]
-use crate::style::color_style::ColorStyle;
-
-#[cfg(feature = "crossterm")]
-impl Render<crate::pixel::CrosstermColorSymbol, ()> for Rectangle {
-    fn render(
-        &self,
-        target: &mut impl RenderTarget<crate::pixel::CrosstermColorSymbol>,
-        layout: &ResolvedLayout<()>,
-        env: &impl crate::environment::RenderEnvironment<crate::pixel::CrosstermColorSymbol>,
-    ) {
-        let width = layout.resolved_size.width;
-        let height = layout.resolved_size.height;
-        for y in 0..height {
-            for x in 0..width {
+        for y in origin.y..origin.y + height as i16 {
+            for x in origin.x..origin.x + width as i16 {
                 let foreground_color =
                     env.foreground_style()
-                        .shade_pixel(x, y, layout.resolved_size);
-                target.draw(Point::new(x as i16, y as i16), foreground_color);
-            }
-        }
-    }
-}
-
-#[cfg(feature = "embedded-graphics")]
-use embedded_graphics::pixelcolor::BinaryColor;
-
-#[cfg(feature = "embedded-graphics")]
-impl Render<BinaryColor, ()> for Rectangle {
-    fn render(
-        &self,
-        target: &mut impl RenderTarget<BinaryColor>,
-        layout: &ResolvedLayout<()>,
-        _: &impl crate::environment::RenderEnvironment<BinaryColor>,
-    ) {
-        let width = layout.resolved_size.width;
-        let height = layout.resolved_size.height;
-        for y in 0..height {
-            for x in 0..width {
-                target.draw(Point::new(x as i16, y as i16), BinaryColor::On);
+                        .shade_pixel(x as u16, y as u16, layout.resolved_size);
+                target.draw(Point::new(x, y), foreground_color);
             }
         }
     }

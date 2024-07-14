@@ -4,7 +4,7 @@ use buoyant::{
     environment::DefaultEnvironment,
     font::TerminalChar,
     layout::Layout,
-    primitives::Size,
+    primitives::{Point, Size},
     render::Render,
     render_target::{FixedTextBuffer, RenderTarget},
     view::{Divider, HorizontalTextAlignment, Rectangle, Spacer, Text, VStack, ViewExtensions},
@@ -29,7 +29,7 @@ fn test_clipped_text_trails_correctly() {
 
     let layout = text.layout(buffer.size(), &env);
 
-    text.render(&mut buffer, &layout, &env);
+    text.render(&mut buffer, &layout, Point::zero(), &env);
 
     let lines = [
         "                              ",

@@ -4,7 +4,7 @@ use buoyant::{
     environment::DefaultEnvironment,
     font::{CharacterFont, TerminalChar},
     layout::Layout as _,
-    primitives::Size,
+    primitives::{Point, Size},
     render::Render as _,
     render_target::{FixedTextBuffer, RenderTarget as _},
     view::{HorizontalTextAlignment, Text},
@@ -110,7 +110,7 @@ fn test_render_wrapping_leading() {
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let text = Text::char("This is a lengthy text here", &font);
     let layout = text.layout(buffer.size(), &env);
-    text.render(&mut buffer, &layout, &env);
+    text.render(&mut buffer, &layout, Point::zero(), &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "This  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "is a  ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "length");
@@ -126,7 +126,7 @@ fn test_render_wrapping_center_even() {
     let text = Text::char("This is a lengthy text here", &font)
         .multiline_text_alignment(HorizontalTextAlignment::Center);
     let layout = text.layout(buffer.size(), &env);
-    text.render(&mut buffer, &layout, &env);
+    text.render(&mut buffer, &layout, Point::zero(), &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), " This ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), " is a ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "length");
@@ -142,7 +142,7 @@ fn test_render_wrapping_center_odd() {
     let text = Text::char("This is a lengthy text 12345", &font)
         .multiline_text_alignment(HorizontalTextAlignment::Center);
     let layout = text.layout(buffer.size(), &env);
-    text.render(&mut buffer, &layout, &env);
+    text.render(&mut buffer, &layout, Point::zero(), &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), " This ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), " is a ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "length");
@@ -158,7 +158,7 @@ fn test_render_wrapping_trailing() {
     let text = Text::char("This is a lengthy text here", &font)
         .multiline_text_alignment(HorizontalTextAlignment::Trailing);
     let layout = text.layout(buffer.size(), &env);
-    text.render(&mut buffer, &layout, &env);
+    text.render(&mut buffer, &layout, Point::zero(), &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "  This");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "  is a");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "length");
@@ -182,7 +182,7 @@ fn test_clipped_text_is_centered_correctly() {
 
     assert_eq!(layout.resolved_size, Size::new(13, 2));
 
-    text.render(&mut buffer, &layout, &env);
+    text.render(&mut buffer, &layout, Point::zero(), &env);
 
     let lines = [
         "Several lines                           ",
@@ -209,7 +209,7 @@ fn test_clipped_text_trails_correctly() {
 
     assert_eq!(layout.resolved_size, Size::new(13, 2));
 
-    text.render(&mut buffer, &layout, &env);
+    text.render(&mut buffer, &layout, Point::zero(), &env);
 
     let lines = [
         "Several lines                           ",

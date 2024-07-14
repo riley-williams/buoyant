@@ -1,6 +1,6 @@
 use buoyant::font::TerminalChar;
 use buoyant::layout::Layout;
-use buoyant::primitives::Size;
+use buoyant::primitives::{Point, Size};
 use buoyant::render::Render;
 use buoyant::render_target::{FixedTextBuffer, RenderTarget};
 use buoyant::view::{ConditionalView, Text};
@@ -24,7 +24,7 @@ fn test_conditional_view_layout() {
     let view = make_view(true);
     let layout = view.layout(buffer.size(), &env);
     assert_eq!(layout.resolved_size, Size::new(4, 2));
-    view.render(&mut buffer, &layout, &env);
+    view.render(&mut buffer, &layout, Point::zero(), &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "true ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "!!!  ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "     ");
@@ -34,7 +34,7 @@ fn test_conditional_view_layout() {
     let view = make_view(false);
     let layout = view.layout(buffer.size(), &env);
     assert_eq!(layout.resolved_size, Size::new(1, 1));
-    view.render(&mut buffer, &layout, &env);
+    view.render(&mut buffer, &layout, Point::zero(), &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "f    ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "     ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "     ");

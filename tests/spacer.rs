@@ -1,6 +1,6 @@
 use buoyant::font::TerminalChar;
 use buoyant::layout::{Layout, LayoutDirection};
-use buoyant::primitives::Size;
+use buoyant::primitives::{Point, Size};
 use buoyant::render::Render;
 use buoyant::render_target::{FixedTextBuffer, RenderTarget};
 use buoyant::view::{HStack, Spacer, Text};
@@ -33,6 +33,6 @@ fn test_render_fills_stack() {
     let mut buffer = FixedTextBuffer::<9, 1>::default();
     let env = TestEnv::default().with_direction(LayoutDirection::Horizontal);
     let layout = hstack.layout(buffer.size(), &env);
-    hstack.render(&mut buffer, &layout, &env);
+    hstack.render(&mut buffer, &layout, Point::zero(), &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "       67");
 }

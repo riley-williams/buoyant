@@ -1,7 +1,7 @@
 use buoyant::environment::DefaultEnvironment;
 use buoyant::font::TerminalChar;
 use buoyant::layout::{HorizontalAlignment, Layout, VerticalAlignment};
-use buoyant::primitives::Size;
+use buoyant::primitives::{Point, Size};
 use buoyant::render::Render;
 use buoyant::render_target::{FixedTextBuffer, RenderTarget as _};
 use buoyant::view::{
@@ -60,7 +60,7 @@ fn test_undersized_layout_3_bottom_pad() {
     let layout = vstack.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(1, 10));
     let mut buffer = FixedTextBuffer::<1, 10>::default();
-    vstack.render(&mut buffer, &layout, &env);
+    vstack.render(&mut buffer, &layout, Point::zero(), &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "1");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "2");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "3");
@@ -87,7 +87,7 @@ fn test_undersized_layout_3_right_pad_space() {
     let layout = vstack.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(1, 10));
     let mut buffer = FixedTextBuffer::<1, 10>::default();
-    vstack.render(&mut buffer, &layout, &env);
+    vstack.render(&mut buffer, &layout, Point::zero(), &env);
     assert_eq!(collect_text(&buffer), "  234 5678");
 }
 
@@ -106,7 +106,7 @@ fn test_oversized_layout_3_right_pad_space() {
     let layout = vstack.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(1, 10));
     let mut buffer = FixedTextBuffer::<1, 10>::default();
-    vstack.render(&mut buffer, &layout, &env);
+    vstack.render(&mut buffer, &layout, Point::zero(), &env);
     assert_eq!(collect_text(&buffer), " 234 56789");
 }
 
@@ -125,7 +125,7 @@ fn test_oversized_layout_3_middle_pad_space() {
     let layout = vstack.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(1, 10));
     let mut buffer = FixedTextBuffer::<1, 10>::default();
-    vstack.render(&mut buffer, &layout, &env);
+    vstack.render(&mut buffer, &layout, Point::zero(), &env);
     assert_eq!(collect_text(&buffer), "234  56789");
 }
 
@@ -144,7 +144,7 @@ fn test_oversized_layout_3_trailing_pad_space() {
     let layout = vstack.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(1, 10));
     let mut buffer = FixedTextBuffer::<1, 10>::default();
-    vstack.render(&mut buffer, &layout, &env);
+    vstack.render(&mut buffer, &layout, Point::zero(), &env);
     assert_eq!(collect_text(&buffer), "234 56789 ");
 }
 
@@ -161,7 +161,7 @@ fn test_undersized_layout_3_middle_pad() {
     let layout = vstack.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(1, 10));
     let mut buffer = FixedTextBuffer::<1, 10>::default();
-    vstack.render(&mut buffer, &layout, &env);
+    vstack.render(&mut buffer, &layout, Point::zero(), &env);
     assert_eq!(collect_text(&buffer), "234   5678");
 }
 
@@ -178,22 +178,22 @@ fn test_layout_3_remainder_allocation() {
     let mut buffer = FixedTextBuffer::<1, 10>::default();
     let offer = Size::new(1, 7);
     let layout = vstack.layout(offer, &env);
-    vstack.render(&mut buffer, &layout, &env);
+    vstack.render(&mut buffer, &layout, Point::zero(), &env);
     assert_eq!(collect_text(&buffer), "aaabbcc   ");
 
     let offer = Size::new(1, 8);
     let layout = vstack.layout(offer, &env);
-    vstack.render(&mut buffer, &layout, &env);
+    vstack.render(&mut buffer, &layout, Point::zero(), &env);
     assert_eq!(collect_text(&buffer), "aaabbbcc  ");
 
     let offer = Size::new(1, 9);
     let layout = vstack.layout(offer, &env);
-    vstack.render(&mut buffer, &layout, &env);
+    vstack.render(&mut buffer, &layout, Point::zero(), &env);
     assert_eq!(collect_text(&buffer), "aaabbbccc ");
 
     let offer = Size::new(1, 10);
     let layout = vstack.layout(offer, &env);
-    vstack.render(&mut buffer, &layout, &env);
+    vstack.render(&mut buffer, &layout, Point::zero(), &env);
     assert_eq!(collect_text(&buffer), "aaabbbccc ");
 }
 
@@ -211,7 +211,7 @@ fn test_layout_3_horizontal_alignment_trailing() {
     let env = DefaultEnvironment::new(' ');
     let mut buffer = FixedTextBuffer::<6, 7>::default();
     let layout = vstack.layout(buffer.size(), &env);
-    vstack.render(&mut buffer, &layout, &env);
+    vstack.render(&mut buffer, &layout, Point::zero(), &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "   aaa");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "------");
@@ -235,7 +235,7 @@ fn test_layout_3_alignment_center() {
     let env = DefaultEnvironment::new(' ');
     let mut buffer = FixedTextBuffer::<7, 5>::default();
     let layout = vstack.layout(buffer.size(), &env);
-    vstack.render(&mut buffer, &layout, &env);
+    vstack.render(&mut buffer, &layout, Point::zero(), &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "  aaa  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "-------");
     assert_eq!(buffer.text[2].iter().collect::<String>(), " cccc  ");
@@ -257,7 +257,7 @@ fn test_layout_3_alignment_leading() {
     let env = DefaultEnvironment::new(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = vstack.layout(buffer.size(), &env);
-    vstack.render(&mut buffer, &layout, &env);
+    vstack.render(&mut buffer, &layout, Point::zero(), &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aaa   ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "------");
@@ -277,7 +277,7 @@ fn test_layout_direction_is_set_inner_hstack() {
     let env = DefaultEnvironment::new(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = vstack.layout(buffer.size(), &env);
-    vstack.render(&mut buffer, &layout, &env);
+    vstack.render(&mut buffer, &layout, Point::zero(), &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "------");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "|     ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "|     ");
@@ -295,7 +295,7 @@ fn test_layout_direction_is_set_inner_vstack() {
     let env = DefaultEnvironment::new(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = hstack.layout(buffer.size(), &env);
-    hstack.render(&mut buffer, &layout, &env);
+    hstack.render(&mut buffer, &layout, Point::zero(), &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "|----|");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "|    |");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "|    |");

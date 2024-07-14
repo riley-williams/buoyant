@@ -120,10 +120,10 @@ where
         &self,
         target: &mut impl RenderTarget<Pixel>,
         layout: &ResolvedLayout<(ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>)>,
+        origin: Point,
         env: &impl RenderEnvironment<Pixel>,
     ) {
         let env = HorizontalEnvironment::from(env);
-        let original_window = target.window();
         let mut width = 0;
 
         let offset = Point::new(
@@ -134,8 +134,9 @@ where
             ),
         );
 
-        target.set_window_origin(original_window.origin + offset);
-        self.items.0.render(target, &layout.sublayouts.0, &env);
+        self.items
+            .0
+            .render(target, &layout.sublayouts.0, origin + offset, &env);
 
         width += (layout.sublayouts.0.resolved_size.width + self.spacing) as i16;
         let offset = Point::new(
@@ -146,9 +147,9 @@ where
             ),
         );
 
-        target.set_window_origin(original_window.origin + offset);
-        self.items.1.render(target, &layout.sublayouts.1, &env);
-        target.set_window(original_window);
+        self.items
+            .1
+            .render(target, &layout.sublayouts.1, origin + offset, &env);
     }
 }
 
@@ -233,10 +234,10 @@ where
             ResolvedLayout<V::Sublayout>,
             ResolvedLayout<W::Sublayout>,
         )>,
+        origin: Point,
         env: &impl RenderEnvironment<Pixel>,
     ) {
         let env = HorizontalEnvironment::from(env);
-        let original_window = target.window();
         let mut width = 0;
 
         let offset = Point::new(
@@ -247,8 +248,9 @@ where
             ),
         );
 
-        target.set_window_origin(original_window.origin + offset);
-        self.items.0.render(target, &layout.sublayouts.0, &env);
+        self.items
+            .0
+            .render(target, &layout.sublayouts.0, origin + offset, &env);
 
         width += (layout.sublayouts.0.resolved_size.width + self.spacing) as i16;
         let offset = Point::new(
@@ -259,8 +261,9 @@ where
             ),
         );
 
-        target.set_window_origin(original_window.origin + offset);
-        self.items.1.render(target, &layout.sublayouts.1, &env);
+        self.items
+            .1
+            .render(target, &layout.sublayouts.1, origin + offset, &env);
 
         width += (layout.sublayouts.1.resolved_size.width + self.spacing) as i16;
         let offset = Point::new(
@@ -271,9 +274,9 @@ where
             ),
         );
 
-        target.set_window_origin(original_window.origin + offset);
-        self.items.2.render(target, &layout.sublayouts.2, &env);
-        target.set_window(original_window);
+        self.items
+            .2
+            .render(target, &layout.sublayouts.2, origin + offset, &env);
     }
 }
 

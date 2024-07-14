@@ -48,6 +48,16 @@ impl core::ops::Add for Size {
     }
 }
 
+#[cfg(feature = "embedded-graphics")]
+impl From<embedded_graphics::geometry::Size> for Size {
+    fn from(value: embedded_graphics::geometry::Size) -> Self {
+        Size {
+            width: value.width as u16,
+            height: value.height as u16,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct Point {
     pub x: i16,
@@ -67,6 +77,10 @@ impl core::ops::Add for Point {
 impl Point {
     pub fn new(x: i16, y: i16) -> Self {
         Point { x, y }
+    }
+
+    pub fn zero() -> Self {
+        Point { x: 0, y: 0 }
     }
 }
 
