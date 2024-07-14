@@ -1,5 +1,3 @@
-use embedded_graphics::pixelcolor::Rgb565;
-
 use crate::{
     environment::{LayoutEnvironment, RenderEnvironment},
     layout::{Layout, LayoutDirection, ResolvedLayout},
@@ -49,13 +47,14 @@ impl Layout for Divider {
     }
 }
 
-impl Render<Rgb565, ()> for Divider {
+#[cfg(feature = "embedded-graphics")]
+impl Render<embedded_graphics::pixelcolor::Rgb565, ()> for Divider {
     fn render(
         &self,
-        target: &mut impl RenderTarget<Rgb565>,
+        target: &mut impl RenderTarget<embedded_graphics::pixelcolor::Rgb565>,
         layout: &ResolvedLayout<()>,
         origin: Point,
-        env: &impl RenderEnvironment<Rgb565>,
+        env: &impl RenderEnvironment<embedded_graphics::pixelcolor::Rgb565>,
     ) {
         match env.layout_direction() {
             LayoutDirection::Horizontal => {
