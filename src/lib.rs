@@ -1,6 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![feature(type_alias_impl_trait)]
-#![feature(min_specialization)]
 
 #[cfg(feature = "std")]
 extern crate std;

@@ -26,7 +26,7 @@ impl Layout for Rectangle {
 }
 
 impl<P: ColorValue> Render<P, ()> for Rectangle {
-    default fn render(
+    fn render(
         &self,
         target: &mut impl RenderTarget<P>,
         layout: &ResolvedLayout<()>,
