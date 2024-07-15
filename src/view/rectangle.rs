@@ -35,12 +35,12 @@ impl<P: ColorValue> Render<P, ()> for Rectangle {
     ) {
         let width = layout.resolved_size.width;
         let height = layout.resolved_size.height;
-        for y in origin.y..origin.y + height as i16 {
-            for x in origin.x..origin.x + width as i16 {
+        for y in 0..height as i16 {
+            for x in 0..width as i16 {
                 let foreground_color =
                     env.foreground_style()
                         .shade_pixel(x as u16, y as u16, layout.resolved_size);
-                target.draw(Point::new(x, y), foreground_color);
+                target.draw(origin + Point::new(x, y), foreground_color);
             }
         }
     }

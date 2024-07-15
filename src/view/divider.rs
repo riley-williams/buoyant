@@ -58,25 +58,21 @@ impl Render<embedded_graphics::pixelcolor::Rgb565, ()> for Divider {
     ) {
         match env.layout_direction() {
             LayoutDirection::Horizontal => {
-                for y in origin.y..origin.y + layout.resolved_size.height as i16 {
-                    let foreground_color = env.foreground_style().shade_pixel(
-                        origin.x as u16,
-                        y as u16,
-                        layout.resolved_size,
-                    );
+                for y in 0..layout.resolved_size.height as i16 {
+                    let foreground_color =
+                        env.foreground_style()
+                            .shade_pixel(0, y as u16, layout.resolved_size);
 
-                    target.draw(Point::new(origin.x, y), foreground_color);
+                    target.draw(origin + Point::new(0, y), foreground_color);
                 }
             }
             LayoutDirection::Vertical => {
-                for x in origin.x..origin.x + layout.resolved_size.width as i16 {
-                    let foreground_color = env.foreground_style().shade_pixel(
-                        x as u16,
-                        origin.y as u16,
-                        layout.resolved_size,
-                    );
+                for x in 0..layout.resolved_size.width as i16 {
+                    let foreground_color =
+                        env.foreground_style()
+                            .shade_pixel(x as u16, 0, layout.resolved_size);
 
-                    target.draw(Point::new(x, origin.y), foreground_color);
+                    target.draw(origin + Point::new(x, 0), foreground_color);
                 }
             }
         }
