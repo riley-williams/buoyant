@@ -140,12 +140,19 @@ use embedded_graphics::pixelcolor::{Rgb565, RgbColor};
 #[cfg(feature = "embedded-graphics")]
 impl ColorValue for embedded_graphics::pixelcolor::Rgb565 {
     fn interpolate(from: Self, to: Self, amount: f32) -> Self {
-        let x = ((amount * 255.0) as u32).clamp(0, 255) as u16;
-        let r = from.r() as u16 * x + to.r() as u16 * (255 - x);
-        let g = from.g() as u16 * x + to.g() as u16 * (255 - x);
-        let b = from.b() as u16 * x + to.b() as u16 * (255 - x);
-        Rgb565::new((r / 255) as u8, (g / 255) as u8, (b / 255) as u8)
+        let t_fixed = (amount * 256.0) as i16;
+
+        let r = interpolate_channel(from.r(), to.r(), t_fixed);
+        let g = interpolate_channel(from.g(), to.g(), t_fixed);
+        let b = interpolate_channel(from.b(), to.b(), t_fixed);
+        Rgb565::new(r, g, b)
     }
+}
+
+#[inline]
+/// Interpolate between two colors, using a u16 between 0 and 256
+fn interpolate_channel(a: u8, b: u8, t: i16) -> u8 {
+    (a as i16 + (((b as i16).wrapping_sub(a as i16)).wrapping_mul(t) as u16 >> 8) as i16) as u8
 }
 
 #[cfg(feature = "embedded-graphics")]
@@ -157,19 +164,10 @@ mod tests {
 
     #[test]
     fn interpolate_rgb() {
-        let start = Rgb565::new(0, 30, 100);
-        let end = Rgb565::new(10, 20, 200);
-        assert_eq!(
-            Rgb565::interpolate(start, end, 0.0),
-            Rgb565::new(0, 30, 100)
-        );
-        assert_eq!(
-            Rgb565::interpolate(start, end, 0.1),
-            Rgb565::new(1, 29, 110)
-        );
-        assert_eq!(
-            Rgb565::interpolate(start, end, 1.0),
-            Rgb565::new(10, 20, 200)
-        );
+        let start = Rgb565::new(0, 30, 10);
+        let end = Rgb565::new(10, 20, 20);
+        assert_eq!(Rgb565::interpolate(start, end, 0.0), start);
+        assert_eq!(Rgb565::interpolate(start, end, 0.5), Rgb565::new(5, 25, 15));
+        assert_eq!(Rgb565::interpolate(start, end, 1.0), end);
     }
 }
