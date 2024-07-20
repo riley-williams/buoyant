@@ -1,6 +1,6 @@
 use buoyant::{
     environment::DefaultEnvironment,
-    font::TerminalChar,
+    font::BufferCharacterFont,
     layout::{HorizontalAlignment, Layout, VerticalAlignment},
     primitives::{Point, Size},
     render::Render,
@@ -10,7 +10,7 @@ use buoyant::{
 
 #[test]
 fn test_fixed_width() {
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let content = Text::char("123456", &font).frame(Some(2), None, None, None);
     let env = DefaultEnvironment::new(' ');
 
@@ -37,7 +37,7 @@ fn test_fixed_width() {
 
 #[test]
 fn test_fixed_height() {
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let content = Text::char("123456", &font).frame(None, Some(2), None, None);
     let env = DefaultEnvironment::new(' ');
     assert_eq!(
@@ -60,7 +60,7 @@ fn test_fixed_height() {
 
 #[test]
 fn test_render_frame_top_leading_alignment() {
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let content = Text::char("aa\nbb\ncc", &font).frame(
         Some(6),
         Some(5),
@@ -80,7 +80,7 @@ fn test_render_frame_top_leading_alignment() {
 
 #[test]
 fn test_render_frame_top_center_alignment() {
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let content =
         Text::char("aa\nbb\ncc", &font).frame(Some(6), Some(5), None, Some(VerticalAlignment::Top));
     let env = DefaultEnvironment::new(' ');
@@ -96,7 +96,7 @@ fn test_render_frame_top_center_alignment() {
 
 #[test]
 fn test_render_frame_top_trailing_alignment() {
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let content = Text::char("aa\nbb\ncc", &font).frame(
         Some(6),
         Some(5),
@@ -116,7 +116,7 @@ fn test_render_frame_top_trailing_alignment() {
 
 #[test]
 fn test_render_frame_center_leading_alignment() {
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let content = Text::char("aa\nbb\ncc", &font).frame(
         Some(6),
         Some(5),
@@ -136,7 +136,7 @@ fn test_render_frame_center_leading_alignment() {
 
 #[test]
 fn test_render_frame_center_center_alignment() {
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let content = Text::char("aa\nbb\ncc", &font).frame(Some(6), Some(5), None, None);
     let env = DefaultEnvironment::new(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
@@ -151,7 +151,7 @@ fn test_render_frame_center_center_alignment() {
 
 #[test]
 fn test_render_frame_center_trailing_alignment() {
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let content = Text::char("aa\nbb\ncc", &font).frame(
         Some(6),
         Some(5),
@@ -171,7 +171,7 @@ fn test_render_frame_center_trailing_alignment() {
 
 #[test]
 fn test_render_frame_bottom_leading_alignment() {
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let content = Text::char("aa\nbb\ncc", &font).frame(
         Some(6),
         Some(5),
@@ -191,7 +191,7 @@ fn test_render_frame_bottom_leading_alignment() {
 
 #[test]
 fn test_render_frame_bottom_center_alignment() {
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let content = Text::char("aa\nbb\ncc", &font).frame(
         Some(6),
         Some(5),
@@ -211,7 +211,7 @@ fn test_render_frame_bottom_center_alignment() {
 
 #[test]
 fn test_render_frame_bottom_trailing_alignment() {
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let content = Text::char("aa\nbb\ncc", &font).frame(
         Some(6),
         Some(5),

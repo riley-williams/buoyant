@@ -1,9 +1,9 @@
+use buoyant::font::TerminalCharFont;
 use buoyant::pixel::CrosstermColorSymbol;
 use buoyant::primitives::Point;
 use buoyant::view::ViewExtensions;
 use buoyant::{
     environment::DefaultEnvironment,
-    font::TerminalChar,
     layout::{Layout, VerticalAlignment},
     primitives::Size,
     render::Render,
@@ -22,7 +22,7 @@ fn main() {
     println!("Size {:?}", size);
 
     let env = DefaultEnvironment::new(CrosstermColorSymbol::new(' '));
-    let font = TerminalChar {};
+    let font = TerminalCharFont {};
     let stack = VStack::three(
         HStack::three(
             Text::char(

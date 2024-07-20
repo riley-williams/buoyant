@@ -2,7 +2,7 @@ use std::iter::zip;
 
 use buoyant::{
     environment::DefaultEnvironment,
-    font::{CharacterFont, TerminalChar},
+    font::{BufferCharacterFont, CharacterFont, CharacterFontLayout},
     layout::Layout as _,
     primitives::{Point, Size},
     render::Render as _,
@@ -16,12 +16,20 @@ struct ArbitraryFont {
     character_width: u16,
 }
 
-impl CharacterFont for ArbitraryFont {
+impl CharacterFontLayout for ArbitraryFont {
     fn line_height(&self) -> u16 {
         self.line_height
     }
     fn character_width(&self, _character: char) -> u16 {
         self.character_width
+    }
+}
+impl CharacterFont<char> for ArbitraryFont {
+    fn render_character<T>(&self, _: &mut T, _: Point, _: char, _: char)
+    where
+        T: buoyant::render_target::RenderTarget<char>,
+    {
+        panic!("Not renderable");
     }
 }
 
@@ -106,7 +114,7 @@ fn test_newline() {
 #[test]
 fn test_render_wrapping_leading() {
     let env = DefaultEnvironment::new(' ');
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let text = Text::char("This is a lengthy text here", &font);
     let layout = text.layout(buffer.size(), &env);
@@ -121,7 +129,7 @@ fn test_render_wrapping_leading() {
 #[test]
 fn test_render_wrapping_center_even() {
     let env = DefaultEnvironment::new(' ');
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let text = Text::char("This is a lengthy text here", &font)
         .multiline_text_alignment(HorizontalTextAlignment::Center);
@@ -137,7 +145,7 @@ fn test_render_wrapping_center_even() {
 #[test]
 fn test_render_wrapping_center_odd() {
     let env = DefaultEnvironment::new(' ');
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let text = Text::char("This is a lengthy text 12345", &font)
         .multiline_text_alignment(HorizontalTextAlignment::Center);
@@ -153,7 +161,7 @@ fn test_render_wrapping_center_odd() {
 #[test]
 fn test_render_wrapping_trailing() {
     let env = DefaultEnvironment::new(' ');
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let text = Text::char("This is a lengthy text here", &font)
         .multiline_text_alignment(HorizontalTextAlignment::Trailing);
@@ -168,7 +176,7 @@ fn test_render_wrapping_trailing() {
 
 #[test]
 fn test_clipped_text_is_centered_correctly() {
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let text = Text::char(
         "Several lines\n of text\nshould be correctly spaced when cut off",
         &font,
@@ -195,7 +203,7 @@ fn test_clipped_text_is_centered_correctly() {
 
 #[test]
 fn test_clipped_text_trails_correctly() {
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let text = Text::char(
         "Several lines\n of text\nshould be correctly spaced when cut off",
         &font,

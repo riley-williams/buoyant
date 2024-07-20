@@ -1,4 +1,4 @@
-use buoyant::font::TerminalChar;
+use buoyant::font::BufferCharacterFont;
 use buoyant::layout::Layout;
 use buoyant::primitives::{Point, Size};
 use buoyant::render::Render;
@@ -10,7 +10,7 @@ mod common;
 
 #[test]
 fn test_conditional_view_layout() {
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let make_view = |condition| {
         ConditionalView::new(
             condition,

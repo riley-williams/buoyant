@@ -1,5 +1,5 @@
 use buoyant::environment::DefaultEnvironment;
-use buoyant::font::TerminalChar;
+use buoyant::font::BufferCharacterFont;
 use buoyant::layout::{HorizontalAlignment, Layout, VerticalAlignment};
 use buoyant::primitives::{Point, Size};
 use buoyant::render::Render;
@@ -26,7 +26,7 @@ fn test_oversized_layout_2() {
 
 #[test]
 fn test_render_two_centered_overlap() {
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let stack = ZStack::two(Text::char("aa\nbb\ncc", &font), Text::char("test", &font));
     let env = DefaultEnvironment::new(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
@@ -41,7 +41,7 @@ fn test_render_two_centered_overlap() {
 
 #[test]
 fn test_render_two_centered() {
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let stack = ZStack::two(Text::char("test", &font), Text::char("aa\nbb\ncc", &font));
     let env = DefaultEnvironment::new(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
@@ -56,7 +56,7 @@ fn test_render_two_centered() {
 
 #[test]
 fn test_render_two_top_center_alignment() {
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let stack = ZStack::two(
         Text::char("a a a\nb b b\nc c c", &font),
         Text::char("xxx", &font),
@@ -75,7 +75,7 @@ fn test_render_two_top_center_alignment() {
 
 #[test]
 fn test_render_two_top_leading_alignment() {
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let stack = ZStack::two(
         Text::char("a a a\nb b b\nc c c", &font),
         Text::char("xxx", &font),
@@ -95,7 +95,7 @@ fn test_render_two_top_leading_alignment() {
 
 #[test]
 fn test_render_two_top_trailing_alignment() {
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let stack = ZStack::two(
         Text::char("a a a\nb b b\nc c c", &font),
         Text::char("xxx", &font),
@@ -115,7 +115,7 @@ fn test_render_two_top_trailing_alignment() {
 
 #[test]
 fn test_render_two_center_leading_alignment() {
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let stack = ZStack::two(
         Text::char("a a a\nb b b\nc c c", &font),
         Text::char("xxx", &font),
@@ -134,7 +134,7 @@ fn test_render_two_center_leading_alignment() {
 
 #[test]
 fn test_render_two_center_trailing_alignment() {
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let stack = ZStack::two(
         Text::char("a a a\nb b b\nc c c", &font),
         Text::char("xxx", &font),
@@ -153,7 +153,7 @@ fn test_render_two_center_trailing_alignment() {
 
 #[test]
 fn test_render_two_bottom_leading_alignment() {
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let stack = ZStack::two(
         Text::char("a a a\nb b b\nc c c", &font),
         Text::char("xxx", &font),
@@ -173,7 +173,7 @@ fn test_render_two_bottom_leading_alignment() {
 
 #[test]
 fn test_render_two_bottom_center_alignment() {
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let stack = ZStack::two(
         Text::char("a a a\nb b b\nc c c", &font),
         Text::char("xxx", &font),
@@ -192,7 +192,7 @@ fn test_render_two_bottom_center_alignment() {
 
 #[test]
 fn test_render_two_bottom_trailing_alignment() {
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let stack = ZStack::two(
         Text::char("a a a\nb b b\nc c c", &font),
         Text::char("xxx", &font),

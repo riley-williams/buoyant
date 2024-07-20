@@ -1,6 +1,6 @@
 use buoyant::{
     environment::DefaultEnvironment,
-    font::TerminalChar,
+    font::BufferCharacterFont,
     layout::{Layout, VerticalAlignment},
     primitives::{Point, Size},
     render::Render,
@@ -17,7 +17,7 @@ fn main() {
 
     let env = DefaultEnvironment::new(' ');
 
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let stack = VStack::three(
     HStack::three(
         Text::char(

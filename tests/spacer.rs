@@ -1,4 +1,4 @@
-use buoyant::font::TerminalChar;
+use buoyant::font::BufferCharacterFont;
 use buoyant::layout::{Layout, LayoutDirection};
 use buoyant::primitives::{Point, Size};
 use buoyant::render::Render;
@@ -28,7 +28,7 @@ fn test_vertical_layout() {
 
 #[test]
 fn test_render_fills_stack() {
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let hstack = HStack::two(Spacer::default(), Text::char("67", &font)).spacing(1);
     let mut buffer = FixedTextBuffer::<9, 1>::default();
     let env = TestEnv::default().with_direction(LayoutDirection::Horizontal);

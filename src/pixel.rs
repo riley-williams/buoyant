@@ -46,6 +46,11 @@ impl CrosstermColorSymbol {
         }
     }
 
+    pub fn with_character(mut self, character: char) -> Self {
+        self.character = character;
+        self
+    }
+
     pub fn with_foreground(mut self, color: crossterm::style::Color) -> Self {
         self.colors.foreground = Some(color);
         self

@@ -2,7 +2,7 @@ use std::iter::zip;
 
 use buoyant::{
     environment::DefaultEnvironment,
-    font::TerminalChar,
+    font::BufferCharacterFont,
     layout::Layout,
     primitives::{Point, Size},
     render::Render,
@@ -12,7 +12,7 @@ use buoyant::{
 
 #[test]
 fn test_clipped_text_trails_correctly() {
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let text = VStack::three(
         Spacer::default(),
         Text::char(

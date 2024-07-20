@@ -1,5 +1,5 @@
 use buoyant::environment::DefaultEnvironment;
-use buoyant::font::TerminalChar;
+use buoyant::font::BufferCharacterFont;
 use buoyant::layout::{HorizontalAlignment, Layout, VerticalAlignment};
 use buoyant::primitives::{Point, Size};
 use buoyant::render::Render;
@@ -49,7 +49,7 @@ fn test_oversized_layout_3() {
 
 #[test]
 fn test_undersized_layout_3_bottom_pad() {
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let vstack = VStack::three(
         Text::char("123", &font),
         Text::char("4567", &font),
@@ -75,7 +75,7 @@ fn test_undersized_layout_3_bottom_pad() {
 
 #[test]
 fn test_undersized_layout_3_right_pad_space() {
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let vstack = VStack::three(
         Spacer::default(),
         Text::char("234", &font),
@@ -94,7 +94,7 @@ fn test_undersized_layout_3_right_pad_space() {
 #[test]
 fn test_oversized_layout_3_right_pad_space() {
     // The second text view is too large to fit in the initial offer.
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let vstack = VStack::three(
         Spacer::default(),
         Text::char("234", &font),
@@ -113,7 +113,7 @@ fn test_oversized_layout_3_right_pad_space() {
 #[test]
 fn test_oversized_layout_3_middle_pad_space() {
     // The second text view is too large to fit in the initial offer.
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let vstack = VStack::three(
         Text::char("234", &font),
         Spacer::default(),
@@ -132,7 +132,7 @@ fn test_oversized_layout_3_middle_pad_space() {
 #[test]
 fn test_oversized_layout_3_trailing_pad_space() {
     // The second text view is too large to fit in the initial offer.
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let vstack = VStack::three(
         Text::char("234", &font),
         Text::char("56789", &font),
@@ -150,7 +150,7 @@ fn test_oversized_layout_3_trailing_pad_space() {
 
 #[test]
 fn test_undersized_layout_3_middle_pad() {
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let vstack = VStack::three(
         Text::char("234", &font),
         Spacer::default(),
@@ -168,7 +168,7 @@ fn test_undersized_layout_3_middle_pad() {
 #[test]
 fn test_layout_3_remainder_allocation() {
     // The VStack should attempt to lay out the views into the full width of the offer.
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let vstack = VStack::three(
         Text::char("aaa", &font),
         Text::char("bbb", &font),
@@ -200,7 +200,7 @@ fn test_layout_3_remainder_allocation() {
 #[test]
 fn test_layout_3_horizontal_alignment_trailing() {
     // The VStack should attempt to lay out the views into the full width of the offer.
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let vstack = VStack::three(
         Text::char("aaa", &font),
         Divider::default(),
@@ -225,7 +225,7 @@ fn test_layout_3_horizontal_alignment_trailing() {
 #[test]
 fn test_layout_3_alignment_center() {
     // The VStack should attempt to lay out the views into the full width of the offer.
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let vstack = VStack::three(
         Text::char("aaa", &font),
         Divider::default(),
@@ -246,7 +246,7 @@ fn test_layout_3_alignment_center() {
 #[test]
 fn test_layout_3_alignment_leading() {
     // The VStack should attempt to lay out the views into the full width of the offer.
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let vstack = VStack::three(
         Text::char("aaa", &font),
         Divider::default(),
@@ -305,7 +305,7 @@ fn test_layout_direction_is_set_inner_vstack() {
 
 #[test]
 fn test_flexible_layout_fills_frame_10k() {
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let stack = VStack::three(
     HStack::three(
         Text::char(
