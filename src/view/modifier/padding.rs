@@ -54,13 +54,11 @@ where
         &self,
         target: &mut impl RenderTarget<Pixel>,
         layout: &ResolvedLayout<ResolvedLayout<View::Sublayout>>,
+        origin: Point,
         env: &impl RenderEnvironment<Pixel>,
     ) {
-        let original_window = target.window();
-        target.set_window_origin(
-            original_window.origin + Point::new(self.padding as i16, self.padding as i16),
-        );
-        self.child.render(target, &layout.sublayouts, env);
-        target.set_window(original_window);
+        let offset_origin = origin + Point::new(self.padding as i16, self.padding as i16);
+        self.child
+            .render(target, &layout.sublayouts, offset_origin, env);
     }
 }

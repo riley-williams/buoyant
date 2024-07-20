@@ -3,17 +3,12 @@ mod crossterm_render_target;
 #[cfg(feature = "crossterm")]
 pub use crossterm_render_target::CrosstermRenderTarget;
 
-#[cfg(feature = "embedded-graphics")]
-mod embedded_display_render_target;
-#[cfg(feature = "embedded-graphics")]
-pub use embedded_display_render_target::EmbeddedDisplayRenderTarget;
-
 mod fixed_text_buffer;
 pub use fixed_text_buffer::FixedTextBuffer;
 
 use crate::{
     pixel::ColorValue,
-    primitives::{Frame, Point, Size},
+    primitives::{Point, Size},
 };
 
 /// A target that can render pixels.
@@ -38,19 +33,38 @@ where
 
     /// Draw a pixel to the render target
     fn draw(&mut self, point: Point, item: Pixel);
+}
 
-    /// Set the window frame. Draw commands will be drawn inside this frame
-    fn set_window(&mut self, frame: Frame);
+#[cfg(feature = "embedded-graphics")]
+use embedded_graphics::{draw_target::DrawTarget, primitives::Rectangle};
 
-    /// Get the current window frame
-    fn window(&self) -> Frame;
+#[cfg(feature = "embedded-graphics")]
+impl<D, Pixel> RenderTarget<Pixel> for D
+where
+    D: DrawTarget<Color = Pixel>,
+    Pixel: ColorValue,
+{
+    fn size(&self) -> Size {
+        self.bounding_box().size.into()
+    }
 
-    /// Sets the origin of the window frame. The window size will not be changed.
-    fn set_window_origin(&mut self, origin: Point) {
-        let parent_frame = self.window();
-        self.set_window(Frame {
-            origin,
-            size: parent_frame.size,
-        });
+    fn clear(&mut self) {
+        todo!()
+    }
+
+    fn draw(&mut self, point: Point, item: Pixel) {
+        _ = self.fill_solid(
+            &Rectangle::new(
+                embedded_graphics::geometry::Point {
+                    x: point.x as i32,
+                    y: point.y as i32,
+                },
+                embedded_graphics::geometry::Size {
+                    width: 1,
+                    height: 1,
+                },
+            ),
+            item,
+        );
     }
 }

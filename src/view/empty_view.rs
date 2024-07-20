@@ -1,7 +1,7 @@
 use crate::{
     layout::{Layout, ResolvedLayout},
     pixel::ColorValue,
-    primitives::Size,
+    primitives::{Point, Size},
     render::Render,
     render_target::RenderTarget,
 };
@@ -32,6 +32,7 @@ impl<Pixel: ColorValue> Render<Pixel, ()> for EmptyView {
         &self,
         _: &mut impl RenderTarget<Pixel>,
         _: &ResolvedLayout<()>,
+        _: Point,
         _: &impl crate::environment::RenderEnvironment<Pixel>,
     ) {
     }

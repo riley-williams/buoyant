@@ -72,40 +72,38 @@ where
         &self,
         target: &mut impl RenderTarget<Pixel>,
         layout: &ResolvedLayout<(ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>)>,
+        origin: Point,
         env: &impl RenderEnvironment<Pixel>,
     ) {
-        let original_window = target.window();
-
-        target.set_window_origin(
-            original_window.origin
-                + Point::new(
-                    self.horizontal_alignment.align(
-                        layout.resolved_size.width as i16,
-                        layout.sublayouts.0.resolved_size.width as i16,
-                    ),
-                    self.vertical_alignment.align(
-                        layout.resolved_size.height as i16,
-                        layout.sublayouts.0.resolved_size.height as i16,
-                    ),
+        let new_origin = origin
+            + Point::new(
+                self.horizontal_alignment.align(
+                    layout.resolved_size.width as i16,
+                    layout.sublayouts.0.resolved_size.width as i16,
                 ),
-        );
-
-        self.items.0.render(target, &layout.sublayouts.0, env);
-
-        target.set_window_origin(
-            original_window.origin
-                + Point::new(
-                    self.horizontal_alignment.align(
-                        layout.resolved_size.width as i16,
-                        layout.sublayouts.1.resolved_size.width as i16,
-                    ),
-                    self.vertical_alignment.align(
-                        layout.resolved_size.height as i16,
-                        layout.sublayouts.1.resolved_size.height as i16,
-                    ),
+                self.vertical_alignment.align(
+                    layout.resolved_size.height as i16,
+                    layout.sublayouts.0.resolved_size.height as i16,
                 ),
-        );
-        self.items.1.render(target, &layout.sublayouts.1, env);
-        target.set_window(original_window);
+            );
+
+        self.items
+            .0
+            .render(target, &layout.sublayouts.0, new_origin, env);
+
+        let new_origin = origin
+            + Point::new(
+                self.horizontal_alignment.align(
+                    layout.resolved_size.width as i16,
+                    layout.sublayouts.1.resolved_size.width as i16,
+                ),
+                self.vertical_alignment.align(
+                    layout.resolved_size.height as i16,
+                    layout.sublayouts.1.resolved_size.height as i16,
+                ),
+            );
+        self.items
+            .1
+            .render(target, &layout.sublayouts.1, new_origin, env);
     }
 }

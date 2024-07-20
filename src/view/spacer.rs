@@ -2,7 +2,7 @@ use crate::{
     environment::{LayoutEnvironment, RenderEnvironment},
     layout::{Layout, LayoutDirection, ResolvedLayout},
     pixel::ColorValue,
-    primitives::Size,
+    primitives::{Point, Size},
     render::Render,
     render_target::RenderTarget,
 };
@@ -40,6 +40,7 @@ impl<Pixel: ColorValue, Sublayout: Clone> Render<Pixel, Sublayout> for Spacer {
         &self,
         _target: &mut impl RenderTarget<Pixel>,
         _layout: &ResolvedLayout<Sublayout>,
+        _origin: Point,
         _env: &impl RenderEnvironment<Pixel>,
     ) {
     }

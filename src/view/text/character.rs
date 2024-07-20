@@ -133,6 +133,7 @@ impl<'a, F: CharacterFont> Render<char, ()> for Text<'a, F> {
         &self,
         target: &mut impl RenderTarget<char>,
         layout: &ResolvedLayout<()>,
+        origin: Point,
         _env: &impl RenderEnvironment<char>,
     ) {
         if layout.resolved_size.area() == 0 {
@@ -208,15 +209,17 @@ impl<'a, F: CharacterFont> Render<char, ()> for Text<'a, F> {
                     break;
                 }
             }
-            let x = self
-                .alignment
-                .align(layout.resolved_size.width as i16, whole_width_points as i16);
+            let x = origin.x
+                + self
+                    .alignment
+                    .align(layout.resolved_size.width as i16, whole_width_points as i16);
 
+            let draw_y = consumed_height as i16 + origin.y;
             remaining_slice[..last_renderable_index]
                 .chars()
                 .enumerate()
                 .for_each(|(i, c)| {
-                    target.draw(Point::new(x + i as i16, consumed_height as i16), c);
+                    target.draw(Point::new(x + i as i16, draw_y), c);
                 });
 
             consumed_height += 1;
@@ -235,6 +238,7 @@ impl<'a, F: CharacterFont> Render<CrosstermColorSymbol, ()> for Text<'a, F> {
         &self,
         target: &mut impl RenderTarget<CrosstermColorSymbol>,
         layout: &ResolvedLayout<()>,
+        origin: Point,
         env: &impl RenderEnvironment<CrosstermColorSymbol>,
     ) {
         if layout.resolved_size.area() == 0 {
@@ -313,6 +317,7 @@ impl<'a, F: CharacterFont> Render<CrosstermColorSymbol, ()> for Text<'a, F> {
             let x = self
                 .alignment
                 .align(layout.resolved_size.width as i16, whole_width_points as i16);
+            let y = origin.y + consumed_height as i16;
 
             for (i, character) in remaining_slice[..last_renderable_index].chars().enumerate() {
                 let x = x + i as i16;
@@ -324,7 +329,7 @@ impl<'a, F: CharacterFont> Render<CrosstermColorSymbol, ()> for Text<'a, F> {
 
                 foreground_color.character = character;
 
-                target.draw(Point::new(x, consumed_height as i16), foreground_color);
+                target.draw(Point::new(origin.x + x, y), foreground_color);
             }
 
             consumed_height += 1;

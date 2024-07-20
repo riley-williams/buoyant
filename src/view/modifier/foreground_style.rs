@@ -2,7 +2,7 @@ use crate::{
     environment::{LayoutEnvironment, RenderEnvironment},
     layout::{Layout, ResolvedLayout},
     pixel::ColorValue,
-    primitives::Size,
+    primitives::{Point, Size},
     render::Render,
     render_target::RenderTarget,
     style::color_style::ColorStyle,
@@ -43,6 +43,7 @@ where
         &self,
         target: &mut impl RenderTarget<Pixel>,
         layout: &ResolvedLayout<Inner::Sublayout>,
+        origin: Point,
         env: &impl RenderEnvironment<Pixel>,
     ) {
         let modified_env = ForegroundStyleEnv {
@@ -50,7 +51,7 @@ where
             wrapped_env: env,
         };
 
-        self.inner.render(target, layout, &modified_env);
+        self.inner.render(target, layout, origin, &modified_env);
     }
 }
 

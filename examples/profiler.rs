@@ -2,7 +2,7 @@ use buoyant::{
     environment::DefaultEnvironment,
     font::TerminalChar,
     layout::{Layout, VerticalAlignment},
-    primitives::Size,
+    primitives::{Point, Size},
     render::Render,
     render_target::{FixedTextBuffer, RenderTarget},
     view::{Divider, HStack, HorizontalTextAlignment, Spacer, Text, VStack, ViewExtensions},
@@ -57,7 +57,7 @@ fn main() {
         for height in 1..100 {
             size = Size::new(width, height);
             let layout = stack.layout(size, &env);
-            stack.render(&mut target, &layout, &env);
+            stack.render(&mut target, &layout, Point::zero(), &env);
         }
     }
 }

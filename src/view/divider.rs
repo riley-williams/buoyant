@@ -4,6 +4,7 @@ use crate::{
     primitives::{Point, Size},
     render::Render,
     render_target::RenderTarget,
+    style::color_style::ColorStyle,
 };
 
 pub struct Divider {
@@ -46,22 +47,55 @@ impl Layout for Divider {
     }
 }
 
+#[cfg(feature = "embedded-graphics")]
+impl Render<embedded_graphics::pixelcolor::Rgb565, ()> for Divider {
+    fn render(
+        &self,
+        target: &mut impl RenderTarget<embedded_graphics::pixelcolor::Rgb565>,
+        layout: &ResolvedLayout<()>,
+        origin: Point,
+        env: &impl RenderEnvironment<embedded_graphics::pixelcolor::Rgb565>,
+    ) {
+        match env.layout_direction() {
+            LayoutDirection::Horizontal => {
+                for y in 0..layout.resolved_size.height as i16 {
+                    let foreground_color =
+                        env.foreground_style()
+                            .shade_pixel(0, y as u16, layout.resolved_size);
+
+                    target.draw(origin + Point::new(0, y), foreground_color);
+                }
+            }
+            LayoutDirection::Vertical => {
+                for x in 0..layout.resolved_size.width as i16 {
+                    let foreground_color =
+                        env.foreground_style()
+                            .shade_pixel(x as u16, 0, layout.resolved_size);
+
+                    target.draw(origin + Point::new(x, 0), foreground_color);
+                }
+            }
+        }
+    }
+}
+
 impl Render<char, ()> for Divider {
     fn render(
         &self,
         target: &mut impl RenderTarget<char>,
         layout: &ResolvedLayout<()>,
+        origin: Point,
         env: &impl RenderEnvironment<char>,
     ) {
         match env.layout_direction() {
             LayoutDirection::Horizontal => {
-                for y in 0..layout.resolved_size.height {
-                    target.draw(Point::new(0, y as i16), '|');
+                for y in origin.y..origin.y + layout.resolved_size.height as i16 {
+                    target.draw(Point::new(origin.x, y), '|');
                 }
             }
             LayoutDirection::Vertical => {
-                for x in 0..layout.resolved_size.width {
-                    target.draw(Point::new(x as i16, 0), '-');
+                for x in origin.x..origin.x + layout.resolved_size.width as i16 {
+                    target.draw(Point::new(x, origin.y), '-');
                 }
             }
         }
@@ -69,7 +103,7 @@ impl Render<char, ()> for Divider {
 }
 
 #[cfg(feature = "crossterm")]
-use crate::{pixel::CrosstermColorSymbol, style::color_style::ColorStyle};
+use crate::pixel::CrosstermColorSymbol;
 
 #[cfg(feature = "crossterm")]
 impl Render<CrosstermColorSymbol, ()> for Divider {
@@ -77,6 +111,7 @@ impl Render<CrosstermColorSymbol, ()> for Divider {
         &self,
         target: &mut impl RenderTarget<CrosstermColorSymbol>,
         layout: &ResolvedLayout<()>,
+        origin: Point,
         env: &impl RenderEnvironment<CrosstermColorSymbol>,
     ) {
         // TODO: we can make this rainbow
@@ -85,14 +120,14 @@ impl Render<CrosstermColorSymbol, ()> for Divider {
         match env.layout_direction() {
             LayoutDirection::Horizontal => {
                 color.character = '|';
-                for y in 0..layout.resolved_size.height {
-                    target.draw(Point::new(0, y as i16), color);
+                for y in origin.y..origin.y + layout.resolved_size.height as i16 {
+                    target.draw(Point::new(origin.x, y), color);
                 }
             }
             LayoutDirection::Vertical => {
                 color.character = '-';
-                for x in 0..layout.resolved_size.width {
-                    target.draw(Point::new(x as i16, 0), color);
+                for x in origin.x..origin.x + layout.resolved_size.width as i16 {
+                    target.draw(Point::new(x, origin.y), color);
                 }
             }
         }
@@ -131,7 +166,7 @@ mod tests {
         let mut buffer = FixedTextBuffer::<5, 5>::default();
         let env = TestEnv::default().with_direction(LayoutDirection::Horizontal);
         let layout = divider.layout(buffer.size(), &env);
-        divider.render(&mut buffer, &layout, &env);
+        divider.render(&mut buffer, &layout, Point::zero(), &env);
         assert_eq!(buffer.text[0][0], '|');
         assert_eq!(buffer.text[4][0], '|');
         assert_eq!(buffer.text[0][1], ' ');
@@ -143,7 +178,7 @@ mod tests {
         let mut buffer = FixedTextBuffer::<5, 5>::default();
         let env = TestEnv::default().with_direction(LayoutDirection::Vertical);
         let layout = divider.layout(buffer.size(), &env);
-        divider.render(&mut buffer, &layout, &env);
+        divider.render(&mut buffer, &layout, Point::zero(), &env);
         assert_eq!(buffer.text[0][0], '-');
         assert_eq!(buffer.text[0][4], '-');
         assert_eq!(buffer.text[1][0], ' ');

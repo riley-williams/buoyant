@@ -93,24 +93,22 @@ where
         &self,
         target: &mut impl RenderTarget<Pixel>,
         layout: &ResolvedLayout<ResolvedLayout<View::Sublayout>>,
+        origin: Point,
         env: &impl RenderEnvironment<Pixel>,
     ) {
-        let original_window = target.window();
-        target.set_window_origin(
-            original_window.origin
-                + Point::new(
-                    self.horizontal_alignment.unwrap_or_default().align(
-                        layout.resolved_size.width as i16,
-                        layout.sublayouts.resolved_size.width as i16,
-                    ),
-                    self.vertical_alignment.unwrap_or_default().align(
-                        layout.resolved_size.height as i16,
-                        layout.sublayouts.resolved_size.height as i16,
-                    ),
+        let new_origin = origin
+            + Point::new(
+                self.horizontal_alignment.unwrap_or_default().align(
+                    layout.resolved_size.width as i16,
+                    layout.sublayouts.resolved_size.width as i16,
                 ),
-        );
+                self.vertical_alignment.unwrap_or_default().align(
+                    layout.resolved_size.height as i16,
+                    layout.sublayouts.resolved_size.height as i16,
+                ),
+            );
 
-        self.child.render(target, &layout.sublayouts, env);
-        target.set_window(original_window);
+        self.child
+            .render(target, &layout.sublayouts, new_origin, env);
     }
 }

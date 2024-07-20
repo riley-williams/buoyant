@@ -123,17 +123,6 @@ fn interpolate_crossterm_colors(
     }
 }
 
-impl ColorValue for rgb::RGB8 {
-    fn interpolate(from: Self, to: Self, mut amount: f32) -> Self {
-        amount = amount.clamp(0.0, 1.0);
-        let inverse_amount = 1.0 - amount;
-        let r = (from.r as f32 * inverse_amount + to.r as f32 * amount) as u8;
-        let g = (from.g as f32 * inverse_amount + to.g as f32 * amount) as u8;
-        let b = (from.b as f32 * inverse_amount + to.b as f32 * amount) as u8;
-        rgb::RGB8 { r, g, b }
-    }
-}
-
 #[cfg(feature = "embedded-graphics")]
 impl ColorValue for embedded_graphics::pixelcolor::BinaryColor {
     fn interpolate(from: Self, to: Self, amount: f32) -> Self {
@@ -142,5 +131,43 @@ impl ColorValue for embedded_graphics::pixelcolor::BinaryColor {
         } else {
             to
         }
+    }
+}
+
+#[cfg(feature = "embedded-graphics")]
+use embedded_graphics::pixelcolor::{Rgb565, RgbColor};
+
+#[cfg(feature = "embedded-graphics")]
+impl ColorValue for embedded_graphics::pixelcolor::Rgb565 {
+    fn interpolate(from: Self, to: Self, amount: f32) -> Self {
+        let t_fixed = (amount * 256.0) as i16;
+
+        let r = interpolate_channel(from.r(), to.r(), t_fixed);
+        let g = interpolate_channel(from.g(), to.g(), t_fixed);
+        let b = interpolate_channel(from.b(), to.b(), t_fixed);
+        Rgb565::new(r, g, b)
+    }
+}
+
+#[inline]
+/// Interpolate between two colors, using a u16 between 0 and 256
+fn interpolate_channel(a: u8, b: u8, t: i16) -> u8 {
+    (a as i16 + (((b as i16).wrapping_sub(a as i16)).wrapping_mul(t) as u16 >> 8) as i16) as u8
+}
+
+#[cfg(feature = "embedded-graphics")]
+#[cfg(test)]
+mod tests {
+    use embedded_graphics::pixelcolor::Rgb565;
+
+    use super::ColorValue;
+
+    #[test]
+    fn interpolate_rgb() {
+        let start = Rgb565::new(0, 30, 10);
+        let end = Rgb565::new(10, 20, 20);
+        assert_eq!(Rgb565::interpolate(start, end, 0.0), start);
+        assert_eq!(Rgb565::interpolate(start, end, 0.5), Rgb565::new(5, 25, 15));
+        assert_eq!(Rgb565::interpolate(start, end, 1.0), end);
     }
 }
