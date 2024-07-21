@@ -14,9 +14,10 @@ pub trait CharacterFontLayout {
 /// Multi-character graphemes are not supported, making
 /// this primarily useful for embedded devices.
 pub trait CharacterFont<C: PixelColor>: CharacterFontLayout {
-    fn render_character<T>(&self, target: &mut T, origin: Point, color: C, character: char)
+    fn render_iter<T, I>(&self, target: &mut T, origin: Point, color: C, characters: I)
     where
-        T: RenderTarget<Color = C>;
+        T: RenderTarget<Color = C>,
+        I: IntoIterator<Item = char>;
 }
 
 /// A simple font for rendering non-unicode characters in a text buffer
@@ -37,11 +38,14 @@ impl CharacterFontLayout for BufferCharacterFont {
 }
 
 impl CharacterFont<char> for BufferCharacterFont {
-    fn render_character<T>(&self, target: &mut T, origin: Point, _: char, character: char)
+    fn render_iter<T, I>(&self, target: &mut T, origin: Point, _color: char, characters: I)
     where
         T: RenderTarget<Color = char>,
+        I: IntoIterator<Item = char>,
     {
-        target.draw(origin, character);
+        for (i, character) in characters.into_iter().enumerate() {
+            target.draw(origin + Point::new(i as i16, 0), character);
+        }
     }
 }
 
@@ -72,16 +76,22 @@ mod crossterm_font {
     }
 
     impl CharacterFont<CrosstermColorSymbol> for TerminalCharFont {
-        fn render_character<T>(
+        fn render_iter<T, I>(
             &self,
             target: &mut T,
             origin: Point,
             color: CrosstermColorSymbol,
-            character: char,
+            characters: I,
         ) where
             T: RenderTarget<Color = CrosstermColorSymbol>,
+            I: IntoIterator<Item = char>,
         {
-            target.draw(origin, color.with_character(character));
+            for (i, character) in characters.into_iter().enumerate() {
+                target.draw(
+                    origin + Point::new(i as i16, 0),
+                    color.with_character(character),
+                );
+            }
         }
     }
 }
@@ -91,6 +101,7 @@ mod embedded_graphics_fonts {
     use embedded_graphics::{geometry::OriginDimensions, mono_font::MonoTextStyle, text::Text};
     use embedded_graphics_core::pixelcolor::PixelColor as EmbeddedPixelColor;
     use embedded_graphics_core::Drawable;
+    use heapless::String;
 
     use crate::{pixel::PixelColor, render_target::RenderTarget};
 
@@ -111,19 +122,22 @@ mod embedded_graphics_fonts {
     impl<C: PixelColor + EmbeddedPixelColor> CharacterFont<C>
         for embedded_graphics::mono_font::MonoFont<'_>
     {
-        fn render_character<T>(
+        fn render_iter<T, I>(
             &self,
             target: &mut T,
             origin: crate::primitives::Point,
             color: C,
-            character: char,
+            characters: I,
         ) where
             T: RenderTarget<Color = C>,
+            I: IntoIterator<Item = char>,
         {
             let style = MonoTextStyle::new(self, color);
             let mut proxy = ProxyTarget { target };
-
-            _ = Text::new(&character.to_string(), origin.into(), style).draw(&mut proxy);
+            for character in characters {
+                let text = String::<1>::from_iter(core::iter::once(character));
+                _ = Text::new(&text, origin.into(), style).draw(&mut proxy);
+            }
         }
     }
 

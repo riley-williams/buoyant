@@ -215,21 +215,16 @@ impl<'a, F: CharacterFont<Color>, Color: PixelColor> Render<Color> for Text<'a, 
                 .align(layout.resolved_size.width as i16, whole_width_points as i16);
             let y = origin.y + consumed_height as i16;
 
-            for (i, character) in remaining_slice[..last_renderable_index].chars().enumerate() {
-                let x = x + i as i16;
-                let foreground_color = env.foreground_style().shade_pixel(
-                    x as u16,
-                    consumed_height,
-                    layout.resolved_size,
-                );
+            let foreground_color =
+                env.foreground_style()
+                    .shade_pixel(x as u16, consumed_height, layout.resolved_size);
 
-                self.font.render_character(
-                    target,
-                    Point::new(origin.x + x, y),
-                    foreground_color,
-                    character,
-                );
-            }
+            self.font.render_iter(
+                target,
+                Point::new(origin.x + x, y),
+                foreground_color,
+                remaining_slice[..last_renderable_index].chars(),
+            );
 
             consumed_height += 1;
 
