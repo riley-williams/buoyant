@@ -1,7 +1,7 @@
 use crate::{
     environment::{LayoutEnvironment, RenderEnvironment},
     layout::{HorizontalAlignment, Layout, ResolvedLayout, VerticalAlignment},
-    pixel::ColorValue,
+    pixel::PixelColor,
     primitives::{Point, Size},
     render::Render,
     render_target::RenderTarget,
@@ -84,15 +84,15 @@ impl<V: Layout> Layout for FlexFrame<V> {
     }
 }
 
-impl<Pixel, View: Layout> Render<Pixel, ResolvedLayout<View::Sublayout>> for FlexFrame<View>
+impl<Pixel, View: Layout> Render<Pixel> for FlexFrame<View>
 where
-    View: Render<Pixel, View::Sublayout>,
-    Pixel: ColorValue,
+    View: Render<Pixel>,
+    Pixel: PixelColor,
 {
     fn render(
         &self,
         target: &mut impl RenderTarget<Pixel>,
-        layout: &ResolvedLayout<ResolvedLayout<View::Sublayout>>,
+        layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
         env: &impl RenderEnvironment<Pixel>,
     ) {

@@ -50,7 +50,7 @@ impl RenderTarget<CrosstermColorSymbol> for CrosstermRenderTarget {
             .unwrap_or_default()
     }
 
-    fn clear(&mut self) {
+    fn clear(&mut self, _: CrosstermColorSymbol) {
         _ = self
             .stdout
             .execute(terminal::Clear(terminal::ClearType::All))

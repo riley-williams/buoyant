@@ -1,6 +1,6 @@
 use crate::{
     layout::{Alignment, LayoutDirection},
-    pixel::ColorValue,
+    pixel::PixelColor,
     style::color_style::ColorStyle,
 };
 
@@ -9,21 +9,21 @@ pub trait LayoutEnvironment {
     fn alignment(&self) -> Alignment;
 }
 
-pub trait RenderEnvironment<C: ColorValue>: LayoutEnvironment {
+pub trait RenderEnvironment<C: PixelColor>: LayoutEnvironment {
     fn foreground_style(&self) -> impl ColorStyle<Color = C>;
 }
 
-pub struct DefaultEnvironment<Color: ColorValue> {
+pub struct DefaultEnvironment<Color: PixelColor> {
     foreground_color: Color,
 }
 
-impl<Color: ColorValue> DefaultEnvironment<Color> {
+impl<Color: PixelColor> DefaultEnvironment<Color> {
     pub fn new(foreground_color: Color) -> Self {
         Self { foreground_color }
     }
 }
 
-impl<Color: ColorValue> LayoutEnvironment for DefaultEnvironment<Color> {
+impl<Color: PixelColor> LayoutEnvironment for DefaultEnvironment<Color> {
     fn layout_direction(&self) -> LayoutDirection {
         LayoutDirection::default()
     }
@@ -33,7 +33,7 @@ impl<Color: ColorValue> LayoutEnvironment for DefaultEnvironment<Color> {
     }
 }
 
-impl<C: ColorValue> RenderEnvironment<C> for DefaultEnvironment<C> {
+impl<C: PixelColor> RenderEnvironment<C> for DefaultEnvironment<C> {
     fn foreground_style(&self) -> impl ColorStyle<Color = C> {
         self.foreground_color
     }
@@ -45,13 +45,13 @@ pub(crate) mod mock {
 
     use super::*;
 
-    pub struct TestEnv<Color: ColorValue> {
+    pub struct TestEnv<Color: PixelColor> {
         pub direction: LayoutDirection,
         pub alignment: Alignment,
         pub foreground_style: Color,
     }
 
-    impl<Color: ColorValue> LayoutEnvironment for TestEnv<Color> {
+    impl<Color: PixelColor> LayoutEnvironment for TestEnv<Color> {
         fn layout_direction(&self) -> LayoutDirection {
             self.direction
         }
@@ -61,13 +61,13 @@ pub(crate) mod mock {
         }
     }
 
-    impl<Color: ColorValue> RenderEnvironment<Color> for TestEnv<Color> {
+    impl<Color: PixelColor> RenderEnvironment<Color> for TestEnv<Color> {
         fn foreground_style(&self) -> impl ColorStyle<Color = Color> {
             self.foreground_style
         }
     }
 
-    impl<C: ColorValue + Default> Default for TestEnv<C> {
+    impl<C: PixelColor + Default> Default for TestEnv<C> {
         fn default() -> Self {
             Self {
                 direction: LayoutDirection::Horizontal,
@@ -77,7 +77,7 @@ pub(crate) mod mock {
         }
     }
 
-    impl<C: ColorValue> TestEnv<C> {
+    impl<C: PixelColor> TestEnv<C> {
         pub fn with_direction(mut self, direction: LayoutDirection) -> Self {
             self.direction = direction;
             self

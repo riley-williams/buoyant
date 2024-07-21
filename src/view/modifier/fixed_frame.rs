@@ -1,7 +1,7 @@
 use crate::{
     environment::{LayoutEnvironment, RenderEnvironment},
     layout::{HorizontalAlignment, Layout, ResolvedLayout, VerticalAlignment},
-    pixel::ColorValue,
+    pixel::PixelColor,
     primitives::{Point, Size},
     render::Render,
     render_target::RenderTarget,
@@ -62,10 +62,10 @@ impl<V: Layout> Layout for FixedFrame<V> {
     }
 }
 
-impl<Pixel, View: Layout> Render<Pixel, ResolvedLayout<View::Sublayout>> for FixedFrame<View>
+impl<Pixel, View: Layout> Render<Pixel> for FixedFrame<View>
 where
-    View: Render<Pixel, View::Sublayout>,
-    Pixel: ColorValue,
+    View: Render<Pixel>,
+    Pixel: PixelColor,
 {
     fn render(
         &self,

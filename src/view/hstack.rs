@@ -3,7 +3,7 @@ use core::cmp::{max, min};
 use crate::{
     environment::{LayoutEnvironment, RenderEnvironment},
     layout::{Layout, LayoutDirection, ResolvedLayout, VerticalAlignment},
-    pixel::ColorValue,
+    pixel::PixelColor,
     primitives::{Point, Size},
     render::Render,
     render_target::RenderTarget,
@@ -31,7 +31,7 @@ impl<T: LayoutEnvironment> LayoutEnvironment for HorizontalEnvironment<'_, T> {
     }
 }
 
-impl<Color: ColorValue, T: RenderEnvironment<Color>> RenderEnvironment<Color>
+impl<Color: PixelColor, T: RenderEnvironment<Color>> RenderEnvironment<Color>
     for HorizontalEnvironment<'_, T>
 {
     fn foreground_style(&self) -> impl ColorStyle<Color = Color> {
@@ -109,17 +109,16 @@ impl<U: Layout, V: Layout> Layout for HStack<(U, V)> {
     }
 }
 
-impl<Pixel, U: Layout, V: Layout>
-    Render<Pixel, (ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>)> for HStack<(U, V)>
+impl<Pixel, U, V> Render<Pixel> for HStack<(U, V)>
 where
-    U: Render<Pixel, U::Sublayout>,
-    V: Render<Pixel, V::Sublayout>,
-    Pixel: ColorValue,
+    U: Render<Pixel>,
+    V: Render<Pixel>,
+    Pixel: PixelColor,
 {
     fn render(
         &self,
         target: &mut impl RenderTarget<Pixel>,
-        layout: &ResolvedLayout<(ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>)>,
+        layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
         env: &impl RenderEnvironment<Pixel>,
     ) {
@@ -211,29 +210,17 @@ impl<U: Layout, V: Layout, W: Layout> Layout for HStack<(U, V, W)> {
     }
 }
 
-impl<Pixel, U: Layout, V: Layout, W: Layout>
-    Render<
-        Pixel,
-        (
-            ResolvedLayout<U::Sublayout>,
-            ResolvedLayout<V::Sublayout>,
-            ResolvedLayout<W::Sublayout>,
-        ),
-    > for HStack<(U, V, W)>
+impl<Pixel, U, V, W> Render<Pixel> for HStack<(U, V, W)>
 where
-    U: Render<Pixel, U::Sublayout>,
-    V: Render<Pixel, V::Sublayout>,
-    W: Render<Pixel, W::Sublayout>,
-    Pixel: ColorValue,
+    U: Render<Pixel>,
+    V: Render<Pixel>,
+    W: Render<Pixel>,
+    Pixel: PixelColor,
 {
     fn render(
         &self,
         target: &mut impl RenderTarget<Pixel>,
-        layout: &ResolvedLayout<(
-            ResolvedLayout<U::Sublayout>,
-            ResolvedLayout<V::Sublayout>,
-            ResolvedLayout<W::Sublayout>,
-        )>,
+        layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
         env: &impl RenderEnvironment<Pixel>,
     ) {

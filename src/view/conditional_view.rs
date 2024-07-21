@@ -1,6 +1,6 @@
 use crate::{
     layout::{Layout, ResolvedLayout},
-    pixel::ColorValue,
+    pixel::PixelColor,
     primitives::Point,
     render::Render,
 };
@@ -55,12 +55,10 @@ impl<U: Layout, V: Layout> Layout for ConditionalView<U, V> {
     }
 }
 
-impl<Pixel: ColorValue, U: Layout, V: Layout>
-    Render<Pixel, ConditionalViewLayout<ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>>>
-    for ConditionalView<U, V>
+impl<Pixel: PixelColor, U, V> Render<Pixel> for ConditionalView<U, V>
 where
-    U: Render<Pixel, U::Sublayout>,
-    V: Render<Pixel, V::Sublayout>,
+    U: Render<Pixel>,
+    V: Render<Pixel>,
 {
     fn render(
         &self,

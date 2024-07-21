@@ -1,7 +1,7 @@
 use crate::{
     environment::{LayoutEnvironment, RenderEnvironment},
     layout::{HorizontalAlignment, Layout, ResolvedLayout, VerticalAlignment},
-    pixel::ColorValue,
+    pixel::PixelColor,
     primitives::{Point, Size},
     render::Render,
     render_target::RenderTarget,
@@ -61,12 +61,11 @@ impl<U: Layout, V: Layout> Layout for ZStack<(U, V)> {
     }
 }
 
-impl<Pixel, U: Layout, V: Layout>
-    Render<Pixel, (ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>)> for ZStack<(U, V)>
+impl<Pixel, U: Layout, V: Layout> Render<Pixel> for ZStack<(U, V)>
 where
-    U: Render<Pixel, U::Sublayout>,
-    V: Render<Pixel, V::Sublayout>,
-    Pixel: ColorValue,
+    U: Render<Pixel>,
+    V: Render<Pixel>,
+    Pixel: PixelColor,
 {
     fn render(
         &self,
