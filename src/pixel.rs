@@ -7,10 +7,6 @@ pub struct Pixel<C: PixelColor> {
 
 pub trait PixelColor: Clone + Copy + PartialEq {
     /// Interpolate between two colors
-    fn interpolate(from: Self, to: Self, amount: f32) -> Self;
-}
-
-impl PixelColor for char {
     fn interpolate(from: Self, to: Self, amount: f32) -> Self {
         if amount < 0.5 {
             from
@@ -19,6 +15,8 @@ impl PixelColor for char {
         }
     }
 }
+
+impl PixelColor for char {}
 
 #[cfg(feature = "crossterm")]
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -131,15 +129,7 @@ fn interpolate_crossterm_colors(
 }
 
 #[cfg(feature = "embedded-graphics")]
-impl PixelColor for embedded_graphics::pixelcolor::BinaryColor {
-    fn interpolate(from: Self, to: Self, amount: f32) -> Self {
-        if amount < 0.5 {
-            from
-        } else {
-            to
-        }
-    }
-}
+impl PixelColor for embedded_graphics::pixelcolor::BinaryColor {}
 
 #[cfg(feature = "embedded-graphics")]
 use embedded_graphics::pixelcolor::{Rgb565, RgbColor};
