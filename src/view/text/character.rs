@@ -226,7 +226,7 @@ impl<'a, F: CharacterFont<Color>, Color: PixelColor> Render<Color> for Text<'a, 
                 remaining_slice[..last_renderable_index].chars(),
             );
 
-            consumed_height += 1;
+            consumed_height += self.font.line_height();
 
             remaining_slice = &remaining_slice[completed_index..];
         }
