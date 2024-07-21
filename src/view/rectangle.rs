@@ -1,6 +1,6 @@
 use crate::{
     layout::{Layout, ResolvedLayout},
-    pixel::ColorValue,
+    pixel::PixelColor,
     primitives::{Point, Size},
     render::Render,
     render_target::RenderTarget,
@@ -25,11 +25,11 @@ impl Layout for Rectangle {
     }
 }
 
-impl<P: ColorValue> Render<P, ()> for Rectangle {
+impl<P: PixelColor> Render<P> for Rectangle {
     fn render(
         &self,
         target: &mut impl RenderTarget<P>,
-        layout: &ResolvedLayout<()>,
+        layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
         env: &impl crate::environment::RenderEnvironment<P>,
     ) {

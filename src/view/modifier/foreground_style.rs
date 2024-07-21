@@ -1,7 +1,7 @@
 use crate::{
     environment::{LayoutEnvironment, RenderEnvironment},
     layout::{Layout, ResolvedLayout},
-    pixel::ColorValue,
+    pixel::PixelColor,
     primitives::{Point, Size},
     render::Render,
     render_target::RenderTarget,
@@ -33,10 +33,10 @@ impl<Inner: Layout, Style: ColorStyle> Layout for ForegroundStyle<Inner, Style> 
     }
 }
 
-impl<Pixel, Inner, Style> Render<Pixel, Inner::Sublayout> for ForegroundStyle<Inner, Style>
+impl<Pixel, Inner, Style> Render<Pixel> for ForegroundStyle<Inner, Style>
 where
-    Inner: Layout + Render<Pixel, Inner::Sublayout>,
-    Pixel: ColorValue,
+    Inner: Render<Pixel>,
+    Pixel: PixelColor,
     Style: ColorStyle<Color = Pixel>,
 {
     fn render(

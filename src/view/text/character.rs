@@ -128,11 +128,11 @@ impl<'a, F: CharacterFont> Layout for Text<'a, F> {
     }
 }
 
-impl<'a, F: CharacterFont> Render<char, ()> for Text<'a, F> {
+impl<'a, F: CharacterFont> Render<char> for Text<'a, F> {
     fn render(
         &self,
         target: &mut impl RenderTarget<char>,
-        layout: &ResolvedLayout<()>,
+        layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
         _env: &impl RenderEnvironment<char>,
     ) {
@@ -233,11 +233,11 @@ impl<'a, F: CharacterFont> Render<char, ()> for Text<'a, F> {
 use crate::{pixel::CrosstermColorSymbol, style::color_style::ColorStyle};
 
 #[cfg(feature = "crossterm")]
-impl<'a, F: CharacterFont> Render<CrosstermColorSymbol, ()> for Text<'a, F> {
+impl<'a, F: CharacterFont> Render<CrosstermColorSymbol> for Text<'a, F> {
     fn render(
         &self,
         target: &mut impl RenderTarget<CrosstermColorSymbol>,
-        layout: &ResolvedLayout<()>,
+        layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
         env: &impl RenderEnvironment<CrosstermColorSymbol>,
     ) {

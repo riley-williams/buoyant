@@ -1,9 +1,16 @@
-pub trait ColorValue: Clone + Copy + PartialEq {
+use crate::primitives::Point;
+
+pub struct Pixel<C: PixelColor> {
+    pub point: Point,
+    pub color: C,
+}
+
+pub trait PixelColor: Clone + Copy + PartialEq {
     /// Interpolate between two colors
     fn interpolate(from: Self, to: Self, amount: f32) -> Self;
 }
 
-impl ColorValue for char {
+impl PixelColor for char {
     fn interpolate(from: Self, to: Self, amount: f32) -> Self {
         if amount < 0.5 {
             from
@@ -62,7 +69,7 @@ impl From<CrosstermColorSymbol> for crossterm::style::StyledContent<char> {
 }
 
 #[cfg(feature = "crossterm")]
-impl ColorValue for CrosstermColorSymbol {
+impl PixelColor for CrosstermColorSymbol {
     fn interpolate(from: Self, to: Self, amount: f32) -> Self {
         let interpolated_char = if amount < 0.5 {
             from.character
@@ -124,7 +131,7 @@ fn interpolate_crossterm_colors(
 }
 
 #[cfg(feature = "embedded-graphics")]
-impl ColorValue for embedded_graphics::pixelcolor::BinaryColor {
+impl PixelColor for embedded_graphics::pixelcolor::BinaryColor {
     fn interpolate(from: Self, to: Self, amount: f32) -> Self {
         if amount < 0.5 {
             from
@@ -138,7 +145,7 @@ impl ColorValue for embedded_graphics::pixelcolor::BinaryColor {
 use embedded_graphics::pixelcolor::{Rgb565, RgbColor};
 
 #[cfg(feature = "embedded-graphics")]
-impl ColorValue for embedded_graphics::pixelcolor::Rgb565 {
+impl PixelColor for embedded_graphics::pixelcolor::Rgb565 {
     fn interpolate(from: Self, to: Self, amount: f32) -> Self {
         let t_fixed = (amount * 256.0) as i16;
 
@@ -149,6 +156,7 @@ impl ColorValue for embedded_graphics::pixelcolor::Rgb565 {
     }
 }
 
+#[cfg(feature = "embedded-graphics")]
 #[inline]
 /// Interpolate between two colors, using a u16 between 0 and 256
 fn interpolate_channel(a: u8, b: u8, t: i16) -> u8 {
@@ -160,7 +168,7 @@ fn interpolate_channel(a: u8, b: u8, t: i16) -> u8 {
 mod tests {
     use embedded_graphics::pixelcolor::Rgb565;
 
-    use super::ColorValue;
+    use super::PixelColor;
 
     #[test]
     fn interpolate_rgb() {

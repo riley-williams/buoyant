@@ -1,7 +1,7 @@
 use crate::{
     environment::{LayoutEnvironment, RenderEnvironment},
     layout::{Layout, ResolvedLayout},
-    pixel::ColorValue,
+    pixel::PixelColor,
     primitives::{Point, Size},
     render::Render,
     render_target::RenderTarget,
@@ -45,15 +45,15 @@ impl<V: Layout> Layout for Padding<V> {
     }
 }
 
-impl<Pixel, View: Layout> Render<Pixel, ResolvedLayout<View::Sublayout>> for Padding<View>
+impl<Pixel, View: Layout> Render<Pixel> for Padding<View>
 where
-    View: Render<Pixel, View::Sublayout>,
-    Pixel: ColorValue,
+    View: Render<Pixel>,
+    Pixel: PixelColor,
 {
     fn render(
         &self,
         target: &mut impl RenderTarget<Pixel>,
-        layout: &ResolvedLayout<ResolvedLayout<View::Sublayout>>,
+        layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
         env: &impl RenderEnvironment<Pixel>,
     ) {
