@@ -125,7 +125,7 @@ mod embedded_graphics_fonts {
         fn render_iter<T, I>(
             &self,
             target: &mut T,
-            origin: crate::primitives::Point,
+            mut origin: crate::primitives::Point,
             color: C,
             characters: I,
         ) where
@@ -137,6 +137,7 @@ mod embedded_graphics_fonts {
             for character in characters {
                 let text = String::<1>::from_iter(core::iter::once(character));
                 _ = Text::new(&text, origin.into(), style).draw(&mut proxy);
+                origin.x += self.character_width(character) as i16;
             }
         }
     }
