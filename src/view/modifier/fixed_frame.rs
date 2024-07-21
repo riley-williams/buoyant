@@ -69,7 +69,7 @@ where
 {
     fn render(
         &self,
-        target: &mut impl RenderTarget<Pixel>,
+        target: &mut impl RenderTarget<Color = Pixel>,
         layout: &ResolvedLayout<ResolvedLayout<View::Sublayout>>,
         origin: Point,
         env: &impl RenderEnvironment<Pixel>,

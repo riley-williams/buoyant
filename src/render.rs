@@ -11,7 +11,7 @@ pub trait Render<Pixel: PixelColor>: PartialEq + Layout {
     /// Render the view to the screen
     fn render(
         &self,
-        target: &mut impl RenderTarget<Pixel>,
+        target: &mut impl RenderTarget<Color = Pixel>,
         layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
         env: &impl RenderEnvironment<Pixel>,

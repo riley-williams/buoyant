@@ -30,7 +30,7 @@ impl Layout for EmptyView {
 impl<Pixel: PixelColor> Render<Pixel> for EmptyView {
     fn render(
         &self,
-        _: &mut impl RenderTarget<Pixel>,
+        _: &mut impl RenderTarget<Color = Pixel>,
         _: &ResolvedLayout<Self::Sublayout>,
         _: Point,
         _: &impl crate::environment::RenderEnvironment<Pixel>,

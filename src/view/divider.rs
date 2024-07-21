@@ -51,7 +51,7 @@ impl Layout for Divider {
 impl Render<embedded_graphics_core::pixelcolor::Rgb565> for Divider {
     fn render(
         &self,
-        target: &mut impl RenderTarget<embedded_graphics_core::pixelcolor::Rgb565>,
+        target: &mut impl RenderTarget<Color = embedded_graphics_core::pixelcolor::Rgb565>,
         layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
         env: &impl RenderEnvironment<embedded_graphics_core::pixelcolor::Rgb565>,
@@ -82,7 +82,7 @@ impl Render<embedded_graphics_core::pixelcolor::Rgb565> for Divider {
 impl Render<char> for Divider {
     fn render(
         &self,
-        target: &mut impl RenderTarget<char>,
+        target: &mut impl RenderTarget<Color = char>,
         layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
         env: &impl RenderEnvironment<char>,
@@ -109,7 +109,7 @@ use crate::pixel::CrosstermColorSymbol;
 impl Render<CrosstermColorSymbol> for Divider {
     fn render(
         &self,
-        target: &mut impl RenderTarget<CrosstermColorSymbol>,
+        target: &mut impl RenderTarget<Color = CrosstermColorSymbol>,
         layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
         env: &impl RenderEnvironment<CrosstermColorSymbol>,

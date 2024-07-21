@@ -14,6 +14,18 @@ impl<T: embedded_graphics_core::pixelcolor::PixelColor + PixelColor> From<Pixel<
     }
 }
 
+#[cfg(feature = "embedded-graphics")]
+impl<T: embedded_graphics_core::pixelcolor::PixelColor + PixelColor>
+    From<embedded_graphics_core::Pixel<T>> for Pixel<T>
+{
+    fn from(value: embedded_graphics_core::Pixel<T>) -> Self {
+        Pixel {
+            point: value.0.into(),
+            color: value.1,
+        }
+    }
+}
+
 pub trait PixelColor: Clone + Copy + PartialEq {
     /// Interpolate between two colors
     fn interpolate(from: Self, to: Self, amount: f32) -> Self {

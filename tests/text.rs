@@ -27,7 +27,7 @@ impl CharacterFontLayout for ArbitraryFont {
 impl CharacterFont<char> for ArbitraryFont {
     fn render_character<T>(&self, _: &mut T, _: Point, _: char, _: char)
     where
-        T: buoyant::render_target::RenderTarget<char>,
+        T: buoyant::render_target::RenderTarget<Color = char>,
     {
         panic!("Not renderable");
     }

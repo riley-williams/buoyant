@@ -43,7 +43,9 @@ impl Drop for CrosstermRenderTarget {
     }
 }
 
-impl RenderTarget<CrosstermColorSymbol> for CrosstermRenderTarget {
+impl RenderTarget for CrosstermRenderTarget {
+    type Color = CrosstermColorSymbol;
+
     fn size(&self) -> Size {
         crossterm::terminal::size()
             .map(|(w, h)| Size::new(w, h))

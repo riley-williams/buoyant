@@ -38,7 +38,7 @@ impl Layout for Spacer {
 impl<Pixel: PixelColor> Render<Pixel> for Spacer {
     fn render(
         &self,
-        _target: &mut impl RenderTarget<Pixel>,
+        _target: &mut impl RenderTarget<Color = Pixel>,
         _layout: &ResolvedLayout<Self::Sublayout>,
         _origin: Point,
         _env: &impl RenderEnvironment<Pixel>,

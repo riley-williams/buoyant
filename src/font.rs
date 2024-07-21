@@ -16,7 +16,7 @@ pub trait CharacterFontLayout {
 pub trait CharacterFont<C: PixelColor>: CharacterFontLayout {
     fn render_character<T>(&self, target: &mut T, origin: Point, color: C, character: char)
     where
-        T: RenderTarget<C>;
+        T: RenderTarget<Color = C>;
 }
 
 /// A simple font for rendering non-unicode characters in a text buffer
@@ -39,7 +39,7 @@ impl CharacterFontLayout for BufferCharacterFont {
 impl CharacterFont<char> for BufferCharacterFont {
     fn render_character<T>(&self, target: &mut T, origin: Point, _: char, character: char)
     where
-        T: RenderTarget<char>,
+        T: RenderTarget<Color = char>,
     {
         target.draw(origin, character);
     }
@@ -79,7 +79,7 @@ mod crossterm_font {
             color: CrosstermColorSymbol,
             character: char,
         ) where
-            T: RenderTarget<CrosstermColorSymbol>,
+            T: RenderTarget<Color = CrosstermColorSymbol>,
         {
             target.draw(origin, color.with_character(character));
         }
@@ -88,7 +88,9 @@ mod crossterm_font {
 
 #[cfg(feature = "embedded-graphics")]
 mod embedded_graphics_fonts {
+    use embedded_graphics::{geometry::OriginDimensions, mono_font::MonoTextStyle, text::Text};
     use embedded_graphics_core::pixelcolor::PixelColor as EmbeddedPixelColor;
+    use embedded_graphics_core::Drawable;
 
     use crate::{pixel::PixelColor, render_target::RenderTarget};
 
@@ -116,9 +118,42 @@ mod embedded_graphics_fonts {
             color: C,
             character: char,
         ) where
-            T: RenderTarget<C>,
+            T: RenderTarget<Color = C>,
         {
-            todo!()
+            let style = MonoTextStyle::new(self, color);
+            let mut proxy = ProxyTarget { target };
+
+            _ = Text::new(&character.to_string(), origin.into(), style).draw(&mut proxy);
+        }
+    }
+
+    struct ProxyTarget<'a, T> {
+        target: &'a mut T,
+    }
+
+    impl<D, C> embedded_graphics_core::draw_target::DrawTarget for ProxyTarget<'_, D>
+    where
+        D: RenderTarget<Color = C>,
+        C: EmbeddedPixelColor + PixelColor,
+    {
+        type Color = C;
+        type Error = ();
+
+        fn draw_iter<I>(&mut self, pixels: I) -> Result<(), Self::Error>
+        where
+            I: IntoIterator<Item = embedded_graphics::Pixel<Self::Color>>,
+        {
+            self.target.draw_iter(pixels.into_iter().map(Into::into));
+            Ok(())
+        }
+    }
+
+    impl<D> OriginDimensions for ProxyTarget<'_, D>
+    where
+        D: RenderTarget,
+    {
+        fn size(&self) -> embedded_graphics::geometry::Size {
+            self.target.size().into()
         }
     }
 }

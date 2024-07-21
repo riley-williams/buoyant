@@ -28,7 +28,7 @@ impl Layout for Rectangle {
 impl<P: PixelColor> Render<P> for Rectangle {
     fn render(
         &self,
-        target: &mut impl RenderTarget<P>,
+        target: &mut impl RenderTarget<Color = P>,
         layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
         env: &impl crate::environment::RenderEnvironment<P>,

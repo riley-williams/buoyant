@@ -132,7 +132,7 @@ impl<'a, F: CharacterFontLayout> Layout for Text<'a, F> {
 impl<'a, F: CharacterFont<Color>, Color: PixelColor> Render<Color> for Text<'a, F> {
     fn render(
         &self,
-        target: &mut impl RenderTarget<Color>,
+        target: &mut impl RenderTarget<Color = Color>,
         layout: &ResolvedLayout<()>,
         origin: Point,
         env: &impl RenderEnvironment<Color>,

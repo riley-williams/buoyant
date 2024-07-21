@@ -62,7 +62,7 @@ where
 {
     fn render(
         &self,
-        target: &mut impl crate::render_target::RenderTarget<Pixel>,
+        target: &mut impl crate::render_target::RenderTarget<Color = Pixel>,
         layout: &ResolvedLayout<
             ConditionalViewLayout<ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>>,
         >,

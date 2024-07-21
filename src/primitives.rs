@@ -98,6 +98,16 @@ impl From<Point> for embedded_graphics_core::geometry::Point {
     }
 }
 
+#[cfg(feature = "embedded-graphics")]
+impl From<embedded_graphics_core::geometry::Point> for Point {
+    fn from(value: embedded_graphics_core::geometry::Point) -> Self {
+        Point {
+            x: value.x as i16,
+            y: value.y as i16,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct Frame {
     pub size: Size,

@@ -30,7 +30,9 @@ impl<const W: usize, const H: usize> Default for FixedTextBuffer<W, H> {
     }
 }
 
-impl<const W: usize, const H: usize> RenderTarget<char> for FixedTextBuffer<W, H> {
+impl<const W: usize, const H: usize> RenderTarget for FixedTextBuffer<W, H> {
+    type Color = char;
+
     fn size(&self) -> Size {
         Size::new(W as u16, H as u16)
     }
