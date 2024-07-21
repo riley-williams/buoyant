@@ -5,7 +5,7 @@ use buoyant::primitives::{Point, Size};
 use buoyant::render::Render;
 use buoyant::render_target::{FixedTextBuffer, RenderTarget as _};
 use buoyant::view::{
-    Divider, HStack, HorizontalTextAlignment, Spacer, Text, VStack, ViewExtensions,
+    Divider, HStack, HorizontalTextAlignment, Rectangle, Spacer, Text, VStack, ViewExtensions,
 };
 
 fn collect_text<const W: usize, const H: usize>(buffer: &FixedTextBuffer<W, H>) -> String {
@@ -344,4 +344,33 @@ fn test_flexible_layout_fills_frame_10k() {
             assert_eq!(size, layout.resolved_size);
         }
     }
+}
+
+#[ignore = "This test is currently failing because extra space is allocated only to the first view"]
+#[test]
+fn test_layout_3_extra_space_allocation() {
+    // The VStack should attempt to lay out the views into the full width of the offer.
+    let font = BufferCharacterFont {};
+    let vstack = VStack::three(
+        Rectangle.foreground_style('x'),
+        Text::char("Texty text", &font),
+        Rectangle.foreground_style('+'),
+    )
+    .spacing(0);
+    let env = DefaultEnvironment::new(' ');
+    let mut buffer = FixedTextBuffer::<6, 10>::default();
+    let layout = vstack.layout(buffer.size(), &env);
+    vstack.render(&mut buffer, &layout, Point::zero(), &env);
+    assert_eq!(buffer.text[0].iter().collect::<String>(), "xxxxxx");
+    assert_eq!(buffer.text[1].iter().collect::<String>(), "xxxxxx");
+    assert_eq!(buffer.text[2].iter().collect::<String>(), "xxxxxx");
+    assert_eq!(buffer.text[3].iter().collect::<String>(), "xxxxxx");
+    assert_eq!(buffer.text[4].iter().collect::<String>(), "Texty ");
+    assert_eq!(buffer.text[5].iter().collect::<String>(), " text ");
+    assert_eq!(buffer.text[6].iter().collect::<String>(), "++++++");
+    assert_eq!(buffer.text[7].iter().collect::<String>(), "++++++");
+    assert_eq!(buffer.text[8].iter().collect::<String>(), "++++++");
+    assert_eq!(buffer.text[9].iter().collect::<String>(), "++++++");
+    // multiline text alignment applies within the frame of the text
+    // the leading c is correct
 }

@@ -6,7 +6,7 @@ use buoyant::layout::{Layout, VerticalAlignment};
 use buoyant::primitives::{Point, Size};
 use buoyant::render::Render;
 use buoyant::render_target::{FixedTextBuffer, RenderTarget};
-use buoyant::view::{Divider, HStack, Spacer, Text, ViewExtensions};
+use buoyant::view::{Divider, HStack, Rectangle, Spacer, Text, ViewExtensions};
 
 #[test]
 fn test_greedy_layout_2() {
@@ -308,4 +308,24 @@ fn test_minimal_offer_extra_space_1() {
     zip(lines.iter(), buffer.text.iter()).for_each(|(expected, actual)| {
         assert_eq!(actual.iter().collect::<String>(), *expected);
     });
+}
+
+#[ignore = "This test is currently failing because extra space is allocated only to the first view"]
+#[test]
+fn test_layout_3_extra_space_allocation() {
+    // The VStack should attempt to lay out the views into the full width of the offer.
+    let font = BufferCharacterFont {};
+    let hstack = HStack::three(
+        Rectangle.foreground_style('x'),
+        Text::char("T", &font),
+        Rectangle.foreground_style('+'),
+    )
+    .spacing(0);
+    let env = DefaultEnvironment::new(' ');
+    let mut buffer = FixedTextBuffer::<9, 3>::default();
+    let layout = hstack.layout(buffer.size(), &env);
+    hstack.render(&mut buffer, &layout, Point::zero(), &env);
+    assert_eq!(buffer.text[0].iter().collect::<String>(), "xxxx ++++");
+    assert_eq!(buffer.text[1].iter().collect::<String>(), "xxxxT++++");
+    assert_eq!(buffer.text[2].iter().collect::<String>(), "xxxx ++++");
 }
