@@ -49,8 +49,8 @@ impl core::ops::Add for Size {
 }
 
 #[cfg(feature = "embedded-graphics")]
-impl From<embedded_graphics::geometry::Size> for Size {
-    fn from(value: embedded_graphics::geometry::Size) -> Self {
+impl From<embedded_graphics_core::geometry::Size> for Size {
+    fn from(value: embedded_graphics_core::geometry::Size) -> Self {
         Size {
             width: value.width as u16,
             height: value.height as u16,

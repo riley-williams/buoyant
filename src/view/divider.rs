@@ -48,13 +48,13 @@ impl Layout for Divider {
 }
 
 #[cfg(feature = "embedded-graphics")]
-impl Render<embedded_graphics::pixelcolor::Rgb565> for Divider {
+impl Render<embedded_graphics_core::pixelcolor::Rgb565> for Divider {
     fn render(
         &self,
-        target: &mut impl RenderTarget<embedded_graphics::pixelcolor::Rgb565>,
+        target: &mut impl RenderTarget<embedded_graphics_core::pixelcolor::Rgb565>,
         layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
-        env: &impl RenderEnvironment<embedded_graphics::pixelcolor::Rgb565>,
+        env: &impl RenderEnvironment<embedded_graphics_core::pixelcolor::Rgb565>,
     ) {
         match env.layout_direction() {
             LayoutDirection::Horizontal => {

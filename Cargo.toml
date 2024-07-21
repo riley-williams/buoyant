@@ -17,11 +17,11 @@ maintenance = { status = "experimental" }
 default = ["std", "crossterm"]
 std = []
 crossterm = ["dep:crossterm", "std"]
-embedded-graphics = ["dep:embedded-graphics"]
+embedded-graphics = ["dep:embedded-graphics-core"]
 
 [dependencies]
 crossterm = { version = "0.27", optional = true }
-embedded-graphics = { version = "0.8", optional = true }
+embedded-graphics-core = { version = "0.4", optional = true }
 
 [profile.release]
 debug = true

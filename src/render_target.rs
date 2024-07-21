@@ -70,7 +70,7 @@ where
 }
 
 #[cfg(feature = "embedded-graphics")]
-use embedded_graphics::{draw_target::DrawTarget, primitives::Rectangle};
+use embedded_graphics_core::{draw_target::DrawTarget, primitives::Rectangle};
 
 #[cfg(feature = "embedded-graphics")]
 impl<D, Pixel> RenderTarget<Pixel> for D
@@ -89,11 +89,11 @@ where
     fn draw(&mut self, point: Point, color: Pixel) {
         _ = self.fill_solid(
             &Rectangle::new(
-                embedded_graphics::geometry::Point {
+                embedded_graphics_core::geometry::Point {
                     x: point.x as i32,
                     y: point.y as i32,
                 },
-                embedded_graphics::geometry::Size {
+                embedded_graphics_core::geometry::Size {
                     width: 1,
                     height: 1,
                 },

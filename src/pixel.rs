@@ -129,13 +129,13 @@ fn interpolate_crossterm_colors(
 }
 
 #[cfg(feature = "embedded-graphics")]
-impl PixelColor for embedded_graphics::pixelcolor::BinaryColor {}
+impl PixelColor for embedded_graphics_core::pixelcolor::BinaryColor {}
 
 #[cfg(feature = "embedded-graphics")]
-use embedded_graphics::pixelcolor::{Rgb565, RgbColor};
+use embedded_graphics_core::pixelcolor::{Rgb565, RgbColor};
 
 #[cfg(feature = "embedded-graphics")]
-impl PixelColor for embedded_graphics::pixelcolor::Rgb565 {
+impl PixelColor for embedded_graphics_core::pixelcolor::Rgb565 {
     fn interpolate(from: Self, to: Self, amount: f32) -> Self {
         let t_fixed = (amount * 256.0) as i16;
 
@@ -156,7 +156,7 @@ fn interpolate_channel(a: u8, b: u8, t: i16) -> u8 {
 #[cfg(feature = "embedded-graphics")]
 #[cfg(test)]
 mod tests {
-    use embedded_graphics::pixelcolor::Rgb565;
+    use embedded_graphics_core::pixelcolor::Rgb565;
 
     use super::PixelColor;
 
