@@ -29,7 +29,9 @@ where
     fn size(&self) -> Size;
 
     /// Clear the render target
-    fn clear(&mut self);
+    fn clear(&mut self, color: Color) {
+        self.draw_solid(&Frame::new(Point::zero(), self.size()), color);
+    }
 
     /// Draw a pixel to the render target
     fn draw(&mut self, point: Point, color: Color);
@@ -73,32 +75,40 @@ where
 use embedded_graphics_core::{draw_target::DrawTarget, primitives::Rectangle};
 
 #[cfg(feature = "embedded-graphics")]
-impl<D, Pixel> RenderTarget<Pixel> for D
+impl<D, C> RenderTarget<C> for D
 where
-    D: DrawTarget<Color = Pixel>,
-    Pixel: PixelColor,
+    D: DrawTarget<Color = C>,
+    C: PixelColor + embedded_graphics_core::pixelcolor::PixelColor,
 {
     fn size(&self) -> Size {
         self.bounding_box().size.into()
     }
 
-    fn clear(&mut self) {
-        todo!()
+    fn clear(&mut self, color: C) {
+        _ = self.clear(color);
     }
 
-    fn draw(&mut self, point: Point, color: Pixel) {
-        _ = self.fill_solid(
-            &Rectangle::new(
-                embedded_graphics_core::geometry::Point {
-                    x: point.x as i32,
-                    y: point.y as i32,
-                },
-                embedded_graphics_core::geometry::Size {
-                    width: 1,
-                    height: 1,
-                },
-            ),
-            color,
-        );
+    fn draw(&mut self, point: Point, color: C) {
+        _ = self.draw_iter(std::iter::once(crate::pixel::Pixel { point, color }.into()));
+    }
+
+    fn draw_iter<I>(&mut self, pixels: I)
+    where
+        I: IntoIterator<Item = crate::pixel::Pixel<C>>,
+    {
+        _ = self.draw_iter(pixels.into_iter().map(Into::into));
+    }
+
+    fn draw_contiguous<I>(&mut self, area: &Frame, colors: I)
+    where
+        I: IntoIterator<Item = C>,
+    {
+        let rect = Rectangle::from(*area);
+        _ = self.fill_contiguous(&rect, colors);
+    }
+
+    fn draw_solid(&mut self, area: &Frame, color: C) {
+        let rect = Rectangle::from(*area);
+        _ = self.fill_solid(&rect, color);
     }
 }

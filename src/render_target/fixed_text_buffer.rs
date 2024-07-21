@@ -35,14 +35,6 @@ impl<const W: usize, const H: usize> RenderTarget<char> for FixedTextBuffer<W, H
         Size::new(W as u16, H as u16)
     }
 
-    fn clear(&mut self) {
-        for line in self.text.iter_mut() {
-            for c in line.iter_mut() {
-                *c = ' ';
-            }
-        }
-    }
-
     fn draw(&mut self, point: Point, item: char) {
         let x = point.x as usize;
         let y = point.y as usize;

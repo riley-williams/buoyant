@@ -5,6 +5,15 @@ pub struct Pixel<C: PixelColor> {
     pub color: C,
 }
 
+#[cfg(feature = "embedded-graphics")]
+impl<T: embedded_graphics_core::pixelcolor::PixelColor + PixelColor> From<Pixel<T>>
+    for embedded_graphics_core::Pixel<T>
+{
+    fn from(value: Pixel<T>) -> Self {
+        embedded_graphics_core::Pixel(value.point.into(), value.color)
+    }
+}
+
 pub trait PixelColor: Clone + Copy + PartialEq {
     /// Interpolate between two colors
     fn interpolate(from: Self, to: Self, amount: f32) -> Self {

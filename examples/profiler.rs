@@ -11,7 +11,7 @@ use buoyant::{
 fn main() {
     let mut target = FixedTextBuffer::<100, 100>::default();
 
-    target.clear();
+    target.clear(' ');
     let mut size = target.size();
     println!("Size {:?}", size);
 
@@ -52,7 +52,7 @@ fn main() {
     let sample_layout = stack.layout(size, &env);
     println!("Layout size {}", std::mem::size_of_val(&sample_layout));
 
-    target.clear();
+    target.clear(' ');
     for width in 1..100 {
         for height in 1..100 {
             size = Size::new(width, height);

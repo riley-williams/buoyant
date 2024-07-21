@@ -17,7 +17,7 @@ fn main() {
     let mut target = CrosstermRenderTarget::default();
 
     target.enter_fullscreen();
-    target.clear();
+    target.clear(CrosstermColorSymbol::new(' '));
     let mut size = target.size();
     println!("Size {:?}", size);
 
@@ -101,7 +101,7 @@ fn main() {
             }
             Event::Mouse(_) => (),
             Event::Resize(width, height) => {
-                target.clear();
+                target.clear(CrosstermColorSymbol::new(' '));
                 size = Size::new(width, height);
                 let layout = stack.layout(size, &env);
                 stack.render(&mut target, &layout, Point::zero(), &env);
