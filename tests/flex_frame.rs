@@ -3,8 +3,8 @@ use buoyant::{
     font::BufferCharacterFont,
     layout::{HorizontalAlignment, Layout, VerticalAlignment},
     primitives::{Point, Size},
-    render::Render,
-    render_target::{FixedTextBuffer, RenderTarget},
+    render::CharacterRender,
+    render_target::{CharacterRenderTarget, FixedTextBuffer},
     view::{Text, ViewExtensions},
 };
 
@@ -13,7 +13,7 @@ fn test_min() {
     let font = BufferCharacterFont {};
     let content = Text::char("123456", &font).flex_frame(Some(2), None, Some(2), None, None, None);
 
-    let env = DefaultEnvironment::new(' ');
+    let env = DefaultEnvironment::new(());
 
     assert_eq!(
         content.layout(Size::new(1, 1), &env).resolved_size,
@@ -41,7 +41,7 @@ fn test_max() {
     let font = BufferCharacterFont {};
     let content = Text::char("123456", &font).flex_frame(None, Some(2), None, Some(2), None, None);
 
-    let env = DefaultEnvironment::new(' ');
+    let env = DefaultEnvironment::new(());
 
     assert_eq!(
         content.layout(Size::new(2, 1), &env).resolved_size,
@@ -76,7 +76,7 @@ fn test_min_max() {
         None,
     );
 
-    let env = DefaultEnvironment::new(' ');
+    let env = DefaultEnvironment::new(());
 
     assert_eq!(
         content.layout(Size::new(2, 1), &env).resolved_size,
@@ -124,7 +124,7 @@ fn test_render_min_flex_frame_top_leading_alignment() {
         Some(HorizontalAlignment::Leading),
         Some(VerticalAlignment::Top),
     );
-    let env = DefaultEnvironment::new(' ');
+    let env = DefaultEnvironment::new(());
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = content.layout(buffer.size(), &env);
     content.render(&mut buffer, &layout, Point::zero(), &env);
@@ -146,7 +146,7 @@ fn test_render_min_flex_frame_top_center_alignment() {
         None,
         Some(VerticalAlignment::Top),
     );
-    let env = DefaultEnvironment::new(' ');
+    let env = DefaultEnvironment::new(());
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = content.layout(buffer.size(), &env);
     content.render(&mut buffer, &layout, Point::zero(), &env);
@@ -168,7 +168,7 @@ fn test_render_min_flex_frame_top_trailing_alignment() {
         Some(HorizontalAlignment::Trailing),
         Some(VerticalAlignment::Top),
     );
-    let env = DefaultEnvironment::new(' ');
+    let env = DefaultEnvironment::new(());
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = content.layout(buffer.size(), &env);
     content.render(&mut buffer, &layout, Point::zero(), &env);
@@ -190,7 +190,7 @@ fn test_render_min_flex_frame_center_leading_alignment() {
         Some(HorizontalAlignment::Leading),
         None,
     );
-    let env = DefaultEnvironment::new(' ');
+    let env = DefaultEnvironment::new(());
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = content.layout(buffer.size(), &env);
     content.render(&mut buffer, &layout, Point::zero(), &env);
@@ -206,7 +206,7 @@ fn test_render_min_flex_frame_center_center_alignment() {
     let font = BufferCharacterFont {};
     let content =
         Text::char("aa\nbb\ncc", &font).flex_frame(Some(6), None, Some(5), None, None, None);
-    let env = DefaultEnvironment::new(' ');
+    let env = DefaultEnvironment::new(());
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = content.layout(buffer.size(), &env);
     content.render(&mut buffer, &layout, Point::zero(), &env);
@@ -228,7 +228,7 @@ fn test_render_min_flex_frame_center_trailing_alignment() {
         Some(HorizontalAlignment::Trailing),
         None,
     );
-    let env = DefaultEnvironment::new(' ');
+    let env = DefaultEnvironment::new(());
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = content.layout(buffer.size(), &env);
     content.render(&mut buffer, &layout, Point::zero(), &env);
@@ -250,7 +250,7 @@ fn test_render_min_flex_frame_bottom_leading_alignment() {
         Some(HorizontalAlignment::Leading),
         Some(VerticalAlignment::Bottom),
     );
-    let env = DefaultEnvironment::new(' ');
+    let env = DefaultEnvironment::new(());
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = content.layout(buffer.size(), &env);
     content.render(&mut buffer, &layout, Point::zero(), &env);
@@ -272,7 +272,7 @@ fn test_render_min_flex_frame_bottom_center_alignment() {
         None,
         Some(VerticalAlignment::Bottom),
     );
-    let env = DefaultEnvironment::new(' ');
+    let env = DefaultEnvironment::new(());
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = content.layout(buffer.size(), &env);
     content.render(&mut buffer, &layout, Point::zero(), &env);
@@ -294,7 +294,7 @@ fn test_render_min_flex_frame_bottom_trailing_alignment() {
         Some(HorizontalAlignment::Trailing),
         Some(VerticalAlignment::Bottom),
     );
-    let env = DefaultEnvironment::new(' ');
+    let env = DefaultEnvironment::new(());
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = content.layout(buffer.size(), &env);
     content.render(&mut buffer, &layout, Point::zero(), &env);
@@ -316,7 +316,7 @@ fn test_render_infinite_width_height_fills_space() {
         Some(HorizontalAlignment::Center),
         Some(VerticalAlignment::Center),
     );
-    let env = DefaultEnvironment::new(' ');
+    let env = DefaultEnvironment::new(());
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = content.layout(buffer.size(), &env);
     assert_eq!(layout.resolved_size, Size::new(6, 5));
@@ -339,7 +339,7 @@ fn test_render_oversize_mix() {
         Some(HorizontalAlignment::Center),
         Some(VerticalAlignment::Center),
     );
-    let env = DefaultEnvironment::new(' ');
+    let env = DefaultEnvironment::new(());
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = content.layout(buffer.size(), &env);
     assert_eq!(layout.resolved_size, Size::new(8, 8));

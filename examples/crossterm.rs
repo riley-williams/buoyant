@@ -1,27 +1,32 @@
 use buoyant::font::TerminalCharFont;
-use buoyant::pixel::CrosstermColorSymbol;
 use buoyant::primitives::Point;
+use buoyant::render::CharacterRender;
 use buoyant::view::ViewExtensions;
 use buoyant::{
     environment::DefaultEnvironment,
     layout::{Layout, VerticalAlignment},
     primitives::Size,
-    render::Render,
-    render_target::{CrosstermRenderTarget, RenderTarget},
+    render_target::{CharacterRenderTarget, CrosstermRenderTarget},
     style::horizontal_gradient::HorizontalGradient,
     view::{Divider, HStack, HorizontalTextAlignment, Rectangle, Spacer, Text, VStack, ZStack},
 };
 use crossterm::event::{read, Event};
+use crossterm::style::Colors;
 
 fn main() {
     let mut target = CrosstermRenderTarget::default();
 
+    let blank_color = Colors {
+        foreground: None,
+        background: None,
+    };
+
     target.enter_fullscreen();
-    target.clear(CrosstermColorSymbol::new(' '));
+    target.clear(blank_color);
     let mut size = target.size();
     println!("Size {:?}", size);
 
-    let env = DefaultEnvironment::new(CrosstermColorSymbol::new(' '));
+    let env = DefaultEnvironment::new(blank_color);
     let font = TerminalCharFont {};
     let stack = VStack::three(
         HStack::three(
@@ -31,8 +36,7 @@ fn main() {
             )
                 .multiline_text_alignment(HorizontalTextAlignment::Leading)
                 .foreground_style(
-                    CrosstermColorSymbol::new(' ')
-                        .with_foreground(crossterm::style::Color::Red)
+                    Colors { foreground: Some(crossterm::style::Color::Red), background: None },
                 ),
             Spacer::default(),
             Text::char(
@@ -48,13 +52,16 @@ fn main() {
         VStack::three(
             ZStack::two(
                 Rectangle
-                    .foreground_style(HorizontalGradient::new(
-                        CrosstermColorSymbol::new('#')
-                            .with_foreground(crossterm::style::Color::Rgb { r: 0, g: 255, b: 0 })
-                            .with_background(crossterm::style::Color::Rgb { r: 127, g: 0, b: 0 }),
-                        CrosstermColorSymbol::new('@')
-                            .with_foreground(crossterm::style::Color::Rgb { r: 127, g: 0, b: 255 })
-                            .with_background(crossterm::style::Color::Rgb { r: 0, g: 0, b: 127 }),
+                    .foreground_style(
+                        HorizontalGradient::new(
+                            Colors {
+                                foreground: Some(crossterm::style::Color::Rgb { r: 0, g: 255, b: 0 }),
+                                background: Some(crossterm::style::Color::Rgb { r: 127, g: 0, b: 0 })
+                            },
+                            Colors {
+                                foreground: Some(crossterm::style::Color::Rgb { r: 127, g: 0, b: 255 }),
+                                background: Some(crossterm::style::Color::Rgb { r: 0, g: 0, b: 127 }),
+                            }
                         )
                     ),
                 Text::char(
@@ -69,15 +76,12 @@ fn main() {
             )
                 .multiline_text_alignment(HorizontalTextAlignment::Center)
                 .foreground_style(HorizontalGradient::new(
-                    CrosstermColorSymbol::new(' ')
-                        .with_foreground(crossterm::style::Color::Rgb { r: 0, g: 255, b: 255 }),
-                    CrosstermColorSymbol::new(' ')
-                        .with_foreground(crossterm::style::Color::Rgb { r: 255, g: 0, b: 255 })
-                    )
+                    Colors { foreground: Some(crossterm::style::Color::Rgb { r: 0, g: 255, b: 255 }), background: None },
+                    Colors { foreground:Some(crossterm::style::Color::Rgb { r: 255, g: 0, b: 255 }), background: None })
                 )
                 .padding(2),
             Divider::default()
-                .foreground_style(CrosstermColorSymbol::new(' ').with_foreground(crossterm::style::Color::DarkYellow))
+                .foreground_style(Colors { foreground: Some(crossterm::style::Color::DarkYellow), background: None })
         ),
     );
 
@@ -101,7 +105,7 @@ fn main() {
             }
             Event::Mouse(_) => (),
             Event::Resize(width, height) => {
-                target.clear(CrosstermColorSymbol::new(' '));
+                target.clear(blank_color);
                 size = Size::new(width, height);
                 let layout = stack.layout(size, &env);
                 stack.render(&mut target, &layout, Point::zero(), &env);

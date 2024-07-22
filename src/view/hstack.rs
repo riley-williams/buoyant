@@ -5,8 +5,8 @@ use crate::{
     layout::{Layout, LayoutDirection, ResolvedLayout, VerticalAlignment},
     pixel::PixelColor,
     primitives::{Point, Size},
-    render::Render,
-    render_target::RenderTarget,
+    render::CharacterRender,
+    render_target::CharacterRenderTarget,
     style::color_style::ColorStyle,
 };
 
@@ -20,8 +20,6 @@ struct HorizontalEnvironment<'a, T> {
     inner_environment: &'a T,
 }
 
-// TODO: NOT a sustainable pattern, considering the defaults set on the environment.
-// Maybe this is one reason why Apple uses the roundabout EnvironmentKey?
 impl<T: LayoutEnvironment> LayoutEnvironment for HorizontalEnvironment<'_, T> {
     fn alignment(&self) -> crate::layout::Alignment {
         self.inner_environment.alignment()
@@ -108,50 +106,6 @@ impl<U: Layout, V: Layout> Layout for HStack<(U, V)> {
         }
     }
 }
-
-impl<Pixel, U, V> Render<Pixel> for HStack<(U, V)>
-where
-    U: Render<Pixel>,
-    V: Render<Pixel>,
-    Pixel: PixelColor,
-{
-    fn render(
-        &self,
-        target: &mut impl RenderTarget<Color = Pixel>,
-        layout: &ResolvedLayout<Self::Sublayout>,
-        origin: Point,
-        env: &impl RenderEnvironment<Pixel>,
-    ) {
-        let env = HorizontalEnvironment::from(env);
-        let mut width = 0;
-
-        let offset = Point::new(
-            width,
-            self.alignment.align(
-                layout.resolved_size.height as i16,
-                layout.sublayouts.0.resolved_size.height as i16,
-            ),
-        );
-
-        self.items
-            .0
-            .render(target, &layout.sublayouts.0, origin + offset, &env);
-
-        width += (layout.sublayouts.0.resolved_size.width + self.spacing) as i16;
-        let offset = Point::new(
-            width,
-            self.alignment.align(
-                layout.resolved_size.height as i16,
-                layout.sublayouts.1.resolved_size.height as i16,
-            ),
-        );
-
-        self.items
-            .1
-            .render(target, &layout.sublayouts.1, origin + offset, &env);
-    }
-}
-
 impl<U, V, W> HStack<(U, V, W)> {
     pub fn three(item0: U, item1: V, item2: W) -> Self {
         HStack {
@@ -207,63 +161,6 @@ impl<U: Layout, V: Layout, W: Layout> Layout for HStack<(U, V, W)> {
             sublayouts: (c0.unwrap(), c1.unwrap(), c2.unwrap()),
             resolved_size: total_size,
         }
-    }
-}
-
-impl<Pixel, U, V, W> Render<Pixel> for HStack<(U, V, W)>
-where
-    U: Render<Pixel>,
-    V: Render<Pixel>,
-    W: Render<Pixel>,
-    Pixel: PixelColor,
-{
-    fn render(
-        &self,
-        target: &mut impl RenderTarget<Color = Pixel>,
-        layout: &ResolvedLayout<Self::Sublayout>,
-        origin: Point,
-        env: &impl RenderEnvironment<Pixel>,
-    ) {
-        let env = HorizontalEnvironment::from(env);
-        let mut width = 0;
-
-        let offset = Point::new(
-            width,
-            self.alignment.align(
-                layout.resolved_size.height as i16,
-                layout.sublayouts.0.resolved_size.height as i16,
-            ),
-        );
-
-        self.items
-            .0
-            .render(target, &layout.sublayouts.0, origin + offset, &env);
-
-        width += (layout.sublayouts.0.resolved_size.width + self.spacing) as i16;
-        let offset = Point::new(
-            width,
-            self.alignment.align(
-                layout.resolved_size.height as i16,
-                layout.sublayouts.1.resolved_size.height as i16,
-            ),
-        );
-
-        self.items
-            .1
-            .render(target, &layout.sublayouts.1, origin + offset, &env);
-
-        width += (layout.sublayouts.1.resolved_size.width + self.spacing) as i16;
-        let offset = Point::new(
-            width,
-            self.alignment.align(
-                layout.resolved_size.height as i16,
-                layout.sublayouts.2.resolved_size.height as i16,
-            ),
-        );
-
-        self.items
-            .2
-            .render(target, &layout.sublayouts.2, origin + offset, &env);
     }
 }
 
@@ -405,4 +302,213 @@ enum LayoutStage {
     Unsized,
     Candidate(Size),
     Final(Size),
+}
+
+// -- Character Render
+
+impl<Pixel, U, V> CharacterRender<Pixel> for HStack<(U, V)>
+where
+    U: CharacterRender<Pixel>,
+    V: CharacterRender<Pixel>,
+    Pixel: PixelColor,
+{
+    fn render(
+        &self,
+        target: &mut impl CharacterRenderTarget<Color = Pixel>,
+        layout: &ResolvedLayout<Self::Sublayout>,
+        origin: Point,
+        env: &impl RenderEnvironment<Pixel>,
+    ) {
+        let env = HorizontalEnvironment::from(env);
+        let mut width = 0;
+
+        let offset = Point::new(
+            width,
+            self.alignment.align(
+                layout.resolved_size.height as i16,
+                layout.sublayouts.0.resolved_size.height as i16,
+            ),
+        );
+
+        self.items
+            .0
+            .render(target, &layout.sublayouts.0, origin + offset, &env);
+
+        width += (layout.sublayouts.0.resolved_size.width + self.spacing) as i16;
+        let offset = Point::new(
+            width,
+            self.alignment.align(
+                layout.resolved_size.height as i16,
+                layout.sublayouts.1.resolved_size.height as i16,
+            ),
+        );
+
+        self.items
+            .1
+            .render(target, &layout.sublayouts.1, origin + offset, &env);
+    }
+}
+
+impl<Pixel, U, V, W> CharacterRender<Pixel> for HStack<(U, V, W)>
+where
+    U: CharacterRender<Pixel>,
+    V: CharacterRender<Pixel>,
+    W: CharacterRender<Pixel>,
+    Pixel: PixelColor,
+{
+    fn render(
+        &self,
+        target: &mut impl CharacterRenderTarget<Color = Pixel>,
+        layout: &ResolvedLayout<Self::Sublayout>,
+        origin: Point,
+        env: &impl RenderEnvironment<Pixel>,
+    ) {
+        let env = HorizontalEnvironment::from(env);
+        let mut width = 0;
+
+        let offset = Point::new(
+            width,
+            self.alignment.align(
+                layout.resolved_size.height as i16,
+                layout.sublayouts.0.resolved_size.height as i16,
+            ),
+        );
+
+        self.items
+            .0
+            .render(target, &layout.sublayouts.0, origin + offset, &env);
+
+        width += (layout.sublayouts.0.resolved_size.width + self.spacing) as i16;
+        let offset = Point::new(
+            width,
+            self.alignment.align(
+                layout.resolved_size.height as i16,
+                layout.sublayouts.1.resolved_size.height as i16,
+            ),
+        );
+
+        self.items
+            .1
+            .render(target, &layout.sublayouts.1, origin + offset, &env);
+
+        width += (layout.sublayouts.1.resolved_size.width + self.spacing) as i16;
+        let offset = Point::new(
+            width,
+            self.alignment.align(
+                layout.resolved_size.height as i16,
+                layout.sublayouts.2.resolved_size.height as i16,
+            ),
+        );
+
+        self.items
+            .2
+            .render(target, &layout.sublayouts.2, origin + offset, &env);
+    }
+}
+
+// -- Embedded Render
+
+#[cfg(feature = "embedded-graphics")]
+use embedded_graphics::draw_target::DrawTarget;
+
+#[cfg(feature = "embedded-graphics")]
+impl<Pixel, U, V> crate::render::EmbeddedRender<Pixel> for HStack<(U, V)>
+where
+    U: crate::render::EmbeddedRender<Pixel>,
+    V: crate::render::EmbeddedRender<Pixel>,
+    Pixel: PixelColor,
+{
+    fn render(
+        &self,
+        target: &mut impl DrawTarget<Color = Pixel>,
+        layout: &ResolvedLayout<Self::Sublayout>,
+        origin: Point,
+        env: &impl RenderEnvironment<Pixel>,
+    ) {
+        let env = HorizontalEnvironment::from(env);
+        let mut width = 0;
+
+        let offset = Point::new(
+            width,
+            self.alignment.align(
+                layout.resolved_size.height as i16,
+                layout.sublayouts.0.resolved_size.height as i16,
+            ),
+        );
+
+        self.items
+            .0
+            .render(target, &layout.sublayouts.0, origin + offset, &env);
+
+        width += (layout.sublayouts.0.resolved_size.width + self.spacing) as i16;
+        let offset = Point::new(
+            width,
+            self.alignment.align(
+                layout.resolved_size.height as i16,
+                layout.sublayouts.1.resolved_size.height as i16,
+            ),
+        );
+
+        self.items
+            .1
+            .render(target, &layout.sublayouts.1, origin + offset, &env);
+    }
+}
+
+#[cfg(feature = "embedded-graphics")]
+impl<Pixel, U, V, W> crate::render::EmbeddedRender<Pixel> for HStack<(U, V, W)>
+where
+    U: crate::render::EmbeddedRender<Pixel>,
+    V: crate::render::EmbeddedRender<Pixel>,
+    W: crate::render::EmbeddedRender<Pixel>,
+    Pixel: PixelColor,
+{
+    fn render(
+        &self,
+        target: &mut impl DrawTarget<Color = Pixel>,
+        layout: &ResolvedLayout<Self::Sublayout>,
+        origin: Point,
+        env: &impl RenderEnvironment<Pixel>,
+    ) {
+        let env = HorizontalEnvironment::from(env);
+        let mut width = 0;
+
+        let offset = Point::new(
+            width,
+            self.alignment.align(
+                layout.resolved_size.height as i16,
+                layout.sublayouts.0.resolved_size.height as i16,
+            ),
+        );
+
+        self.items
+            .0
+            .render(target, &layout.sublayouts.0, origin + offset, &env);
+
+        width += (layout.sublayouts.0.resolved_size.width + self.spacing) as i16;
+        let offset = Point::new(
+            width,
+            self.alignment.align(
+                layout.resolved_size.height as i16,
+                layout.sublayouts.1.resolved_size.height as i16,
+            ),
+        );
+
+        self.items
+            .1
+            .render(target, &layout.sublayouts.1, origin + offset, &env);
+
+        width += (layout.sublayouts.1.resolved_size.width + self.spacing) as i16;
+        let offset = Point::new(
+            width,
+            self.alignment.align(
+                layout.resolved_size.height as i16,
+                layout.sublayouts.2.resolved_size.height as i16,
+            ),
+        );
+
+        self.items
+            .2
+            .render(target, &layout.sublayouts.2, origin + offset, &env);
+    }
 }

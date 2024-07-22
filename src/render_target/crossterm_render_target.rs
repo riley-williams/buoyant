@@ -1,5 +1,6 @@
 use crossterm::{
-    cursor, execute, style,
+    cursor, execute,
+    style::{self, Stylize},
     terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
     ExecutableCommand, QueueableCommand,
 };
@@ -7,10 +8,9 @@ use crossterm::{
 #[cfg(feature = "std")]
 use std::io::{stdout, Stdout, Write};
 
-use crate::pixel::CrosstermColorSymbol;
 use crate::primitives::Size;
 
-use super::RenderTarget;
+use super::CharacterRenderTarget;
 
 pub struct CrosstermRenderTarget {
     stdout: Stdout,
@@ -43,8 +43,8 @@ impl Drop for CrosstermRenderTarget {
     }
 }
 
-impl RenderTarget for CrosstermRenderTarget {
-    type Color = CrosstermColorSymbol;
+impl CharacterRenderTarget for CrosstermRenderTarget {
+    type Color = crossterm::style::Colors;
 
     fn size(&self) -> Size {
         crossterm::terminal::size()
@@ -52,18 +52,30 @@ impl RenderTarget for CrosstermRenderTarget {
             .unwrap_or_default()
     }
 
-    fn clear(&mut self, _: CrosstermColorSymbol) {
+    fn clear(&mut self, _: crossterm::style::Colors) {
         _ = self
             .stdout
             .execute(terminal::Clear(terminal::ClearType::All))
             .unwrap();
     }
 
-    fn draw(&mut self, point: crate::primitives::Point, item: CrosstermColorSymbol) {
+    fn draw(
+        &mut self,
+        point: crate::primitives::Point,
+        item: char,
+        color: crossterm::style::Colors,
+    ) {
+        let mut styled_char = item.stylize();
+        if let Some(foreground) = color.foreground {
+            styled_char = styled_char.with(foreground);
+        }
+        if let Some(background) = color.background {
+            styled_char = styled_char.on(background);
+        }
         self.stdout
             .queue(cursor::MoveTo(point.x as u16, point.y as u16))
             .unwrap()
-            .queue(style::PrintStyledContent(item.into()))
+            .queue(style::PrintStyledContent(styled_char))
             .unwrap();
     }
 }

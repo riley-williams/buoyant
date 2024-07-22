@@ -2,8 +2,8 @@ use buoyant::environment::DefaultEnvironment;
 use buoyant::font::BufferCharacterFont;
 use buoyant::layout::{HorizontalAlignment, Layout, VerticalAlignment};
 use buoyant::primitives::{Point, Size};
-use buoyant::render::Render;
-use buoyant::render_target::{FixedTextBuffer, RenderTarget as _};
+use buoyant::render::CharacterRender;
+use buoyant::render_target::{CharacterRenderTarget as _, FixedTextBuffer};
 use buoyant::view::{
     Divider, HStack, HorizontalTextAlignment, Rectangle, Spacer, Text, VStack, ViewExtensions,
 };
@@ -20,7 +20,7 @@ fn collect_text<const W: usize, const H: usize>(buffer: &FixedTextBuffer<W, H>) 
 fn test_greedy_layout_2() {
     let vstack = VStack::two(Spacer::default(), Spacer::default());
     let offer = Size::new(100, 100);
-    let env = DefaultEnvironment::new(' ');
+    let env = DefaultEnvironment::new(());
     let layout = vstack.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(0, 100));
 }
@@ -29,7 +29,7 @@ fn test_greedy_layout_2() {
 fn test_oversized_layout_2() {
     let vstack = VStack::two(Divider::default().padding(2), Spacer::default());
     let offer = Size::new(0, 10);
-    let env = DefaultEnvironment::new(' ');
+    let env = DefaultEnvironment::new(());
     let layout = vstack.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(0, 10));
 }
@@ -42,7 +42,7 @@ fn test_oversized_layout_3() {
         Spacer::default(),
     );
     let offer = Size::new(0, 10);
-    let env = DefaultEnvironment::new(' ');
+    let env = DefaultEnvironment::new(());
     let layout = vstack.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(0, 10));
 }
@@ -56,7 +56,7 @@ fn test_undersized_layout_3_bottom_pad() {
         Spacer::default(),
     );
     let offer = Size::new(1, 10);
-    let env = DefaultEnvironment::new(' ');
+    let env = DefaultEnvironment::new(());
     let layout = vstack.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(1, 10));
     let mut buffer = FixedTextBuffer::<1, 10>::default();
@@ -83,7 +83,7 @@ fn test_undersized_layout_3_right_pad_space() {
     )
     .spacing(1);
     let offer = Size::new(1, 10);
-    let env = DefaultEnvironment::new(' ');
+    let env = DefaultEnvironment::new(());
     let layout = vstack.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(1, 10));
     let mut buffer = FixedTextBuffer::<1, 10>::default();
@@ -102,7 +102,7 @@ fn test_oversized_layout_3_right_pad_space() {
     )
     .spacing(1);
     let offer = Size::new(1, 10);
-    let env = DefaultEnvironment::new(' ');
+    let env = DefaultEnvironment::new(());
     let layout = vstack.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(1, 10));
     let mut buffer = FixedTextBuffer::<1, 10>::default();
@@ -121,7 +121,7 @@ fn test_oversized_layout_3_middle_pad_space() {
     )
     .spacing(1);
     let offer = Size::new(1, 10);
-    let env = DefaultEnvironment::new(' ');
+    let env = DefaultEnvironment::new(());
     let layout = vstack.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(1, 10));
     let mut buffer = FixedTextBuffer::<1, 10>::default();
@@ -140,7 +140,7 @@ fn test_oversized_layout_3_trailing_pad_space() {
     )
     .spacing(1);
     let offer = Size::new(1, 10);
-    let env = DefaultEnvironment::new(' ');
+    let env = DefaultEnvironment::new(());
     let layout = vstack.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(1, 10));
     let mut buffer = FixedTextBuffer::<1, 10>::default();
@@ -157,7 +157,7 @@ fn test_undersized_layout_3_middle_pad() {
         Text::char("5678", &font),
     );
     let offer = Size::new(1, 10);
-    let env = DefaultEnvironment::new(' ');
+    let env = DefaultEnvironment::new(());
     let layout = vstack.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(1, 10));
     let mut buffer = FixedTextBuffer::<1, 10>::default();
@@ -174,7 +174,7 @@ fn test_layout_3_remainder_allocation() {
         Text::char("bbb", &font),
         Text::char("ccc", &font),
     );
-    let env = DefaultEnvironment::new(' ');
+    let env = DefaultEnvironment::new(());
     let mut buffer = FixedTextBuffer::<1, 10>::default();
     let offer = Size::new(1, 7);
     let layout = vstack.layout(offer, &env);
@@ -208,7 +208,7 @@ fn test_layout_3_horizontal_alignment_trailing() {
     )
     .alignment(HorizontalAlignment::Trailing)
     .spacing(1);
-    let env = DefaultEnvironment::new(' ');
+    let env = DefaultEnvironment::new(());
     let mut buffer = FixedTextBuffer::<6, 7>::default();
     let layout = vstack.layout(buffer.size(), &env);
     vstack.render(&mut buffer, &layout, Point::zero(), &env);
@@ -232,7 +232,7 @@ fn test_layout_3_alignment_center() {
         Text::char("cccc", &font),
     )
     .alignment(HorizontalAlignment::Center);
-    let env = DefaultEnvironment::new(' ');
+    let env = DefaultEnvironment::new(());
     let mut buffer = FixedTextBuffer::<7, 5>::default();
     let layout = vstack.layout(buffer.size(), &env);
     vstack.render(&mut buffer, &layout, Point::zero(), &env);
@@ -254,7 +254,7 @@ fn test_layout_3_alignment_leading() {
     )
     .alignment(HorizontalAlignment::Leading)
     .spacing(1);
-    let env = DefaultEnvironment::new(' ');
+    let env = DefaultEnvironment::new(());
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = vstack.layout(buffer.size(), &env);
     vstack.render(&mut buffer, &layout, Point::zero(), &env);
@@ -274,7 +274,7 @@ fn test_layout_direction_is_set_inner_hstack() {
         HStack::two(Divider::default(), Spacer::default()),
         Divider::default(),
     );
-    let env = DefaultEnvironment::new(' ');
+    let env = DefaultEnvironment::new(());
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = vstack.layout(buffer.size(), &env);
     vstack.render(&mut buffer, &layout, Point::zero(), &env);
@@ -292,7 +292,7 @@ fn test_layout_direction_is_set_inner_vstack() {
         VStack::two(Divider::default(), Spacer::default()),
         Divider::default(),
     );
-    let env = DefaultEnvironment::new(' ');
+    let env = DefaultEnvironment::new(());
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = hstack.layout(buffer.size(), &env);
     hstack.render(&mut buffer, &layout, Point::zero(), &env);
@@ -335,7 +335,7 @@ fn test_flexible_layout_fills_frame_10k() {
         ),
     );
 
-    let env = DefaultEnvironment::new(' ');
+    let env = DefaultEnvironment::new(());
     // The spacers in this view should always cause the stack size to equal the offer size
     for width in 1..100 {
         for height in 1..100 {
@@ -352,12 +352,12 @@ fn test_layout_3_extra_space_allocation() {
     // The VStack should attempt to lay out the views into the full width of the offer.
     let font = BufferCharacterFont {};
     let vstack = VStack::three(
-        Rectangle.foreground_style('x'),
+        Rectangle.foreground_style(()),
         Text::char("Texty text", &font),
-        Rectangle.foreground_style('+'),
+        Rectangle.foreground_style(()),
     )
     .spacing(0);
-    let env = DefaultEnvironment::new(' ');
+    let env = DefaultEnvironment::new(());
     let mut buffer = FixedTextBuffer::<6, 10>::default();
     let layout = vstack.layout(buffer.size(), &env);
     vstack.render(&mut buffer, &layout, Point::zero(), &env);

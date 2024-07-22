@@ -3,8 +3,8 @@ use crate::{
     layout::{Layout, LayoutDirection, ResolvedLayout},
     pixel::PixelColor,
     primitives::{Point, Size},
-    render::Render,
-    render_target::RenderTarget,
+    render::CharacterRender,
+    render_target::CharacterRenderTarget,
 };
 
 #[derive(Default, PartialEq)]
@@ -35,10 +35,22 @@ impl Layout for Spacer {
     }
 }
 
-impl<Pixel: PixelColor> Render<Pixel> for Spacer {
+impl<Pixel: PixelColor> CharacterRender<Pixel> for Spacer {
     fn render(
         &self,
-        _target: &mut impl RenderTarget<Color = Pixel>,
+        _target: &mut impl CharacterRenderTarget<Color = Pixel>,
+        _layout: &ResolvedLayout<Self::Sublayout>,
+        _origin: Point,
+        _env: &impl RenderEnvironment<Pixel>,
+    ) {
+    }
+}
+
+#[cfg(feature = "embedded-graphics")]
+impl<Pixel: PixelColor> crate::render::EmbeddedRender<Pixel> for Spacer {
+    fn render(
+        &self,
+        _target: &mut impl embedded_graphics_core::draw_target::DrawTarget<Color = Pixel>,
         _layout: &ResolvedLayout<Self::Sublayout>,
         _origin: Point,
         _env: &impl RenderEnvironment<Pixel>,

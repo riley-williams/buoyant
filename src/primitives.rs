@@ -126,3 +126,13 @@ impl From<Frame> for embedded_graphics_core::primitives::Rectangle {
         embedded_graphics_core::primitives::Rectangle::new(value.origin.into(), value.size.into())
     }
 }
+
+#[cfg(feature = "embedded-graphics")]
+impl From<embedded_graphics_core::primitives::Rectangle> for Frame {
+    fn from(value: embedded_graphics_core::primitives::Rectangle) -> Self {
+        Frame {
+            origin: value.top_left.into(),
+            size: value.size.into(),
+        }
+    }
+}

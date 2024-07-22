@@ -3,8 +3,8 @@ use crate::{
     layout::{HorizontalAlignment, Layout, ResolvedLayout, VerticalAlignment},
     pixel::PixelColor,
     primitives::{Point, Size},
-    render::Render,
-    render_target::RenderTarget,
+    render::CharacterRender,
+    render_target::CharacterRenderTarget,
 };
 
 pub struct FlexFrame<T> {
@@ -84,14 +84,47 @@ impl<V: Layout> Layout for FlexFrame<V> {
     }
 }
 
-impl<Pixel, View: Layout> Render<Pixel> for FlexFrame<View>
+impl<Pixel, View: Layout> CharacterRender<Pixel> for FlexFrame<View>
 where
-    View: Render<Pixel>,
+    View: CharacterRender<Pixel>,
     Pixel: PixelColor,
 {
     fn render(
         &self,
-        target: &mut impl RenderTarget<Color = Pixel>,
+        target: &mut impl CharacterRenderTarget<Color = Pixel>,
+        layout: &ResolvedLayout<Self::Sublayout>,
+        origin: Point,
+        env: &impl RenderEnvironment<Pixel>,
+    ) {
+        let new_origin = origin
+            + Point::new(
+                self.horizontal_alignment.unwrap_or_default().align(
+                    layout.resolved_size.width as i16,
+                    layout.sublayouts.resolved_size.width as i16,
+                ),
+                self.vertical_alignment.unwrap_or_default().align(
+                    layout.resolved_size.height as i16,
+                    layout.sublayouts.resolved_size.height as i16,
+                ),
+            );
+
+        self.child
+            .render(target, &layout.sublayouts, new_origin, env);
+    }
+}
+
+#[cfg(feature = "embedded-graphics")]
+use embedded_graphics::draw_target::DrawTarget;
+
+#[cfg(feature = "embedded-graphics")]
+impl<Pixel, View: Layout> crate::render::EmbeddedRender<Pixel> for FlexFrame<View>
+where
+    View: crate::render::EmbeddedRender<Pixel>,
+    Pixel: PixelColor,
+{
+    fn render(
+        &self,
+        target: &mut impl DrawTarget<Color = Pixel>,
         layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
         env: &impl RenderEnvironment<Pixel>,

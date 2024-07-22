@@ -3,8 +3,8 @@ use crate::{
     layout::{Layout, ResolvedLayout},
     pixel::PixelColor,
     primitives::{Point, Size},
-    render::Render,
-    render_target::RenderTarget,
+    render::CharacterRender,
+    render_target::CharacterRenderTarget,
 };
 
 /// A view that adds padding around a child view.
@@ -45,14 +45,36 @@ impl<V: Layout> Layout for Padding<V> {
     }
 }
 
-impl<Pixel, View: Layout> Render<Pixel> for Padding<View>
+impl<Pixel, View: Layout> CharacterRender<Pixel> for Padding<View>
 where
-    View: Render<Pixel>,
+    View: CharacterRender<Pixel>,
     Pixel: PixelColor,
 {
     fn render(
         &self,
-        target: &mut impl RenderTarget<Color = Pixel>,
+        target: &mut impl CharacterRenderTarget<Color = Pixel>,
+        layout: &ResolvedLayout<Self::Sublayout>,
+        origin: Point,
+        env: &impl RenderEnvironment<Pixel>,
+    ) {
+        let offset_origin = origin + Point::new(self.padding as i16, self.padding as i16);
+        self.child
+            .render(target, &layout.sublayouts, offset_origin, env);
+    }
+}
+
+#[cfg(feature = "embedded-graphics")]
+use embedded_graphics::draw_target::DrawTarget;
+
+#[cfg(feature = "embedded-graphics")]
+impl<Pixel, View: Layout> crate::render::EmbeddedRender<Pixel> for Padding<View>
+where
+    View: crate::render::EmbeddedRender<Pixel>,
+    Pixel: PixelColor,
+{
+    fn render(
+        &self,
+        target: &mut impl DrawTarget<Color = Pixel>,
         layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
         env: &impl RenderEnvironment<Pixel>,

@@ -3,19 +3,19 @@ use buoyant::{
     font::BufferCharacterFont,
     layout::{Layout, VerticalAlignment},
     primitives::{Point, Size},
-    render::Render,
-    render_target::{FixedTextBuffer, RenderTarget},
+    render::CharacterRender,
+    render_target::{CharacterRenderTarget, FixedTextBuffer},
     view::{Divider, HStack, HorizontalTextAlignment, Spacer, Text, VStack, ViewExtensions},
 };
 
 fn main() {
     let mut target = FixedTextBuffer::<100, 100>::default();
 
-    target.clear(' ');
+    target.clear(());
     let mut size = target.size();
     println!("Size {:?}", size);
 
-    let env = DefaultEnvironment::new(' ');
+    let env = DefaultEnvironment::new(());
 
     let font = BufferCharacterFont {};
     let stack = VStack::three(
@@ -52,7 +52,7 @@ fn main() {
     let sample_layout = stack.layout(size, &env);
     println!("Layout size {}", std::mem::size_of_val(&sample_layout));
 
-    target.clear(' ');
+    target.clear(());
     for width in 1..100 {
         for height in 1..100 {
             size = Size::new(width, height);
