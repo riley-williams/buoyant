@@ -1,8 +1,8 @@
-use buoyant::font::TerminalChar;
+use buoyant::font::BufferCharacterFont;
 use buoyant::layout::Layout;
 use buoyant::primitives::{Point, Size};
-use buoyant::render::Render;
-use buoyant::render_target::{FixedTextBuffer, RenderTarget};
+use buoyant::render::CharacterRender;
+use buoyant::render_target::{CharacterRenderTarget, FixedTextBuffer};
 use buoyant::view::{ConditionalView, Text};
 use common::TestEnv;
 
@@ -10,7 +10,7 @@ mod common;
 
 #[test]
 fn test_conditional_view_layout() {
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let make_view = |condition| {
         ConditionalView::new(
             condition,
@@ -29,7 +29,7 @@ fn test_conditional_view_layout() {
     assert_eq!(buffer.text[1].iter().collect::<String>(), "!!!  ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "     ");
 
-    buffer.clear(' ');
+    buffer.clear(());
 
     let view = make_view(false);
     let layout = view.layout(buffer.size(), &env);

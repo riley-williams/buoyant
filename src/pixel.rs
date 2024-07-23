@@ -14,6 +14,18 @@ impl<T: embedded_graphics_core::pixelcolor::PixelColor + PixelColor> From<Pixel<
     }
 }
 
+#[cfg(feature = "embedded-graphics")]
+impl<T: embedded_graphics_core::pixelcolor::PixelColor + PixelColor>
+    From<embedded_graphics_core::Pixel<T>> for Pixel<T>
+{
+    fn from(value: embedded_graphics_core::Pixel<T>) -> Self {
+        Pixel {
+            point: value.0.into(),
+            color: value.1,
+        }
+    }
+}
+
 pub trait PixelColor: Clone + Copy + PartialEq {
     /// Interpolate between two colors
     fn interpolate(from: Self, to: Self, amount: f32) -> Self {
@@ -26,75 +38,17 @@ pub trait PixelColor: Clone + Copy + PartialEq {
 }
 
 impl PixelColor for char {}
+impl PixelColor for () {}
 
 #[cfg(feature = "crossterm")]
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub struct CrosstermColorSymbol {
-    pub character: char,
-    pub colors: crossterm::style::Colors,
-}
-
-#[cfg(feature = "crossterm")]
-impl CrosstermColorSymbol {
-    pub fn new(character: char) -> Self {
-        CrosstermColorSymbol {
-            character,
-            colors: crossterm::style::Colors {
-                foreground: None,
-                background: None,
-            },
-        }
-    }
-
-    pub fn with_foreground(mut self, color: crossterm::style::Color) -> Self {
-        self.colors.foreground = Some(color);
-        self
-    }
-
-    pub fn with_background(mut self, color: crossterm::style::Color) -> Self {
-        self.colors.background = Some(color);
-        self
-    }
-}
-
-#[cfg(feature = "crossterm")]
-use crossterm::style::Stylize;
-
-#[cfg(feature = "crossterm")]
-impl From<CrosstermColorSymbol> for crossterm::style::StyledContent<char> {
-    fn from(value: CrosstermColorSymbol) -> Self {
-        if let Some(fg) = value.colors.foreground {
-            if let Some(bg) = value.colors.background {
-                value.character.with(fg).on(bg)
-            } else {
-                value.character.with(fg)
-            }
-        } else {
-            value.character.stylize()
-        }
-    }
-}
-
-#[cfg(feature = "crossterm")]
-impl PixelColor for CrosstermColorSymbol {
+impl PixelColor for crossterm::style::Colors {
     fn interpolate(from: Self, to: Self, amount: f32) -> Self {
-        let interpolated_char = if amount < 0.5 {
-            from.character
-        } else {
-            to.character
-        };
+        let foreground = interpolate_crossterm_colors(from.foreground, to.foreground, amount);
+        let background = interpolate_crossterm_colors(from.background, to.background, amount);
 
-        let foreground =
-            interpolate_crossterm_colors(from.colors.foreground, to.colors.foreground, amount);
-        let background =
-            interpolate_crossterm_colors(from.colors.background, to.colors.background, amount);
-
-        CrosstermColorSymbol {
-            character: interpolated_char,
-            colors: crossterm::style::Colors {
-                foreground,
-                background,
-            },
+        crossterm::style::Colors {
+            foreground,
+            background,
         }
     }
 }

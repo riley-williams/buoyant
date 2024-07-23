@@ -1,9 +1,10 @@
 use crate::{
     environment::{LayoutEnvironment, RenderEnvironment},
     layout::{Layout, LayoutDirection, ResolvedLayout},
+    pixel::PixelColor,
     primitives::{Point, Size},
-    render::Render,
-    render_target::RenderTarget,
+    render::CharacterRender,
+    render_target::CharacterRenderTarget,
     style::color_style::ColorStyle,
 };
 
@@ -48,13 +49,18 @@ impl Layout for Divider {
 }
 
 #[cfg(feature = "embedded-graphics")]
-impl Render<embedded_graphics_core::pixelcolor::Rgb565> for Divider {
+use embedded_graphics::draw_target::DrawTarget;
+
+#[cfg(feature = "embedded-graphics")]
+impl<C: PixelColor + embedded_graphics_core::pixelcolor::PixelColor> crate::render::PixelRender<C>
+    for Divider
+{
     fn render(
         &self,
-        target: &mut impl RenderTarget<embedded_graphics_core::pixelcolor::Rgb565>,
+        target: &mut impl DrawTarget<Color = C>,
         layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
-        env: &impl RenderEnvironment<embedded_graphics_core::pixelcolor::Rgb565>,
+        env: &impl RenderEnvironment<C>,
     ) {
         match env.layout_direction() {
             LayoutDirection::Horizontal => {
@@ -63,7 +69,11 @@ impl Render<embedded_graphics_core::pixelcolor::Rgb565> for Divider {
                         env.foreground_style()
                             .shade_pixel(0, y as u16, layout.resolved_size);
 
-                    target.draw(origin + Point::new(0, y), foreground_color);
+                    let point = origin + Point::new(0, y);
+                    _ = target.draw_iter(core::iter::once(embedded_graphics::Pixel(
+                        point.into(),
+                        foreground_color,
+                    )));
                 }
             }
             LayoutDirection::Vertical => {
@@ -72,62 +82,46 @@ impl Render<embedded_graphics_core::pixelcolor::Rgb565> for Divider {
                         env.foreground_style()
                             .shade_pixel(x as u16, 0, layout.resolved_size);
 
-                    target.draw(origin + Point::new(x, 0), foreground_color);
+                    let point = origin + Point::new(x, 0);
+                    _ = target.draw_iter(core::iter::once(embedded_graphics::Pixel(
+                        point.into(),
+                        foreground_color,
+                    )));
                 }
             }
         }
     }
 }
 
-impl Render<char> for Divider {
+impl<C: PixelColor> CharacterRender<C> for Divider {
     fn render(
         &self,
-        target: &mut impl RenderTarget<char>,
+        target: &mut impl CharacterRenderTarget<Color = C>,
         layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
-        env: &impl RenderEnvironment<char>,
+        env: &impl RenderEnvironment<C>,
     ) {
         match env.layout_direction() {
             LayoutDirection::Horizontal => {
                 for y in origin.y..origin.y + layout.resolved_size.height as i16 {
-                    target.draw(Point::new(origin.x, y), '|');
+                    let color = env.foreground_style().shade_pixel(
+                        0,
+                        y as u16 - origin.y as u16,
+                        Size::new(1, layout.resolved_size.height),
+                    );
+
+                    target.draw(Point::new(origin.x, y), '|', color);
                 }
             }
             LayoutDirection::Vertical => {
                 for x in origin.x..origin.x + layout.resolved_size.width as i16 {
-                    target.draw(Point::new(x, origin.y), '-');
-                }
-            }
-        }
-    }
-}
+                    let color = env.foreground_style().shade_pixel(
+                        x as u16 - origin.x as u16,
+                        0,
+                        Size::new(layout.resolved_size.width, 1),
+                    );
 
-#[cfg(feature = "crossterm")]
-use crate::pixel::CrosstermColorSymbol;
-
-#[cfg(feature = "crossterm")]
-impl Render<CrosstermColorSymbol> for Divider {
-    fn render(
-        &self,
-        target: &mut impl RenderTarget<CrosstermColorSymbol>,
-        layout: &ResolvedLayout<Self::Sublayout>,
-        origin: Point,
-        env: &impl RenderEnvironment<CrosstermColorSymbol>,
-    ) {
-        // TODO: we can make this rainbow
-        let mut color = env.foreground_style().shade_pixel(0, 0, Size::new(0, 0));
-
-        match env.layout_direction() {
-            LayoutDirection::Horizontal => {
-                color.character = '|';
-                for y in origin.y..origin.y + layout.resolved_size.height as i16 {
-                    target.draw(Point::new(origin.x, y), color);
-                }
-            }
-            LayoutDirection::Vertical => {
-                color.character = '-';
-                for x in origin.x..origin.x + layout.resolved_size.width as i16 {
-                    target.draw(Point::new(x, origin.y), color);
+                    target.draw(Point::new(x, origin.y), '-', color);
                 }
             }
         }
@@ -136,11 +130,12 @@ impl Render<CrosstermColorSymbol> for Divider {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::Divider;
     use crate::environment::mock::TestEnv;
     use crate::layout::{Layout, LayoutDirection};
-    use crate::primitives::Size;
-    use crate::render_target::FixedTextBuffer;
+    use crate::primitives::{Point, Size};
+    use crate::render::CharacterRender;
+    use crate::render_target::{CharacterRenderTarget, FixedTextBuffer};
 
     #[test]
     fn test_horizontal_layout() {

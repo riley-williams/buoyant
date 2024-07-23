@@ -2,7 +2,7 @@ use crate::{
     layout::{Layout, ResolvedLayout},
     pixel::PixelColor,
     primitives::Point,
-    render::Render,
+    render::CharacterRender,
 };
 
 #[derive(Debug, Clone, PartialEq)]
@@ -55,17 +55,45 @@ impl<U: Layout, V: Layout> Layout for ConditionalView<U, V> {
     }
 }
 
-impl<Pixel: PixelColor, U, V> Render<Pixel> for ConditionalView<U, V>
+impl<Pixel: PixelColor, U, V> CharacterRender<Pixel> for ConditionalView<U, V>
 where
-    U: Render<Pixel>,
-    V: Render<Pixel>,
+    U: CharacterRender<Pixel>,
+    V: CharacterRender<Pixel>,
 {
     fn render(
         &self,
-        target: &mut impl crate::render_target::RenderTarget<Pixel>,
+        target: &mut impl crate::render_target::CharacterRenderTarget<Color = Pixel>,
         layout: &ResolvedLayout<
             ConditionalViewLayout<ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>>,
         >,
+        origin: Point,
+        env: &impl crate::environment::RenderEnvironment<Pixel>,
+    ) {
+        match &layout.sublayouts {
+            ConditionalViewLayout::TrueLayout(true_layout) => {
+                self.true_view.render(target, true_layout, origin, env)
+            }
+            ConditionalViewLayout::FalseLayout(false_layout) => {
+                self.false_view.render(target, false_layout, origin, env)
+            }
+        }
+    }
+}
+
+#[cfg(feature = "embedded-graphics")]
+use embedded_graphics::draw_target::DrawTarget;
+
+#[cfg(feature = "embedded-graphics")]
+impl<Pixel, U, V> crate::render::PixelRender<Pixel> for ConditionalView<U, V>
+where
+    U: crate::render::PixelRender<Pixel>,
+    V: crate::render::PixelRender<Pixel>,
+    Pixel: embedded_graphics_core::pixelcolor::PixelColor,
+{
+    fn render(
+        &self,
+        target: &mut impl DrawTarget<Color = Pixel>,
+        layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
         env: &impl crate::environment::RenderEnvironment<Pixel>,
     ) {

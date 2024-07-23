@@ -3,8 +3,8 @@ use crate::{
     layout::{Layout, ResolvedLayout},
     pixel::PixelColor,
     primitives::{Point, Size},
-    render::Render,
-    render_target::RenderTarget,
+    render::CharacterRender,
+    render_target::CharacterRenderTarget,
     style::color_style::ColorStyle,
 };
 
@@ -33,15 +33,41 @@ impl<Inner: Layout, Style: ColorStyle> Layout for ForegroundStyle<Inner, Style> 
     }
 }
 
-impl<Pixel, Inner, Style> Render<Pixel> for ForegroundStyle<Inner, Style>
+impl<Pixel, Inner, Style> CharacterRender<Pixel> for ForegroundStyle<Inner, Style>
 where
-    Inner: Render<Pixel>,
+    Inner: CharacterRender<Pixel>,
     Pixel: PixelColor,
     Style: ColorStyle<Color = Pixel>,
 {
     fn render(
         &self,
-        target: &mut impl RenderTarget<Pixel>,
+        target: &mut impl CharacterRenderTarget<Color = Pixel>,
+        layout: &ResolvedLayout<Inner::Sublayout>,
+        origin: Point,
+        env: &impl RenderEnvironment<Pixel>,
+    ) {
+        let modified_env = ForegroundStyleEnv {
+            style: self.style,
+            wrapped_env: env,
+        };
+
+        self.inner.render(target, layout, origin, &modified_env);
+    }
+}
+
+#[cfg(feature = "embedded-graphics")]
+use embedded_graphics::draw_target::DrawTarget;
+
+#[cfg(feature = "embedded-graphics")]
+impl<Pixel, Inner, Style> crate::render::PixelRender<Pixel> for ForegroundStyle<Inner, Style>
+where
+    Inner: crate::render::PixelRender<Pixel>,
+    Pixel: embedded_graphics_core::pixelcolor::PixelColor,
+    Style: ColorStyle<Color = Pixel>,
+{
+    fn render(
+        &self,
+        target: &mut impl DrawTarget<Color = Pixel>,
         layout: &ResolvedLayout<Inner::Sublayout>,
         origin: Point,
         env: &impl RenderEnvironment<Pixel>,

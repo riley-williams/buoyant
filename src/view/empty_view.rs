@@ -2,8 +2,8 @@ use crate::{
     layout::{Layout, ResolvedLayout},
     pixel::PixelColor,
     primitives::{Point, Size},
-    render::Render,
-    render_target::RenderTarget,
+    render::CharacterRender,
+    render_target::CharacterRenderTarget,
 };
 
 #[derive(Debug, Clone, PartialEq)]
@@ -27,10 +27,27 @@ impl Layout for EmptyView {
     }
 }
 
-impl<Pixel: PixelColor> Render<Pixel> for EmptyView {
+impl<Pixel: PixelColor> CharacterRender<Pixel> for EmptyView {
     fn render(
         &self,
-        _: &mut impl RenderTarget<Pixel>,
+        _: &mut impl CharacterRenderTarget<Color = Pixel>,
+        _: &ResolvedLayout<Self::Sublayout>,
+        _: Point,
+        _: &impl crate::environment::RenderEnvironment<Pixel>,
+    ) {
+    }
+}
+
+#[cfg(feature = "embedded-graphics")]
+use embedded_graphics::draw_target::DrawTarget;
+
+#[cfg(feature = "embedded-graphics")]
+impl<Pixel: embedded_graphics_core::pixelcolor::PixelColor> crate::render::PixelRender<Pixel>
+    for EmptyView
+{
+    fn render(
+        &self,
+        _: &mut impl DrawTarget<Color = Pixel>,
         _: &ResolvedLayout<Self::Sublayout>,
         _: Point,
         _: &impl crate::environment::RenderEnvironment<Pixel>,

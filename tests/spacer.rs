@@ -1,8 +1,8 @@
-use buoyant::font::TerminalChar;
+use buoyant::font::BufferCharacterFont;
 use buoyant::layout::{Layout, LayoutDirection};
 use buoyant::primitives::{Point, Size};
-use buoyant::render::Render;
-use buoyant::render_target::{FixedTextBuffer, RenderTarget};
+use buoyant::render::CharacterRender;
+use buoyant::render_target::{CharacterRenderTarget, FixedTextBuffer};
 use buoyant::view::{HStack, Spacer, Text};
 use common::TestEnv;
 
@@ -12,7 +12,7 @@ mod common;
 fn test_horizontal_layout() {
     let spacer = Spacer::default();
     let offer = Size::new(10, 10);
-    let env = TestEnv::default().with_direction(LayoutDirection::Horizontal);
+    let env = TestEnv::colorless().with_direction(LayoutDirection::Horizontal);
     let layout = spacer.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(10, 0));
 }
@@ -21,14 +21,14 @@ fn test_horizontal_layout() {
 fn test_vertical_layout() {
     let spacer = Spacer::default();
     let offer = Size::new(10, 10);
-    let env = TestEnv::default().with_direction(LayoutDirection::Vertical);
+    let env = TestEnv::colorless().with_direction(LayoutDirection::Vertical);
     let layout = spacer.layout(offer, &env);
     assert_eq!(layout.resolved_size, Size::new(0, 10));
 }
 
 #[test]
 fn test_render_fills_stack() {
-    let font = TerminalChar {};
+    let font = BufferCharacterFont {};
     let hstack = HStack::two(Spacer::default(), Text::char("67", &font)).spacing(1);
     let mut buffer = FixedTextBuffer::<9, 1>::default();
     let env = TestEnv::default().with_direction(LayoutDirection::Horizontal);

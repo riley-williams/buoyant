@@ -1,16 +1,17 @@
 use buoyant::{
     environment::{LayoutEnvironment, RenderEnvironment},
     layout::{Alignment, LayoutDirection},
+    pixel::PixelColor,
     style::color_style::ColorStyle,
 };
 
-pub struct TestEnv {
+pub struct TestEnv<Color> {
     pub direction: LayoutDirection,
     pub alignment: Alignment,
-    pub foreground_style: char,
+    pub foreground_style: Color,
 }
 
-impl LayoutEnvironment for TestEnv {
+impl<Color> LayoutEnvironment for TestEnv<Color> {
     fn layout_direction(&self) -> LayoutDirection {
         self.direction
     }
@@ -20,23 +21,33 @@ impl LayoutEnvironment for TestEnv {
     }
 }
 
-impl RenderEnvironment<char> for TestEnv {
-    fn foreground_style(&self) -> impl ColorStyle<Color = char> {
+impl<Color: PixelColor> RenderEnvironment<Color> for TestEnv<Color> {
+    fn foreground_style(&self) -> impl ColorStyle<Color = Color> {
         self.foreground_style
     }
 }
 
-impl Default for TestEnv {
+impl<C: Default> Default for TestEnv<C> {
     fn default() -> Self {
         Self {
             direction: LayoutDirection::Horizontal,
             alignment: Alignment::default(),
-            foreground_style: ' ',
+            foreground_style: C::default(),
         }
     }
 }
 
-impl TestEnv {
+impl TestEnv<()> {
+    pub fn colorless() -> Self {
+        Self {
+            direction: LayoutDirection::Horizontal,
+            alignment: Alignment::default(),
+            foreground_style: (),
+        }
+    }
+}
+
+impl<C> TestEnv<C> {
     pub fn with_direction(mut self, direction: LayoutDirection) -> Self {
         self.direction = direction;
         self

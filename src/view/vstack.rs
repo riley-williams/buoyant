@@ -5,8 +5,8 @@ use crate::{
     layout::{HorizontalAlignment, Layout, LayoutDirection, ResolvedLayout},
     pixel::PixelColor,
     primitives::{Point, Size},
-    render::Render,
-    render_target::RenderTarget,
+    render::CharacterRender,
+    render_target::CharacterRenderTarget,
     style::color_style::ColorStyle,
 };
 
@@ -30,7 +30,7 @@ impl<T: LayoutEnvironment> LayoutEnvironment for VerticalEnvironment<'_, T> {
     }
 }
 
-impl<Color: PixelColor, T: RenderEnvironment<Color>> RenderEnvironment<Color>
+impl<Color: Copy + PartialEq, T: RenderEnvironment<Color>> RenderEnvironment<Color>
     for VerticalEnvironment<'_, T>
 {
     fn foreground_style(&self) -> impl ColorStyle<Color = Color> {
@@ -107,50 +107,6 @@ impl<U: Layout, V: Layout> Layout for VStack<(U, V)> {
     }
 }
 
-impl<Pixel, U: Render<Pixel>, V: Render<Pixel>> Render<Pixel> for VStack<(U, V)>
-where
-    Pixel: PixelColor,
-{
-    fn render(
-        &self,
-        target: &mut impl RenderTarget<Pixel>,
-        layout: &ResolvedLayout<(ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>)>,
-        origin: Point,
-        env: &impl RenderEnvironment<Pixel>,
-    ) {
-        let env = &VerticalEnvironment::from(env);
-
-        let mut height = 0;
-
-        let new_origin = origin
-            + Point::new(
-                self.alignment.align(
-                    layout.resolved_size.width as i16,
-                    layout.sublayouts.0.resolved_size.width as i16,
-                ),
-                height,
-            );
-
-        self.items
-            .0
-            .render(target, &layout.sublayouts.0, new_origin, env);
-
-        height += (layout.sublayouts.0.resolved_size.height + self.spacing) as i16;
-        let new_origin = Point::new(
-            origin.x
-                + self.alignment.align(
-                    layout.resolved_size.width as i16,
-                    layout.sublayouts.1.resolved_size.width as i16,
-                ),
-            height,
-        );
-
-        self.items
-            .1
-            .render(target, &layout.sublayouts.1, new_origin, env);
-    }
-}
-
 impl<U, V, W> VStack<(U, V, W)> {
     pub fn three(item0: U, item1: V, item2: W) -> Self {
         VStack {
@@ -206,69 +162,6 @@ impl<U: Layout, V: Layout, W: Layout> Layout for VStack<(U, V, W)> {
             sublayouts: (c0.unwrap(), c1.unwrap(), c2.unwrap()),
             resolved_size: total_size,
         }
-    }
-}
-
-impl<Pixel, U, V, W> Render<Pixel> for VStack<(U, V, W)>
-where
-    U: Render<Pixel>,
-    V: Render<Pixel>,
-    W: Render<Pixel>,
-    Pixel: PixelColor,
-{
-    fn render(
-        &self,
-        target: &mut impl RenderTarget<Pixel>,
-        layout: &ResolvedLayout<(
-            ResolvedLayout<U::Sublayout>,
-            ResolvedLayout<V::Sublayout>,
-            ResolvedLayout<W::Sublayout>,
-        )>,
-        origin: Point,
-        env: &impl RenderEnvironment<Pixel>,
-    ) {
-        let env = &VerticalEnvironment::from(env);
-
-        let mut height = 0;
-
-        let new_origin = origin
-            + Point::new(
-                self.alignment.align(
-                    layout.resolved_size.width as i16,
-                    layout.sublayouts.0.resolved_size.width as i16,
-                ),
-                height,
-            );
-        self.items
-            .0
-            .render(target, &layout.sublayouts.0, new_origin, env);
-
-        height += (layout.sublayouts.0.resolved_size.height + self.spacing) as i16;
-        let new_origin = origin
-            + Point::new(
-                self.alignment.align(
-                    layout.resolved_size.width as i16,
-                    layout.sublayouts.1.resolved_size.width as i16,
-                ),
-                height,
-            );
-
-        self.items
-            .1
-            .render(target, &layout.sublayouts.1, new_origin, env);
-
-        height += (layout.sublayouts.1.resolved_size.height + self.spacing) as i16;
-        let new_origin = origin
-            + Point::new(
-                self.alignment.align(
-                    layout.resolved_size.width as i16,
-                    layout.sublayouts.2.resolved_size.width as i16,
-                ),
-                height,
-            );
-        self.items
-            .2
-            .render(target, &layout.sublayouts.2, new_origin, env);
     }
 }
 
@@ -409,4 +302,219 @@ enum LayoutStage {
     Unsized,
     Candidate(Size),
     Final(Size),
+}
+
+impl<Pixel, U: CharacterRender<Pixel>, V: CharacterRender<Pixel>> CharacterRender<Pixel>
+    for VStack<(U, V)>
+where
+    Pixel: PixelColor,
+{
+    fn render(
+        &self,
+        target: &mut impl CharacterRenderTarget<Color = Pixel>,
+        layout: &ResolvedLayout<Self::Sublayout>,
+        origin: Point,
+        env: &impl RenderEnvironment<Pixel>,
+    ) {
+        let env = &VerticalEnvironment::from(env);
+
+        let mut height = 0;
+
+        let new_origin = origin
+            + Point::new(
+                self.alignment.align(
+                    layout.resolved_size.width as i16,
+                    layout.sublayouts.0.resolved_size.width as i16,
+                ),
+                height,
+            );
+
+        self.items
+            .0
+            .render(target, &layout.sublayouts.0, new_origin, env);
+
+        height += (layout.sublayouts.0.resolved_size.height + self.spacing) as i16;
+        let new_origin = Point::new(
+            origin.x
+                + self.alignment.align(
+                    layout.resolved_size.width as i16,
+                    layout.sublayouts.1.resolved_size.width as i16,
+                ),
+            height,
+        );
+
+        self.items
+            .1
+            .render(target, &layout.sublayouts.1, new_origin, env);
+    }
+}
+
+impl<Pixel, U, V, W> CharacterRender<Pixel> for VStack<(U, V, W)>
+where
+    U: CharacterRender<Pixel>,
+    V: CharacterRender<Pixel>,
+    W: CharacterRender<Pixel>,
+    Pixel: PixelColor,
+{
+    fn render(
+        &self,
+        target: &mut impl CharacterRenderTarget<Color = Pixel>,
+        layout: &ResolvedLayout<Self::Sublayout>,
+        origin: Point,
+        env: &impl RenderEnvironment<Pixel>,
+    ) {
+        let env = &VerticalEnvironment::from(env);
+
+        let mut height = 0;
+
+        let new_origin = origin
+            + Point::new(
+                self.alignment.align(
+                    layout.resolved_size.width as i16,
+                    layout.sublayouts.0.resolved_size.width as i16,
+                ),
+                height,
+            );
+        self.items
+            .0
+            .render(target, &layout.sublayouts.0, new_origin, env);
+
+        height += (layout.sublayouts.0.resolved_size.height + self.spacing) as i16;
+        let new_origin = origin
+            + Point::new(
+                self.alignment.align(
+                    layout.resolved_size.width as i16,
+                    layout.sublayouts.1.resolved_size.width as i16,
+                ),
+                height,
+            );
+
+        self.items
+            .1
+            .render(target, &layout.sublayouts.1, new_origin, env);
+
+        height += (layout.sublayouts.1.resolved_size.height + self.spacing) as i16;
+        let new_origin = origin
+            + Point::new(
+                self.alignment.align(
+                    layout.resolved_size.width as i16,
+                    layout.sublayouts.2.resolved_size.width as i16,
+                ),
+                height,
+            );
+        self.items
+            .2
+            .render(target, &layout.sublayouts.2, new_origin, env);
+    }
+}
+
+// -- Embedded Render
+
+#[cfg(feature = "embedded-graphics")]
+use embedded_graphics::draw_target::DrawTarget;
+
+#[cfg(feature = "embedded-graphics")]
+impl<Pixel, U: crate::render::PixelRender<Pixel>, V: crate::render::PixelRender<Pixel>>
+    crate::render::PixelRender<Pixel> for VStack<(U, V)>
+where
+    Pixel: embedded_graphics_core::pixelcolor::PixelColor,
+{
+    fn render(
+        &self,
+        target: &mut impl DrawTarget<Color = Pixel>,
+        layout: &ResolvedLayout<Self::Sublayout>,
+        origin: Point,
+        env: &impl RenderEnvironment<Pixel>,
+    ) {
+        let env = &VerticalEnvironment::from(env);
+
+        let mut height = 0;
+
+        let new_origin = origin
+            + Point::new(
+                self.alignment.align(
+                    layout.resolved_size.width as i16,
+                    layout.sublayouts.0.resolved_size.width as i16,
+                ),
+                height,
+            );
+
+        self.items
+            .0
+            .render(target, &layout.sublayouts.0, new_origin, env);
+
+        height += (layout.sublayouts.0.resolved_size.height + self.spacing) as i16;
+        let new_origin = Point::new(
+            origin.x
+                + self.alignment.align(
+                    layout.resolved_size.width as i16,
+                    layout.sublayouts.1.resolved_size.width as i16,
+                ),
+            height,
+        );
+
+        self.items
+            .1
+            .render(target, &layout.sublayouts.1, new_origin, env);
+    }
+}
+
+#[cfg(feature = "embedded-graphics")]
+impl<Pixel, U, V, W> crate::render::PixelRender<Pixel> for VStack<(U, V, W)>
+where
+    U: crate::render::PixelRender<Pixel>,
+    V: crate::render::PixelRender<Pixel>,
+    W: crate::render::PixelRender<Pixel>,
+    Pixel: embedded_graphics_core::pixelcolor::PixelColor,
+{
+    fn render(
+        &self,
+        target: &mut impl DrawTarget<Color = Pixel>,
+        layout: &ResolvedLayout<Self::Sublayout>,
+        origin: Point,
+        env: &impl RenderEnvironment<Pixel>,
+    ) {
+        let env = &VerticalEnvironment::from(env);
+
+        let mut height = 0;
+
+        let new_origin = origin
+            + Point::new(
+                self.alignment.align(
+                    layout.resolved_size.width as i16,
+                    layout.sublayouts.0.resolved_size.width as i16,
+                ),
+                height,
+            );
+        self.items
+            .0
+            .render(target, &layout.sublayouts.0, new_origin, env);
+
+        height += (layout.sublayouts.0.resolved_size.height + self.spacing) as i16;
+        let new_origin = origin
+            + Point::new(
+                self.alignment.align(
+                    layout.resolved_size.width as i16,
+                    layout.sublayouts.1.resolved_size.width as i16,
+                ),
+                height,
+            );
+
+        self.items
+            .1
+            .render(target, &layout.sublayouts.1, new_origin, env);
+
+        height += (layout.sublayouts.1.resolved_size.height + self.spacing) as i16;
+        let new_origin = origin
+            + Point::new(
+                self.alignment.align(
+                    layout.resolved_size.width as i16,
+                    layout.sublayouts.2.resolved_size.width as i16,
+                ),
+                height,
+            );
+        self.items
+            .2
+            .render(target, &layout.sublayouts.2, new_origin, env);
+    }
 }

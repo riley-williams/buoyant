@@ -98,6 +98,16 @@ impl From<Point> for embedded_graphics_core::geometry::Point {
     }
 }
 
+#[cfg(feature = "embedded-graphics")]
+impl From<embedded_graphics_core::geometry::Point> for Point {
+    fn from(value: embedded_graphics_core::geometry::Point) -> Self {
+        Point {
+            x: value.x as i16,
+            y: value.y as i16,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct Frame {
     pub size: Size,
@@ -114,5 +124,15 @@ impl Frame {
 impl From<Frame> for embedded_graphics_core::primitives::Rectangle {
     fn from(value: Frame) -> Self {
         embedded_graphics_core::primitives::Rectangle::new(value.origin.into(), value.size.into())
+    }
+}
+
+#[cfg(feature = "embedded-graphics")]
+impl From<embedded_graphics_core::primitives::Rectangle> for Frame {
+    fn from(value: embedded_graphics_core::primitives::Rectangle) -> Self {
+        Frame {
+            origin: value.top_left.into(),
+            size: value.size.into(),
+        }
     }
 }

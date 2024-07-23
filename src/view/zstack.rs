@@ -3,8 +3,8 @@ use crate::{
     layout::{HorizontalAlignment, Layout, ResolvedLayout, VerticalAlignment},
     pixel::PixelColor,
     primitives::{Point, Size},
-    render::Render,
-    render_target::RenderTarget,
+    render::CharacterRender,
+    render_target::CharacterRenderTarget,
 };
 
 pub struct ZStack<T> {
@@ -61,15 +61,65 @@ impl<U: Layout, V: Layout> Layout for ZStack<(U, V)> {
     }
 }
 
-impl<Pixel, U: Layout, V: Layout> Render<Pixel> for ZStack<(U, V)>
+impl<Pixel, U: Layout, V: Layout> CharacterRender<Pixel> for ZStack<(U, V)>
 where
-    U: Render<Pixel>,
-    V: Render<Pixel>,
+    U: CharacterRender<Pixel>,
+    V: CharacterRender<Pixel>,
     Pixel: PixelColor,
 {
     fn render(
         &self,
-        target: &mut impl RenderTarget<Pixel>,
+        target: &mut impl CharacterRenderTarget<Color = Pixel>,
+        layout: &ResolvedLayout<(ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>)>,
+        origin: Point,
+        env: &impl RenderEnvironment<Pixel>,
+    ) {
+        let new_origin = origin
+            + Point::new(
+                self.horizontal_alignment.align(
+                    layout.resolved_size.width as i16,
+                    layout.sublayouts.0.resolved_size.width as i16,
+                ),
+                self.vertical_alignment.align(
+                    layout.resolved_size.height as i16,
+                    layout.sublayouts.0.resolved_size.height as i16,
+                ),
+            );
+
+        self.items
+            .0
+            .render(target, &layout.sublayouts.0, new_origin, env);
+
+        let new_origin = origin
+            + Point::new(
+                self.horizontal_alignment.align(
+                    layout.resolved_size.width as i16,
+                    layout.sublayouts.1.resolved_size.width as i16,
+                ),
+                self.vertical_alignment.align(
+                    layout.resolved_size.height as i16,
+                    layout.sublayouts.1.resolved_size.height as i16,
+                ),
+            );
+        self.items
+            .1
+            .render(target, &layout.sublayouts.1, new_origin, env);
+    }
+}
+
+#[cfg(feature = "embedded-graphics")]
+use embedded_graphics::draw_target::DrawTarget;
+
+#[cfg(feature = "embedded-graphics")]
+impl<Pixel, U: Layout, V: Layout> crate::render::PixelRender<Pixel> for ZStack<(U, V)>
+where
+    U: crate::render::PixelRender<Pixel>,
+    V: crate::render::PixelRender<Pixel>,
+    Pixel: embedded_graphics_core::pixelcolor::PixelColor,
+{
+    fn render(
+        &self,
+        target: &mut impl DrawTarget<Color = Pixel>,
         layout: &ResolvedLayout<(ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>)>,
         origin: Point,
         env: &impl RenderEnvironment<Pixel>,
