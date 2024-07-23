@@ -9,7 +9,7 @@ pub trait LayoutEnvironment {
     fn alignment(&self) -> Alignment;
 }
 
-pub trait RenderEnvironment<C: PixelColor>: LayoutEnvironment {
+pub trait RenderEnvironment<C: Copy + PartialEq>: LayoutEnvironment {
     fn foreground_style(&self) -> impl ColorStyle<Color = C>;
 }
 

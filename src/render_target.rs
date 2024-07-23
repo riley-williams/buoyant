@@ -17,11 +17,6 @@ use crate::{
 /// A pixel could be a character, a color, or a more complex structure
 /// such as a a character with a foreground and background color, like what
 /// you might render to a terminal.
-///
-/// The built-in views that primarily perform layout (stacks, padding, etc.)
-/// do not render pixels, so their default Render impl is sufficient.
-/// For other types such as Text, Divider, etc., you will need to implement
-/// Render for your target Pixel type.
 pub trait CharacterRenderTarget {
     type Color: PixelColor;
     /// The size of the render target

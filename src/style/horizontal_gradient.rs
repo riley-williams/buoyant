@@ -21,4 +21,8 @@ impl<C: PixelColor> ColorStyle for HorizontalGradient<C> {
         let fraction = in_bounds.width.saturating_sub(x) as f32 / in_bounds.width as f32;
         C::interpolate(self.start, self.end, 1.0 - fraction)
     }
+
+    fn solid(&self) -> Option<Self::Color> {
+        None
+    }
 }

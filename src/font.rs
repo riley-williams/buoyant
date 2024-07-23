@@ -19,10 +19,20 @@ pub trait FontLayout {
 /// A font that renders individual characters at a time to a character render target
 /// Multi-character graphemes are not supported
 pub trait CharacterFont<C: PixelColor>: FontLayout {
-    fn render_iter<T, I>(&self, target: &mut T, origin: Point, color: C, characters: I)
+    /// Render a sequence of characters with a solid color
+    fn render_iter_solid<T, I>(&self, target: &mut T, origin: Point, color: C, characters: I)
     where
         T: CharacterRenderTarget<Color = C>,
-        I: IntoIterator<Item = char>;
+        I: IntoIterator<Item = char>,
+    {
+        self.render_iter(target, origin, characters.into_iter().map(|c| (c, color)));
+    }
+
+    /// Render a sequence of characters with individually defined colors
+    fn render_iter<T, I>(&self, target: &mut T, origin: Point, characters: I)
+    where
+        T: CharacterRenderTarget<Color = C>,
+        I: IntoIterator<Item = (char, C)>;
 }
 
 /// A simple font for rendering non-unicode characters in a text buffer
@@ -43,12 +53,12 @@ impl FontLayout for BufferCharacterFont {
 }
 
 impl<C: PixelColor> CharacterFont<C> for BufferCharacterFont {
-    fn render_iter<T, I>(&self, target: &mut T, origin: Point, color: C, characters: I)
+    fn render_iter<T, I>(&self, target: &mut T, origin: Point, characters: I)
     where
         T: CharacterRenderTarget<Color = C>,
-        I: IntoIterator<Item = char>,
+        I: IntoIterator<Item = (char, C)>,
     {
-        for (i, character) in characters.into_iter().enumerate() {
+        for (i, (character, color)) in characters.into_iter().enumerate() {
             target.draw(origin + Point::new(i as i16, 0), character, color);
         }
     }
@@ -61,7 +71,7 @@ use embedded_graphics::draw_target::DrawTarget;
 /// Multi-character graphemes are not supported, making
 /// this primarily useful for embedded devices.
 #[cfg(feature = "embedded-graphics")]
-pub trait PixelFont<C: PixelColor>: FontLayout {
+pub trait PixelFont<C>: FontLayout {
     fn render_iter<T, I>(&self, target: &mut T, origin: Point, color: C, characters: I)
     where
         T: DrawTarget<Color = C>,
@@ -95,17 +105,14 @@ mod crossterm_font {
     }
 
     impl CharacterFont<crossterm::style::Colors> for TerminalCharFont {
-        fn render_iter<T, I>(
-            &self,
-            target: &mut T,
-            origin: Point,
-            color: crossterm::style::Colors,
-            characters: I,
-        ) where
+        // TODO: Add render_iter_solid impl once character render target draws strings
+
+        fn render_iter<T, I>(&self, target: &mut T, origin: Point, characters: I)
+        where
             T: CharacterRenderTarget<Color = crossterm::style::Colors>,
-            I: IntoIterator<Item = char>,
+            I: IntoIterator<Item = (char, crossterm::style::Colors)>,
         {
-            for (i, character) in characters.into_iter().enumerate() {
+            for (i, (character, color)) in characters.into_iter().enumerate() {
                 target.draw(origin + Point::new(i as i16, 0), character, color);
             }
         }

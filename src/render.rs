@@ -20,7 +20,9 @@ pub trait CharacterRender<Pixel: PixelColor>: PartialEq + Layout {
 
 #[cfg(feature = "embedded-graphics")]
 /// A view that can be rendered to an embedded-graphics render target
-pub trait EmbeddedRender<Pixel: PixelColor>: PartialEq + Layout {
+pub trait PixelRender<Pixel: embedded_graphics_core::pixelcolor::PixelColor>:
+    PartialEq + Layout
+{
     /// Render the view to the screen
     fn render(
         &self,

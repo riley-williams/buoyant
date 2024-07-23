@@ -24,11 +24,12 @@ impl FontLayout for ArbitraryFont {
         self.character_width
     }
 }
+
 impl CharacterFont<char> for ArbitraryFont {
-    fn render_iter<T, I>(&self, _target: &mut T, _origin: Point, _color: char, _characters: I)
+    fn render_iter<T, I>(&self, _target: &mut T, _origin: Point, _characters: I)
     where
         T: buoyant::render_target::CharacterRenderTarget<Color = char>,
-        I: IntoIterator<Item = char>,
+        I: IntoIterator<Item = (char, char)>,
     {
         panic!("Not renderable");
     }

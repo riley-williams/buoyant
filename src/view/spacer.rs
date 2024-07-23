@@ -47,7 +47,9 @@ impl<Pixel: PixelColor> CharacterRender<Pixel> for Spacer {
 }
 
 #[cfg(feature = "embedded-graphics")]
-impl<Pixel: PixelColor> crate::render::EmbeddedRender<Pixel> for Spacer {
+impl<Pixel: embedded_graphics_core::pixelcolor::PixelColor> crate::render::PixelRender<Pixel>
+    for Spacer
+{
     fn render(
         &self,
         _target: &mut impl embedded_graphics_core::draw_target::DrawTarget<Color = Pixel>,

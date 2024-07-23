@@ -216,16 +216,30 @@ impl<'a, F: CharacterFont<Color>, Color: PixelColor> CharacterRender<Color> for 
                 .align(layout.resolved_size.width as i16, whole_width_points as i16);
             let y = origin.y + consumed_height as i16;
 
-            let foreground_color =
-                env.foreground_style()
-                    .shade_pixel(x as u16, consumed_height, layout.resolved_size);
-
-            self.font.render_iter(
-                target,
-                Point::new(origin.x + x, y),
-                foreground_color,
-                remaining_slice[..last_renderable_index].chars(),
-            );
+            if let Some(solid_color) = env.foreground_style().solid() {
+                self.font.render_iter_solid(
+                    target,
+                    Point::new(origin.x + x, y),
+                    solid_color,
+                    remaining_slice[..last_renderable_index].chars(),
+                );
+            } else {
+                let slice = remaining_slice[..last_renderable_index]
+                    .chars()
+                    .enumerate()
+                    .map(|(i, c)| {
+                        (
+                            c,
+                            env.foreground_style().shade_pixel(
+                                x as u16 + i as u16,
+                                consumed_height,
+                                layout.resolved_size,
+                            ),
+                        )
+                    });
+                self.font
+                    .render_iter(target, Point::new(origin.x + x, y), slice);
+            }
 
             consumed_height += self.font.line_height();
 
@@ -238,8 +252,11 @@ impl<'a, F: CharacterFont<Color>, Color: PixelColor> CharacterRender<Color> for 
 use embedded_graphics::draw_target::DrawTarget;
 
 #[cfg(feature = "embedded-graphics")]
-impl<'a, F: crate::font::PixelFont<Color>, Color: PixelColor> crate::render::EmbeddedRender<Color>
-    for Text<'a, F>
+impl<
+        'a,
+        F: crate::font::PixelFont<Color>,
+        Color: embedded_graphics_core::pixelcolor::PixelColor,
+    > crate::render::PixelRender<Color> for Text<'a, F>
 {
     fn render(
         &self,

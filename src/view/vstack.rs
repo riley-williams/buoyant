@@ -30,7 +30,7 @@ impl<T: LayoutEnvironment> LayoutEnvironment for VerticalEnvironment<'_, T> {
     }
 }
 
-impl<Color: PixelColor, T: RenderEnvironment<Color>> RenderEnvironment<Color>
+impl<Color: Copy + PartialEq, T: RenderEnvironment<Color>> RenderEnvironment<Color>
     for VerticalEnvironment<'_, T>
 {
     fn foreground_style(&self) -> impl ColorStyle<Color = Color> {
@@ -414,10 +414,10 @@ where
 use embedded_graphics::draw_target::DrawTarget;
 
 #[cfg(feature = "embedded-graphics")]
-impl<Pixel, U: crate::render::EmbeddedRender<Pixel>, V: crate::render::EmbeddedRender<Pixel>>
-    crate::render::EmbeddedRender<Pixel> for VStack<(U, V)>
+impl<Pixel, U: crate::render::PixelRender<Pixel>, V: crate::render::PixelRender<Pixel>>
+    crate::render::PixelRender<Pixel> for VStack<(U, V)>
 where
-    Pixel: PixelColor,
+    Pixel: embedded_graphics_core::pixelcolor::PixelColor,
 {
     fn render(
         &self,
@@ -460,12 +460,12 @@ where
 }
 
 #[cfg(feature = "embedded-graphics")]
-impl<Pixel, U, V, W> crate::render::EmbeddedRender<Pixel> for VStack<(U, V, W)>
+impl<Pixel, U, V, W> crate::render::PixelRender<Pixel> for VStack<(U, V, W)>
 where
-    U: crate::render::EmbeddedRender<Pixel>,
-    V: crate::render::EmbeddedRender<Pixel>,
-    W: crate::render::EmbeddedRender<Pixel>,
-    Pixel: PixelColor,
+    U: crate::render::PixelRender<Pixel>,
+    V: crate::render::PixelRender<Pixel>,
+    W: crate::render::PixelRender<Pixel>,
+    Pixel: embedded_graphics_core::pixelcolor::PixelColor,
 {
     fn render(
         &self,

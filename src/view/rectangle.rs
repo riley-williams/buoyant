@@ -50,8 +50,8 @@ impl<P: PixelColor> CharacterRender<P> for Rectangle {
 use embedded_graphics::draw_target::DrawTarget;
 
 #[cfg(feature = "embedded-graphics")]
-impl<P: PixelColor + embedded_graphics_core::pixelcolor::PixelColor>
-    crate::render::EmbeddedRender<P> for Rectangle
+impl<P: PixelColor + embedded_graphics_core::pixelcolor::PixelColor> crate::render::PixelRender<P>
+    for Rectangle
 {
     fn render(
         &self,

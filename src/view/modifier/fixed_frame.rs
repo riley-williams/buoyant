@@ -95,10 +95,10 @@ where
 use embedded_graphics::draw_target::DrawTarget;
 
 #[cfg(feature = "embedded-graphics")]
-impl<Pixel, View: Layout> crate::render::EmbeddedRender<Pixel> for FixedFrame<View>
+impl<Pixel, View: Layout> crate::render::PixelRender<Pixel> for FixedFrame<View>
 where
-    View: crate::render::EmbeddedRender<Pixel>,
-    Pixel: PixelColor,
+    View: crate::render::PixelRender<Pixel>,
+    Pixel: embedded_graphics_core::pixelcolor::PixelColor,
 {
     fn render(
         &self,

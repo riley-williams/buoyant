@@ -52,8 +52,8 @@ impl Layout for Divider {
 use embedded_graphics::draw_target::DrawTarget;
 
 #[cfg(feature = "embedded-graphics")]
-impl<C: PixelColor + embedded_graphics_core::pixelcolor::PixelColor>
-    crate::render::EmbeddedRender<C> for Divider
+impl<C: PixelColor + embedded_graphics_core::pixelcolor::PixelColor> crate::render::PixelRender<C>
+    for Divider
 {
     fn render(
         &self,

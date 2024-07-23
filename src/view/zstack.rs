@@ -111,11 +111,11 @@ where
 use embedded_graphics::draw_target::DrawTarget;
 
 #[cfg(feature = "embedded-graphics")]
-impl<Pixel, U: Layout, V: Layout> crate::render::EmbeddedRender<Pixel> for ZStack<(U, V)>
+impl<Pixel, U: Layout, V: Layout> crate::render::PixelRender<Pixel> for ZStack<(U, V)>
 where
-    U: crate::render::EmbeddedRender<Pixel>,
-    V: crate::render::EmbeddedRender<Pixel>,
-    Pixel: PixelColor,
+    U: crate::render::PixelRender<Pixel>,
+    V: crate::render::PixelRender<Pixel>,
+    Pixel: embedded_graphics_core::pixelcolor::PixelColor,
 {
     fn render(
         &self,

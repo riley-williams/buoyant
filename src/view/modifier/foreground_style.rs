@@ -59,10 +59,10 @@ where
 use embedded_graphics::draw_target::DrawTarget;
 
 #[cfg(feature = "embedded-graphics")]
-impl<Pixel, Inner, Style> crate::render::EmbeddedRender<Pixel> for ForegroundStyle<Inner, Style>
+impl<Pixel, Inner, Style> crate::render::PixelRender<Pixel> for ForegroundStyle<Inner, Style>
 where
-    Inner: crate::render::EmbeddedRender<Pixel>,
-    Pixel: PixelColor,
+    Inner: crate::render::PixelRender<Pixel>,
+    Pixel: embedded_graphics_core::pixelcolor::PixelColor,
     Style: ColorStyle<Color = Pixel>,
 {
     fn render(

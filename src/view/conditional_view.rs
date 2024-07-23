@@ -84,10 +84,11 @@ where
 use embedded_graphics::draw_target::DrawTarget;
 
 #[cfg(feature = "embedded-graphics")]
-impl<Pixel: PixelColor, U, V> crate::render::EmbeddedRender<Pixel> for ConditionalView<U, V>
+impl<Pixel, U, V> crate::render::PixelRender<Pixel> for ConditionalView<U, V>
 where
-    U: crate::render::EmbeddedRender<Pixel>,
-    V: crate::render::EmbeddedRender<Pixel>,
+    U: crate::render::PixelRender<Pixel>,
+    V: crate::render::PixelRender<Pixel>,
+    Pixel: embedded_graphics_core::pixelcolor::PixelColor,
 {
     fn render(
         &self,

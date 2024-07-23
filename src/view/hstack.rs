@@ -29,7 +29,7 @@ impl<T: LayoutEnvironment> LayoutEnvironment for HorizontalEnvironment<'_, T> {
     }
 }
 
-impl<Color: PixelColor, T: RenderEnvironment<Color>> RenderEnvironment<Color>
+impl<Color: Copy + PartialEq, T: RenderEnvironment<Color>> RenderEnvironment<Color>
     for HorizontalEnvironment<'_, T>
 {
     fn foreground_style(&self) -> impl ColorStyle<Color = Color> {
@@ -106,6 +106,7 @@ impl<U: Layout, V: Layout> Layout for HStack<(U, V)> {
         }
     }
 }
+
 impl<U, V, W> HStack<(U, V, W)> {
     pub fn three(item0: U, item1: V, item2: W) -> Self {
         HStack {
@@ -412,11 +413,11 @@ where
 use embedded_graphics::draw_target::DrawTarget;
 
 #[cfg(feature = "embedded-graphics")]
-impl<Pixel, U, V> crate::render::EmbeddedRender<Pixel> for HStack<(U, V)>
+impl<Pixel, U, V> crate::render::PixelRender<Pixel> for HStack<(U, V)>
 where
-    U: crate::render::EmbeddedRender<Pixel>,
-    V: crate::render::EmbeddedRender<Pixel>,
-    Pixel: PixelColor,
+    U: crate::render::PixelRender<Pixel>,
+    V: crate::render::PixelRender<Pixel>,
+    Pixel: embedded_graphics_core::pixelcolor::PixelColor,
 {
     fn render(
         &self,
@@ -456,12 +457,12 @@ where
 }
 
 #[cfg(feature = "embedded-graphics")]
-impl<Pixel, U, V, W> crate::render::EmbeddedRender<Pixel> for HStack<(U, V, W)>
+impl<Pixel, U, V, W> crate::render::PixelRender<Pixel> for HStack<(U, V, W)>
 where
-    U: crate::render::EmbeddedRender<Pixel>,
-    V: crate::render::EmbeddedRender<Pixel>,
-    W: crate::render::EmbeddedRender<Pixel>,
-    Pixel: PixelColor,
+    U: crate::render::PixelRender<Pixel>,
+    V: crate::render::PixelRender<Pixel>,
+    W: crate::render::PixelRender<Pixel>,
+    Pixel: embedded_graphics_core::pixelcolor::PixelColor,
 {
     fn render(
         &self,
