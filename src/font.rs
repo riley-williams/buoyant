@@ -126,8 +126,6 @@ mod embedded_graphics_fonts {
     use embedded_graphics_core::Drawable;
     use heapless::String;
 
-    use crate::pixel::Interpolate;
-
     use super::{FontLayout, PixelFont};
 
     impl FontLayout for embedded_graphics::mono_font::MonoFont<'_> {
@@ -147,9 +145,7 @@ mod embedded_graphics_fonts {
         }
     }
 
-    impl<C: Interpolate + EmbeddedPixelColor> PixelFont<C>
-        for embedded_graphics::mono_font::MonoFont<'_>
-    {
+    impl<C: EmbeddedPixelColor> PixelFont<C> for embedded_graphics::mono_font::MonoFont<'_> {
         fn render_iter<T, I>(
             &self,
             target: &mut T,
