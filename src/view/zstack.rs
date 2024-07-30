@@ -1,7 +1,6 @@
 use crate::{
     environment::{LayoutEnvironment, RenderEnvironment},
     layout::{HorizontalAlignment, Layout, ResolvedLayout, VerticalAlignment},
-    pixel::PixelColor,
     primitives::{Point, Size},
     render::CharacterRender,
     render_target::CharacterRenderTarget,
@@ -61,18 +60,17 @@ impl<U: Layout, V: Layout> Layout for ZStack<(U, V)> {
     }
 }
 
-impl<Pixel, U: Layout, V: Layout> CharacterRender<Pixel> for ZStack<(U, V)>
+impl<Pixel: Copy, U: Layout, V: Layout> CharacterRender<Pixel> for ZStack<(U, V)>
 where
     U: CharacterRender<Pixel>,
     V: CharacterRender<Pixel>,
-    Pixel: PixelColor,
 {
     fn render(
         &self,
         target: &mut impl CharacterRenderTarget<Color = Pixel>,
         layout: &ResolvedLayout<(ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>)>,
         origin: Point,
-        env: &impl RenderEnvironment<Pixel>,
+        env: &impl RenderEnvironment<Color = Pixel>,
     ) {
         let new_origin = origin
             + Point::new(
@@ -122,7 +120,7 @@ where
         target: &mut impl DrawTarget<Color = Pixel>,
         layout: &ResolvedLayout<(ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>)>,
         origin: Point,
-        env: &impl RenderEnvironment<Pixel>,
+        env: &impl RenderEnvironment<Color = Pixel>,
     ) {
         let new_origin = origin
             + Point::new(

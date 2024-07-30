@@ -1,7 +1,6 @@
 use crate::{
     environment::{LayoutEnvironment, RenderEnvironment},
     layout::{Layout, ResolvedLayout},
-    pixel::PixelColor,
     primitives::{Point, Size},
     render::CharacterRender,
     render_target::CharacterRenderTarget,
@@ -45,17 +44,16 @@ impl<V: Layout> Layout for Padding<V> {
     }
 }
 
-impl<Pixel, View: Layout> CharacterRender<Pixel> for Padding<View>
+impl<Pixel: Copy, View: Layout> CharacterRender<Pixel> for Padding<View>
 where
     View: CharacterRender<Pixel>,
-    Pixel: PixelColor,
 {
     fn render(
         &self,
         target: &mut impl CharacterRenderTarget<Color = Pixel>,
         layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
-        env: &impl RenderEnvironment<Pixel>,
+        env: &impl RenderEnvironment<Color = Pixel>,
     ) {
         let offset_origin = origin + Point::new(self.padding as i16, self.padding as i16);
         self.child
@@ -77,7 +75,7 @@ where
         target: &mut impl DrawTarget<Color = Pixel>,
         layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
-        env: &impl RenderEnvironment<Pixel>,
+        env: &impl RenderEnvironment<Color = Pixel>,
     ) {
         let offset_origin = origin + Point::new(self.padding as i16, self.padding as i16);
         self.child

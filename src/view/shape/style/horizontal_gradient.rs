@@ -1,20 +1,20 @@
-use crate::pixel::PixelColor;
+use crate::pixel::Interpolate;
 
-use super::color_style::ColorStyle;
+use super::fill_style::FillStyle;
 
 #[derive(Debug, PartialEq, Copy, Clone)]
-pub struct HorizontalGradient<Color: PixelColor> {
+pub struct HorizontalGradient<Color> {
     start: Color,
     end: Color,
 }
 
-impl<Color: PixelColor> HorizontalGradient<Color> {
+impl<Color: Interpolate> HorizontalGradient<Color> {
     pub fn new(start: Color, end: Color) -> Self {
         Self { start, end }
     }
 }
 
-impl<C: PixelColor> ColorStyle for HorizontalGradient<C> {
+impl<C: Interpolate + Copy> FillStyle for HorizontalGradient<C> {
     type Color = C;
 
     fn shade_pixel(&self, x: u16, _: u16, in_bounds: crate::primitives::Size) -> C {

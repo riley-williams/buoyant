@@ -58,14 +58,14 @@ impl VerticalAlignment {
     }
 }
 
-#[derive(Clone)]
-pub struct ResolvedLayout<C: Clone> {
+#[derive(Clone, PartialEq)]
+pub struct ResolvedLayout<C: Clone + PartialEq> {
     pub sublayouts: C,
     pub resolved_size: Size,
 }
 
 pub trait Layout: Sized {
-    type Sublayout: Clone;
+    type Sublayout: Clone + PartialEq;
     /// The size of the view given the offer
     fn layout(&self, offer: Size, env: &impl LayoutEnvironment) -> ResolvedLayout<Self::Sublayout>;
     /// The layout priority of the view. Higher priority views are more likely to be given the size they want

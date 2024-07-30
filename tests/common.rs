@@ -1,14 +1,12 @@
 use buoyant::{
     environment::{LayoutEnvironment, RenderEnvironment},
     layout::{Alignment, LayoutDirection},
-    pixel::PixelColor,
-    style::color_style::ColorStyle,
 };
 
 pub struct TestEnv<Color> {
     pub direction: LayoutDirection,
     pub alignment: Alignment,
-    pub foreground_style: Color,
+    pub foreground_color: Color,
 }
 
 impl<Color> LayoutEnvironment for TestEnv<Color> {
@@ -21,9 +19,10 @@ impl<Color> LayoutEnvironment for TestEnv<Color> {
     }
 }
 
-impl<Color: PixelColor> RenderEnvironment<Color> for TestEnv<Color> {
-    fn foreground_style(&self) -> impl ColorStyle<Color = Color> {
-        self.foreground_style
+impl<Color: Copy> RenderEnvironment for TestEnv<Color> {
+    type Color = Color;
+    fn foreground_color(&self) -> Color {
+        self.foreground_color
     }
 }
 
@@ -32,7 +31,7 @@ impl<C: Default> Default for TestEnv<C> {
         Self {
             direction: LayoutDirection::Horizontal,
             alignment: Alignment::default(),
-            foreground_style: C::default(),
+            foreground_color: C::default(),
         }
     }
 }
@@ -42,7 +41,7 @@ impl TestEnv<()> {
         Self {
             direction: LayoutDirection::Horizontal,
             alignment: Alignment::default(),
-            foreground_style: (),
+            foreground_color: (),
         }
     }
 }

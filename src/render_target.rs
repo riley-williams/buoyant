@@ -7,10 +7,7 @@ pub use crossterm_render_target::CrosstermRenderTarget;
 mod fixed_text_buffer;
 pub use fixed_text_buffer::FixedTextBuffer;
 
-use crate::{
-    pixel::PixelColor,
-    primitives::{Point, Size},
-};
+use crate::primitives::{Point, Size};
 
 /// A target that can render character pixels.
 ///
@@ -18,7 +15,7 @@ use crate::{
 /// such as a a character with a foreground and background color, like what
 /// you might render to a terminal.
 pub trait CharacterRenderTarget {
-    type Color: PixelColor;
+    type Color: Copy;
     /// The size of the render target
     fn size(&self) -> Size;
 

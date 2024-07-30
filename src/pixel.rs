@@ -1,12 +1,12 @@
 use crate::primitives::Point;
 
-pub struct Pixel<C: PixelColor> {
+pub struct Pixel<C> {
     pub point: Point,
     pub color: C,
 }
 
 #[cfg(feature = "embedded-graphics")]
-impl<T: embedded_graphics_core::pixelcolor::PixelColor + PixelColor> From<Pixel<T>>
+impl<T: embedded_graphics_core::pixelcolor::PixelColor> From<Pixel<T>>
     for embedded_graphics_core::Pixel<T>
 {
     fn from(value: Pixel<T>) -> Self {
@@ -15,8 +15,8 @@ impl<T: embedded_graphics_core::pixelcolor::PixelColor + PixelColor> From<Pixel<
 }
 
 #[cfg(feature = "embedded-graphics")]
-impl<T: embedded_graphics_core::pixelcolor::PixelColor + PixelColor>
-    From<embedded_graphics_core::Pixel<T>> for Pixel<T>
+impl<T: embedded_graphics_core::pixelcolor::PixelColor> From<embedded_graphics_core::Pixel<T>>
+    for Pixel<T>
 {
     fn from(value: embedded_graphics_core::Pixel<T>) -> Self {
         Pixel {
@@ -26,7 +26,7 @@ impl<T: embedded_graphics_core::pixelcolor::PixelColor + PixelColor>
     }
 }
 
-pub trait PixelColor: Clone + Copy + PartialEq {
+pub trait Interpolate: Copy + PartialEq {
     /// Interpolate between two colors
     fn interpolate(from: Self, to: Self, amount: f32) -> Self {
         if amount < 0.5 {
@@ -37,11 +37,8 @@ pub trait PixelColor: Clone + Copy + PartialEq {
     }
 }
 
-impl PixelColor for char {}
-impl PixelColor for () {}
-
 #[cfg(feature = "crossterm")]
-impl PixelColor for crossterm::style::Colors {
+impl Interpolate for crossterm::style::Colors {
     fn interpolate(from: Self, to: Self, amount: f32) -> Self {
         let foreground = interpolate_crossterm_colors(from.foreground, to.foreground, amount);
         let background = interpolate_crossterm_colors(from.background, to.background, amount);
@@ -92,13 +89,13 @@ fn interpolate_crossterm_colors(
 }
 
 #[cfg(feature = "embedded-graphics")]
-impl PixelColor for embedded_graphics_core::pixelcolor::BinaryColor {}
+impl Interpolate for embedded_graphics_core::pixelcolor::BinaryColor {}
 
 #[cfg(feature = "embedded-graphics")]
 use embedded_graphics_core::pixelcolor::{Rgb565, RgbColor};
 
 #[cfg(feature = "embedded-graphics")]
-impl PixelColor for embedded_graphics_core::pixelcolor::Rgb565 {
+impl Interpolate for embedded_graphics_core::pixelcolor::Rgb565 {
     fn interpolate(from: Self, to: Self, amount: f32) -> Self {
         let t_fixed = (amount * 256.0) as i16;
 
@@ -121,7 +118,7 @@ fn interpolate_channel(a: u8, b: u8, t: i16) -> u8 {
 mod tests {
     use embedded_graphics_core::pixelcolor::Rgb565;
 
-    use super::PixelColor;
+    use super::Interpolate;
 
     #[test]
     fn interpolate_rgb() {

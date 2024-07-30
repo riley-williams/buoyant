@@ -1,53 +1,49 @@
 use crate::{
     environment::{LayoutEnvironment, RenderEnvironment},
     layout::{Layout, ResolvedLayout},
-    pixel::PixelColor,
     primitives::{Point, Size},
     render::CharacterRender,
     render_target::CharacterRenderTarget,
-    style::color_style::ColorStyle,
 };
 
 /// Sets a foreground style
 #[derive(Debug, PartialEq)]
-pub struct ForegroundStyle<V, Style: ColorStyle> {
+pub struct ForegroundStyle<V, Style> {
     style: Style,
     inner: V,
 }
 
-impl<V, Style: ColorStyle> ForegroundStyle<V, Style> {
-    pub fn new(style: Style, inner: V) -> Self {
+impl<V, Color: Copy> ForegroundStyle<V, Color> {
+    pub fn new(style: Color, inner: V) -> Self {
         Self { style, inner }
     }
 }
 
-impl<Inner: Layout, Style: ColorStyle> Layout for ForegroundStyle<Inner, Style> {
+impl<Inner: Layout, Color: Copy> Layout for ForegroundStyle<Inner, Color> {
     type Sublayout = Inner::Sublayout;
 
     fn layout(&self, offer: Size, env: &impl LayoutEnvironment) -> ResolvedLayout<Self::Sublayout> {
         let modified_env = ForegroundStyleEnv {
-            style: self.style,
+            color: self.style,
             wrapped_env: env,
         };
         self.inner.layout(offer, &modified_env)
     }
 }
 
-impl<Pixel, Inner, Style> CharacterRender<Pixel> for ForegroundStyle<Inner, Style>
+impl<Color: Copy, Inner> CharacterRender<Color> for ForegroundStyle<Inner, Color>
 where
-    Inner: CharacterRender<Pixel>,
-    Pixel: PixelColor,
-    Style: ColorStyle<Color = Pixel>,
+    Inner: CharacterRender<Color>,
 {
     fn render(
         &self,
-        target: &mut impl CharacterRenderTarget<Color = Pixel>,
+        target: &mut impl CharacterRenderTarget<Color = Color>,
         layout: &ResolvedLayout<Inner::Sublayout>,
         origin: Point,
-        env: &impl RenderEnvironment<Pixel>,
+        env: &impl RenderEnvironment<Color = Color>,
     ) {
         let modified_env = ForegroundStyleEnv {
-            style: self.style,
+            color: self.style,
             wrapped_env: env,
         };
 
@@ -59,21 +55,20 @@ where
 use embedded_graphics::draw_target::DrawTarget;
 
 #[cfg(feature = "embedded-graphics")]
-impl<Pixel, Inner, Style> crate::render::PixelRender<Pixel> for ForegroundStyle<Inner, Style>
+impl<Color, Inner> crate::render::PixelRender<Color> for ForegroundStyle<Inner, Color>
 where
-    Inner: crate::render::PixelRender<Pixel>,
-    Pixel: embedded_graphics_core::pixelcolor::PixelColor,
-    Style: ColorStyle<Color = Pixel>,
+    Inner: crate::render::PixelRender<Color>,
+    Color: embedded_graphics_core::pixelcolor::PixelColor,
 {
     fn render(
         &self,
-        target: &mut impl DrawTarget<Color = Pixel>,
+        target: &mut impl DrawTarget<Color = Color>,
         layout: &ResolvedLayout<Inner::Sublayout>,
         origin: Point,
-        env: &impl RenderEnvironment<Pixel>,
+        env: &impl RenderEnvironment<Color = Color>,
     ) {
         let modified_env = ForegroundStyleEnv {
-            style: self.style,
+            color: self.style,
             wrapped_env: env,
         };
 
@@ -82,13 +77,11 @@ where
 }
 
 struct ForegroundStyleEnv<'a, Env, Style> {
-    style: Style,
+    color: Style,
     wrapped_env: &'a Env,
 }
 
-impl<E: LayoutEnvironment, Style: ColorStyle> LayoutEnvironment
-    for ForegroundStyleEnv<'_, E, Style>
-{
+impl<E: LayoutEnvironment, C: Copy> LayoutEnvironment for ForegroundStyleEnv<'_, E, C> {
     fn layout_direction(&self) -> crate::layout::LayoutDirection {
         self.wrapped_env.layout_direction()
     }
@@ -98,10 +91,11 @@ impl<E: LayoutEnvironment, Style: ColorStyle> LayoutEnvironment
     }
 }
 
-impl<E: RenderEnvironment<Style::Color>, Style: ColorStyle> RenderEnvironment<Style::Color>
-    for ForegroundStyleEnv<'_, E, Style>
+impl<E: RenderEnvironment<Color = Color>, Color: Copy> RenderEnvironment
+    for ForegroundStyleEnv<'_, E, Color>
 {
-    fn foreground_style(&self) -> impl ColorStyle<Color = Style::Color> {
-        self.style
+    type Color = Color;
+    fn foreground_color(&self) -> Color {
+        self.color
     }
 }

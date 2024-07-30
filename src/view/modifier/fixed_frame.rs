@@ -1,7 +1,6 @@
 use crate::{
     environment::{LayoutEnvironment, RenderEnvironment},
     layout::{HorizontalAlignment, Layout, ResolvedLayout, VerticalAlignment},
-    pixel::PixelColor,
     primitives::{Point, Size},
     render::CharacterRender,
     render_target::CharacterRenderTarget,
@@ -62,17 +61,16 @@ impl<V: Layout> Layout for FixedFrame<V> {
     }
 }
 
-impl<Pixel, View: Layout> CharacterRender<Pixel> for FixedFrame<View>
+impl<Pixel: Copy, View: Layout> CharacterRender<Pixel> for FixedFrame<View>
 where
     View: CharacterRender<Pixel>,
-    Pixel: PixelColor,
 {
     fn render(
         &self,
         target: &mut impl CharacterRenderTarget<Color = Pixel>,
         layout: &ResolvedLayout<ResolvedLayout<View::Sublayout>>,
         origin: Point,
-        env: &impl RenderEnvironment<Pixel>,
+        env: &impl RenderEnvironment<Color = Pixel>,
     ) {
         let new_origin = origin
             + Point::new(
@@ -105,7 +103,7 @@ where
         target: &mut impl DrawTarget<Color = Pixel>,
         layout: &ResolvedLayout<ResolvedLayout<View::Sublayout>>,
         origin: Point,
-        env: &impl RenderEnvironment<Pixel>,
+        env: &impl RenderEnvironment<Color = Pixel>,
     ) {
         let new_origin = origin
             + Point::new(

@@ -1,11 +1,9 @@
 use crate::{
     environment::{LayoutEnvironment, RenderEnvironment},
     layout::{Layout, LayoutDirection, ResolvedLayout},
-    pixel::PixelColor,
     primitives::{Point, Size},
     render::CharacterRender,
     render_target::CharacterRenderTarget,
-    style::color_style::ColorStyle,
 };
 
 pub struct Divider {
@@ -49,78 +47,45 @@ impl Layout for Divider {
 }
 
 #[cfg(feature = "embedded-graphics")]
-use embedded_graphics::draw_target::DrawTarget;
+use embedded_graphics::{draw_target::DrawTarget, primitives::Rectangle};
 
 #[cfg(feature = "embedded-graphics")]
-impl<C: PixelColor + embedded_graphics_core::pixelcolor::PixelColor> crate::render::PixelRender<C>
-    for Divider
-{
+impl<C: embedded_graphics_core::pixelcolor::PixelColor> crate::render::PixelRender<C> for Divider {
     fn render(
         &self,
         target: &mut impl DrawTarget<Color = C>,
         layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
-        env: &impl RenderEnvironment<C>,
+        env: &impl RenderEnvironment<Color = C>,
     ) {
-        match env.layout_direction() {
-            LayoutDirection::Horizontal => {
-                for y in 0..layout.resolved_size.height as i16 {
-                    let foreground_color =
-                        env.foreground_style()
-                            .shade_pixel(0, y as u16, layout.resolved_size);
-
-                    let point = origin + Point::new(0, y);
-                    _ = target.draw_iter(core::iter::once(embedded_graphics::Pixel(
-                        point.into(),
-                        foreground_color,
-                    )));
-                }
-            }
-            LayoutDirection::Vertical => {
-                for x in 0..layout.resolved_size.width as i16 {
-                    let foreground_color =
-                        env.foreground_style()
-                            .shade_pixel(x as u16, 0, layout.resolved_size);
-
-                    let point = origin + Point::new(x, 0);
-                    _ = target.draw_iter(core::iter::once(embedded_graphics::Pixel(
-                        point.into(),
-                        foreground_color,
-                    )));
-                }
-            }
-        }
+        let color = env.foreground_color();
+        _ = target.fill_solid(
+            &Rectangle {
+                top_left: origin.into(),
+                size: layout.resolved_size.into(),
+            },
+            color,
+        );
     }
 }
 
-impl<C: PixelColor> CharacterRender<C> for Divider {
+impl<C: Copy> CharacterRender<C> for Divider {
     fn render(
         &self,
         target: &mut impl CharacterRenderTarget<Color = C>,
         layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
-        env: &impl RenderEnvironment<C>,
+        env: &impl RenderEnvironment<Color = C>,
     ) {
+        let color = env.foreground_color();
         match env.layout_direction() {
             LayoutDirection::Horizontal => {
                 for y in origin.y..origin.y + layout.resolved_size.height as i16 {
-                    let color = env.foreground_style().shade_pixel(
-                        0,
-                        y as u16 - origin.y as u16,
-                        Size::new(1, layout.resolved_size.height),
-                    );
-
                     target.draw(Point::new(origin.x, y), '|', color);
                 }
             }
             LayoutDirection::Vertical => {
                 for x in origin.x..origin.x + layout.resolved_size.width as i16 {
-                    let color = env.foreground_style().shade_pixel(
-                        x as u16 - origin.x as u16,
-                        0,
-                        Size::new(layout.resolved_size.width, 1),
-                    );
-
                     target.draw(Point::new(x, origin.y), '-', color);
                 }
             }
@@ -141,7 +106,7 @@ mod tests {
     fn test_horizontal_layout() {
         let divider = Divider::new(2);
         let offer = Size::new(100, 100);
-        let env = TestEnv::<char>::default().with_direction(LayoutDirection::Horizontal);
+        let env = TestEnv::<()>::default().with_direction(LayoutDirection::Horizontal);
         let layout = divider.layout(offer, &env);
         assert_eq!(layout.resolved_size, Size::new(2, 100));
     }
