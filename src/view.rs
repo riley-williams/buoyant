@@ -3,7 +3,7 @@ mod divider;
 mod empty_view;
 mod hstack;
 mod modifier;
-mod rectangle;
+mod shape;
 mod spacer;
 mod text;
 mod vstack;
@@ -12,7 +12,8 @@ mod zstack;
 pub use conditional_view::ConditionalView;
 pub use divider::Divider;
 pub use hstack::HStack;
-pub use rectangle::Rectangle;
+pub use shape::style;
+pub use shape::Rectangle;
 pub use spacer::Spacer;
 pub use text::{HorizontalTextAlignment, Text};
 pub use vstack::VStack;
@@ -20,18 +21,10 @@ pub use zstack::ZStack;
 
 use modifier::{FixedFrame, FlexFrame, ForegroundStyle, Padding};
 
-pub trait ViewExtensions: Sized {
+pub trait LayoutExtensions: Sized {
     fn padding(self, amount: u16) -> Padding<Self> {
         Padding::new(amount, self)
     }
-
-    fn foreground_style<Style: crate::style::color_style::ColorStyle>(
-        self,
-        style: Style,
-    ) -> ForegroundStyle<Self, Style> {
-        ForegroundStyle::new(style, self)
-    }
-
     fn frame(
         self,
         width: Option<u16>,
@@ -69,4 +62,27 @@ pub trait ViewExtensions: Sized {
     }
 }
 
-impl<T: crate::layout::Layout> ViewExtensions for T {}
+impl<T: crate::layout::Layout> LayoutExtensions for T {}
+
+pub trait CharacterRenderExtensions<Color: Copy>: Sized {
+    fn foreground_color(self, color: Color) -> ForegroundStyle<Self, Color> {
+        ForegroundStyle::new(color, self)
+    }
+}
+
+impl<Color: Copy, T: crate::render::CharacterRender<Color>> CharacterRenderExtensions<Color> for T {}
+
+#[cfg(feature = "embedded-graphics")]
+pub trait PixelRenderExtensions<Color: Copy>: Sized {
+    fn foreground_color(self, color: Color) -> ForegroundStyle<Self, Color> {
+        ForegroundStyle::new(color, self)
+    }
+}
+
+#[cfg(feature = "embedded-graphics")]
+impl<
+        Color: embedded_graphics_core::pixelcolor::PixelColor,
+        T: crate::render::PixelRender<Color>,
+    > PixelRenderExtensions<Color> for T
+{
+}

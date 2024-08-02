@@ -1,13 +1,12 @@
 use buoyant::font::TerminalCharFont;
 use buoyant::primitives::Point;
 use buoyant::render::CharacterRender;
-use buoyant::view::ViewExtensions;
+use buoyant::view::{CharacterRenderExtensions, LayoutExtensions};
 use buoyant::{
     environment::DefaultEnvironment,
     layout::{Layout, VerticalAlignment},
     primitives::Size,
     render_target::{CharacterRenderTarget, CrosstermRenderTarget},
-    style::horizontal_gradient::HorizontalGradient,
     view::{Divider, HStack, HorizontalTextAlignment, Rectangle, Spacer, Text, VStack, ZStack},
 };
 use crossterm::event::{read, Event};
@@ -35,7 +34,7 @@ fn main() {
                 &font,
             )
                 .multiline_text_alignment(HorizontalTextAlignment::Leading)
-                .foreground_style(
+                .foreground_color(
                     Colors { foreground: Some(crossterm::style::Color::Red), background: None },
                 ),
             Spacer::default(),
@@ -52,17 +51,11 @@ fn main() {
         VStack::three(
             ZStack::two(
                 Rectangle
-                    .foreground_style(
-                        HorizontalGradient::new(
-                            Colors {
-                                foreground: Some(crossterm::style::Color::Rgb { r: 0, g: 255, b: 0 }),
-                                background: Some(crossterm::style::Color::Rgb { r: 127, g: 0, b: 0 })
-                            },
-                            Colors {
-                                foreground: Some(crossterm::style::Color::Rgb { r: 127, g: 0, b: 255 }),
-                                background: Some(crossterm::style::Color::Rgb { r: 0, g: 0, b: 127 }),
-                            }
-                        )
+                    .foreground_color(
+                        Colors {
+                            foreground: Some(crossterm::style::Color::Rgb { r: 0, g: 255, b: 0 }),
+                            background: Some(crossterm::style::Color::Rgb { r: 127, g: 0, b: 0 })
+                        }
                     ),
                 Text::char(
                     "This is in a fixed size box",
@@ -75,13 +68,12 @@ fn main() {
                 &font,
             )
                 .multiline_text_alignment(HorizontalTextAlignment::Center)
-                .foreground_style(HorizontalGradient::new(
-                    Colors { foreground: Some(crossterm::style::Color::Rgb { r: 0, g: 255, b: 255 }), background: None },
-                    Colors { foreground:Some(crossterm::style::Color::Rgb { r: 255, g: 0, b: 255 }), background: None })
+                .foreground_color(
+                    Colors { foreground:Some(crossterm::style::Color::Rgb { r: 255, g: 0, b: 255 }), background: None }
                 )
                 .padding(2),
             Divider::default()
-                .foreground_style(Colors { foreground: Some(crossterm::style::Color::DarkYellow), background: None })
+                .foreground_color(Colors { foreground: Some(crossterm::style::Color::DarkYellow), background: None })
         ),
     );
 

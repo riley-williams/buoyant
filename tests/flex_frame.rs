@@ -5,7 +5,7 @@ use buoyant::{
     primitives::{Point, Size},
     render::CharacterRender,
     render_target::{CharacterRenderTarget, FixedTextBuffer},
-    view::{Text, ViewExtensions},
+    view::{LayoutExtensions, Text},
 };
 
 #[test]

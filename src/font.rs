@@ -1,4 +1,4 @@
-use crate::{pixel::PixelColor, primitives::Point, render_target::CharacterRenderTarget};
+use crate::{primitives::Point, render_target::CharacterRenderTarget};
 
 /// A font that renders individual characters at a time.
 /// Multi-character graphemes are not supported, making
@@ -18,7 +18,7 @@ pub trait FontLayout {
 
 /// A font that renders individual characters at a time to a character render target
 /// Multi-character graphemes are not supported
-pub trait CharacterFont<C: PixelColor>: FontLayout {
+pub trait CharacterFont<C: Copy>: FontLayout {
     /// Render a sequence of characters with a solid color
     fn render_iter_solid<T, I>(&self, target: &mut T, origin: Point, color: C, characters: I)
     where
@@ -52,7 +52,7 @@ impl FontLayout for BufferCharacterFont {
     }
 }
 
-impl<C: PixelColor> CharacterFont<C> for BufferCharacterFont {
+impl<C: Copy> CharacterFont<C> for BufferCharacterFont {
     fn render_iter<T, I>(&self, target: &mut T, origin: Point, characters: I)
     where
         T: CharacterRenderTarget<Color = C>,
@@ -126,8 +126,6 @@ mod embedded_graphics_fonts {
     use embedded_graphics_core::Drawable;
     use heapless::String;
 
-    use crate::pixel::PixelColor;
-
     use super::{FontLayout, PixelFont};
 
     impl FontLayout for embedded_graphics::mono_font::MonoFont<'_> {
@@ -147,9 +145,7 @@ mod embedded_graphics_fonts {
         }
     }
 
-    impl<C: PixelColor + EmbeddedPixelColor> PixelFont<C>
-        for embedded_graphics::mono_font::MonoFont<'_>
-    {
+    impl<C: EmbeddedPixelColor> PixelFont<C> for embedded_graphics::mono_font::MonoFont<'_> {
         fn render_iter<T, I>(
             &self,
             target: &mut T,

@@ -1,7 +1,6 @@
 use crate::{
     environment::{LayoutEnvironment, RenderEnvironment},
     layout::{Layout, LayoutDirection, ResolvedLayout},
-    pixel::PixelColor,
     primitives::{Point, Size},
     render::CharacterRender,
     render_target::CharacterRenderTarget,
@@ -35,13 +34,13 @@ impl Layout for Spacer {
     }
 }
 
-impl<Pixel: PixelColor> CharacterRender<Pixel> for Spacer {
+impl<Pixel: Copy> CharacterRender<Pixel> for Spacer {
     fn render(
         &self,
         _target: &mut impl CharacterRenderTarget<Color = Pixel>,
         _layout: &ResolvedLayout<Self::Sublayout>,
         _origin: Point,
-        _env: &impl RenderEnvironment<Pixel>,
+        _env: &impl RenderEnvironment<Color = Pixel>,
     ) {
     }
 }
@@ -55,7 +54,7 @@ impl<Pixel: embedded_graphics_core::pixelcolor::PixelColor> crate::render::Pixel
         _target: &mut impl embedded_graphics_core::draw_target::DrawTarget<Color = Pixel>,
         _layout: &ResolvedLayout<Self::Sublayout>,
         _origin: Point,
-        _env: &impl RenderEnvironment<Pixel>,
+        _env: &impl RenderEnvironment<Color = Pixel>,
     ) {
     }
 }

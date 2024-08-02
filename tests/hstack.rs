@@ -6,7 +6,9 @@ use buoyant::layout::{Layout, VerticalAlignment};
 use buoyant::primitives::{Point, Size};
 use buoyant::render::CharacterRender;
 use buoyant::render_target::{CharacterRenderTarget, FixedTextBuffer};
-use buoyant::view::{Divider, HStack, Rectangle, Spacer, Text, ViewExtensions};
+use buoyant::view::{
+    CharacterRenderExtensions, Divider, HStack, LayoutExtensions, Rectangle, Spacer, Text,
+};
 
 #[test]
 fn test_greedy_layout_2() {
@@ -316,9 +318,9 @@ fn test_layout_3_extra_space_allocation() {
     // The VStack should attempt to lay out the views into the full width of the offer.
     let font = BufferCharacterFont {};
     let hstack = HStack::three(
-        Rectangle.foreground_style(()),
+        Rectangle.foreground_color(()),
         Text::char("T", &font),
-        Rectangle.foreground_style(()),
+        Rectangle.foreground_color(()),
     )
     .spacing(0);
     let env = DefaultEnvironment::new(());

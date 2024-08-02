@@ -1,6 +1,5 @@
 use crate::{
     layout::{Layout, ResolvedLayout},
-    pixel::PixelColor,
     primitives::Point,
     render::CharacterRender,
 };
@@ -55,7 +54,7 @@ impl<U: Layout, V: Layout> Layout for ConditionalView<U, V> {
     }
 }
 
-impl<Pixel: PixelColor, U, V> CharacterRender<Pixel> for ConditionalView<U, V>
+impl<Pixel: Copy, U, V> CharacterRender<Pixel> for ConditionalView<U, V>
 where
     U: CharacterRender<Pixel>,
     V: CharacterRender<Pixel>,
@@ -67,7 +66,7 @@ where
             ConditionalViewLayout<ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>>,
         >,
         origin: Point,
-        env: &impl crate::environment::RenderEnvironment<Pixel>,
+        env: &impl crate::environment::RenderEnvironment<Color = Pixel>,
     ) {
         match &layout.sublayouts {
             ConditionalViewLayout::TrueLayout(true_layout) => {
@@ -95,7 +94,7 @@ where
         target: &mut impl DrawTarget<Color = Pixel>,
         layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
-        env: &impl crate::environment::RenderEnvironment<Pixel>,
+        env: &impl crate::environment::RenderEnvironment<Color = Pixel>,
     ) {
         match &layout.sublayouts {
             ConditionalViewLayout::TrueLayout(true_layout) => {

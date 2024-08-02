@@ -5,7 +5,8 @@ use buoyant::primitives::{Point, Size};
 use buoyant::render::CharacterRender;
 use buoyant::render_target::{CharacterRenderTarget as _, FixedTextBuffer};
 use buoyant::view::{
-    Divider, HStack, HorizontalTextAlignment, Rectangle, Spacer, Text, VStack, ViewExtensions,
+    CharacterRenderExtensions, Divider, HStack, HorizontalTextAlignment, LayoutExtensions,
+    Rectangle, Spacer, Text, VStack,
 };
 
 fn collect_text<const W: usize, const H: usize>(buffer: &FixedTextBuffer<W, H>) -> String {
@@ -352,9 +353,9 @@ fn test_layout_3_extra_space_allocation() {
     // The VStack should attempt to lay out the views into the full width of the offer.
     let font = BufferCharacterFont {};
     let vstack = VStack::three(
-        Rectangle.foreground_style(()),
+        Rectangle.foreground_color(()),
         Text::char("Texty text", &font),
-        Rectangle.foreground_style(()),
+        Rectangle.foreground_color(()),
     )
     .spacing(0);
     let env = DefaultEnvironment::new(());

@@ -3,11 +3,9 @@ use core::cmp::{max, min};
 use crate::{
     environment::{LayoutEnvironment, RenderEnvironment},
     layout::{Layout, LayoutDirection, ResolvedLayout, VerticalAlignment},
-    pixel::PixelColor,
     primitives::{Point, Size},
     render::CharacterRender,
     render_target::CharacterRenderTarget,
-    style::color_style::ColorStyle,
 };
 
 pub struct HStack<T> {
@@ -29,11 +27,12 @@ impl<T: LayoutEnvironment> LayoutEnvironment for HorizontalEnvironment<'_, T> {
     }
 }
 
-impl<Color: Copy + PartialEq, T: RenderEnvironment<Color>> RenderEnvironment<Color>
+impl<Color: Copy, T: RenderEnvironment<Color = Color>> RenderEnvironment
     for HorizontalEnvironment<'_, T>
 {
-    fn foreground_style(&self) -> impl ColorStyle<Color = Color> {
-        self.inner_environment.foreground_style()
+    type Color = Color;
+    fn foreground_color(&self) -> Color {
+        self.inner_environment.foreground_color()
     }
 }
 
@@ -307,18 +306,17 @@ enum LayoutStage {
 
 // -- Character Render
 
-impl<Pixel, U, V> CharacterRender<Pixel> for HStack<(U, V)>
+impl<Pixel: Copy, U, V> CharacterRender<Pixel> for HStack<(U, V)>
 where
     U: CharacterRender<Pixel>,
     V: CharacterRender<Pixel>,
-    Pixel: PixelColor,
 {
     fn render(
         &self,
         target: &mut impl CharacterRenderTarget<Color = Pixel>,
         layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
-        env: &impl RenderEnvironment<Pixel>,
+        env: &impl RenderEnvironment<Color = Pixel>,
     ) {
         let env = HorizontalEnvironment::from(env);
         let mut width = 0;
@@ -350,19 +348,18 @@ where
     }
 }
 
-impl<Pixel, U, V, W> CharacterRender<Pixel> for HStack<(U, V, W)>
+impl<Pixel: Copy, U, V, W> CharacterRender<Pixel> for HStack<(U, V, W)>
 where
     U: CharacterRender<Pixel>,
     V: CharacterRender<Pixel>,
     W: CharacterRender<Pixel>,
-    Pixel: PixelColor,
 {
     fn render(
         &self,
         target: &mut impl CharacterRenderTarget<Color = Pixel>,
         layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
-        env: &impl RenderEnvironment<Pixel>,
+        env: &impl RenderEnvironment<Color = Pixel>,
     ) {
         let env = HorizontalEnvironment::from(env);
         let mut width = 0;
@@ -424,7 +421,7 @@ where
         target: &mut impl DrawTarget<Color = Pixel>,
         layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
-        env: &impl RenderEnvironment<Pixel>,
+        env: &impl RenderEnvironment<Color = Pixel>,
     ) {
         let env = HorizontalEnvironment::from(env);
         let mut width = 0;
@@ -469,7 +466,7 @@ where
         target: &mut impl DrawTarget<Color = Pixel>,
         layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
-        env: &impl RenderEnvironment<Pixel>,
+        env: &impl RenderEnvironment<Color = Pixel>,
     ) {
         let env = HorizontalEnvironment::from(env);
         let mut width = 0;

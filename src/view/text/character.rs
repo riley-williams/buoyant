@@ -2,11 +2,9 @@ use crate::{
     environment::{LayoutEnvironment, RenderEnvironment},
     font::{CharacterFont, FontLayout},
     layout::{Layout, ResolvedLayout},
-    pixel::PixelColor,
     primitives::{Point, Size},
     render::CharacterRender,
     render_target::CharacterRenderTarget,
-    style::color_style::ColorStyle,
 };
 use core::cmp::max;
 
@@ -130,13 +128,13 @@ impl<'a, F: FontLayout> Layout for Text<'a, F> {
     }
 }
 
-impl<'a, F: CharacterFont<Color>, Color: PixelColor> CharacterRender<Color> for Text<'a, F> {
+impl<'a, F: CharacterFont<Color>, Color: Copy> CharacterRender<Color> for Text<'a, F> {
     fn render(
         &self,
         target: &mut impl CharacterRenderTarget<Color = Color>,
         layout: &ResolvedLayout<()>,
         origin: Point,
-        env: &impl RenderEnvironment<Color>,
+        env: &impl RenderEnvironment<Color = Color>,
     ) {
         if layout.resolved_size.area() == 0 {
             return;
@@ -216,30 +214,13 @@ impl<'a, F: CharacterFont<Color>, Color: PixelColor> CharacterRender<Color> for 
                 .align(layout.resolved_size.width as i16, whole_width_points as i16);
             let y = origin.y + consumed_height as i16;
 
-            if let Some(solid_color) = env.foreground_style().solid() {
-                self.font.render_iter_solid(
-                    target,
-                    Point::new(origin.x + x, y),
-                    solid_color,
-                    remaining_slice[..last_renderable_index].chars(),
-                );
-            } else {
-                let slice = remaining_slice[..last_renderable_index]
-                    .chars()
-                    .enumerate()
-                    .map(|(i, c)| {
-                        (
-                            c,
-                            env.foreground_style().shade_pixel(
-                                x as u16 + i as u16,
-                                consumed_height,
-                                layout.resolved_size,
-                            ),
-                        )
-                    });
-                self.font
-                    .render_iter(target, Point::new(origin.x + x, y), slice);
-            }
+            let color = env.foreground_color();
+            self.font.render_iter_solid(
+                target,
+                Point::new(origin.x + x, y),
+                color,
+                remaining_slice[..last_renderable_index].chars(),
+            );
 
             consumed_height += self.font.line_height();
 
@@ -263,7 +244,7 @@ impl<
         target: &mut impl DrawTarget<Color = Color>,
         layout: &ResolvedLayout<()>,
         origin: Point,
-        env: &impl RenderEnvironment<Color>,
+        env: &impl RenderEnvironment<Color = Color>,
     ) {
         if layout.resolved_size.area() == 0 {
             return;
@@ -343,9 +324,7 @@ impl<
                 .align(layout.resolved_size.width as i16, whole_width_points as i16);
             let y = origin.y + consumed_height as i16;
 
-            let foreground_color =
-                env.foreground_style()
-                    .shade_pixel(x as u16, consumed_height, layout.resolved_size);
+            let foreground_color = env.foreground_color();
 
             self.font.render_iter(
                 target,
