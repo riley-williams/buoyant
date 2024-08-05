@@ -4,6 +4,7 @@ use crate::{
     render::CharacterRender,
     render_target::CharacterRenderTarget,
 };
+use micromath::F32;
 
 #[derive(Debug, Copy, Clone, PartialEq, Default)]
 pub struct RoundedRectangle {
@@ -109,7 +110,7 @@ impl<P: embedded_graphics_core::pixelcolor::PixelColor> crate::render::PixelRend
         // draw the corners
         let sq_radius = self.corner_radius as u32 * self.corner_radius as u32;
         for y in 0..self.corner_radius as u32 {
-            let intercept = ((sq_radius - y * y) as f32).sqrt();
+            let intercept: f32 = F32::from((sq_radius - y * y) as f32).sqrt().into();
             // TODO: anti-aliasing
             // let remainder = intercept.fract() * 255.0;
             let x = intercept as u32;

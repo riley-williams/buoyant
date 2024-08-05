@@ -14,7 +14,7 @@ exclude = [".github"]
 maintenance = { status = "experimental" }
 
 [features]
-default = ["std", "crossterm"]
+default = ["embedded-graphics"]
 std = []
 crossterm = ["dep:crossterm", "std"]
 embedded-graphics = ["dep:embedded-graphics-core", "dep:embedded-graphics"]
@@ -24,6 +24,7 @@ crossterm = { version = "0.27", optional = true }
 embedded-graphics-core = { version = "0.4", optional = true }
 embedded-graphics = { version = "0.8.1", optional = true }
 heapless = "0.8.0"
+micromath = "2.1.0"
 
 [profile.release]
 debug = true
