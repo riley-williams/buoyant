@@ -156,12 +156,15 @@ mod embedded_graphics_fonts {
             T: DrawTarget<Color = C>,
             I: IntoIterator<Item = char>,
         {
+            // Text gets drawn from the bottom left
+            origin.y += self.line_height() as i16;
             let style = MonoTextStyle::new(self, color);
             for character in characters {
                 // TODO: This is a workaround for embedded-graphics Text not supporting Iter<Item = char>
                 // Should probably either contribute a text init for iter, or render slices with
                 // heapless::String
                 let text = String::<1>::from_iter(core::iter::once(character));
+                // TODO: oh... looks like this returns next character position?
                 _ = Text::new(&text, origin.into(), style).draw(target);
                 origin.x += self.character_width(character) as i16;
             }
