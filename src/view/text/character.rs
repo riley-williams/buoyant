@@ -333,7 +333,7 @@ impl<
                 remaining_slice[..last_renderable_index].chars(),
             );
 
-            consumed_height += self.font.baseline();
+            consumed_height += self.font.line_height();
 
             remaining_slice = &remaining_slice[completed_index..];
         }

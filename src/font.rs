@@ -157,7 +157,7 @@ mod embedded_graphics_fonts {
             I: IntoIterator<Item = char>,
         {
             // Text gets drawn from the bottom left
-            origin.y += self.line_height() as i16;
+            origin.y += self.baseline() as i16;
             let style = MonoTextStyle::new(self, color);
             for character in characters {
                 // TODO: This is a workaround for embedded-graphics Text not supporting Iter<Item = char>
