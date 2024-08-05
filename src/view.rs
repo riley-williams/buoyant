@@ -12,6 +12,7 @@ mod zstack;
 pub use conditional_view::ConditionalView;
 pub use divider::Divider;
 pub use hstack::HStack;
+use modifier::Priority;
 pub use shape::style;
 pub use shape::Rectangle;
 pub use spacer::Spacer;
@@ -59,6 +60,10 @@ pub trait LayoutExtensions: Sized {
             horizontal_alignment,
             vertical_alignment,
         )
+    }
+
+    fn priority(self, priority: u16) -> Priority<Self> {
+        Priority::new(priority, self)
     }
 }
 
