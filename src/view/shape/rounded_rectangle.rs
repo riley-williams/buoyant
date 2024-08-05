@@ -4,7 +4,7 @@ use crate::{
     render::CharacterRender,
     render_target::CharacterRenderTarget,
 };
-use micromath::F32;
+use embedded_graphics::primitives::StyledDrawable;
 
 #[derive(Debug, Copy, Clone, PartialEq, Default)]
 pub struct RoundedRectangle {
@@ -74,78 +74,19 @@ impl<P: embedded_graphics_core::pixelcolor::PixelColor> crate::render::PixelRend
         origin: Point,
         env: &impl crate::environment::RenderEnvironment<Color = P>,
     ) {
-        let width = layout.resolved_size.width as u32;
-        let height = layout.resolved_size.height as u32;
         let color = env.foreground_color();
-
-        let corner_radius = self.corner_radius as u32;
-        // attempt to draw inside as 3 rectangles to utilize accelerated rectangle drawing
-        let mut center_origin = origin;
-        center_origin.x += self.corner_radius as i16;
-        let area = embedded_graphics::primitives::Rectangle::new(
-            center_origin.into(),
-            (width - 2 * corner_radius, height).into(),
-        );
-        _ = target.fill_solid(&area, color);
-
-        let side_rect_height = height - 2 * corner_radius;
-        let side_rect_y = origin.y as i32 + corner_radius as i32;
-
-        let left_area = embedded_graphics::primitives::Rectangle::new(
-            (origin.x as i32, side_rect_y).into(),
-            (corner_radius, side_rect_height).into(),
-        );
-        _ = target.fill_solid(&left_area, color);
-
-        let right_area = embedded_graphics::primitives::Rectangle::new(
-            (
-                origin.x as i32 + width as i32 - corner_radius as i32,
-                side_rect_y,
-            )
-                .into(),
-            (corner_radius, side_rect_height).into(),
-        );
-        _ = target.fill_solid(&right_area, color);
-
-        // draw the corners
-        let sq_radius = self.corner_radius as u32 * self.corner_radius as u32;
-        for y in 0..self.corner_radius as u32 {
-            let intercept: f32 = F32::from((sq_radius - y * y) as f32).sqrt().into();
-            // TODO: anti-aliasing
-            // let remainder = intercept.fract() * 255.0;
-            let x = intercept as u32;
-            // draw a line in each unfilled corner
-            let tl_x = origin.x as i32 + corner_radius as i32 - x as i32;
-            let tl_y = origin.y as i32 + y as i32;
-            let rect = embedded_graphics::primitives::Rectangle::new(
-                (tl_x, tl_y).into(),
-                (origin.y as u32 + corner_radius, tl_y as u32).into(),
-            );
-            _ = target.fill_solid(&rect, color);
-
-            let tr_x = origin.x as i32 + width as i32 - corner_radius as i32;
-            let tr_y = origin.y as i32 + y as i32;
-            let rect = embedded_graphics::primitives::Rectangle::new(
-                (tr_x, tr_y).into(),
-                (origin.y as u32 + corner_radius, tr_y as u32).into(),
-            );
-            _ = target.fill_solid(&rect, color);
-
-            let bl_x = origin.x as i32 + corner_radius as i32 - x as i32;
-            let bl_y = origin.y as i32 + height as i32 - y as i32;
-            let rect = embedded_graphics::primitives::Rectangle::new(
-                (bl_x, bl_y).into(),
-                (origin.y as u32 + corner_radius, bl_y as u32).into(),
-            );
-            _ = target.fill_solid(&rect, color);
-
-            let br_x = origin.x as i32 + width as i32 - corner_radius as i32;
-            let br_y = origin.y as i32 + height as i32 - y as i32;
-            let rect = embedded_graphics::primitives::Rectangle::new(
-                (br_x, br_y).into(),
-                (origin.y as u32 + corner_radius, br_y as u32).into(),
-            );
-            _ = target.fill_solid(&rect, color);
-        }
+        let style = embedded_graphics::primitives::PrimitiveStyleBuilder::new()
+            .fill_color(color)
+            .build();
+        _ = embedded_graphics::primitives::RoundedRectangle::new(
+            embedded_graphics::primitives::Rectangle {
+                top_left: origin.into(),
+                size: layout.resolved_size.into(),
+            },
+            embedded_graphics::primitives::CornerRadii::new(
+                (self.corner_radius as u32, self.corner_radius as u32).into(),
+            ),
+        )
+        .draw_styled(&style, target);
     }
 }

@@ -28,7 +28,6 @@ dependencies = [
  "embedded-graphics",
  "embedded-graphics-core",
  "heapless",
- "micromath",
 ]
 
 [[package]]
