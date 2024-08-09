@@ -1,6 +1,6 @@
 use crate::pixel::Interpolate;
 
-use super::fill_style::FillStyle;
+use super::FillStyle;
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub struct HorizontalGradient<Color> {

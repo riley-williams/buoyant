@@ -12,15 +12,15 @@ mod zstack;
 pub use conditional_view::ConditionalView;
 pub use divider::Divider;
 pub use hstack::HStack;
-use modifier::Priority;
 pub use shape::style;
+pub use shape::Circle;
 pub use shape::Rectangle;
 pub use spacer::Spacer;
 pub use text::{HorizontalTextAlignment, Text};
 pub use vstack::VStack;
 pub use zstack::ZStack;
 
-use modifier::{FixedFrame, FlexFrame, ForegroundStyle, Padding};
+use modifier::{FixedFrame, FlexFrame, ForegroundStyle, Padding, Priority};
 
 pub trait LayoutExtensions: Sized {
     fn padding(self, amount: u16) -> Padding<Self> {
