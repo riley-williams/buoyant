@@ -122,7 +122,7 @@ mod crossterm_font {
 #[cfg(feature = "embedded-graphics")]
 mod embedded_graphics_fonts {
     use embedded_graphics::{draw_target::DrawTarget, mono_font::MonoTextStyle, text::Text};
-    use embedded_graphics_core::pixelcolor::PixelColor as EmbeddedPixelColor;
+    use embedded_graphics_core::pixelcolor::PixelColor;
     use embedded_graphics_core::Drawable;
     use heapless::String;
 
@@ -145,25 +145,28 @@ mod embedded_graphics_fonts {
         }
     }
 
-    impl<C: EmbeddedPixelColor> PixelFont<C> for embedded_graphics::mono_font::MonoFont<'_> {
+    impl<C: PixelColor> PixelFont<C> for embedded_graphics::mono_font::MonoFont<'_> {
         fn render_iter<T, I>(
             &self,
             target: &mut T,
-            mut origin: crate::primitives::Point,
+            origin: crate::primitives::Point,
             color: C,
             characters: I,
         ) where
             T: DrawTarget<Color = C>,
             I: IntoIterator<Item = char>,
         {
+            // embedded graphics Text is drawn at the baseline
+            let mut origin: embedded_graphics_core::geometry::Point = origin.into();
+            origin.y += self.baseline as i32;
             let style = MonoTextStyle::new(self, color);
+
             for character in characters {
-                // TODO: This is a workaround for embedded-graphics Text not supporting Iter<Item = char>
-                // Should probably either contribute a text init for iter, or render slices with
-                // heapless::String
                 let text = String::<1>::from_iter(core::iter::once(character));
-                _ = Text::new(&text, origin.into(), style).draw(target);
-                origin.x += self.character_width(character) as i16;
+                origin = match Text::new(&text, origin, style).draw(target) {
+                    Ok(o) => o,
+                    Err(_) => break,
+                };
             }
         }
     }
