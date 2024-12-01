@@ -2,7 +2,6 @@ use crate::{
     layout::{Layout, ResolvedLayout},
     primitives::{Point, Size},
 };
-use embedded_graphics::primitives::StyledDrawable;
 
 #[derive(Debug, Copy, Clone, PartialEq, Default)]
 pub struct RoundedRectangle {
@@ -31,7 +30,7 @@ impl Layout for RoundedRectangle {
 }
 
 #[cfg(feature = "embedded-graphics")]
-use embedded_graphics::draw_target::DrawTarget;
+use embedded_graphics::{draw_target::DrawTarget, primitives::StyledDrawable};
 
 #[cfg(feature = "embedded-graphics")]
 impl<P: embedded_graphics_core::pixelcolor::PixelColor> crate::render::PixelRender<P>
