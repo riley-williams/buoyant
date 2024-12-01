@@ -1,6 +1,6 @@
 [package]
 name = "buoyant"
-version = "0.1.6"
+version = "0.1.7"
 authors = ["Riley Williams"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
@@ -20,10 +20,10 @@ crossterm = ["dep:crossterm", "std"]
 embedded-graphics = ["dep:embedded-graphics-core", "dep:embedded-graphics"]
 
 [dependencies]
-crossterm = { version = "0.27", optional = true }
-embedded-graphics-core = { version = "0.4", optional = true }
-embedded-graphics = { version = "0.8.1", optional = true }
-heapless = "0.8.0"
+crossterm = { version = "^0.27", optional = true }
+embedded-graphics-core = { version = "^0.4", optional = true }
+embedded-graphics = { version = "^0.8", optional = true }
+heapless = "^0.8"
 
 [profile.release]
 debug = true
