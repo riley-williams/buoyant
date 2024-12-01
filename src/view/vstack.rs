@@ -52,22 +52,20 @@ impl<T> PartialEq for VStack<T> {
 }
 
 impl<T> VStack<T> {
+    pub fn new(items: T) -> Self {
+        Self {
+            items,
+            alignment: HorizontalAlignment::default(),
+            spacing: 0,
+        }
+    }
+
     pub fn spacing(self, spacing: u16) -> Self {
         Self { spacing, ..self }
     }
 
     pub fn alignment(self, alignment: HorizontalAlignment) -> Self {
         Self { alignment, ..self }
-    }
-}
-
-impl<U, V> VStack<(U, V)> {
-    pub fn two(item0: U, item1: V) -> Self {
-        VStack {
-            items: (item0, item1),
-            alignment: HorizontalAlignment::default(),
-            spacing: 0,
-        }
     }
 }
 
@@ -102,16 +100,6 @@ impl<U: Layout, V: Layout> Layout for VStack<(U, V)> {
         ResolvedLayout {
             sublayouts: (c0.unwrap(), c1.unwrap()),
             resolved_size: total_size,
-        }
-    }
-}
-
-impl<U, V, W> VStack<(U, V, W)> {
-    pub fn three(item0: U, item1: V, item2: W) -> Self {
-        VStack {
-            items: (item0, item1, item2),
-            alignment: HorizontalAlignment::default(),
-            spacing: 0,
         }
     }
 }
