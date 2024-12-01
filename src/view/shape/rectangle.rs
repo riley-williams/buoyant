@@ -8,6 +8,12 @@ use crate::{
 #[derive(Debug, Copy, Clone, PartialEq, Default)]
 pub struct Rectangle;
 
+impl Rectangle {
+    pub fn corner_radius(self, radius: u16) -> RoundedRectangle {
+        RoundedRectangle::new(radius)
+    }
+}
+
 impl Layout for Rectangle {
     type Sublayout = ();
 
@@ -44,6 +50,8 @@ impl<P: Copy> CharacterRender<P> for Rectangle {
 
 #[cfg(feature = "embedded-graphics")]
 use embedded_graphics::draw_target::DrawTarget;
+
+use super::RoundedRectangle;
 
 #[cfg(feature = "embedded-graphics")]
 impl<P: embedded_graphics_core::pixelcolor::PixelColor> crate::render::PixelRender<P>
