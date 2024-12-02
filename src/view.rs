@@ -16,13 +16,14 @@ pub use empty_view::EmptyView;
 pub use foreach::ForEach;
 pub use hstack::HStack;
 pub use shape::style;
+pub use shape::Circle;
 pub use shape::Rectangle;
 pub use spacer::Spacer;
 pub use text::{HorizontalTextAlignment, Text};
 pub use vstack::VStack;
 pub use zstack::ZStack;
 
-use modifier::{FixedFrame, FlexFrame, ForegroundStyle, Padding};
+use modifier::{FixedFrame, FlexFrame, ForegroundStyle, Padding, Priority};
 
 pub trait LayoutExtensions: Sized {
     fn padding(self, amount: u16) -> Padding<Self> {
@@ -62,6 +63,10 @@ pub trait LayoutExtensions: Sized {
             horizontal_alignment,
             vertical_alignment,
         )
+    }
+
+    fn priority(self, priority: u16) -> Priority<Self> {
+        Priority::new(priority, self)
     }
 }
 
