@@ -13,7 +13,7 @@ use buoyant::{
 #[test]
 fn test_clipped_text_trails_correctly() {
     let font = BufferCharacterFont {};
-    let text = VStack::three(
+    let text = VStack::new((
         Spacer::default(),
         Text::char(
             "Padding respects\nparent alignment\nshouldnt affect alignment",
@@ -22,7 +22,7 @@ fn test_clipped_text_trails_correctly() {
         .multiline_text_alignment(HorizontalTextAlignment::Trailing)
         .padding(2),
         Divider::default(),
-    );
+    ));
 
     let env = DefaultEnvironment::new(());
     let mut buffer = FixedTextBuffer::<30, 7>::default();

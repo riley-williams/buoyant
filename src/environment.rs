@@ -79,10 +79,5 @@ pub(crate) mod mock {
             self.direction = direction;
             self
         }
-
-        pub fn with_alignment(mut self, alignment: Alignment) -> Self {
-            self.alignment = alignment;
-            self
-        }
     }
 }
