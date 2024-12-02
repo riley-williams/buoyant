@@ -114,11 +114,14 @@ fn layout_n<const N: usize>(
     spacing: u16,
     mut layout_fn: impl FnMut(usize, Size) -> Size,
 ) -> Size {
-    let mut remaining_height = offer.height.saturating_sub(spacing * (N - 1) as u16);
+    let mut remaining_height = offer
+        .height
+        .saturating_sub(spacing * (subviews.len() - 1) as u16);
 
     loop {
         // collect the unsized subviews with the max layout priority into a group
-        let mut subviews_indecies: [usize; N] = [0; N];
+        let mut subviews_indecies: heapless::Vec<usize, N> =
+            heapless::Vec::from_slice(&[0; N]).expect("This can never fail, N vec from N slice");
         let mut max = i8::MIN;
         let mut slice_start: usize = 0;
         let mut slice_len: usize = 0;
