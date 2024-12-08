@@ -272,7 +272,7 @@ fn test_layout_3_alignment_leading() {
 fn test_layout_direction_is_set_inner_hstack() {
     let vstack = VStack::new((
         Divider::default(),
-        HStack::two(Divider::default(), Spacer::default()),
+        HStack::new((Divider::default(), Spacer::default())),
         Divider::default(),
     ));
     let env = DefaultEnvironment::new(());
@@ -288,11 +288,11 @@ fn test_layout_direction_is_set_inner_hstack() {
 
 #[test]
 fn test_layout_direction_is_set_inner_vstack() {
-    let hstack = HStack::three(
+    let hstack = HStack::new((
         Divider::default(),
         VStack::new((Divider::default(), Spacer::default())),
         Divider::default(),
-    );
+    ));
     let env = DefaultEnvironment::new(());
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = hstack.layout(buffer.size(), &env);
@@ -308,7 +308,7 @@ fn test_layout_direction_is_set_inner_vstack() {
 fn test_flexible_layout_fills_frame_10k() {
     let font = BufferCharacterFont {};
     let stack = VStack::new((
-    HStack::three(
+    HStack::new((
         Text::char(
             "This text is centered horizontally in the middle of its space\nThe stack however, has bottom alignment.",
             &font,
@@ -320,9 +320,9 @@ fn test_flexible_layout_fills_frame_10k() {
             &font,
                 )
                 .multiline_text_alignment(HorizontalTextAlignment::Trailing),
-            )
-            .spacing(1)
-            .alignment(VerticalAlignment::Bottom),
+        ))
+        .spacing(1)
+        .alignment(VerticalAlignment::Bottom),
     Divider::default(),
     VStack::new((
         Spacer::default(),

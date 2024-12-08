@@ -29,7 +29,7 @@ fn test_vertical_layout() {
 #[test]
 fn test_render_fills_stack() {
     let font = BufferCharacterFont {};
-    let hstack = HStack::two(Spacer::default(), Text::char("67", &font)).spacing(1);
+    let hstack = HStack::new((Spacer::default(), Text::char("67", &font))).spacing(1);
     let mut buffer = FixedTextBuffer::<9, 1>::default();
     let env = TestEnv::default().with_direction(LayoutDirection::Horizontal);
     let layout = hstack.layout(buffer.size(), &env);

@@ -28,7 +28,7 @@ fn main() {
     let env = DefaultEnvironment::new(blank_color);
     let font = TerminalCharFont {};
     let stack = VStack::new((
-        HStack::three(
+        HStack::new((
             Text::char(
                 "This red text is aligned to the leading edge of its space\nThe stack however, has bottom alignment.",
                 &font,
@@ -44,7 +44,7 @@ fn main() {
             )
                 .multiline_text_alignment(HorizontalTextAlignment::Trailing)
                 .flex_frame(Some(10), Some(35), None, None, None, None),
-        )
+        ))
             .spacing(1)
             .alignment(VerticalAlignment::Bottom),
         Divider::default(),

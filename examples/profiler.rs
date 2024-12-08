@@ -19,7 +19,7 @@ fn main() {
 
     let font = BufferCharacterFont {};
     let stack = VStack::new((
-    HStack::three(
+    HStack::new((
         Text::char(
             "This text is centered horizontally in the middle of its space\nThe stack however, has bottom alignment.",
             &font,
@@ -31,9 +31,9 @@ fn main() {
             &font,
                 )
                 .multiline_text_alignment(HorizontalTextAlignment::Trailing),
-            )
-            .spacing(1)
-            .alignment(VerticalAlignment::Bottom),
+        ))
+        .spacing(1)
+        .alignment(VerticalAlignment::Bottom),
     Divider::default(),
     VStack::new((
         Spacer::default(),
