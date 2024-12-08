@@ -27,8 +27,8 @@ fn main() {
 
     let env = DefaultEnvironment::new(blank_color);
     let font = TerminalCharFont {};
-    let stack = VStack::three(
-        HStack::three(
+    let stack = VStack::new((
+        HStack::new((
             Text::char(
                 "This red text is aligned to the leading edge of its space\nThe stack however, has bottom alignment.",
                 &font,
@@ -44,11 +44,11 @@ fn main() {
             )
                 .multiline_text_alignment(HorizontalTextAlignment::Trailing)
                 .flex_frame(Some(10), Some(35), None, None, None, None),
-        )
+        ))
             .spacing(1)
             .alignment(VerticalAlignment::Bottom),
         Divider::default(),
-        VStack::three(
+        VStack::new((
             ZStack::two(
                 Rectangle
                     .foreground_color(
@@ -74,8 +74,8 @@ fn main() {
                 .padding(2),
             Divider::default()
                 .foreground_color(Colors { foreground: Some(crossterm::style::Color::DarkYellow), background: None })
-        ),
-    );
+        )),
+    ));
 
     println!("View size {}", std::mem::size_of_val(&stack));
     println!("Env size {}", std::mem::size_of_val(&env));

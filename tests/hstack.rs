@@ -12,7 +12,7 @@ use buoyant::view::{
 
 #[test]
 fn test_greedy_layout_2() {
-    let hstack = HStack::two(Spacer::default(), Spacer::default());
+    let hstack = HStack::new((Spacer::default(), Spacer::default()));
     let offer = Size::new(100, 100);
     let env = DefaultEnvironment::new(());
     let layout = hstack.layout(offer, &env);
@@ -21,7 +21,7 @@ fn test_greedy_layout_2() {
 
 #[test]
 fn test_oversized_layout_2() {
-    let vstack = HStack::two(Divider::default().padding(2), Spacer::default());
+    let vstack = HStack::new((Divider::default().padding(2), Spacer::default()));
     let offer = Size::new(10, 0);
     let env = DefaultEnvironment::new(());
     let layout = vstack.layout(offer, &env);
@@ -30,11 +30,11 @@ fn test_oversized_layout_2() {
 
 #[test]
 fn test_oversized_layout_3() {
-    let vstack = HStack::three(
+    let vstack = HStack::new((
         Divider::default(),
         Divider::default().padding(2),
         Spacer::default(),
-    );
+    ));
     let offer = Size::new(10, 0);
     let env = DefaultEnvironment::new(());
     let layout = vstack.layout(offer, &env);
@@ -44,7 +44,7 @@ fn test_oversized_layout_3() {
 #[test]
 fn test_undersized_layout_2() {
     let font = BufferCharacterFont {};
-    let hstack = HStack::two(Text::char("123", &font), Text::char("4567", &font)).spacing(1);
+    let hstack = HStack::new((Text::char("123", &font), Text::char("4567", &font))).spacing(1);
     let offer = Size::new(50, 1);
     let env = DefaultEnvironment::new(());
     let layout = hstack.layout(offer, &env);
@@ -54,7 +54,7 @@ fn test_undersized_layout_2() {
 #[test]
 fn test_horizontal_render_2() {
     let font = BufferCharacterFont {};
-    let hstack = HStack::two(Text::char("123", &font), Text::char("4567", &font)).spacing(1);
+    let hstack = HStack::new((Text::char("123", &font), Text::char("4567", &font))).spacing(1);
     let mut buffer = FixedTextBuffer::<9, 1>::default();
     let env = DefaultEnvironment::new(());
     let layout = hstack.layout(buffer.size(), &env);
@@ -65,11 +65,11 @@ fn test_horizontal_render_2() {
 #[test]
 fn test_undersized_layout_3_left_pad() {
     let font = BufferCharacterFont {};
-    let hstack = HStack::three(
+    let hstack = HStack::new((
         Text::char("123", &font),
         Text::char("4567", &font),
         Spacer::default(),
-    );
+    ));
     let offer = Size::new(10, 1);
     let env = DefaultEnvironment::new(());
     let layout = hstack.layout(offer, &env);
@@ -82,11 +82,11 @@ fn test_undersized_layout_3_left_pad() {
 #[test]
 fn test_undersized_layout_3_right_pad_space() {
     let font = BufferCharacterFont {};
-    let hstack = HStack::three(
+    let hstack = HStack::new((
         Spacer::default(),
         Text::char("234", &font),
         Text::char("5678", &font),
-    )
+    ))
     .spacing(1);
     let offer = Size::new(10, 1);
     let env = DefaultEnvironment::new(());
@@ -102,11 +102,11 @@ fn test_undersized_layout_3_right_pad_space() {
 fn test_oversized_layout_3_leading_pad_space() {
     // The second text view is too large to fit in the initial offer.
     let font = BufferCharacterFont {};
-    let hstack = HStack::three(
+    let hstack = HStack::new((
         Spacer::default(),
         Text::char("234", &font),
         Text::char("56789", &font),
-    )
+    ))
     .spacing(1);
     let offer = Size::new(10, 1);
     let env = DefaultEnvironment::new(());
@@ -121,11 +121,11 @@ fn test_oversized_layout_3_leading_pad_space() {
 #[test]
 fn test_undersized_layout_3_middle_pad() {
     let font = BufferCharacterFont {};
-    let hstack = HStack::three(
+    let hstack = HStack::new((
         Text::char("234", &font),
         Spacer::default(),
         Text::char("5678", &font),
-    );
+    ));
     let offer = Size::new(10, 1);
     let env = DefaultEnvironment::new(());
     let layout = hstack.layout(offer, &env);
@@ -140,11 +140,11 @@ fn test_undersized_layout_3_middle_pad() {
 fn test_oversized_layout_3_middle_pad_space() {
     // The third text view is too large to fit in the initial offer.
     let font = BufferCharacterFont {};
-    let hstack = HStack::three(
+    let hstack = HStack::new((
         Text::char("234", &font),
         Spacer::default(),
         Text::char("56789", &font),
-    )
+    ))
     .spacing(1);
     let offer = Size::new(10, 1);
     let env = DefaultEnvironment::new(());
@@ -160,11 +160,11 @@ fn test_oversized_layout_3_middle_pad_space() {
 fn test_oversized_layout_3_trailing_pad_space() {
     // The second text view is too large to fit in the initial offer.
     let font = BufferCharacterFont {};
-    let hstack = HStack::three(
+    let hstack = HStack::new((
         Text::char("234", &font),
         Text::char("56789", &font),
         Spacer::default(),
-    )
+    ))
     .spacing(1);
     let offer = Size::new(10, 1);
     let env = DefaultEnvironment::new(());
@@ -180,11 +180,11 @@ fn test_oversized_layout_3_trailing_pad_space() {
 fn test_layout_3_remainder_allocation() {
     // The HStack should attempt to lay out the views into the full width of the offer.
     let font = BufferCharacterFont {};
-    let hstack = HStack::three(
+    let hstack = HStack::new((
         Text::char("aaa", &font),
         Text::char("bbb", &font),
         Text::char("ccc", &font),
-    );
+    ));
     let env = DefaultEnvironment::new(());
     let mut buffer = FixedTextBuffer::<10, 1>::default();
     let offer = Size::new(7, 1);
@@ -216,11 +216,11 @@ fn test_layout_3_remainder_allocation() {
 fn test_layout_3_vertical_alignment_bottom() {
     // The HStack should attempt to lay out the views into the full width of the offer.
     let font = BufferCharacterFont {};
-    let hstack = HStack::three(
+    let hstack = HStack::new((
         Text::char("aaa", &font),
         Divider::default(),
         Text::char("ccc", &font),
-    )
+    ))
     .alignment(VerticalAlignment::Bottom)
     .spacing(1);
     let env = DefaultEnvironment::new(());
@@ -239,11 +239,11 @@ fn test_layout_3_vertical_alignment_bottom() {
 fn test_layout_3_vertical_alignment_center() {
     // The HStack should attempt to lay out the views into the full width of the offer.
     let font = BufferCharacterFont {};
-    let hstack = HStack::three(
+    let hstack = HStack::new((
         Text::char("aaa", &font),
         Divider::default(),
         Text::char("ccc", &font),
-    )
+    ))
     .alignment(VerticalAlignment::Center)
     .spacing(1);
     let env = DefaultEnvironment::new(());
@@ -262,11 +262,11 @@ fn test_layout_3_vertical_alignment_center() {
 fn test_layout_3_vertical_alignment_top() {
     // The HStack should attempt to lay out the views into the full width of the offer.
     let font = BufferCharacterFont {};
-    let hstack = HStack::three(
+    let hstack = HStack::new((
         Text::char("aaa", &font),
         Divider::default(),
         Text::char("ccc", &font),
-    )
+    ))
     .alignment(VerticalAlignment::Top)
     .spacing(1);
     let env = DefaultEnvironment::new(());
@@ -285,11 +285,11 @@ fn test_layout_3_vertical_alignment_top() {
 fn test_minimal_offer_extra_space_1() {
     // The HStack should offer remaining space when the views do not consume the full width.
     let font = BufferCharacterFont {};
-    let hstack = HStack::three(
+    let hstack = HStack::new((
         Text::char("a b c d e f", &font),
         Text::char("g h i", &font),
         Text::char("j", &font),
-    )
+    ))
     .alignment(VerticalAlignment::Top)
     .spacing(1);
 
@@ -317,11 +317,11 @@ fn test_minimal_offer_extra_space_1() {
 fn test_layout_3_extra_space_allocation() {
     // The VStack should attempt to lay out the views into the full width of the offer.
     let font = BufferCharacterFont {};
-    let hstack = HStack::three(
+    let hstack = HStack::new((
         Rectangle.foreground_color(()),
         Text::char("T", &font),
         Rectangle.foreground_color(()),
-    )
+    ))
     .spacing(0);
     let env = DefaultEnvironment::new(());
     let mut buffer = FixedTextBuffer::<9, 3>::default();

@@ -60,10 +60,10 @@ impl<T> PartialEq for HStack<T> {
     }
 }
 
-impl<U, V> HStack<(U, V)> {
-    pub fn two(item0: U, item1: V) -> Self {
+impl<T> HStack<T> {
+    pub fn new(items: T) -> Self {
         HStack {
-            items: (item0, item1),
+            items,
             alignment: VerticalAlignment::default(),
             spacing: 0,
         }
@@ -102,16 +102,6 @@ impl<U: Layout, V: Layout> Layout for HStack<(U, V)> {
         ResolvedLayout {
             sublayouts: (c0.unwrap(), c1.unwrap()),
             resolved_size: total_size,
-        }
-    }
-}
-
-impl<U, V, W> HStack<(U, V, W)> {
-    pub fn three(item0: U, item1: V, item2: W) -> Self {
-        HStack {
-            items: (item0, item1, item2),
-            alignment: VerticalAlignment::default(),
-            spacing: 0,
         }
     }
 }
