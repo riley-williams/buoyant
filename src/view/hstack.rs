@@ -45,11 +45,11 @@ impl<'a, T: LayoutEnvironment> From<&'a T> for HorizontalEnvironment<'a, T> {
 }
 
 impl<T> HStack<T> {
-    pub fn spacing(self, spacing: u16) -> Self {
+    pub fn with_spacing(self, spacing: u16) -> Self {
         Self { spacing, ..self }
     }
 
-    pub fn alignment(self, alignment: VerticalAlignment) -> Self {
+    pub fn with_alignment(self, alignment: VerticalAlignment) -> Self {
         Self { alignment, ..self }
     }
 }

@@ -60,11 +60,11 @@ impl<T> VStack<T> {
         }
     }
 
-    pub fn spacing(self, spacing: u16) -> Self {
+    pub fn with_spacing(self, spacing: u16) -> Self {
         Self { spacing, ..self }
     }
 
-    pub fn alignment(self, alignment: HorizontalAlignment) -> Self {
+    pub fn with_alignment(self, alignment: HorizontalAlignment) -> Self {
         Self { alignment, ..self }
     }
 }

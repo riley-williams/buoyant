@@ -44,7 +44,7 @@ fn test_oversized_layout_3() {
 #[test]
 fn test_undersized_layout_2() {
     let font = BufferCharacterFont {};
-    let hstack = HStack::new((Text::str("123", &font), Text::str("4567", &font))).spacing(1);
+    let hstack = HStack::new((Text::str("123", &font), Text::str("4567", &font))).with_spacing(1);
     let offer = Size::new(50, 1);
     let env = DefaultEnvironment::new(());
     let layout = hstack.layout(offer, &env);
@@ -54,7 +54,7 @@ fn test_undersized_layout_2() {
 #[test]
 fn test_horizontal_render_2() {
     let font = BufferCharacterFont {};
-    let hstack = HStack::new((Text::str("123", &font), Text::str("4567", &font))).spacing(1);
+    let hstack = HStack::new((Text::str("123", &font), Text::str("4567", &font))).with_spacing(1);
     let mut buffer = FixedTextBuffer::<9, 1>::default();
     let env = DefaultEnvironment::new(());
     let layout = hstack.layout(buffer.size(), &env);
@@ -87,7 +87,7 @@ fn test_undersized_layout_3_right_pad_space() {
         Text::str("234", &font),
         Text::str("5678", &font),
     ))
-    .spacing(1);
+    .with_spacing(1);
     let offer = Size::new(10, 1);
     let env = DefaultEnvironment::new(());
     let layout = hstack.layout(offer, &env);
@@ -107,7 +107,7 @@ fn test_oversized_layout_3_leading_pad_space() {
         Text::str("234", &font),
         Text::str("56789", &font),
     ))
-    .spacing(1);
+    .with_spacing(1);
     let offer = Size::new(10, 1);
     let env = DefaultEnvironment::new(());
     let layout = hstack.layout(offer, &env);
@@ -145,7 +145,7 @@ fn test_oversized_layout_3_middle_pad_space() {
         Spacer::default(),
         Text::str("56789", &font),
     ))
-    .spacing(1);
+    .with_spacing(1);
     let offer = Size::new(10, 1);
     let env = DefaultEnvironment::new(());
     let layout = hstack.layout(offer, &env);
@@ -165,7 +165,7 @@ fn test_oversized_layout_3_trailing_pad_space() {
         Text::str("56789", &font),
         Spacer::default(),
     ))
-    .spacing(1);
+    .with_spacing(1);
     let offer = Size::new(10, 1);
     let env = DefaultEnvironment::new(());
     let layout = hstack.layout(offer, &env);
@@ -221,8 +221,8 @@ fn test_layout_3_vertical_alignment_bottom() {
         Divider::default(),
         Text::str("ccc", &font),
     ))
-    .alignment(VerticalAlignment::Bottom)
-    .spacing(1);
+    .with_alignment(VerticalAlignment::Bottom)
+    .with_spacing(1);
     let env = DefaultEnvironment::new(());
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = hstack.layout(buffer.size(), &env);
@@ -244,8 +244,8 @@ fn test_layout_3_vertical_alignment_center() {
         Divider::default(),
         Text::str("ccc", &font),
     ))
-    .alignment(VerticalAlignment::Center)
-    .spacing(1);
+    .with_alignment(VerticalAlignment::Center)
+    .with_spacing(1);
     let env = DefaultEnvironment::new(());
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = hstack.layout(buffer.size(), &env);
@@ -267,8 +267,8 @@ fn test_layout_3_vertical_alignment_top() {
         Divider::default(),
         Text::str("ccc", &font),
     ))
-    .alignment(VerticalAlignment::Top)
-    .spacing(1);
+    .with_alignment(VerticalAlignment::Top)
+    .with_spacing(1);
     let env = DefaultEnvironment::new(());
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = hstack.layout(buffer.size(), &env);
@@ -290,8 +290,8 @@ fn test_minimal_offer_extra_space_1() {
         Text::str("g h i", &font),
         Text::str("j", &font),
     ))
-    .alignment(VerticalAlignment::Top)
-    .spacing(1);
+    .with_alignment(VerticalAlignment::Top)
+    .with_spacing(1);
 
     let env = DefaultEnvironment::new(());
     let mut buffer = FixedTextBuffer::<19, 5>::default();
@@ -322,7 +322,7 @@ fn test_layout_3_extra_space_allocation() {
         Text::str("T", &font),
         Rectangle.foreground_color(()),
     ))
-    .spacing(0);
+    .with_spacing(0);
     let env = DefaultEnvironment::new(());
     let mut buffer = FixedTextBuffer::<9, 3>::default();
     let layout = hstack.layout(buffer.size(), &env);
