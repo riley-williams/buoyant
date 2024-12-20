@@ -14,8 +14,8 @@ fn test_conditional_view_layout() {
     let make_view = |condition| {
         ConditionalView::new(
             condition,
-            Text::char("true\n!!!", &font),
-            Text::char("f", &font),
+            Text::str("true\n!!!", &font),
+            Text::str("f", &font),
         )
     };
     let mut buffer = FixedTextBuffer::<5, 5>::default();

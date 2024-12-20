@@ -1,9 +1,17 @@
-mod character;
+use core::marker::PhantomData;
 
-pub struct Text<'a, F> {
-    pub(crate) text: &'a str,
+use wrap::WhitespaceWrap;
+
+mod character;
+mod wrap;
+
+// W is hardcoded to WhitespaceWrap, leaving generic for future fix
+
+pub struct Text<'a, T, F, W = WhitespaceWrap<'a, F>> {
+    pub(crate) text: T,
     pub(crate) font: &'a F,
     pub(crate) alignment: HorizontalTextAlignment,
+    pub(crate) _wrap: PhantomData<W>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Default)]

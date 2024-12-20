@@ -6,27 +6,77 @@ use crate::{
     render::CharacterRender,
     render_target::CharacterRenderTarget,
 };
-use core::cmp::max;
+use core::marker::PhantomData;
 
-use super::{HorizontalTextAlignment, Text};
+use super::{wrap::WhitespaceWrap, HorizontalTextAlignment, Text};
 
-impl<'a, F> Text<'a, F> {
-    pub fn char(text: &'a str, font: &'a F) -> Text<'a, F> {
+impl<'a, F> Text<'a, &'a str, F> {
+    pub fn str(text: &'a str, font: &'a F) -> Self {
         Text {
             text,
             font,
             alignment: HorizontalTextAlignment::default(),
+            _wrap: PhantomData,
         }
     }
 }
 
-impl<'a, F> Text<'a, F> {
-    pub fn multiline_text_alignment(self, alignment: HorizontalTextAlignment) -> Text<'a, F> {
+impl<'a, const N: usize, F> Text<'a, heapless::String<N>, F> {
+    pub fn heapless(text: heapless::String<N>, font: &'a F) -> Self {
+        Text {
+            text,
+            font,
+            alignment: HorizontalTextAlignment::default(),
+            _wrap: PhantomData,
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl<'a, F> Text<'a, String, F> {
+    pub fn string(text: String, font: &'a F) -> Self {
+        Text {
+            text,
+            font,
+            alignment: HorizontalTextAlignment::default(),
+            _wrap: PhantomData,
+        }
+    }
+}
+
+trait Slice {
+    fn as_slice(&self) -> &str;
+}
+
+impl Slice for &str {
+    #[inline]
+    fn as_slice(&self) -> &str {
+        self
+    }
+}
+
+impl<const N: usize> Slice for heapless::String<N> {
+    #[inline]
+    fn as_slice(&self) -> &str {
+        self
+    }
+}
+
+#[cfg(feature = "std")]
+impl Slice for String {
+    #[inline]
+    fn as_slice(&self) -> &str {
+        self.as_str()
+    }
+}
+
+impl<'a, T, F> Text<'a, T, F> {
+    pub fn multiline_text_alignment(self, alignment: HorizontalTextAlignment) -> Self {
         Text { alignment, ..self }
     }
 }
 
-impl<'a, F> PartialEq for Text<'a, F> {
+impl<'a, T: PartialEq, F> PartialEq for Text<'a, T, F> {
     fn eq(&self, other: &Self) -> bool {
         self.text == other.text
     }
@@ -34,93 +84,32 @@ impl<'a, F> PartialEq for Text<'a, F> {
 
 // TODO: consolidate the layout implementations...this is getting ridiculous
 
-impl<'a, F: FontLayout> Layout for Text<'a, F> {
+impl<'a, T: Slice, F: FontLayout> Layout for Text<'a, T, F> {
+    // this could be used to store the precalculated line breaks
     type Sublayout = ();
 
-    fn layout(&self, offer: Size, _env: &impl LayoutEnvironment) -> ResolvedLayout<()> {
+    fn layout(
+        &self,
+        offer: Size,
+        _env: &impl LayoutEnvironment,
+    ) -> ResolvedLayout<Self::Sublayout> {
         if offer.area() == 0 {
             return ResolvedLayout {
                 sublayouts: (),
                 resolved_size: Size::new(0, 0),
             };
         }
-
-        let font_height = self.font.line_height();
-
-        let mut consumed_height = 0;
-
-        // track the longest line
-        let mut max_line_width_points = 0;
-
-        let mut remaining_slice = self.text;
-
-        // layout a new line as long as there is vertical space for it, always layout at least one line
-        while !remaining_slice.is_empty() && consumed_height + font_height <= offer.height {
-            // find the longest line that fits horizontally without truncating mid-word, unless
-            // only one word fits
-            let mut whole_width_points = 0;
-            // used to backtrack to the last whole word if needed
-            let mut width_accumulator = 0;
-
-            let mut char_indices = remaining_slice.char_indices();
-
-            let mut completed_index = 0;
-            // accummulate by word until the line is too long
-            loop {
-                if let Some((index, char)) = char_indices.next() {
-                    match char {
-                        '\n' => {
-                            // apply any accumulated width
-                            whole_width_points += width_accumulator;
-                            completed_index = index + 1;
-                            break;
-                        }
-                        ' ' => {
-                            whole_width_points += width_accumulator;
-                            let char_width = self.font.character_width(' ');
-                            // add the space to the accumulator so it is skipped if there are no
-                            // other characters on the line
-                            width_accumulator = char_width;
-
-                            completed_index = index + 1;
-                        }
-                        _ => {
-                            let char_width = self.font.character_width(char);
-                            let candidate_width =
-                                whole_width_points + width_accumulator + char_width;
-                            if candidate_width > offer.width {
-                                // if we reached the limit before the first word, break mid word
-                                if whole_width_points == 0 {
-                                    if index == 0 {
-                                        // if the first character is too wide, use it and break
-                                        whole_width_points = char_width;
-                                        completed_index = 1;
-                                    } else {
-                                        // otherwise drop the character and break
-                                        whole_width_points = width_accumulator;
-                                        completed_index = index;
-                                    }
-                                }
-                                break;
-                            } else {
-                                width_accumulator += char_width;
-                            }
-                        }
-                    }
-                } else {
-                    // if we reached the end of the string, apply the collected word
-                    whole_width_points += width_accumulator;
-                    completed_index = remaining_slice.len();
-                    break;
-                }
+        let line_height = self.font.line_height();
+        let wrap = WhitespaceWrap::new(self.text.as_slice(), offer.width, self.font);
+        let mut size = Size::zero();
+        for line in wrap {
+            size.width = core::cmp::max(size.width, self.font.str_width(line));
+            size.height += line_height;
+            if size.height >= offer.height {
+                break;
             }
-
-            consumed_height += font_height;
-            remaining_slice = &remaining_slice[completed_index..];
-
-            max_line_width_points = max(max_line_width_points, whole_width_points);
         }
-        let size = Size::new(max_line_width_points, consumed_height);
+
         ResolvedLayout {
             sublayouts: (),
             resolved_size: size,
@@ -128,7 +117,7 @@ impl<'a, F: FontLayout> Layout for Text<'a, F> {
     }
 }
 
-impl<'a, F: CharacterFont<Color>, Color: Copy> CharacterRender<Color> for Text<'a, F> {
+impl<'a, T: Slice, F: CharacterFont<Color>, Color: Copy> CharacterRender<Color> for Text<'a, T, F> {
     fn render(
         &self,
         target: &mut impl CharacterRenderTarget<Color = Color>,
@@ -139,92 +128,29 @@ impl<'a, F: CharacterFont<Color>, Color: Copy> CharacterRender<Color> for Text<'
         if layout.resolved_size.area() == 0 {
             return;
         }
-        let mut consumed_height: u16 = 0;
 
-        let mut remaining_slice = self.text;
+        let line_height = self.font.line_height() as i16;
 
-        // layout a new line as long as there is vertical space for it, always layout at least one line
-        while !remaining_slice.is_empty() && consumed_height < layout.resolved_size.height {
-            // find the longest line that fits horizontally without truncating mid-word, unless
-            // only one word fits
-            let mut whole_width_points = 0;
-            // used to backtrack to the last whole word if needed
-            let mut width_accumulator = 0;
+        let mut height = 0;
+        let wrap = WhitespaceWrap::new(self.text.as_slice(), layout.resolved_size.width, self.font);
+        for line in wrap {
+            let color = env.foreground_color();
+            let width = self.font.str_width(line);
 
-            let mut char_indices = remaining_slice.char_indices();
-
-            let mut completed_index = 0;
-            let mut last_renderable_index = 0;
-            // accummulate by word until the line is too long
-            loop {
-                if let Some((index, char)) = char_indices.next() {
-                    match char {
-                        '\n' => {
-                            // apply any accumulated width
-                            whole_width_points += width_accumulator;
-                            completed_index = index + 1;
-                            last_renderable_index = index;
-                            break;
-                        }
-                        ' ' => {
-                            whole_width_points += width_accumulator;
-                            let char_width = self.font.character_width(' ');
-                            // add the space to the accumulator so it is skipped if there are no
-                            // other characters on the line
-                            width_accumulator = char_width;
-
-                            completed_index = index + 1;
-                            last_renderable_index = index;
-                        }
-                        _ => {
-                            let char_width = self.font.character_width(char);
-                            let candidate_width =
-                                whole_width_points + width_accumulator + char_width;
-                            if candidate_width > layout.resolved_size.width {
-                                // if we reached the limit before the first word, break mid word
-                                if whole_width_points == 0 {
-                                    if index == 0 {
-                                        // if the first character is too wide, use it and break
-                                        whole_width_points = char_width;
-                                        completed_index = 1;
-                                        last_renderable_index = 1;
-                                    } else {
-                                        // otherwise drop the character and break
-                                        whole_width_points = width_accumulator;
-                                        completed_index = index;
-                                        last_renderable_index = index;
-                                    }
-                                }
-                                break;
-                            } else {
-                                width_accumulator += char_width;
-                            }
-                        }
-                    }
-                } else {
-                    // if we reached the end of the string, apply the collected word
-                    whole_width_points += width_accumulator;
-                    completed_index = remaining_slice.len();
-                    last_renderable_index = completed_index;
-                    break;
-                }
-            }
             let x = self
                 .alignment
-                .align(layout.resolved_size.width as i16, whole_width_points as i16);
-            let y = origin.y + consumed_height as i16;
-
-            let color = env.foreground_color();
+                .align(layout.resolved_size.width as i16, width as i16);
             self.font.render_iter_solid(
                 target,
-                Point::new(origin.x + x, y),
+                Point::new(origin.x + x, origin.y + height),
                 color,
-                remaining_slice[..last_renderable_index].chars(),
+                line.chars(),
             );
 
-            consumed_height += self.font.line_height();
-
-            remaining_slice = &remaining_slice[completed_index..];
+            height += line_height;
+            if height >= layout.resolved_size.height as i16 {
+                break;
+            }
         }
     }
 }
@@ -235,9 +161,10 @@ use embedded_graphics::draw_target::DrawTarget;
 #[cfg(feature = "embedded-graphics")]
 impl<
         'a,
+        T: Slice,
         F: crate::font::PixelFont<Color>,
         Color: embedded_graphics_core::pixelcolor::PixelColor,
-    > crate::render::PixelRender<Color> for Text<'a, F>
+    > crate::render::PixelRender<Color> for Text<'a, T, F>
 {
     fn render(
         &self,
@@ -249,93 +176,29 @@ impl<
         if layout.resolved_size.area() == 0 {
             return;
         }
-        let mut consumed_height: u16 = 0;
 
-        let mut remaining_slice = self.text;
+        let line_height = self.font.line_height() as i16;
 
-        // layout a new line as long as there is vertical space for it, always layout at least one line
-        while !remaining_slice.is_empty() && consumed_height < layout.resolved_size.height {
-            // find the longest line that fits horizontally without truncating mid-word, unless
-            // only one word fits
-            let mut whole_width_points = 0;
-            // used to backtrack to the last whole word if needed
-            let mut width_accumulator = 0;
+        let mut height = 0;
+        let wrap = WhitespaceWrap::new(self.text.as_slice(), layout.resolved_size.width, self.font);
+        for line in wrap {
+            let color = env.foreground_color();
+            let width = self.font.str_width(line);
 
-            let mut char_indices = remaining_slice.char_indices();
-
-            let mut completed_index = 0;
-            let mut last_renderable_index = 0;
-            // accummulate by word until the line is too long
-            loop {
-                if let Some((index, char)) = char_indices.next() {
-                    match char {
-                        '\n' => {
-                            // apply any accumulated width
-                            whole_width_points += width_accumulator;
-                            completed_index = index + 1;
-                            last_renderable_index = index;
-                            break;
-                        }
-                        ' ' => {
-                            whole_width_points += width_accumulator;
-                            let char_width = self.font.character_width(' ');
-                            // add the space to the accumulator so it is skipped if there are no
-                            // other characters on the line
-                            width_accumulator = char_width;
-
-                            completed_index = index + 1;
-                            last_renderable_index = index;
-                        }
-                        _ => {
-                            let char_width = self.font.character_width(char);
-                            let candidate_width =
-                                whole_width_points + width_accumulator + char_width;
-                            if candidate_width > layout.resolved_size.width {
-                                // if we reached the limit before the first word, break mid word
-                                if whole_width_points == 0 {
-                                    if index == 0 {
-                                        // if the first character is too wide, use it and break
-                                        whole_width_points = char_width;
-                                        completed_index = 1;
-                                        last_renderable_index = 1;
-                                    } else {
-                                        // otherwise drop the character and break
-                                        whole_width_points = width_accumulator;
-                                        completed_index = index;
-                                        last_renderable_index = index;
-                                    }
-                                }
-                                break;
-                            } else {
-                                width_accumulator += char_width;
-                            }
-                        }
-                    }
-                } else {
-                    // if we reached the end of the string, apply the collected word
-                    whole_width_points += width_accumulator;
-                    completed_index = remaining_slice.len();
-                    last_renderable_index = completed_index;
-                    break;
-                }
-            }
             let x = self
                 .alignment
-                .align(layout.resolved_size.width as i16, whole_width_points as i16);
-            let y = origin.y + consumed_height as i16;
-
-            let foreground_color = env.foreground_color();
-
+                .align(layout.resolved_size.width as i16, width as i16);
             self.font.render_iter(
                 target,
-                Point::new(origin.x + x, y),
-                foreground_color,
-                remaining_slice[..last_renderable_index].chars(),
+                Point::new(origin.x + x, origin.y + height),
+                color,
+                line.chars(),
             );
 
-            consumed_height += self.font.line_height();
-
-            remaining_slice = &remaining_slice[completed_index..];
+            height += line_height;
+            if height >= layout.resolved_size.height as i16 {
+                break;
+            }
         }
     }
 }

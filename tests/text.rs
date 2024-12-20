@@ -7,7 +7,7 @@ use buoyant::{
     primitives::{Point, Size},
     render::CharacterRender,
     render_target::{CharacterRenderTarget, FixedTextBuffer},
-    view::{HorizontalTextAlignment, Text},
+    view::{HorizontalTextAlignment, LayoutExtensions as _, Text},
 };
 
 #[derive(Debug)]
@@ -41,7 +41,7 @@ fn test_single_character() {
         line_height: 10,
         character_width: 5,
     };
-    let text = Text::char("A", &font);
+    let text = Text::str("A", &font);
     let offer = Size::new(100, 100);
     let env = DefaultEnvironment::new(());
     let layout = text.layout(offer, &env);
@@ -54,7 +54,7 @@ fn test_single_character_constrained() {
         line_height: 10,
         character_width: 5,
     };
-    let text = Text::char("A", &font);
+    let text = Text::str("A", &font);
     let offer = Size::new(4, 10);
     let env = DefaultEnvironment::new(());
     let layout = text.layout(offer, &env);
@@ -67,7 +67,7 @@ fn test_text_layout() {
         line_height: 10,
         character_width: 5,
     };
-    let text = Text::char("Hello, world!", &font);
+    let text = Text::str("Hello, world!", &font);
     let offer = Size::new(100, 100);
     let env = DefaultEnvironment::new(());
     let layout = text.layout(offer, &env);
@@ -80,7 +80,7 @@ fn test_text_layout_wraps() {
         line_height: 10,
         character_width: 5,
     };
-    let text = Text::char("Hello, world!", &font);
+    let text = Text::str("Hello, world!", &font);
     let offer = Size::new(50, 100);
     let env = DefaultEnvironment::new(());
     let layout = text.layout(offer, &env);
@@ -93,7 +93,7 @@ fn test_wraps_partial_words() {
         line_height: 10,
         character_width: 5,
     };
-    let text = Text::char("123412341234", &font);
+    let text = Text::str("123412341234", &font);
     let offer = Size::new(20, 100);
     let env = DefaultEnvironment::new(());
     let layout = text.layout(offer, &env);
@@ -106,7 +106,7 @@ fn test_newline() {
         line_height: 10,
         character_width: 5,
     };
-    let text = Text::char("1234\n12\n\n123\n", &font);
+    let text = Text::str("1234\n12\n\n123\n", &font);
     let offer = Size::new(25, 100);
     let env = DefaultEnvironment::new(());
     let layout = text.layout(offer, &env);
@@ -118,7 +118,7 @@ fn test_render_wrapping_leading() {
     let env = DefaultEnvironment::new(());
     let font = BufferCharacterFont {};
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let text = Text::char("This is a lengthy text here", &font);
+    let text = Text::str("This is a lengthy text here", &font);
     let layout = text.layout(buffer.size(), &env);
     text.render(&mut buffer, &layout, Point::zero(), &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "This  ");
@@ -133,7 +133,7 @@ fn test_render_wrapping_center_even() {
     let env = DefaultEnvironment::new(());
     let font = BufferCharacterFont {};
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let text = Text::char("This is a lengthy text here", &font)
+    let text = Text::str("This is a lengthy text here", &font)
         .multiline_text_alignment(HorizontalTextAlignment::Center);
     let layout = text.layout(buffer.size(), &env);
     text.render(&mut buffer, &layout, Point::zero(), &env);
@@ -149,7 +149,7 @@ fn test_render_wrapping_center_odd() {
     let env = DefaultEnvironment::new(());
     let font = BufferCharacterFont {};
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let text = Text::char("This is a lengthy text 12345", &font)
+    let text = Text::str("This is a lengthy text 12345", &font)
         .multiline_text_alignment(HorizontalTextAlignment::Center);
     let layout = text.layout(buffer.size(), &env);
     text.render(&mut buffer, &layout, Point::zero(), &env);
@@ -165,7 +165,7 @@ fn test_render_wrapping_trailing() {
     let env = DefaultEnvironment::new(());
     let font = BufferCharacterFont {};
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let text = Text::char("This is a lengthy text here", &font)
+    let text = Text::str("This is a lengthy text here", &font)
         .multiline_text_alignment(HorizontalTextAlignment::Trailing);
     let layout = text.layout(buffer.size(), &env);
     text.render(&mut buffer, &layout, Point::zero(), &env);
@@ -179,7 +179,7 @@ fn test_render_wrapping_trailing() {
 #[test]
 fn test_clipped_text_is_centered_correctly() {
     let font = BufferCharacterFont {};
-    let text = Text::char(
+    let text = Text::str(
         "Several lines\n of text\nshould be correctly spaced when cut off",
         &font,
     )
@@ -206,14 +206,15 @@ fn test_clipped_text_is_centered_correctly() {
 #[test]
 fn test_clipped_text_trails_correctly() {
     let font = BufferCharacterFont {};
-    let text = Text::char(
+    let text = Text::str(
         "Several lines\n of text\nshould be correctly spaced when cut off",
         &font,
     )
-    .multiline_text_alignment(HorizontalTextAlignment::Trailing);
+    .multiline_text_alignment(HorizontalTextAlignment::Trailing)
+    .frame(None, Some(2), None, None); // constrain to 2 pts tall
 
     let env = DefaultEnvironment::new(());
-    let mut buffer = FixedTextBuffer::<40, 2>::default();
+    let mut buffer = FixedTextBuffer::<40, 3>::default();
 
     let layout = text.layout(buffer.size(), &env);
 
@@ -224,6 +225,7 @@ fn test_clipped_text_trails_correctly() {
     let lines = [
         "Several lines                           ",
         "      of text                           ",
+        "                                        ",
     ];
     zip(lines.iter(), buffer.text.iter()).for_each(|(expected, actual)| {
         assert_eq!(actual.iter().collect::<String>(), *expected);
