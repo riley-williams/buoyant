@@ -73,17 +73,17 @@ where
         // TODO: consolidate array init to avoid accidentally allowing them to become different
         // lengths
         let mut items: heapless::Vec<I::Item, N> = heapless::Vec::new();
-        let result = self.iter.into_iter().try_for_each(|item| items.push(item));
-        if let Err(_) = result {
-            // TODO: log an error, iterator was too large
-        }
+        _ = self.iter.into_iter().try_for_each(|item| items.push(item));
+        // if let Err(_) = result {
+        //     // TODO: log an error, iterator was too large
+        // }
 
         let mut subview_stages: heapless::Vec<(LayoutStage, i8), N> = heapless::Vec::new();
         // fill sublayouts with an initial garbage layout
         for item in &items {
             let view = (self.build_view)(item);
-            sublayouts.push(view.layout(offer, env));
-            subview_stages.push((LayoutStage::Unsized, view.priority()));
+            _ = sublayouts.push(view.layout(offer, env));
+            _ = subview_stages.push((LayoutStage::Unsized, view.priority()));
         }
 
         let layout_fn = |index: usize, offer: Size| {
