@@ -18,8 +18,8 @@ fn main() {
     let env = DefaultEnvironment::new(());
 
     let font = BufferCharacterFont {};
-    let stack = VStack::three(
-    HStack::three(
+    let stack = VStack::new((
+    HStack::new((
         Text::char(
             "This text is centered horizontally in the middle of its space\nThe stack however, has bottom alignment.",
             &font,
@@ -31,11 +31,11 @@ fn main() {
             &font,
                 )
                 .multiline_text_alignment(HorizontalTextAlignment::Trailing),
-            )
-            .spacing(1)
-            .alignment(VerticalAlignment::Bottom),
+        ))
+        .spacing(1)
+        .alignment(VerticalAlignment::Bottom),
     Divider::default(),
-    VStack::three(
+    VStack::new((
         Spacer::default(),
         Text::char(
             "This is several lines of text.\nEach line is centered in the available space.\n Spacers are used to fill all the remaining verical space and align the content within it.\n2 points of padding are around this text",
@@ -44,8 +44,8 @@ fn main() {
             .multiline_text_alignment(HorizontalTextAlignment::Center)
             .padding(2),
         Divider::default(),
-        ),
-    );
+        )),
+    ));
 
     println!("View size {}", std::mem::size_of_val(&stack));
     println!("Env size {}", std::mem::size_of_val(&env));

@@ -1,6 +1,6 @@
 [package]
 name = "buoyant"
-version = "0.1.7"
+version = "0.2.0"
 authors = ["Riley Williams"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
@@ -14,7 +14,7 @@ exclude = [".github"]
 maintenance = { status = "experimental" }
 
 [features]
-default = ["embedded-graphics"]
+default = ["embedded-graphics", "crossterm"]
 std = []
 crossterm = ["dep:crossterm", "std"]
 embedded-graphics = ["dep:embedded-graphics-core", "dep:embedded-graphics"]

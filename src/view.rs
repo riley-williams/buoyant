@@ -1,6 +1,7 @@
 mod conditional_view;
 mod divider;
 mod empty_view;
+mod foreach;
 mod hstack;
 mod modifier;
 mod shape;
@@ -11,6 +12,8 @@ mod zstack;
 
 pub use conditional_view::ConditionalView;
 pub use divider::Divider;
+pub use empty_view::EmptyView;
+pub use foreach::ForEach;
 pub use hstack::HStack;
 pub use shape::style;
 pub use shape::Circle;
