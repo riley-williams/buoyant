@@ -43,9 +43,9 @@ fn foreach_with_inner_wrapping_hstack() {
 
     let view = ForEach::<10, _, _, _>::new(&users, |user| {
         HStack::new((
-            Text::char(&user.name, &FONT),
+            Text::str(&user.name, &FONT),
             Spacer::default(),
-            Text::char(&user.age, &FONT),
+            Text::str(&user.age, &FONT),
         ))
         .alignment(VerticalAlignment::Bottom)
     });

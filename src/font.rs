@@ -14,6 +14,10 @@ pub trait FontLayout {
     fn baseline(&self) -> u16 {
         self.line_height()
     }
+
+    fn str_width(&self, text: &str) -> u16 {
+        text.chars().map(|c| self.character_width(c)).sum()
+    }
 }
 
 /// A font that renders individual characters at a time to a character render target

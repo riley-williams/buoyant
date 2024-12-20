@@ -27,6 +27,13 @@ impl Size {
         }
     }
 
+    pub fn zero() -> Self {
+        Size {
+            width: 0,
+            height: 0,
+        }
+    }
+
     /// Returns true if the point is non-negative and within the bounds of the size.
     pub fn contains(&self, point: Point) -> bool {
         point.x >= 0 && point.y >= 0 && point.x < self.width as i16 && point.y < self.height as i16

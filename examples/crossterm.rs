@@ -29,7 +29,7 @@ fn main() {
     let font = TerminalCharFont {};
     let stack = VStack::new((
         HStack::new((
-            Text::char(
+            Text::str(
                 "This red text is aligned to the leading edge of its space\nThe stack however, has bottom alignment.",
                 &font,
             )
@@ -38,7 +38,7 @@ fn main() {
                     Colors { foreground: Some(crossterm::style::Color::Red), background: None },
                 ),
             Spacer::default(),
-            Text::char(
+            Text::str(
                 "This text is aligned to the right, with trailing multi-line text alignment",
                 &font,
             )
@@ -57,13 +57,13 @@ fn main() {
                             background: Some(crossterm::style::Color::Rgb { r: 127, g: 0, b: 0 })
                         }
                     ),
-                Text::char(
+                Text::str(
                     "This is in a fixed size box",
                     &font,
                 )
                     .frame(Some(10), Some(10), None, None),
             ),
-            Text::char(
+            Text::str(
                 "This is several lines of text.\nEach line is centered in the available space.\n The rectangle fills all the remaining verical space and aligns the content within it.\n2 points of padding are around this text",
                 &font,
             )

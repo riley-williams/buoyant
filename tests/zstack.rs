@@ -27,7 +27,7 @@ fn test_oversized_layout_2() {
 #[test]
 fn test_render_two_centered_overlap() {
     let font = BufferCharacterFont {};
-    let stack = ZStack::two(Text::char("aa\nbb\ncc", &font), Text::char("test", &font));
+    let stack = ZStack::two(Text::str("aa\nbb\ncc", &font), Text::str("test", &font));
     let env = DefaultEnvironment::new(());
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = stack.layout(buffer.size(), &env);
@@ -42,7 +42,7 @@ fn test_render_two_centered_overlap() {
 #[test]
 fn test_render_two_centered() {
     let font = BufferCharacterFont {};
-    let stack = ZStack::two(Text::char("test", &font), Text::char("aa\nbb\ncc", &font));
+    let stack = ZStack::two(Text::str("test", &font), Text::str("aa\nbb\ncc", &font));
     let env = DefaultEnvironment::new(());
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = stack.layout(buffer.size(), &env);
@@ -58,8 +58,8 @@ fn test_render_two_centered() {
 fn test_render_two_top_center_alignment() {
     let font = BufferCharacterFont {};
     let stack = ZStack::two(
-        Text::char("a a a\nb b b\nc c c", &font),
-        Text::char("xxx", &font),
+        Text::str("a a a\nb b b\nc c c", &font),
+        Text::str("xxx", &font),
     )
     .vertical_alignment(VerticalAlignment::Top);
     let env = DefaultEnvironment::new(());
@@ -77,8 +77,8 @@ fn test_render_two_top_center_alignment() {
 fn test_render_two_top_leading_alignment() {
     let font = BufferCharacterFont {};
     let stack = ZStack::two(
-        Text::char("a a a\nb b b\nc c c", &font),
-        Text::char("xxx", &font),
+        Text::str("a a a\nb b b\nc c c", &font),
+        Text::str("xxx", &font),
     )
     .vertical_alignment(VerticalAlignment::Top)
     .horizontal_alignment(HorizontalAlignment::Leading);
@@ -97,8 +97,8 @@ fn test_render_two_top_leading_alignment() {
 fn test_render_two_top_trailing_alignment() {
     let font = BufferCharacterFont {};
     let stack = ZStack::two(
-        Text::char("a a a\nb b b\nc c c", &font),
-        Text::char("xxx", &font),
+        Text::str("a a a\nb b b\nc c c", &font),
+        Text::str("xxx", &font),
     )
     .vertical_alignment(VerticalAlignment::Top)
     .horizontal_alignment(HorizontalAlignment::Trailing);
@@ -117,8 +117,8 @@ fn test_render_two_top_trailing_alignment() {
 fn test_render_two_center_leading_alignment() {
     let font = BufferCharacterFont {};
     let stack = ZStack::two(
-        Text::char("a a a\nb b b\nc c c", &font),
-        Text::char("xxx", &font),
+        Text::str("a a a\nb b b\nc c c", &font),
+        Text::str("xxx", &font),
     )
     .horizontal_alignment(HorizontalAlignment::Leading);
     let env = DefaultEnvironment::new(());
@@ -136,8 +136,8 @@ fn test_render_two_center_leading_alignment() {
 fn test_render_two_center_trailing_alignment() {
     let font = BufferCharacterFont {};
     let stack = ZStack::two(
-        Text::char("a a a\nb b b\nc c c", &font),
-        Text::char("xxx", &font),
+        Text::str("a a a\nb b b\nc c c", &font),
+        Text::str("xxx", &font),
     )
     .horizontal_alignment(HorizontalAlignment::Trailing);
     let env = DefaultEnvironment::new(());
@@ -155,8 +155,8 @@ fn test_render_two_center_trailing_alignment() {
 fn test_render_two_bottom_leading_alignment() {
     let font = BufferCharacterFont {};
     let stack = ZStack::two(
-        Text::char("a a a\nb b b\nc c c", &font),
-        Text::char("xxx", &font),
+        Text::str("a a a\nb b b\nc c c", &font),
+        Text::str("xxx", &font),
     )
     .vertical_alignment(VerticalAlignment::Bottom)
     .horizontal_alignment(HorizontalAlignment::Leading);
@@ -175,8 +175,8 @@ fn test_render_two_bottom_leading_alignment() {
 fn test_render_two_bottom_center_alignment() {
     let font = BufferCharacterFont {};
     let stack = ZStack::two(
-        Text::char("a a a\nb b b\nc c c", &font),
-        Text::char("xxx", &font),
+        Text::str("a a a\nb b b\nc c c", &font),
+        Text::str("xxx", &font),
     )
     .vertical_alignment(VerticalAlignment::Bottom);
     let env = DefaultEnvironment::new(());
@@ -194,8 +194,8 @@ fn test_render_two_bottom_center_alignment() {
 fn test_render_two_bottom_trailing_alignment() {
     let font = BufferCharacterFont {};
     let stack = ZStack::two(
-        Text::char("a a a\nb b b\nc c c", &font),
-        Text::char("xxx", &font),
+        Text::str("a a a\nb b b\nc c c", &font),
+        Text::str("xxx", &font),
     )
     .vertical_alignment(VerticalAlignment::Bottom)
     .horizontal_alignment(HorizontalAlignment::Trailing);
