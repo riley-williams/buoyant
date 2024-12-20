@@ -32,8 +32,8 @@ fn main() {
                 )
                 .multiline_text_alignment(HorizontalTextAlignment::Trailing),
         ))
-        .spacing(1)
-        .alignment(VerticalAlignment::Bottom),
+        .with_spacing(1)
+        .with_alignment(VerticalAlignment::Bottom),
     Divider::default(),
     VStack::new((
         Spacer::default(),

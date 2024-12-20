@@ -82,7 +82,7 @@ fn test_undersized_layout_3_right_pad_space() {
         Text::str("234", &font),
         Text::str("5678", &font),
     ))
-    .spacing(1);
+    .with_spacing(1);
     let offer = Size::new(1, 10);
     let env = DefaultEnvironment::new(());
     let layout = vstack.layout(offer, &env);
@@ -101,7 +101,7 @@ fn test_oversized_layout_3_right_pad_space() {
         Text::str("234", &font),
         Text::str("56789", &font),
     ))
-    .spacing(1);
+    .with_spacing(1);
     let offer = Size::new(1, 10);
     let env = DefaultEnvironment::new(());
     let layout = vstack.layout(offer, &env);
@@ -120,7 +120,7 @@ fn test_oversized_layout_3_middle_pad_space() {
         Spacer::default(),
         Text::str("56789", &font),
     ))
-    .spacing(1);
+    .with_spacing(1);
     let offer = Size::new(1, 10);
     let env = DefaultEnvironment::new(());
     let layout = vstack.layout(offer, &env);
@@ -139,7 +139,7 @@ fn test_oversized_layout_3_trailing_pad_space() {
         Text::str("56789", &font),
         Spacer::default(),
     ))
-    .spacing(1);
+    .with_spacing(1);
     let offer = Size::new(1, 10);
     let env = DefaultEnvironment::new(());
     let layout = vstack.layout(offer, &env);
@@ -207,8 +207,8 @@ fn test_layout_3_horizontal_alignment_trailing() {
         Divider::default(),
         Text::str("ccccccc", &font),
     ))
-    .alignment(HorizontalAlignment::Trailing)
-    .spacing(1);
+    .with_alignment(HorizontalAlignment::Trailing)
+    .with_spacing(1);
     let env = DefaultEnvironment::new(());
     let mut buffer = FixedTextBuffer::<6, 7>::default();
     let layout = vstack.layout(buffer.size(), &env);
@@ -232,7 +232,7 @@ fn test_layout_3_alignment_center() {
         Divider::default(),
         Text::str("cccc", &font),
     ))
-    .alignment(HorizontalAlignment::Center);
+    .with_alignment(HorizontalAlignment::Center);
     let env = DefaultEnvironment::new(());
     let mut buffer = FixedTextBuffer::<7, 5>::default();
     let layout = vstack.layout(buffer.size(), &env);
@@ -253,8 +253,8 @@ fn test_layout_3_alignment_leading() {
         Divider::default(),
         Text::str("ccc", &font).multiline_text_alignment(HorizontalTextAlignment::Trailing),
     ))
-    .alignment(HorizontalAlignment::Leading)
-    .spacing(1);
+    .with_alignment(HorizontalAlignment::Leading)
+    .with_spacing(1);
     let env = DefaultEnvironment::new(());
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let layout = vstack.layout(buffer.size(), &env);
@@ -321,8 +321,8 @@ fn test_flexible_layout_fills_frame_10k() {
                 )
                 .multiline_text_alignment(HorizontalTextAlignment::Trailing),
         ))
-        .spacing(1)
-        .alignment(VerticalAlignment::Bottom),
+        .with_spacing(1)
+        .with_alignment(VerticalAlignment::Bottom),
     Divider::default(),
     VStack::new((
         Spacer::default(),
@@ -357,7 +357,7 @@ fn test_layout_3_extra_space_allocation() {
         Text::str("Texty text", &font),
         Rectangle.foreground_color(()),
     ))
-    .spacing(0);
+    .with_spacing(0);
     let env = DefaultEnvironment::new(());
     let mut buffer = FixedTextBuffer::<6, 10>::default();
     let layout = vstack.layout(buffer.size(), &env);

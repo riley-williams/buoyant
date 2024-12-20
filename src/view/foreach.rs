@@ -2,7 +2,7 @@ use core::cmp::{max, min};
 
 use crate::{
     environment::{LayoutEnvironment, RenderEnvironment},
-    layout::{Layout, LayoutDirection, ResolvedLayout},
+    layout::{HorizontalAlignment, Layout, LayoutDirection, ResolvedLayout},
     primitives::{Point, Size},
     render::CharacterRender,
 };
@@ -44,6 +44,7 @@ where
 {
     iter: I,
     build_view: F,
+    alignment: HorizontalAlignment,
 }
 
 impl<const N: usize, I: IntoIterator + Copy, V, F> ForEach<N, I, V, F>
@@ -52,7 +53,16 @@ where
     F: Fn(&I::Item) -> V,
 {
     pub fn new(iter: I, build_view: F) -> Self {
-        Self { iter, build_view }
+        Self {
+            iter,
+            build_view,
+            alignment: HorizontalAlignment::default(),
+        }
+    }
+
+    pub fn with_alignment(mut self, alignment: HorizontalAlignment) -> Self {
+        self.alignment = alignment;
+        self
     }
 }
 
@@ -263,8 +273,10 @@ where
             // TODO: defaulting to center alignment
             let aligned_origin = origin
                 + Point::new(
-                    (layout.resolved_size.width as i16 - item_layout.resolved_size.width as i16)
-                        / 2,
+                    self.alignment.align(
+                        layout.resolved_size.width as i16,
+                        item_layout.resolved_size.width as i16,
+                    ),
                     height,
                 );
             let view = (self.build_view)(&item);
@@ -303,8 +315,10 @@ where
             // TODO: defaulting to center alignment
             let aligned_origin = origin
                 + Point::new(
-                    (layout.resolved_size.width as i16 - item_layout.resolved_size.width as i16)
-                        / 2,
+                    self.alignment.align(
+                        layout.resolved_size.width as i16,
+                        item_layout.resolved_size.width as i16,
+                    ),
                     height,
                 );
             let view = (self.build_view)(&item);
