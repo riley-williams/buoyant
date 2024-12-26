@@ -1,5 +1,5 @@
 use crate::{
-    layout::{Layout, ResolvedLayout},
+    layout::{Layout, ProposedDimensions, ResolvedLayout},
     primitives::Point,
     render::CharacterRender,
 };
@@ -33,7 +33,7 @@ impl<U: Layout, V: Layout> Layout for ConditionalView<U, V> {
 
     fn layout(
         &self,
-        offer: crate::primitives::Size,
+        offer: ProposedDimensions,
         env: &impl crate::environment::LayoutEnvironment,
     ) -> ResolvedLayout<Self::Sublayout> {
         if self.condition {
@@ -50,6 +50,22 @@ impl<U: Layout, V: Layout> Layout for ConditionalView<U, V> {
                 sublayouts: ConditionalViewLayout::FalseLayout(child_layout),
                 resolved_size,
             }
+        }
+    }
+
+    fn priority(&self) -> i8 {
+        if self.condition {
+            self.true_view.priority()
+        } else {
+            self.false_view.priority()
+        }
+    }
+
+    fn is_empty(&self) -> bool {
+        if self.condition {
+            self.true_view.is_empty()
+        } else {
+            self.false_view.is_empty()
         }
     }
 }

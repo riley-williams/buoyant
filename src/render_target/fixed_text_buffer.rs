@@ -31,17 +31,17 @@ impl<const W: usize, const H: usize> Default for FixedTextBuffer<W, H> {
 }
 
 impl<const W: usize, const H: usize> CharacterRenderTarget for FixedTextBuffer<W, H> {
-    type Color = ();
+    type Color = Option<char>;
 
     fn size(&self) -> Size {
         Size::new(W as u16, H as u16)
     }
 
-    fn draw(&mut self, point: Point, item: char, _color: ()) {
+    fn draw(&mut self, point: Point, item: char, color: Option<char>) {
         let x = point.x as usize;
         let y = point.y as usize;
         if y < H && x < W {
-            self.text[y][x] = item;
+            self.text[y][x] = color.unwrap_or(item);
         }
     }
 }

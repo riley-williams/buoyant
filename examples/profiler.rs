@@ -11,11 +11,11 @@ use buoyant::{
 fn main() {
     let mut target = FixedTextBuffer::<100, 100>::default();
 
-    target.clear(());
+    target.clear(None);
     let mut size = target.size();
     println!("Size {:?}", size);
 
-    let env = DefaultEnvironment::new(());
+    let env = DefaultEnvironment::new(None);
 
     let font = BufferCharacterFont {};
     let stack = VStack::new((
@@ -49,14 +49,14 @@ fn main() {
 
     println!("View size {}", std::mem::size_of_val(&stack));
     println!("Env size {}", std::mem::size_of_val(&env));
-    let sample_layout = stack.layout(size, &env);
+    let sample_layout = stack.layout(size.into(), &env);
     println!("Layout size {}", std::mem::size_of_val(&sample_layout));
 
-    target.clear(());
+    target.clear(None);
     for width in 1..100 {
         for height in 1..100 {
             size = Size::new(width, height);
-            let layout = stack.layout(size, &env);
+            let layout = stack.layout(size.into(), &env);
             stack.render(&mut target, &layout, Point::zero(), &env);
         }
     }

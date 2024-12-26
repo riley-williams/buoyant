@@ -1,3 +1,6 @@
+mod dimension;
+pub use dimension::*;
+
 use core::cmp::max;
 
 #[derive(Debug, PartialEq, Clone, Copy, Default)]

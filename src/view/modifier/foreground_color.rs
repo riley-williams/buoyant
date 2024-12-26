@@ -1,7 +1,7 @@
 use crate::{
     environment::{LayoutEnvironment, RenderEnvironment},
-    layout::{Layout, ResolvedLayout},
-    primitives::{Point, Size},
+    layout::{Layout, ProposedDimensions, ResolvedLayout},
+    primitives::Point,
     render::CharacterRender,
     render_target::CharacterRenderTarget,
 };
@@ -22,7 +22,11 @@ impl<V, Color: Copy> ForegroundStyle<V, Color> {
 impl<Inner: Layout, Color: Copy> Layout for ForegroundStyle<Inner, Color> {
     type Sublayout = Inner::Sublayout;
 
-    fn layout(&self, offer: Size, env: &impl LayoutEnvironment) -> ResolvedLayout<Self::Sublayout> {
+    fn layout(
+        &self,
+        offer: ProposedDimensions,
+        env: &impl LayoutEnvironment,
+    ) -> ResolvedLayout<Self::Sublayout> {
         let modified_env = ForegroundStyleEnv {
             color: self.style,
             wrapped_env: env,

@@ -22,18 +22,18 @@ fn test_conditional_view_layout() {
     let env = TestEnv::default();
 
     let view = make_view(true);
-    let layout = view.layout(buffer.size(), &env);
-    assert_eq!(layout.resolved_size, Size::new(4, 2));
+    let layout = view.layout(buffer.size().into(), &env);
+    assert_eq!(layout.resolved_size, Size::new(4, 2).into());
     view.render(&mut buffer, &layout, Point::zero(), &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "true ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "!!!  ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "     ");
 
-    buffer.clear(());
+    buffer.clear(None);
 
     let view = make_view(false);
-    let layout = view.layout(buffer.size(), &env);
-    assert_eq!(layout.resolved_size, Size::new(1, 1));
+    let layout = view.layout(buffer.size().into(), &env);
+    assert_eq!(layout.resolved_size, Size::new(1, 1).into());
     view.render(&mut buffer, &layout, Point::zero(), &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "f    ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "     ");

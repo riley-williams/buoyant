@@ -1,3 +1,11 @@
+use crate::{
+    environment::{LayoutEnvironment, RenderEnvironment},
+    layout::{Layout, ProposedDimensions, ResolvedLayout},
+    primitives::Point,
+    render::CharacterRender,
+    render_target::CharacterRenderTarget,
+};
+
 /// A view that adds padding around a child view.
 /// When the space offered to the padding is less than 2* the padding, the padding will
 /// not be truncated and will return a size larger than the offer.
@@ -21,7 +29,11 @@ impl<T> PartialEq for Priority<T> {
 impl<V: Layout> Layout for Priority<V> {
     type Sublayout = V::Sublayout;
 
-    fn layout(&self, offer: Size, env: &impl LayoutEnvironment) -> ResolvedLayout<Self::Sublayout> {
+    fn layout(
+        &self,
+        offer: ProposedDimensions,
+        env: &impl LayoutEnvironment,
+    ) -> ResolvedLayout<Self::Sublayout> {
         self.child.layout(offer, env)
     }
 }
@@ -43,14 +55,6 @@ where
 
 #[cfg(feature = "embedded-graphics")]
 use embedded_graphics::draw_target::DrawTarget;
-
-use crate::{
-    environment::{LayoutEnvironment, RenderEnvironment},
-    layout::{Layout, ResolvedLayout},
-    primitives::{Point, Size},
-    render::CharacterRender,
-    render_target::CharacterRenderTarget,
-};
 
 #[cfg(feature = "embedded-graphics")]
 impl<Pixel, View: Layout> crate::render::PixelRender<Pixel> for Priority<View>

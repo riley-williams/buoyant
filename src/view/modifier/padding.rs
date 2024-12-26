@@ -1,6 +1,6 @@
 use crate::{
     environment::{LayoutEnvironment, RenderEnvironment},
-    layout::{Layout, ResolvedLayout},
+    layout::{Layout, ProposedDimensions, ResolvedLayout},
     primitives::{Point, Size},
     render::CharacterRender,
     render_target::CharacterRenderTarget,
@@ -29,11 +29,15 @@ impl<T> PartialEq for Padding<T> {
 impl<V: Layout> Layout for Padding<V> {
     type Sublayout = ResolvedLayout<V::Sublayout>;
 
-    fn layout(&self, offer: Size, env: &impl LayoutEnvironment) -> ResolvedLayout<Self::Sublayout> {
-        let padded_offer = Size::new(
-            offer.width.saturating_sub(2 * self.padding),
-            offer.height.saturating_sub(2 * self.padding),
-        );
+    fn layout(
+        &self,
+        offer: ProposedDimensions,
+        env: &impl LayoutEnvironment,
+    ) -> ResolvedLayout<Self::Sublayout> {
+        let padded_offer = ProposedDimensions {
+            width: offer.width - (2 * self.padding),
+            height: offer.height - (2 * self.padding),
+        };
         let child_layout = self.child.layout(padded_offer, env);
         let padding_size =
             child_layout.resolved_size + Size::new(2 * self.padding, 2 * self.padding);

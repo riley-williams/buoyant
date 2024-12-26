@@ -1,6 +1,6 @@
 use crate::{
-    layout::{Layout, ResolvedLayout},
-    primitives::{Point, Size},
+    layout::{Layout, ProposedDimensions, ResolvedLayout},
+    primitives::Point,
     render::CharacterRender,
     render_target::CharacterRenderTarget,
 };
@@ -19,12 +19,12 @@ impl Layout for Rectangle {
 
     fn layout(
         &self,
-        offer: Size,
+        offer: ProposedDimensions,
         _: &impl crate::environment::LayoutEnvironment,
     ) -> ResolvedLayout<Self::Sublayout> {
         ResolvedLayout {
             sublayouts: (),
-            resolved_size: offer,
+            resolved_size: offer.resolve_most_flexible(0, 10),
         }
     }
 }
@@ -40,8 +40,8 @@ impl<P: Copy> CharacterRender<P> for Rectangle {
         let width = layout.resolved_size.width;
         let height = layout.resolved_size.height;
         let color = env.foreground_color();
-        for y in 0..height as i16 {
-            for x in 0..width as i16 {
+        for y in 0..height.into() {
+            for x in 0..width.into() {
                 target.draw(origin + Point::new(x, y), ' ', color);
             }
         }
@@ -67,8 +67,8 @@ impl<P: embedded_graphics_core::pixelcolor::PixelColor> crate::render::PixelRend
         let width = layout.resolved_size.width;
         let height = layout.resolved_size.height;
         let color = env.foreground_color();
-        for y in 0..height as i16 {
-            for x in 0..width as i16 {
+        for y in 0..height.into() {
+            for x in 0..width.into() {
                 let point = origin + Point::new(x, y);
                 _ = target.draw_iter(core::iter::once(embedded_graphics::Pixel(
                     point.into(),

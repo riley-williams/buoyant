@@ -1,6 +1,6 @@
 use crate::{
-    layout::{Layout, ResolvedLayout},
-    primitives::{Point, Size},
+    layout::{Layout, ProposedDimensions, ResolvedLayout},
+    primitives::{Dimensions, Point},
     render::CharacterRender,
     render_target::CharacterRenderTarget,
 };
@@ -12,17 +12,21 @@ impl Layout for EmptyView {
     type Sublayout = ();
     fn layout(
         &self,
-        _: Size,
+        _: ProposedDimensions,
         _: &impl crate::environment::LayoutEnvironment,
     ) -> ResolvedLayout<Self::Sublayout> {
         ResolvedLayout {
             sublayouts: (),
-            resolved_size: Size::default(),
+            resolved_size: Dimensions::zero(),
         }
     }
 
     fn priority(&self) -> i8 {
         i8::MIN
+    }
+
+    fn is_empty(&self) -> bool {
+        true
     }
 }
 

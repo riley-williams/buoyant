@@ -1,7 +1,7 @@
 use crate::{
     environment::{LayoutEnvironment, RenderEnvironment},
-    layout::{HorizontalAlignment, Layout, ResolvedLayout, VerticalAlignment},
-    primitives::{Point, Size},
+    layout::{HorizontalAlignment, Layout, ProposedDimensions, ResolvedLayout, VerticalAlignment},
+    primitives::Point,
     render::CharacterRender,
     render_target::CharacterRenderTarget,
 };
@@ -48,14 +48,18 @@ impl<U, V> ZStack<(U, V)> {
 impl<U: Layout, V: Layout> Layout for ZStack<(U, V)> {
     type Sublayout = (ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>);
 
-    fn layout(&self, offer: Size, env: &impl LayoutEnvironment) -> ResolvedLayout<Self::Sublayout> {
+    fn layout(
+        &self,
+        offer: ProposedDimensions,
+        env: &impl LayoutEnvironment,
+    ) -> ResolvedLayout<Self::Sublayout> {
         let layout0 = self.items.0.layout(offer, env);
         let layout1 = self.items.1.layout(offer, env);
         let size = layout0.resolved_size.union(layout1.resolved_size);
 
         ResolvedLayout {
             sublayouts: (layout0, layout1),
-            resolved_size: size.intersection(offer),
+            resolved_size: size.intersecting_proposal(offer),
         }
     }
 }
@@ -75,12 +79,12 @@ where
         let new_origin = origin
             + Point::new(
                 self.horizontal_alignment.align(
-                    layout.resolved_size.width as i16,
-                    layout.sublayouts.0.resolved_size.width as i16,
+                    layout.resolved_size.width.into(),
+                    layout.sublayouts.0.resolved_size.width.into(),
                 ),
                 self.vertical_alignment.align(
-                    layout.resolved_size.height as i16,
-                    layout.sublayouts.0.resolved_size.height as i16,
+                    layout.resolved_size.height.into(),
+                    layout.sublayouts.0.resolved_size.height.into(),
                 ),
             );
 
@@ -91,12 +95,12 @@ where
         let new_origin = origin
             + Point::new(
                 self.horizontal_alignment.align(
-                    layout.resolved_size.width as i16,
-                    layout.sublayouts.1.resolved_size.width as i16,
+                    layout.resolved_size.width.into(),
+                    layout.sublayouts.1.resolved_size.width.into(),
                 ),
                 self.vertical_alignment.align(
-                    layout.resolved_size.height as i16,
-                    layout.sublayouts.1.resolved_size.height as i16,
+                    layout.resolved_size.height.into(),
+                    layout.sublayouts.1.resolved_size.height.into(),
                 ),
             );
         self.items
@@ -125,12 +129,12 @@ where
         let new_origin = origin
             + Point::new(
                 self.horizontal_alignment.align(
-                    layout.resolved_size.width as i16,
-                    layout.sublayouts.0.resolved_size.width as i16,
+                    layout.resolved_size.width.into(),
+                    layout.sublayouts.0.resolved_size.width.into(),
                 ),
                 self.vertical_alignment.align(
-                    layout.resolved_size.height as i16,
-                    layout.sublayouts.0.resolved_size.height as i16,
+                    layout.resolved_size.height.into(),
+                    layout.sublayouts.0.resolved_size.height.into(),
                 ),
             );
 
@@ -141,12 +145,12 @@ where
         let new_origin = origin
             + Point::new(
                 self.horizontal_alignment.align(
-                    layout.resolved_size.width as i16,
-                    layout.sublayouts.1.resolved_size.width as i16,
+                    layout.resolved_size.width.into(),
+                    layout.sublayouts.1.resolved_size.width.into(),
                 ),
                 self.vertical_alignment.align(
-                    layout.resolved_size.height as i16,
-                    layout.sublayouts.1.resolved_size.height as i16,
+                    layout.resolved_size.height.into(),
+                    layout.sublayouts.1.resolved_size.height.into(),
                 ),
             );
         self.items
