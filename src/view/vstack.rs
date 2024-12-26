@@ -219,12 +219,7 @@ fn layout_n<const N: usize>(
         height.saturating_sub(spacing * (N.saturating_sub(num_empty_views + 1)) as u16);
     let mut last_priority_group: Option<i8> = None;
     let mut max_width: Dimension = 0.into();
-    // let mut n = 0;
     loop {
-        // n += 1;
-        // if n > N {
-        //     break;
-        // }
         // collect the unsized subviews with the max layout priority into a group
         let mut subviews_indecies: [usize; N] = [0; N];
         let mut max = i8::MIN;
