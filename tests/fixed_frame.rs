@@ -1,8 +1,8 @@
 use buoyant::{
     environment::DefaultEnvironment,
     font::BufferCharacterFont,
-    layout::{HorizontalAlignment, Layout, ProposedDimensions, VerticalAlignment},
-    primitives::{Dimensions, Point, ProposedDimension, Size},
+    layout::{HorizontalAlignment, Layout, VerticalAlignment},
+    primitives::{Dimensions, Point, ProposedDimension, ProposedDimensions, Size},
     render::CharacterRender,
     render_target::{CharacterRenderTarget, FixedTextBuffer},
     view::{LayoutExtensions, Text},

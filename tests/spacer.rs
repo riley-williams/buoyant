@@ -1,6 +1,8 @@
 use buoyant::font::BufferCharacterFont;
-use buoyant::layout::{Layout, LayoutDirection, ProposedDimensions};
-use buoyant::primitives::{Dimension, Dimensions, Point, ProposedDimension, Size};
+use buoyant::layout::{Layout, LayoutDirection};
+use buoyant::primitives::{
+    Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions, Size,
+};
 use buoyant::render::CharacterRender;
 use buoyant::render_target::{CharacterRenderTarget, FixedTextBuffer};
 use buoyant::view::{HStack, Spacer, Text, VStack};

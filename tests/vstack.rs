@@ -1,7 +1,7 @@
 use buoyant::environment::DefaultEnvironment;
 use buoyant::font::BufferCharacterFont;
-use buoyant::layout::{HorizontalAlignment, Layout, ProposedDimensions, VerticalAlignment};
-use buoyant::primitives::{Dimensions, Point, ProposedDimension, Size};
+use buoyant::layout::{HorizontalAlignment, Layout, VerticalAlignment};
+use buoyant::primitives::{Dimensions, Point, ProposedDimension, ProposedDimensions, Size};
 use buoyant::render::CharacterRender;
 use buoyant::render_target::{CharacterRenderTarget as _, FixedTextBuffer};
 use buoyant::view::{

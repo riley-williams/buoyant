@@ -3,8 +3,8 @@ use std::iter::zip;
 use buoyant::{
     environment::DefaultEnvironment,
     font::{BufferCharacterFont, CharacterFont, FontLayout},
-    layout::{Layout as _, ProposedDimensions},
-    primitives::{Dimensions, Point, ProposedDimension, Size},
+    layout::Layout as _,
+    primitives::{Dimensions, Point, ProposedDimension, ProposedDimensions, Size},
     render::CharacterRender,
     render_target::{CharacterRenderTarget, FixedTextBuffer},
     view::{HorizontalTextAlignment, LayoutExtensions as _, Text},
