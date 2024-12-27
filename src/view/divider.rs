@@ -1,7 +1,7 @@
 use crate::{
     environment::{LayoutEnvironment, RenderEnvironment},
-    layout::{Layout, LayoutDirection, ResolvedLayout},
-    primitives::{Point, Size},
+    layout::{Layout, LayoutDirection, ProposedDimensions, ResolvedLayout},
+    primitives::{Dimensions, Point},
     render::CharacterRender,
     render_target::CharacterRenderTarget,
 };
@@ -30,10 +30,20 @@ impl PartialEq for Divider {
 
 impl Layout for Divider {
     type Sublayout = ();
-    fn layout(&self, offer: Size, env: &impl LayoutEnvironment) -> ResolvedLayout<()> {
+    fn layout(
+        &self,
+        offer: ProposedDimensions,
+        env: &impl LayoutEnvironment,
+    ) -> ResolvedLayout<()> {
         let size = match env.layout_direction() {
-            LayoutDirection::Horizontal => Size::new(self.weight, offer.height),
-            LayoutDirection::Vertical => Size::new(offer.width, self.weight),
+            LayoutDirection::Vertical => Dimensions {
+                width: offer.width.resolve_most_flexible(0, 10),
+                height: self.weight.into(),
+            },
+            LayoutDirection::Horizontal => Dimensions {
+                width: self.weight.into(),
+                height: offer.height.resolve_most_flexible(0, 10),
+            },
         };
         ResolvedLayout {
             sublayouts: (),
@@ -80,12 +90,14 @@ impl<C: Copy> CharacterRender<C> for Divider {
         let color = env.foreground_color();
         match env.layout_direction() {
             LayoutDirection::Horizontal => {
-                for y in origin.y..origin.y + layout.resolved_size.height as i16 {
+                let height: i16 = layout.resolved_size.height.into();
+                for y in origin.y..origin.y + height {
                     target.draw(Point::new(origin.x, y), '|', color);
                 }
             }
             LayoutDirection::Vertical => {
-                for x in origin.x..origin.x + layout.resolved_size.width as i16 {
+                let width: i16 = layout.resolved_size.width.into();
+                for x in origin.x..origin.x + width {
                     target.draw(Point::new(x, origin.y), '-', color);
                 }
             }
@@ -105,19 +117,19 @@ mod tests {
     #[test]
     fn test_horizontal_layout() {
         let divider = Divider::new(2);
-        let offer = Size::new(100, 100);
+        let offer = Size::new(100, 100).into();
         let env = TestEnv::<()>::default().with_direction(LayoutDirection::Horizontal);
         let layout = divider.layout(offer, &env);
-        assert_eq!(layout.resolved_size, Size::new(2, 100));
+        assert_eq!(layout.resolved_size, Size::new(2, 100).into());
     }
 
     #[test]
     fn test_vertical_layout() {
         let divider = Divider::new(2);
-        let offer = Size::new(100, 100);
+        let offer = Size::new(100, 100).into();
         let env = TestEnv::<char>::default().with_direction(LayoutDirection::Vertical);
         let layout = divider.layout(offer, &env);
-        assert_eq!(layout.resolved_size, Size::new(100, 2));
+        assert_eq!(layout.resolved_size, Size::new(100, 2).into());
     }
 
     #[test]
@@ -125,7 +137,7 @@ mod tests {
         let divider = Divider::new(1);
         let mut buffer = FixedTextBuffer::<5, 5>::default();
         let env = TestEnv::default().with_direction(LayoutDirection::Horizontal);
-        let layout = divider.layout(buffer.size(), &env);
+        let layout = divider.layout(buffer.size().into(), &env);
         divider.render(&mut buffer, &layout, Point::zero(), &env);
         assert_eq!(buffer.text[0][0], '|');
         assert_eq!(buffer.text[4][0], '|');
@@ -137,7 +149,7 @@ mod tests {
         let divider = Divider::new(1);
         let mut buffer = FixedTextBuffer::<5, 5>::default();
         let env = TestEnv::default().with_direction(LayoutDirection::Vertical);
-        let layout = divider.layout(buffer.size(), &env);
+        let layout = divider.layout(buffer.size().into(), &env);
         divider.render(&mut buffer, &layout, Point::zero(), &env);
         assert_eq!(buffer.text[0][0], '-');
         assert_eq!(buffer.text[0][4], '-');

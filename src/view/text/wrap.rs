@@ -1,18 +1,18 @@
-use crate::font::FontLayout;
+use crate::{font::FontLayout, primitives::ProposedDimension};
 
 pub struct WhitespaceWrap<'a, F> {
     remaining: &'a str,
     overflow: &'a str,
-    available_width: u16,
+    available_width: ProposedDimension,
     font: &'a F,
 }
 
 impl<'a, F: FontLayout> WhitespaceWrap<'a, F> {
-    pub fn new(text: &'a str, available_width: u16, font: &'a F) -> Self {
+    pub fn new(text: &'a str, available_width: impl Into<ProposedDimension>, font: &'a F) -> Self {
         Self {
             remaining: text,
             overflow: &text[0..0],
-            available_width,
+            available_width: available_width.into(),
             font,
         }
     }
@@ -22,7 +22,7 @@ impl<'a, F: FontLayout> WhitespaceWrap<'a, F> {
         let mut width = 0;
         for (pos, ch) in text.char_indices() {
             width += self.font.character_width(ch);
-            if width > self.available_width {
+            if ProposedDimension::Exact(width) > self.available_width {
                 return Some(if pos > 0 { pos } else { 1 });
             }
         }
@@ -85,7 +85,7 @@ impl<'a, F: FontLayout> Iterator for WhitespaceWrap<'a, F> {
             }
 
             // Check for force split
-            if width > self.available_width {
+            if ProposedDimension::Exact(width) > self.available_width {
                 if let Some(space_pos) = last_space {
                     // Split at last space
                     let (result, rest) = self.remaining.split_at(space_pos);
@@ -107,7 +107,7 @@ impl<'a, F: FontLayout> Iterator for WhitespaceWrap<'a, F> {
             let mut width = 0;
             for (pos, ch) in self.remaining.char_indices() {
                 width += self.font.character_width(ch);
-                if width > self.available_width {
+                if ProposedDimension::Exact(width) > self.available_width {
                     end = pos;
                     break;
                 }
@@ -126,7 +126,7 @@ impl<'a, F: FontLayout> Iterator for WhitespaceWrap<'a, F> {
 
 #[cfg(test)]
 mod tests {
-    use crate::font::BufferCharacterFont;
+    use crate::{font::BufferCharacterFont, primitives::ProposedDimension};
 
     // a basic font for which all characters are 1 unit wide
     static FONT: BufferCharacterFont = BufferCharacterFont;
@@ -212,6 +212,15 @@ mod tests {
     }
 
     #[test]
+    fn partial_words_are_wrapped_1() {
+        let wrap = super::WhitespaceWrap::new("hello world", 1, &FONT);
+        assert_eq!(
+            wrap.collect::<Vec<_>>(),
+            vec!["h", "e", "l", "l", "o", "w", "o", "r", "l", "d"]
+        );
+    }
+
+    #[test]
     fn partial_words_are_wrapped_2() {
         let wrap = super::WhitespaceWrap::new("hello world", 2, &FONT);
         assert_eq!(
@@ -279,5 +288,29 @@ mod tests {
     fn variable_width_wrapping() {
         let wrap = super::WhitespaceWrap::new("1 2 3 4 5 6", 5, &VariableWidthFont);
         assert_eq!(wrap.collect::<Vec<_>>(), vec!["1 2", "3", "4", "5", "6"]);
+    }
+
+    #[test]
+    fn compact_width_offer_never_wraps() {
+        let wrap = super::WhitespaceWrap::new("hello world", ProposedDimension::Compact, &FONT);
+        assert_eq!(wrap.collect::<Vec<_>>(), vec!["hello world"]);
+    }
+
+    #[test]
+    fn infinite_width_offer_never_wraps() {
+        let wrap = super::WhitespaceWrap::new("hello world", ProposedDimension::Infinite, &FONT);
+        assert_eq!(wrap.collect::<Vec<_>>(), vec!["hello world"]);
+    }
+
+    #[test]
+    fn compact_width_offer_only_wraps_explicit_newlines() {
+        let wrap = super::WhitespaceWrap::new("hello\nworld", ProposedDimension::Compact, &FONT);
+        assert_eq!(wrap.collect::<Vec<_>>(), vec!["hello", "world"]);
+    }
+
+    #[test]
+    fn infinite_width_offer_only_wraps_explicit_newlines() {
+        let wrap = super::WhitespaceWrap::new("hello\nworld", ProposedDimension::Infinite, &FONT);
+        assert_eq!(wrap.collect::<Vec<_>>(), vec!["hello", "world"]);
     }
 }

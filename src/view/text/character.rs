@@ -1,8 +1,8 @@
 use crate::{
     environment::{LayoutEnvironment, RenderEnvironment},
     font::{CharacterFont, FontLayout},
-    layout::{Layout, ResolvedLayout},
-    primitives::{Point, Size},
+    layout::{Layout, ProposedDimensions, ResolvedLayout},
+    primitives::{Point, ProposedDimension, Size},
     render::CharacterRender,
     render_target::CharacterRenderTarget,
 };
@@ -90,29 +90,23 @@ impl<'a, T: Slice, F: FontLayout> Layout for Text<'a, T, F> {
 
     fn layout(
         &self,
-        offer: Size,
+        offer: ProposedDimensions,
         _env: &impl LayoutEnvironment,
     ) -> ResolvedLayout<Self::Sublayout> {
-        if offer.area() == 0 {
-            return ResolvedLayout {
-                sublayouts: (),
-                resolved_size: Size::new(0, 0),
-            };
-        }
         let line_height = self.font.line_height();
         let wrap = WhitespaceWrap::new(self.text.as_slice(), offer.width, self.font);
         let mut size = Size::zero();
         for line in wrap {
             size.width = core::cmp::max(size.width, self.font.str_width(line));
             size.height += line_height;
-            if size.height >= offer.height {
+            if ProposedDimension::Exact(size.height) >= offer.height {
                 break;
             }
         }
 
         ResolvedLayout {
             sublayouts: (),
-            resolved_size: size,
+            resolved_size: size.into(),
         }
     }
 }
@@ -132,14 +126,18 @@ impl<'a, T: Slice, F: CharacterFont<Color>, Color: Copy> CharacterRender<Color> 
         let line_height = self.font.line_height() as i16;
 
         let mut height = 0;
-        let wrap = WhitespaceWrap::new(self.text.as_slice(), layout.resolved_size.width, self.font);
+        let wrap = WhitespaceWrap::new(
+            self.text.as_slice(),
+            ProposedDimension::Exact(layout.resolved_size.width.into()),
+            self.font,
+        );
         for line in wrap {
             let color = env.foreground_color();
             let width = self.font.str_width(line);
 
             let x = self
                 .alignment
-                .align(layout.resolved_size.width as i16, width as i16);
+                .align(layout.resolved_size.width.into(), width as i16);
             self.font.render_iter_solid(
                 target,
                 Point::new(origin.x + x, origin.y + height),
@@ -148,7 +146,7 @@ impl<'a, T: Slice, F: CharacterFont<Color>, Color: Copy> CharacterRender<Color> 
             );
 
             height += line_height;
-            if height >= layout.resolved_size.height as i16 {
+            if height >= layout.resolved_size.height.into() {
                 break;
             }
         }
@@ -180,14 +178,18 @@ impl<
         let line_height = self.font.line_height() as i16;
 
         let mut height = 0;
-        let wrap = WhitespaceWrap::new(self.text.as_slice(), layout.resolved_size.width, self.font);
+        let wrap = WhitespaceWrap::new(
+            self.text.as_slice(),
+            ProposedDimension::Exact(layout.resolved_size.width.into()),
+            self.font,
+        );
         for line in wrap {
             let color = env.foreground_color();
             let width = self.font.str_width(line);
 
             let x = self
                 .alignment
-                .align(layout.resolved_size.width as i16, width as i16);
+                .align(layout.resolved_size.width.into(), width as i16);
             self.font.render_iter(
                 target,
                 Point::new(origin.x + x, origin.y + height),
@@ -196,7 +198,7 @@ impl<
             );
 
             height += line_height;
-            if height >= layout.resolved_size.height as i16 {
+            if height >= layout.resolved_size.height.into() {
                 break;
             }
         }

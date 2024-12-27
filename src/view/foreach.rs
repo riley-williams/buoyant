@@ -1,9 +1,9 @@
-use core::cmp::{max, min};
+use core::cmp::max;
 
 use crate::{
     environment::{LayoutEnvironment, RenderEnvironment},
-    layout::{HorizontalAlignment, Layout, LayoutDirection, ResolvedLayout},
-    primitives::{Point, Size},
+    layout::{HorizontalAlignment, Layout, LayoutDirection, ProposedDimensions, ResolvedLayout},
+    primitives::{Dimension, Dimensions, Point, ProposedDimension},
     render::CharacterRender,
 };
 
@@ -76,7 +76,11 @@ where
     // This layout implementation trades extra work for lower memory usage as embedded is the
     // primary target environment. Views are repeatedly created for every layout call, but it
     // should be assumed that this is cheap
-    fn layout(&self, offer: Size, env: &impl LayoutEnvironment) -> ResolvedLayout<Self::Sublayout> {
+    fn layout(
+        &self,
+        offer: ProposedDimensions,
+        env: &impl LayoutEnvironment,
+    ) -> ResolvedLayout<Self::Sublayout> {
         let env = &ForEachEnvironment::from(env);
         let mut sublayouts: heapless::Vec<ResolvedLayout<V::Sublayout>, N> = heapless::Vec::new();
 
@@ -88,15 +92,15 @@ where
         //     // TODO: log an error, iterator was too large
         // }
 
-        let mut subview_stages: heapless::Vec<(LayoutStage, i8), N> = heapless::Vec::new();
+        let mut subview_stages: heapless::Vec<(i8, bool), N> = heapless::Vec::new();
         // fill sublayouts with an initial garbage layout
         for item in &items {
             let view = (self.build_view)(item);
             _ = sublayouts.push(view.layout(offer, env));
-            _ = subview_stages.push((LayoutStage::Unsized, view.priority()));
+            _ = subview_stages.push((view.priority(), view.is_empty()));
         }
 
-        let layout_fn = |index: usize, offer: Size| {
+        let layout_fn = |index: usize, offer: ProposedDimensions| {
             let layout = (self.build_view)(&items[index]).layout(offer, env);
             let size = layout.resolved_size;
             sublayouts[index] = layout;
@@ -111,36 +115,74 @@ where
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
-enum LayoutStage {
-    Unsized,
-    Candidate(Size),
-    Final(Size),
-}
-
 fn layout_n<const N: usize>(
-    subviews: &mut heapless::Vec<(LayoutStage, i8), N>,
-    offer: Size,
+    subviews: &mut heapless::Vec<(i8, bool), N>,
+    offer: ProposedDimensions,
     spacing: u16,
-    mut layout_fn: impl FnMut(usize, Size) -> Size,
-) -> Size {
-    let mut remaining_height = offer
-        .height
-        .saturating_sub(spacing * (subviews.len() - 1) as u16);
-
-    loop {
-        // collect the unsized subviews with the max layout priority into a group
-        let mut subviews_indecies: heapless::Vec<usize, N> =
-            heapless::Vec::from_slice(&[0; N]).expect("This can never fail, N vec from N slice");
-        let mut max = i8::MIN;
-        let mut slice_start: usize = 0;
-        let mut slice_len: usize = 0;
-        for (i, (size, priority)) in subviews.iter().enumerate() {
-            // skip sized subviews
-            if *size != LayoutStage::Unsized {
+    mut layout_fn: impl FnMut(usize, ProposedDimensions) -> Dimensions,
+) -> Dimensions {
+    let ProposedDimension::Exact(height) = offer.height else {
+        let mut total_height: Dimension = 0.into();
+        let mut max_width: Dimension = 0.into();
+        let mut non_empty_views: u16 = 0;
+        for (i, (_, is_empty)) in subviews.iter().enumerate() {
+            // layout must be called at least once on every view to avoid panic unwrapping the
+            // resolved layout.
+            // TODO: Allowing layouts to return a cheap "empty" layout could avoid this?
+            let dimensions = layout_fn(i, offer);
+            if *is_empty {
                 continue;
             }
 
+            total_height += dimensions.height;
+            max_width = max(max_width, dimensions.width);
+            non_empty_views += 1;
+        }
+        return Dimensions {
+            width: max_width,
+            height: total_height + spacing * (non_empty_views.saturating_sub(1)),
+        };
+    };
+
+    // compute the "flexibility" of each view on the vertical axis and sort by decreasing
+    // flexibility
+    // Flexibility is defined as the difference between the responses to 0 and infinite height offers
+    let mut flexibilities: [Dimension; N] = [0.into(); N];
+    let mut num_empty_views = 0;
+    for index in 0..subviews.len() {
+        let min_proposal = ProposedDimensions {
+            width: offer.width,
+            height: ProposedDimension::Exact(0),
+        };
+        let minimum_dimension = layout_fn(index, min_proposal);
+        // skip any further work for empty views
+        if subviews[index].1 {
+            num_empty_views += 1;
+            continue;
+        }
+
+        let max_proposal = ProposedDimensions {
+            width: offer.width,
+            height: ProposedDimension::Infinite,
+        };
+        let maximum_dimension = layout_fn(index, max_proposal);
+        flexibilities[index] = maximum_dimension.height - minimum_dimension.height;
+    }
+
+    let mut remaining_height =
+        height.saturating_sub(spacing * (N.saturating_sub(num_empty_views + 1)) as u16);
+    let mut last_priority_group: Option<i8> = None;
+    let mut max_width: Dimension = 0.into();
+    loop {
+        // collect the unsized subviews with the max layout priority into a group
+        let mut subviews_indecies: [usize; N] = [0; N];
+        let mut max = i8::MIN;
+        let mut slice_start: usize = 0;
+        let mut slice_len: usize = 0;
+        for (i, (priority, is_empty)) in subviews.iter().enumerate() {
+            if last_priority_group.is_some_and(|p| p <= *priority) || *is_empty {
+                continue;
+            }
             match max.cmp(priority) {
                 core::cmp::Ordering::Less => {
                     max = *priority;
@@ -152,104 +194,44 @@ fn layout_n<const N: usize>(
                     if slice_len == 0 {
                         slice_start = i;
                     }
+
                     subviews_indecies[slice_start + slice_len] = i;
                     slice_len += 1;
                 }
                 _ => {}
             }
         }
+        last_priority_group = Some(max);
+
         if slice_len == 0 {
             break;
         }
 
-        // Size all the unsized views that are unwilling to shrink
-        let mut group_offer = Size::new(offer.width, remaining_height / slice_len as u16);
-        let mut remainder = remaining_height as usize % slice_len;
+        let group_indecies = &mut subviews_indecies[slice_start..slice_start + slice_len];
+        group_indecies.sort_unstable_by_key(|&i| flexibilities[i]);
 
-        // Create a slice of the subviews to be sized
-        let subviews_indecies = &subviews_indecies[slice_start..slice_start + slice_len];
+        let mut remaining_group_size = group_indecies.len() as u16;
 
-        // Loop until no view candidates are invalidated, or no nonfinal candidates are left
-        loop {
-            let mut did_layout_nonfinal_candidate = false;
-            let mut nonfinal_candidate_invalidated = false;
-            for (i, subview_index) in subviews_indecies.iter().enumerate() {
-                if let LayoutStage::Final(_) = subviews[*subview_index].0 {
-                    continue;
-                }
-                // Adjust the offer height to account for the remainder. The initial views will be
-                // offered an extra pixel. This is mostly important for rendering character pixels
-                // where the pixels are large.
-                let adjusted_offer = if i < remainder {
-                    Size::new(group_offer.width, group_offer.height + 1)
-                } else {
-                    group_offer
-                };
-
-                let subview_size = layout_fn(*subview_index, adjusted_offer);
-                if subview_size.height > adjusted_offer.height {
-                    // The subview is unwilling to shrink, reslice the remaining width
-                    subviews[*subview_index].0 = LayoutStage::Final(subview_size);
-                    remaining_height = remaining_height.saturating_sub(subview_size.height);
-                    slice_len -= 1;
-                    // on the last subview, the length will go to zero
-                    group_offer.height = remaining_height
-                        .checked_div(slice_len as u16)
-                        .unwrap_or(group_offer.height);
-                    if slice_len != 0 {
-                        remainder = i + remaining_height as usize % slice_len;
-                    }
-                    if did_layout_nonfinal_candidate {
-                        nonfinal_candidate_invalidated = true;
-                        break;
-                    }
-                } else {
-                    subviews[*subview_index].0 = LayoutStage::Candidate(subview_size);
-                    did_layout_nonfinal_candidate = true;
-                }
-            }
-            if !nonfinal_candidate_invalidated {
-                break;
-            }
-        }
-        // subtract the candidates from the remaining width
-        for index in subviews_indecies.iter() {
-            if let LayoutStage::Candidate(s) = subviews[*index].0 {
-                remaining_height = remaining_height.saturating_sub(s.height);
-            }
-        }
-
-        if remaining_height > 0 {
-            // If there is any remaining height, offer it to each of the candidate views.
-            // The first view is always offered the extra height first...hope this is right
-            for subview_index in subviews_indecies.iter() {
-                if let LayoutStage::Candidate(s) = subviews[*subview_index].0 {
-                    let leftover = s + Size::new(0, remaining_height);
-                    let subview_size = layout_fn(*subview_index, leftover);
-                    remaining_height -= subview_size.height - s.height;
-                    subviews[*subview_index].0 = LayoutStage::Final(subview_size);
-                    // unnecessary?
-                }
-            }
+        for index in group_indecies {
+            let height_fraction =
+                remaining_height / remaining_group_size + remaining_height % remaining_group_size;
+            let size = layout_fn(
+                *index,
+                ProposedDimensions {
+                    width: offer.width,
+                    height: ProposedDimension::Exact(height_fraction),
+                },
+            );
+            remaining_height = remaining_height.saturating_sub(size.height.into());
+            remaining_group_size -= 1;
+            max_width = max_width.max(size.width);
         }
     }
 
-    // At this point all the subviews should have either a final or a candidate size
-    // Calculate the final VStack size
-    let total_child_size = subviews.iter().fold(
-        Size::new(0, offer.height - remaining_height),
-        |acc, (size, _)| match size {
-            LayoutStage::Final(s) | LayoutStage::Candidate(s) => {
-                Size::new(max(acc.width, s.width), acc.height)
-            }
-            _ => unreachable!(),
-        },
-    );
-
-    Size::new(
-        min(offer.width, total_child_size.width),
-        min(offer.height, total_child_size.height),
-    )
+    Dimensions {
+        width: max_width,
+        height: (height.saturating_sub(remaining_height)).into(),
+    }
 }
 
 impl<const N: usize, Pixel: Copy, I: IntoIterator + Copy, V, F> CharacterRender<Pixel>
@@ -274,15 +256,16 @@ where
             let aligned_origin = origin
                 + Point::new(
                     self.alignment.align(
-                        layout.resolved_size.width as i16,
-                        item_layout.resolved_size.width as i16,
+                        layout.resolved_size.width.into(),
+                        item_layout.resolved_size.width.into(),
                     ),
                     height,
                 );
             let view = (self.build_view)(&item);
             view.render(target, item_layout, aligned_origin, env);
 
-            height += item_layout.resolved_size.height as i16;
+            let item_height: i16 = item_layout.resolved_size.height.into();
+            height += item_height;
         }
     }
 }
@@ -309,22 +292,23 @@ where
     ) {
         let env = &ForEachEnvironment::from(env);
 
-        let mut height = 0;
+        let mut height: i16 = 0;
 
         for (item_layout, item) in layout.sublayouts.iter().zip(self.iter.into_iter()) {
             // TODO: defaulting to center alignment
             let aligned_origin = origin
                 + Point::new(
                     self.alignment.align(
-                        layout.resolved_size.width as i16,
-                        item_layout.resolved_size.width as i16,
+                        layout.resolved_size.width.into(),
+                        item_layout.resolved_size.width.into(),
                     ),
                     height,
                 );
             let view = (self.build_view)(&item);
             view.render(target, item_layout, aligned_origin, env);
 
-            height += item_layout.resolved_size.height as i16;
+            let item_height: i16 = item_layout.resolved_size.height.into();
+            height += item_height;
         }
     }
 }

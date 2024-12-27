@@ -1,6 +1,6 @@
 use crate::{
-    layout::{Layout, ResolvedLayout},
-    primitives::{Point, Size},
+    layout::{Layout, ProposedDimensions, ResolvedLayout},
+    primitives::Point,
 };
 
 #[derive(Debug, Copy, Clone, PartialEq, Default)]
@@ -19,12 +19,12 @@ impl Layout for RoundedRectangle {
 
     fn layout(
         &self,
-        offer: Size,
+        offer: ProposedDimensions,
         _: &impl crate::environment::LayoutEnvironment,
     ) -> ResolvedLayout<Self::Sublayout> {
         ResolvedLayout {
             sublayouts: (),
-            resolved_size: offer,
+            resolved_size: offer.resolve_most_flexible(0, 10),
         }
     }
 }

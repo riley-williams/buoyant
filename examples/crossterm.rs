@@ -43,7 +43,7 @@ fn main() {
                 &font,
             )
                 .multiline_text_alignment(HorizontalTextAlignment::Trailing)
-                .flex_frame(Some(10), Some(35), None, None, None, None),
+                .flex_frame().with_min_width(10).with_max_width(35),
         ))
             .with_spacing(1)
             .with_alignment(VerticalAlignment::Bottom),
@@ -80,7 +80,7 @@ fn main() {
     println!("View size {}", std::mem::size_of_val(&stack));
     println!("Env size {}", std::mem::size_of_val(&env));
 
-    let layout = stack.layout(target.size(), &env);
+    let layout = stack.layout(target.size().into(), &env);
     stack.render(&mut target, &layout, Point::zero(), &env);
 
     target.flush();
@@ -99,7 +99,7 @@ fn main() {
             Event::Resize(width, height) => {
                 target.clear(blank_color);
                 size = Size::new(width, height);
-                let layout = stack.layout(size, &env);
+                let layout = stack.layout(size.into(), &env);
                 stack.render(&mut target, &layout, Point::zero(), &env);
 
                 target.flush();

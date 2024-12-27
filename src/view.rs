@@ -45,24 +45,8 @@ pub trait LayoutExtensions: Sized {
         )
     }
 
-    fn flex_frame(
-        self,
-        min_width: Option<u16>,
-        max_width: Option<u16>,
-        min_height: Option<u16>,
-        max_height: Option<u16>,
-        horizontal_alignment: Option<crate::layout::HorizontalAlignment>,
-        vertical_alignment: Option<crate::layout::VerticalAlignment>,
-    ) -> FlexFrame<Self> {
-        FlexFrame::new(
-            self,
-            min_width,
-            max_width,
-            min_height,
-            max_height,
-            horizontal_alignment,
-            vertical_alignment,
-        )
+    fn flex_frame(self) -> FlexFrame<Self> {
+        FlexFrame::new(self)
     }
 
     fn priority(self, priority: u16) -> Priority<Self> {

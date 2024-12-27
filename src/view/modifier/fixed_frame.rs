@@ -1,7 +1,7 @@
 use crate::{
     environment::{LayoutEnvironment, RenderEnvironment},
-    layout::{HorizontalAlignment, Layout, ResolvedLayout, VerticalAlignment},
-    primitives::{Point, Size},
+    layout::{HorizontalAlignment, Layout, ProposedDimensions, ResolvedLayout, VerticalAlignment},
+    primitives::{Dimension, Dimensions, Point, ProposedDimension},
     render::CharacterRender,
     render_target::CharacterRenderTarget,
 };
@@ -44,16 +44,32 @@ impl<T> PartialEq for FixedFrame<T> {
 impl<V: Layout> Layout for FixedFrame<V> {
     type Sublayout = ResolvedLayout<V::Sublayout>;
 
-    fn layout(&self, offer: Size, env: &impl LayoutEnvironment) -> ResolvedLayout<Self::Sublayout> {
-        let modified_offer = Size::new(
-            self.width.unwrap_or(offer.width),
-            self.height.unwrap_or(offer.height),
-        );
+    fn layout(
+        &self,
+        offer: ProposedDimensions,
+        env: &impl LayoutEnvironment,
+    ) -> ResolvedLayout<Self::Sublayout> {
+        let modified_offer = ProposedDimensions {
+            width: self
+                .width
+                .map(ProposedDimension::Exact)
+                .unwrap_or(offer.width),
+            height: self
+                .height
+                .map(ProposedDimension::Exact)
+                .unwrap_or(offer.height),
+        };
         let child_layout = self.child.layout(modified_offer, env);
-        let resolved_size = Size::new(
-            self.width.unwrap_or(child_layout.resolved_size.width),
-            self.height.unwrap_or(child_layout.resolved_size.height),
-        );
+        let resolved_size = Dimensions {
+            width: self
+                .width
+                .map(Dimension::from)
+                .unwrap_or(child_layout.resolved_size.width),
+            height: self
+                .height
+                .map(Dimension::from)
+                .unwrap_or(child_layout.resolved_size.height),
+        };
         ResolvedLayout {
             sublayouts: child_layout,
             resolved_size,
@@ -75,12 +91,12 @@ where
         let new_origin = origin
             + Point::new(
                 self.horizontal_alignment.unwrap_or_default().align(
-                    layout.resolved_size.width as i16,
-                    layout.sublayouts.resolved_size.width as i16,
+                    layout.resolved_size.width.into(),
+                    layout.sublayouts.resolved_size.width.into(),
                 ),
                 self.vertical_alignment.unwrap_or_default().align(
-                    layout.resolved_size.height as i16,
-                    layout.sublayouts.resolved_size.height as i16,
+                    layout.resolved_size.height.into(),
+                    layout.sublayouts.resolved_size.height.into(),
                 ),
             );
 
@@ -108,12 +124,12 @@ where
         let new_origin = origin
             + Point::new(
                 self.horizontal_alignment.unwrap_or_default().align(
-                    layout.resolved_size.width as i16,
-                    layout.sublayouts.resolved_size.width as i16,
+                    layout.resolved_size.width.into(),
+                    layout.sublayouts.resolved_size.width.into(),
                 ),
                 self.vertical_alignment.unwrap_or_default().align(
-                    layout.resolved_size.height as i16,
-                    layout.sublayouts.resolved_size.height as i16,
+                    layout.resolved_size.height.into(),
+                    layout.sublayouts.resolved_size.height.into(),
                 ),
             );
 

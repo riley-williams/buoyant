@@ -1,9 +1,9 @@
-use core::cmp::{max, min};
+use core::cmp::max;
 
 use crate::{
     environment::{LayoutEnvironment, RenderEnvironment},
-    layout::{Layout, LayoutDirection, ResolvedLayout, VerticalAlignment},
-    primitives::{Point, Size},
+    layout::{Layout, LayoutDirection, ProposedDimensions, ResolvedLayout, VerticalAlignment},
+    primitives::{Dimension, Dimensions, Point, ProposedDimension},
     render::CharacterRender,
     render_target::CharacterRenderTarget,
 };
@@ -73,20 +73,24 @@ impl<T> HStack<T> {
 impl<U: Layout, V: Layout> Layout for HStack<(U, V)> {
     type Sublayout = (ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>);
 
-    fn layout(&self, offer: Size, env: &impl LayoutEnvironment) -> ResolvedLayout<Self::Sublayout> {
+    fn layout(
+        &self,
+        offer: ProposedDimensions,
+        env: &impl LayoutEnvironment,
+    ) -> ResolvedLayout<Self::Sublayout> {
         const N: usize = 2;
         let mut c0: Option<ResolvedLayout<U::Sublayout>> = None;
         let mut c1: Option<ResolvedLayout<V::Sublayout>> = None;
 
         let env = HorizontalEnvironment::from(env);
 
-        let mut f0 = |size: Size| {
+        let mut f0 = |size: ProposedDimensions| {
             let layout = self.items.0.layout(size, &env);
             let size = layout.resolved_size;
             c0 = Some(layout);
             size
         };
-        let mut f1 = |size: Size| {
+        let mut f1 = |size: ProposedDimensions| {
             let layout = self.items.1.layout(size, &env);
             let size = layout.resolved_size;
             c1 = Some(layout);
@@ -94,9 +98,9 @@ impl<U: Layout, V: Layout> Layout for HStack<(U, V)> {
         };
 
         // precalculate priority to avoid multiple dynamic dispatch calls
-        let mut subviews: [(LayoutStage, LayoutFn, i8); N] = [
-            (LayoutStage::Unsized, &mut f0, self.items.0.priority()),
-            (LayoutStage::Unsized, &mut f1, self.items.1.priority()),
+        let mut subviews: [(LayoutFn, i8, bool); N] = [
+            (&mut f0, self.items.0.priority(), self.items.0.is_empty()),
+            (&mut f1, self.items.1.priority(), self.items.1.is_empty()),
         ];
         let total_size = layout_n(&mut subviews, offer, self.spacing);
         ResolvedLayout {
@@ -113,7 +117,11 @@ impl<U: Layout, V: Layout, W: Layout> Layout for HStack<(U, V, W)> {
         ResolvedLayout<W::Sublayout>,
     );
 
-    fn layout(&self, offer: Size, env: &impl LayoutEnvironment) -> ResolvedLayout<Self::Sublayout> {
+    fn layout(
+        &self,
+        offer: ProposedDimensions,
+        env: &impl LayoutEnvironment,
+    ) -> ResolvedLayout<Self::Sublayout> {
         const N: usize = 3;
         let mut c0: Option<ResolvedLayout<U::Sublayout>> = None;
         let mut c1: Option<ResolvedLayout<V::Sublayout>> = None;
@@ -121,19 +129,19 @@ impl<U: Layout, V: Layout, W: Layout> Layout for HStack<(U, V, W)> {
 
         let env = HorizontalEnvironment::from(env);
 
-        let mut f0 = |size: Size| {
+        let mut f0 = |size: ProposedDimensions| {
             let layout = self.items.0.layout(size, &env);
             let size = layout.resolved_size;
             c0 = Some(layout);
             size
         };
-        let mut f1 = |size: Size| {
+        let mut f1 = |size: ProposedDimensions| {
             let layout = self.items.1.layout(size, &env);
             let size = layout.resolved_size;
             c1 = Some(layout);
             size
         };
-        let mut f2 = |size: Size| {
+        let mut f2 = |size: ProposedDimensions| {
             let layout = self.items.2.layout(size, &env);
             let size = layout.resolved_size;
             c2 = Some(layout);
@@ -141,10 +149,10 @@ impl<U: Layout, V: Layout, W: Layout> Layout for HStack<(U, V, W)> {
         };
 
         // precalculate priority to avoid multiple dynamic dispatch calls
-        let mut subviews: [(LayoutStage, LayoutFn, i8); N] = [
-            (LayoutStage::Unsized, &mut f0, self.items.0.priority()),
-            (LayoutStage::Unsized, &mut f1, self.items.1.priority()),
-            (LayoutStage::Unsized, &mut f2, self.items.2.priority()),
+        let mut subviews: [(LayoutFn, i8, bool); N] = [
+            (&mut f0, self.items.0.priority(), self.items.0.is_empty()),
+            (&mut f1, self.items.1.priority(), self.items.1.is_empty()),
+            (&mut f2, self.items.2.priority(), self.items.2.is_empty()),
         ];
         let total_size = layout_n(&mut subviews, offer, self.spacing);
         ResolvedLayout {
@@ -154,144 +162,131 @@ impl<U: Layout, V: Layout, W: Layout> Layout for HStack<(U, V, W)> {
     }
 }
 
-type LayoutFn<'a> = &'a mut dyn FnMut(Size) -> Size;
+type LayoutFn<'a> = &'a mut dyn FnMut(ProposedDimensions) -> Dimensions;
 
 fn layout_n<const N: usize>(
-    subviews: &mut [(LayoutStage, LayoutFn, i8); N],
-    offer: Size,
+    subviews: &mut [(LayoutFn, i8, bool); N],
+    offer: ProposedDimensions,
     spacing: u16,
-) -> Size {
-    let mut remaining_width = offer.width.saturating_sub(spacing * (N - 1) as u16);
-
-    loop {
-        // collect the unsized subviews with the max layout priority into a group
-        let mut subviews_indecies: [usize; N] = [0; N];
-        let mut max = i8::MIN;
-        let mut slice_start: usize = 0;
-        let mut slice_len: usize = 0;
-        for (i, (size, _, priority)) in subviews.iter().enumerate() {
-            // skip sized subviews
-            if *size != LayoutStage::Unsized {
+) -> Dimensions {
+    let ProposedDimension::Exact(width) = offer.width else {
+        let mut total_width: Dimension = 0.into();
+        let mut max_height: Dimension = 0.into();
+        let mut non_empty_views: u16 = 0;
+        for (layout_fn, _, is_empty) in subviews {
+            // layout must be called at least once on every view to avoid panic unwrapping the
+            // resolved layout.
+            // TODO: Allowing layouts to return a cheap "empty" layout could avoid this?
+            let dimensions = layout_fn(offer);
+            if *is_empty {
                 continue;
             }
 
+            total_width += dimensions.width;
+            max_height = max(max_height, dimensions.height);
+            non_empty_views += 1;
+        }
+        return Dimensions {
+            width: total_width + spacing * (non_empty_views.saturating_sub(1)),
+            height: max_height,
+        };
+    };
+
+    // TODO: Include the minimum width, this is more important than the flexibility
+    // if it exceeds the slice size the view is offered.
+    // compute the "flexibility" of each view on the horizontal axis and sort by increasing
+    // flexibility
+    // Flexibility is defined as the difference between the responses to 0 and infinite width offers
+    let mut flexibilities: [Dimension; N] = [0.into(); N];
+    let mut num_empty_views = 0;
+    for index in 0..N {
+        let min_proposal = ProposedDimensions {
+            width: ProposedDimension::Exact(0),
+            height: offer.height,
+        };
+        let minimum_dimension = subviews[index].0(min_proposal);
+        // skip any further work for empty views
+        if subviews[index].2 {
+            num_empty_views += 1;
+            continue;
+        }
+
+        let max_proposal = ProposedDimensions {
+            width: ProposedDimension::Infinite,
+            height: offer.height,
+        };
+        let maximum_dimension = subviews[index].0(max_proposal);
+        flexibilities[index] = maximum_dimension.width - minimum_dimension.width;
+    }
+
+    let mut remaining_width =
+        width.saturating_sub(spacing * (N.saturating_sub(num_empty_views + 1)) as u16);
+    let mut last_priority_group: Option<i8> = None;
+    let mut max_height: Dimension = 0.into();
+
+    loop {
+        // collect the unsized subviews with the max layout priority into a group
+        let mut subviews_indices: [usize; N] = [0; N];
+        let mut max = i8::MIN;
+        let mut slice_start: usize = 0;
+        let mut slice_len: usize = 0;
+        for (i, (_, priority, is_empty)) in subviews.iter().enumerate() {
+            if last_priority_group.is_some_and(|p| p <= *priority) || *is_empty {
+                continue;
+            }
             match max.cmp(priority) {
                 core::cmp::Ordering::Less => {
                     max = *priority;
                     slice_start = i;
                     slice_len = 1;
-                    subviews_indecies[slice_start] = i;
+                    subviews_indices[slice_start] = i;
                 }
                 core::cmp::Ordering::Equal => {
                     if slice_len == 0 {
                         slice_start = i;
                     }
-                    subviews_indecies[slice_start + slice_len] = i;
+
+                    subviews_indices[slice_start + slice_len] = i;
                     slice_len += 1;
                 }
                 _ => {}
             }
         }
+        last_priority_group = Some(max);
+
         if slice_len == 0 {
             break;
         }
 
-        // Size all the unsized views that are unwilling to shrink
-        let mut group_offer = Size::new(remaining_width / slice_len as u16, offer.height);
-        let mut remainder = remaining_width as usize % slice_len;
+        let group_indices = &mut subviews_indices[slice_start..slice_start + slice_len];
+        // unstable variant is no-alloc, we'll see what instability issues this creates during
+        // frame animation...
+        group_indices.sort_unstable_by_key(|&i| flexibilities[i]);
 
-        // Create a slice of the subviews to be sized
-        let subviews_indecies = &subviews_indecies[slice_start..slice_start + slice_len];
+        let mut remaining_group_size = group_indices.len() as u16;
 
-        // Loop until no view candidates are invalidated, or no nonfinal candidates are left
-        loop {
-            let mut did_layout_nonfinal_candidate = false;
-            let mut nonfinal_candidate_invalidated = false;
-            for (i, subview_index) in subviews_indecies.iter().enumerate() {
-                if let LayoutStage::Final(_) = subviews[*subview_index].0 {
-                    continue;
-                }
-                // Adjust the offer width to account for the remainder. The initial views will be
-                // offered an extra pixel. This is mostly important for rendering character pixels
-                // where the pixels are large.
-                let adjusted_offer = if i < remainder {
-                    Size::new(group_offer.width + 1, group_offer.height)
-                } else {
-                    group_offer
-                };
-
-                let subview_size = subviews.get_mut(*subview_index).unwrap().1(adjusted_offer);
-                if subview_size.width > adjusted_offer.width {
-                    // The subview is unwilling to shrink, reslice the remaining width
-                    subviews[*subview_index].0 = LayoutStage::Final(subview_size);
-                    remaining_width = remaining_width.saturating_sub(subview_size.width);
-                    slice_len -= 1;
-                    // on the last subview, the length will go to zero
-                    group_offer.width = remaining_width
-                        .checked_div(slice_len as u16)
-                        .unwrap_or(group_offer.width);
-                    if slice_len != 0 {
-                        remainder = i + remaining_width as usize % slice_len;
-                    }
-
-                    if did_layout_nonfinal_candidate {
-                        nonfinal_candidate_invalidated = true;
-                        break;
-                    }
-                } else {
-                    subviews[*subview_index].0 = LayoutStage::Candidate(subview_size);
-                    did_layout_nonfinal_candidate = true;
-                }
-            }
-            if !nonfinal_candidate_invalidated {
-                break;
-            }
-        }
-        // subtract the candidates from the remaining width
-        for subview_index in subviews_indecies.iter() {
-            if let LayoutStage::Candidate(s) = subviews[*subview_index].0 {
-                remaining_width = remaining_width.saturating_sub(s.width);
-            }
-        }
-
-        if remaining_width > 0 {
-            // If there is any remaining width, offer it to each of the candidate views.
-            // The first view is always offered the extra width first...hope this is right
-            for subview_index in subviews_indecies.iter() {
-                if let LayoutStage::Candidate(s) = subviews[*subview_index].0 {
-                    let leftover = s + Size::new(remaining_width, 0);
-                    let subview_size = subviews.get_mut(*subview_index).unwrap().1(leftover);
-                    remaining_width -= subview_size.width - s.width;
-                    subviews[*subview_index].0 = LayoutStage::Final(subview_size);
-                    // unnecessary?
-                }
-            }
+        for index in group_indices {
+            let width_fraction =
+                remaining_width / remaining_group_size + remaining_width % remaining_group_size;
+            let size = subviews[*index].0(ProposedDimensions {
+                width: ProposedDimension::Exact(width_fraction),
+                height: offer.height,
+            });
+            remaining_width = remaining_width.saturating_sub(size.width.into());
+            remaining_group_size -= 1;
+            max_height = max_height.max(size.height);
         }
     }
 
-    // At this point all the subviews should have either a final or a candidate size
-    // Calculate the final HStack size
-    let total_child_size = subviews.iter().fold(
-        Size::new(offer.width - remaining_width, 0),
-        |acc, (size, _, _)| match size {
-            LayoutStage::Final(s) | LayoutStage::Candidate(s) => {
-                Size::new(acc.width, max(acc.height, s.height))
-            }
-            _ => unreachable!(),
-        },
-    );
+    // Prevent stack from reporting oversize, even if the children misbehave
+    if let ProposedDimension::Exact(offer_height) = offer.height {
+        max_height = max_height.min(offer_height.into());
+    }
 
-    Size::new(
-        min(offer.width, total_child_size.width),
-        min(offer.height, total_child_size.height),
-    )
-}
-
-#[derive(Copy, Clone, Debug, PartialEq)]
-enum LayoutStage {
-    Unsized,
-    Candidate(Size),
-    Final(Size),
+    Dimensions {
+        width: (width.saturating_sub(remaining_width)).into(),
+        height: max_height,
+    }
 }
 
 // -- Character Render
@@ -311,30 +306,35 @@ where
         let env = HorizontalEnvironment::from(env);
         let mut width = 0;
 
-        let offset = Point::new(
-            width,
-            self.alignment.align(
-                layout.resolved_size.height as i16,
-                layout.sublayouts.0.resolved_size.height as i16,
-            ),
-        );
+        if !self.items.0.is_empty() {
+            let offset = Point::new(
+                width,
+                self.alignment.align(
+                    layout.resolved_size.height.into(),
+                    layout.sublayouts.0.resolved_size.height.into(),
+                ),
+            );
 
-        self.items
-            .0
-            .render(target, &layout.sublayouts.0, origin + offset, &env);
+            self.items
+                .0
+                .render(target, &layout.sublayouts.0, origin + offset, &env);
 
-        width += (layout.sublayouts.0.resolved_size.width + self.spacing) as i16;
-        let offset = Point::new(
-            width,
-            self.alignment.align(
-                layout.resolved_size.height as i16,
-                layout.sublayouts.1.resolved_size.height as i16,
-            ),
-        );
+            width += (u16::from(layout.sublayouts.0.resolved_size.width) + self.spacing) as i16;
+        }
 
-        self.items
-            .1
-            .render(target, &layout.sublayouts.1, origin + offset, &env);
+        if !self.items.1.is_empty() {
+            let offset = Point::new(
+                width,
+                self.alignment.align(
+                    layout.resolved_size.height.into(),
+                    layout.sublayouts.1.resolved_size.height.into(),
+                ),
+            );
+
+            self.items
+                .1
+                .render(target, &layout.sublayouts.1, origin + offset, &env);
+        }
     }
 }
 
@@ -354,43 +354,51 @@ where
         let env = HorizontalEnvironment::from(env);
         let mut width = 0;
 
-        let offset = Point::new(
-            width,
-            self.alignment.align(
-                layout.resolved_size.height as i16,
-                layout.sublayouts.0.resolved_size.height as i16,
-            ),
-        );
+        if !self.items.0.is_empty() {
+            let offset = Point::new(
+                width,
+                self.alignment.align(
+                    layout.resolved_size.height.into(),
+                    layout.sublayouts.0.resolved_size.height.into(),
+                ),
+            );
 
-        self.items
-            .0
-            .render(target, &layout.sublayouts.0, origin + offset, &env);
+            self.items
+                .0
+                .render(target, &layout.sublayouts.0, origin + offset, &env);
 
-        width += (layout.sublayouts.0.resolved_size.width + self.spacing) as i16;
-        let offset = Point::new(
-            width,
-            self.alignment.align(
-                layout.resolved_size.height as i16,
-                layout.sublayouts.1.resolved_size.height as i16,
-            ),
-        );
+            width += (u16::from(layout.sublayouts.0.resolved_size.width) + self.spacing) as i16;
+        }
 
-        self.items
-            .1
-            .render(target, &layout.sublayouts.1, origin + offset, &env);
+        if !self.items.1.is_empty() {
+            let offset = Point::new(
+                width,
+                self.alignment.align(
+                    layout.resolved_size.height.into(),
+                    layout.sublayouts.1.resolved_size.height.into(),
+                ),
+            );
 
-        width += (layout.sublayouts.1.resolved_size.width + self.spacing) as i16;
-        let offset = Point::new(
-            width,
-            self.alignment.align(
-                layout.resolved_size.height as i16,
-                layout.sublayouts.2.resolved_size.height as i16,
-            ),
-        );
+            self.items
+                .1
+                .render(target, &layout.sublayouts.1, origin + offset, &env);
 
-        self.items
-            .2
-            .render(target, &layout.sublayouts.2, origin + offset, &env);
+            width += (u16::from(layout.sublayouts.1.resolved_size.width) + self.spacing) as i16;
+        }
+
+        if !self.items.2.is_empty() {
+            let offset = Point::new(
+                width,
+                self.alignment.align(
+                    layout.resolved_size.height.into(),
+                    layout.sublayouts.2.resolved_size.height.into(),
+                ),
+            );
+
+            self.items
+                .2
+                .render(target, &layout.sublayouts.2, origin + offset, &env);
+        }
     }
 }
 
@@ -416,30 +424,35 @@ where
         let env = HorizontalEnvironment::from(env);
         let mut width = 0;
 
-        let offset = Point::new(
-            width,
-            self.alignment.align(
-                layout.resolved_size.height as i16,
-                layout.sublayouts.0.resolved_size.height as i16,
-            ),
-        );
+        if !self.items.0.is_empty() {
+            let offset = Point::new(
+                width,
+                self.alignment.align(
+                    layout.resolved_size.height.into(),
+                    layout.sublayouts.0.resolved_size.height.into(),
+                ),
+            );
 
-        self.items
-            .0
-            .render(target, &layout.sublayouts.0, origin + offset, &env);
+            self.items
+                .0
+                .render(target, &layout.sublayouts.0, origin + offset, &env);
 
-        width += (layout.sublayouts.0.resolved_size.width + self.spacing) as i16;
-        let offset = Point::new(
-            width,
-            self.alignment.align(
-                layout.resolved_size.height as i16,
-                layout.sublayouts.1.resolved_size.height as i16,
-            ),
-        );
+            width += (u16::from(layout.sublayouts.0.resolved_size.width) + self.spacing) as i16;
+        }
 
-        self.items
-            .1
-            .render(target, &layout.sublayouts.1, origin + offset, &env);
+        if !self.items.1.is_empty() {
+            let offset = Point::new(
+                width,
+                self.alignment.align(
+                    layout.resolved_size.height.into(),
+                    layout.sublayouts.1.resolved_size.height.into(),
+                ),
+            );
+
+            self.items
+                .1
+                .render(target, &layout.sublayouts.1, origin + offset, &env);
+        }
     }
 }
 
@@ -461,42 +474,50 @@ where
         let env = HorizontalEnvironment::from(env);
         let mut width = 0;
 
-        let offset = Point::new(
-            width,
-            self.alignment.align(
-                layout.resolved_size.height as i16,
-                layout.sublayouts.0.resolved_size.height as i16,
-            ),
-        );
+        if !self.items.0.is_empty() {
+            let offset = Point::new(
+                width,
+                self.alignment.align(
+                    layout.resolved_size.height.into(),
+                    layout.sublayouts.0.resolved_size.height.into(),
+                ),
+            );
 
-        self.items
-            .0
-            .render(target, &layout.sublayouts.0, origin + offset, &env);
+            self.items
+                .0
+                .render(target, &layout.sublayouts.0, origin + offset, &env);
 
-        width += (layout.sublayouts.0.resolved_size.width + self.spacing) as i16;
-        let offset = Point::new(
-            width,
-            self.alignment.align(
-                layout.resolved_size.height as i16,
-                layout.sublayouts.1.resolved_size.height as i16,
-            ),
-        );
+            width += (u16::from(layout.sublayouts.0.resolved_size.width) + self.spacing) as i16;
+        }
 
-        self.items
-            .1
-            .render(target, &layout.sublayouts.1, origin + offset, &env);
+        if !self.items.1.is_empty() {
+            let offset = Point::new(
+                width,
+                self.alignment.align(
+                    layout.resolved_size.height.into(),
+                    layout.sublayouts.1.resolved_size.height.into(),
+                ),
+            );
 
-        width += (layout.sublayouts.1.resolved_size.width + self.spacing) as i16;
-        let offset = Point::new(
-            width,
-            self.alignment.align(
-                layout.resolved_size.height as i16,
-                layout.sublayouts.2.resolved_size.height as i16,
-            ),
-        );
+            self.items
+                .1
+                .render(target, &layout.sublayouts.1, origin + offset, &env);
 
-        self.items
-            .2
-            .render(target, &layout.sublayouts.2, origin + offset, &env);
+            width += (u16::from(layout.sublayouts.1.resolved_size.width) + self.spacing) as i16;
+        }
+
+        if !self.items.2.is_empty() {
+            let offset = Point::new(
+                width,
+                self.alignment.align(
+                    layout.resolved_size.height.into(),
+                    layout.sublayouts.2.resolved_size.height.into(),
+                ),
+            );
+
+            self.items
+                .2
+                .render(target, &layout.sublayouts.2, origin + offset, &env);
+        }
     }
 }

@@ -1,6 +1,6 @@
 use crate::{
-    layout::{Layout, ResolvedLayout},
-    primitives::{Point, Size},
+    layout::{Layout, ProposedDimensions, ResolvedLayout},
+    primitives::{Dimensions, Point},
 };
 
 #[derive(Debug, Copy, Clone, PartialEq, Default)]
@@ -11,13 +11,13 @@ impl Layout for Circle {
 
     fn layout(
         &self,
-        offer: Size,
+        offer: ProposedDimensions,
         _: &impl crate::environment::LayoutEnvironment,
     ) -> ResolvedLayout<Self::Sublayout> {
-        let minimum_dimension = offer.width.min(offer.height);
+        let minimum_dimension = offer.width.min(offer.height).resolve_most_flexible(0, 10);
         ResolvedLayout {
             sublayouts: (),
-            resolved_size: Size {
+            resolved_size: Dimensions {
                 width: minimum_dimension,
                 height: minimum_dimension,
             },
@@ -43,7 +43,7 @@ impl<P: embedded_graphics_core::pixelcolor::PixelColor> crate::render::PixelRend
             .build();
         _ = embedded_graphics::primitives::Circle::new(
             origin.into(),
-            layout.resolved_size.width as u32,
+            layout.resolved_size.width.into(),
         )
         .draw_styled(&style, target);
     }

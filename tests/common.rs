@@ -1,6 +1,7 @@
 use buoyant::{
     environment::{LayoutEnvironment, RenderEnvironment},
     layout::{Alignment, LayoutDirection},
+    render_target::FixedTextBuffer,
 };
 
 pub struct TestEnv<Color> {
@@ -56,4 +57,12 @@ impl<C> TestEnv<C> {
         self.alignment = alignment;
         self
     }
+}
+
+pub fn collect_text<const W: usize, const H: usize>(buffer: &FixedTextBuffer<W, H>) -> String {
+    buffer
+        .text
+        .iter()
+        .map(|chars| chars.iter().collect::<String>())
+        .collect::<String>()
 }

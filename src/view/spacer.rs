@@ -1,7 +1,7 @@
 use crate::{
     environment::{LayoutEnvironment, RenderEnvironment},
-    layout::{Layout, LayoutDirection, ResolvedLayout},
-    primitives::{Point, Size},
+    layout::{Layout, LayoutDirection, ProposedDimensions, ResolvedLayout},
+    primitives::{Dimensions, Point},
     render::CharacterRender,
     render_target::CharacterRenderTarget,
 };
@@ -13,14 +13,20 @@ pub struct Spacer {
 
 impl Layout for Spacer {
     type Sublayout = ();
-    fn layout(&self, offer: Size, env: &impl LayoutEnvironment) -> ResolvedLayout<()> {
+    fn layout(
+        &self,
+        offer: ProposedDimensions,
+        env: &impl LayoutEnvironment,
+    ) -> ResolvedLayout<()> {
         let size = match env.layout_direction() {
-            LayoutDirection::Horizontal => {
-                Size::new(core::cmp::max(offer.width, self.min_length), 0)
-            }
-            LayoutDirection::Vertical => {
-                Size::new(0, core::cmp::max(offer.height, self.min_length))
-            }
+            LayoutDirection::Horizontal => Dimensions {
+                width: offer.width.resolve_most_flexible(0, self.min_length),
+                height: 0.into(),
+            },
+            LayoutDirection::Vertical => Dimensions {
+                width: 0.into(),
+                height: offer.height.resolve_most_flexible(0, self.min_length),
+            },
         };
         ResolvedLayout {
             sublayouts: (),
