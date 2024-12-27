@@ -2,15 +2,11 @@ use buoyant::{
     environment::DefaultEnvironment,
     font::BufferCharacterFont,
     layout::{HorizontalAlignment, Layout, VerticalAlignment},
-    primitives::{Point, Size},
+    primitives::{Point, ProposedDimension, ProposedDimensions, Size},
     render::CharacterRender,
     render_target::{CharacterRenderTarget, FixedTextBuffer},
-    view::{LayoutExtensions, Text},
+    view::{LayoutExtensions, Rectangle, Text},
 };
-
-use buoyant::layout::ProposedDimensions;
-use buoyant::primitives::ProposedDimension;
-use buoyant::view::Rectangle;
 
 #[test]
 fn test_min() {

@@ -1,6 +1,6 @@
 use crate::{
-    layout::{Layout, ProposedDimensions, ResolvedLayout},
-    primitives::{Dimensions, Point},
+    layout::{Layout, ResolvedLayout},
+    primitives::{Dimensions, Point, ProposedDimensions},
 };
 
 #[derive(Debug, Copy, Clone, PartialEq, Default)]

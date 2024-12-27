@@ -1,7 +1,7 @@
 use crate::{
     environment::{LayoutEnvironment, RenderEnvironment},
-    layout::{HorizontalAlignment, Layout, ProposedDimensions, ResolvedLayout, VerticalAlignment},
-    primitives::{Dimension, Dimensions, Point, ProposedDimension},
+    layout::{HorizontalAlignment, Layout, ResolvedLayout, VerticalAlignment},
+    primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions},
     render::CharacterRender,
     render_target::CharacterRenderTarget,
 };

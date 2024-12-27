@@ -1,6 +1,6 @@
 use crate::{
     environment::LayoutEnvironment,
-    primitives::{Dimensions, ProposedDimension, Size},
+    primitives::{Dimensions, ProposedDimensions},
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Default)]
@@ -65,30 +65,6 @@ impl VerticalAlignment {
 pub struct ResolvedLayout<C: Clone + PartialEq> {
     pub sublayouts: C,
     pub resolved_size: Dimensions,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct ProposedDimensions {
-    pub width: ProposedDimension,
-    pub height: ProposedDimension,
-}
-
-impl ProposedDimensions {
-    pub fn resolve_most_flexible(self, minimum: u16, ideal: u16) -> Dimensions {
-        Dimensions {
-            width: self.width.resolve_most_flexible(minimum, ideal),
-            height: self.height.resolve_most_flexible(minimum, ideal),
-        }
-    }
-}
-
-impl From<Size> for ProposedDimensions {
-    fn from(size: Size) -> Self {
-        ProposedDimensions {
-            width: ProposedDimension::Exact(size.width),
-            height: ProposedDimension::Exact(size.height),
-        }
-    }
 }
 
 pub trait Layout: Sized {

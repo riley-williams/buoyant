@@ -1,7 +1,19 @@
-use crate::layout::ProposedDimensions;
-
 use super::Size;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ProposedDimensions {
+    pub width: ProposedDimension,
+    pub height: ProposedDimension,
+}
+
+impl ProposedDimensions {
+    pub fn resolve_most_flexible(self, minimum: u16, ideal: u16) -> Dimensions {
+        Dimensions {
+            width: self.width.resolve_most_flexible(minimum, ideal),
+            height: self.height.resolve_most_flexible(minimum, ideal),
+        }
+    }
+}
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ProposedDimension {
     /// An exactly sized offer
@@ -10,6 +22,25 @@ pub enum ProposedDimension {
     Compact,
     /// An offer of infinite size
     Infinite,
+}
+
+impl From<Size> for ProposedDimensions {
+    fn from(size: Size) -> Self {
+        ProposedDimensions {
+            width: ProposedDimension::Exact(size.width),
+            height: ProposedDimension::Exact(size.height),
+        }
+    }
+}
+
+#[cfg(feature = "embedded-graphics")]
+impl From<embedded_graphics_core::geometry::Size> for ProposedDimensions {
+    fn from(size: embedded_graphics_core::geometry::Size) -> Self {
+        ProposedDimensions {
+            width: ProposedDimension::Exact(size.width as u16),
+            height: ProposedDimension::Exact(size.height as u16),
+        }
+    }
 }
 
 impl ProposedDimension {
