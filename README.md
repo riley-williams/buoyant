@@ -1,64 +1,76 @@
 # Buoyant
 
 <!--toc:start-->
-
 - [Buoyant](#buoyant)
-  - [Goals](#goals)
+  - [Capabilities](#capabilities)
   - [Layout and rendering](#layout-and-rendering)
   - [Available render targets](#available-render-targets)
   - [Roadmap](#roadmap)
   - [Usage notes](#usage-notes)
   - [License](#license)
   - [Contribution](#contribution)
-  <!--toc:end-->
+<!--toc:end-->
 
-This is a library for writing and rendering SwiftUI-like layouts in Rust.
+This is a library for writing and rendering SwiftUI-like layouts in Rust,
+primarily intended for use on embedded systems.
 
-## Goals
+## Capabilities
 
 - Embedded / no_std support:
   - Zero heap allocation
   - Minimal memory footprint
-  - Immediate mode, CPU rendering
 - Support for both character-based and pixel-based rendering and layout
-- Ability to support a variety of render devices (e.g., terminal,
+- Ability to support a variety of render devices (terminal,
   framebuffer, SPI display, ...)
 
 ## Layout and rendering
 
 Layout code is shared across all pixel types. Views produce a layout
 which can then be rendered to a render target, calling the rendering code
-specific to the render target's pixel type.
+specific to the render target's pixel type. This allows creating support for
+arbitrary render backends.
 
 ## Available render targets
 
+- `embedded-graphics` displays, with "native" fonts and colors.
 - `TextBuffer`: A basic fixed-size `char` buffer. Does not respect graphemes.
   This is primarily useful for testing and debugging.
-
 - `CrossTerm`: Renders colored character-pixels to a terminal using
   the `crossterm` crate.
 
 ## Roadmap
 
-Right now, all the core components exist to build and render static views.
+Right now, core components exist to build and render a wide variety of
+basic static views. In the current state, usability far exceeds manual
+layout using embedded-graphics primitives directly.
 
-These are the planned features, in order of priority:
+These are the currently planned features:
 
-- embedded-graphics trait implementations
-- default pixel rendering for pixel-based render targets
-- More robust Font support
-  - embedded-graphics fonts
-  - Embedded SPI displays with built-in fonts
+### Distinct View and Widget trees
+
 - State management
   - Layout reuse
-  - Animations
+  - Animation
+
 - Interactivity
   - click/tap routing
-  - focus management / keyboard input
+  - focus management + keyboard input
 
-These things would be nice:
+### Rendering
 
-- Unicode / grapheme support for proper text handling outside embedded
+- Canvas view for arbitrary path/shape/raster drawing
+  - The rendering implementation exclusively targets embedded-graphics,
+    but migrating everything to a canvas interface would enable reusing
+    the rendering logic for other backends.
+- Shape stroke/fill
+- Embedded SPI displays with built-in fonts
+- Alpha blending
+  - Rendering is currently write-only, enabling framebufferless rendering
+
+### Text
+
+- Unicode breaking character support for better text wrapping on
+  less resource-constrained devices.
 
 ## Usage notes
 
