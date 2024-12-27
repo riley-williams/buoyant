@@ -45,6 +45,7 @@ where
     iter: I,
     build_view: F,
     alignment: HorizontalAlignment,
+    spacing: u16,
 }
 
 impl<const N: usize, I: IntoIterator + Copy, V, F> ForEach<N, I, V, F>
@@ -57,11 +58,17 @@ where
             iter,
             build_view,
             alignment: HorizontalAlignment::default(),
+            spacing: 0,
         }
     }
 
     pub fn with_alignment(mut self, alignment: HorizontalAlignment) -> Self {
         self.alignment = alignment;
+        self
+    }
+
+    pub fn with_spacing(mut self, spacing: u16) -> Self {
+        self.spacing = spacing;
         self
     }
 }
@@ -107,7 +114,7 @@ where
             size
         };
 
-        let size = layout_n(&mut subview_stages, offer, 0, layout_fn);
+        let size = layout_n(&mut subview_stages, offer, self.spacing, layout_fn);
         ResolvedLayout {
             sublayouts,
             resolved_size: size,
