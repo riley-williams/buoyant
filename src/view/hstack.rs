@@ -2,8 +2,8 @@ use core::cmp::max;
 
 use crate::{
     environment::{LayoutEnvironment, RenderEnvironment},
-    layout::{Layout, LayoutDirection, ProposedDimensions, ResolvedLayout, VerticalAlignment},
-    primitives::{Dimension, Dimensions, Point, ProposedDimension},
+    layout::{Layout, LayoutDirection, ResolvedLayout, VerticalAlignment},
+    primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions},
     render::CharacterRender,
     render_target::CharacterRenderTarget,
 };

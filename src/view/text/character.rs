@@ -1,8 +1,8 @@
 use crate::{
     environment::{LayoutEnvironment, RenderEnvironment},
     font::{CharacterFont, FontLayout},
-    layout::{Layout, ProposedDimensions, ResolvedLayout},
-    primitives::{Point, ProposedDimension, Size},
+    layout::{Layout, ResolvedLayout},
+    primitives::{Point, ProposedDimension, ProposedDimensions, Size},
     render::CharacterRender,
     render_target::CharacterRenderTarget,
 };

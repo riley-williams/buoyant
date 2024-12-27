@@ -1,6 +1,6 @@
 use crate::{
-    layout::{Layout, ProposedDimensions, ResolvedLayout},
-    primitives::Point,
+    layout::{Layout, ResolvedLayout},
+    primitives::{Point, ProposedDimensions},
     render::CharacterRender,
     render_target::CharacterRenderTarget,
 };
