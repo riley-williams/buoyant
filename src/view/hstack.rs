@@ -259,7 +259,9 @@ fn layout_n<const N: usize>(
         }
 
         let group_indices = &mut subviews_indices[slice_start..slice_start + slice_len];
-        group_indices.sort_by_key(|&i| flexibilities[i]);
+        // unstable variant is no-alloc, we'll see what instability issues this creates during
+        // frame animation...
+        group_indices.sort_unstable_by_key(|&i| flexibilities[i]);
 
         let mut remaining_group_size = group_indices.len() as u16;
 

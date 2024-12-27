@@ -208,7 +208,7 @@ fn layout_n<const N: usize>(
         }
 
         let group_indecies = &mut subviews_indecies[slice_start..slice_start + slice_len];
-        group_indecies.sort_by_key(|&i| flexibilities[i]);
+        group_indecies.sort_unstable_by_key(|&i| flexibilities[i]);
 
         let mut remaining_group_size = group_indecies.len() as u16;
 
