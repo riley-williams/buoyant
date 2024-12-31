@@ -19,13 +19,23 @@ impl Layout for RoundedRectangle {
 
     fn layout(
         &self,
-        offer: ProposedDimensions,
+        offer: &ProposedDimensions,
         _: &impl crate::environment::LayoutEnvironment,
     ) -> ResolvedLayout<Self::Sublayout> {
         ResolvedLayout {
             sublayouts: (),
             resolved_size: offer.resolve_most_flexible(0, 10),
+            origin: Point::zero(),
         }
+    }
+
+    fn place_subviews(
+        &self,
+        layout: &mut ResolvedLayout<Self::Sublayout>,
+        origin: Point,
+        _env: &impl crate::environment::LayoutEnvironment,
+    ) {
+        layout.origin = origin;
     }
 }
 
@@ -40,7 +50,6 @@ impl<P: embedded_graphics_core::pixelcolor::PixelColor> crate::render::PixelRend
         &self,
         target: &mut impl DrawTarget<Color = P>,
         layout: &ResolvedLayout<Self::Sublayout>,
-        origin: Point,
         env: &impl crate::environment::RenderEnvironment<Color = P>,
     ) {
         let color = env.foreground_color();
@@ -49,7 +58,7 @@ impl<P: embedded_graphics_core::pixelcolor::PixelColor> crate::render::PixelRend
             .build();
         _ = embedded_graphics::primitives::RoundedRectangle::new(
             embedded_graphics::primitives::Rectangle {
-                top_left: origin.into(),
+                top_left: layout.origin.into(),
                 size: layout.resolved_size.into(),
             },
             embedded_graphics::primitives::CornerRadii::new(

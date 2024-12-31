@@ -32,7 +32,7 @@ impl Layout for Divider {
     type Sublayout = ();
     fn layout(
         &self,
-        offer: ProposedDimensions,
+        offer: &ProposedDimensions,
         env: &impl LayoutEnvironment,
     ) -> ResolvedLayout<()> {
         let size = match env.layout_direction() {
@@ -48,7 +48,17 @@ impl Layout for Divider {
         ResolvedLayout {
             sublayouts: (),
             resolved_size: size,
+            origin: Point::zero(),
         }
+    }
+
+    fn place_subviews(
+        &self,
+        layout: &mut ResolvedLayout<Self::Sublayout>,
+        origin: Point,
+        _env: &impl LayoutEnvironment,
+    ) {
+        layout.origin = origin;
     }
 
     fn priority(&self) -> i8 {
@@ -65,13 +75,12 @@ impl<C: embedded_graphics_core::pixelcolor::PixelColor> crate::render::PixelRend
         &self,
         target: &mut impl DrawTarget<Color = C>,
         layout: &ResolvedLayout<Self::Sublayout>,
-        origin: Point,
         env: &impl RenderEnvironment<Color = C>,
     ) {
         let color = env.foreground_color();
         _ = target.fill_solid(
             &Rectangle {
-                top_left: origin.into(),
+                top_left: layout.origin.into(),
                 size: layout.resolved_size.into(),
             },
             color,
@@ -84,21 +93,20 @@ impl<C: Copy> CharacterRender<C> for Divider {
         &self,
         target: &mut impl CharacterRenderTarget<Color = C>,
         layout: &ResolvedLayout<Self::Sublayout>,
-        origin: Point,
         env: &impl RenderEnvironment<Color = C>,
     ) {
         let color = env.foreground_color();
         match env.layout_direction() {
             LayoutDirection::Horizontal => {
                 let height: i16 = layout.resolved_size.height.into();
-                for y in origin.y..origin.y + height {
-                    target.draw(Point::new(origin.x, y), '|', color);
+                for y in layout.origin.y..layout.origin.y + height {
+                    target.draw(Point::new(layout.origin.x, y), '|', color);
                 }
             }
             LayoutDirection::Vertical => {
                 let width: i16 = layout.resolved_size.width.into();
-                for x in origin.x..origin.x + width {
-                    target.draw(Point::new(x, origin.y), '-', color);
+                for x in layout.origin.x..layout.origin.x + width {
+                    target.draw(Point::new(x, layout.origin.y), '-', color);
                 }
             }
         }
@@ -110,7 +118,7 @@ mod tests {
     use super::Divider;
     use crate::environment::mock::TestEnv;
     use crate::layout::{Layout, LayoutDirection};
-    use crate::primitives::{Point, Size};
+    use crate::primitives::Size;
     use crate::render::CharacterRender;
     use crate::render_target::{CharacterRenderTarget, FixedTextBuffer};
 
@@ -119,7 +127,7 @@ mod tests {
         let divider = Divider::new(2);
         let offer = Size::new(100, 100).into();
         let env = TestEnv::<()>::default().with_direction(LayoutDirection::Horizontal);
-        let layout = divider.layout(offer, &env);
+        let layout = divider.layout(&offer, &env);
         assert_eq!(layout.resolved_size, Size::new(2, 100).into());
     }
 
@@ -128,7 +136,7 @@ mod tests {
         let divider = Divider::new(2);
         let offer = Size::new(100, 100).into();
         let env = TestEnv::<char>::default().with_direction(LayoutDirection::Vertical);
-        let layout = divider.layout(offer, &env);
+        let layout = divider.layout(&offer, &env);
         assert_eq!(layout.resolved_size, Size::new(100, 2).into());
     }
 
@@ -137,8 +145,8 @@ mod tests {
         let divider = Divider::new(1);
         let mut buffer = FixedTextBuffer::<5, 5>::default();
         let env = TestEnv::default().with_direction(LayoutDirection::Horizontal);
-        let layout = divider.layout(buffer.size().into(), &env);
-        divider.render(&mut buffer, &layout, Point::zero(), &env);
+        let layout = divider.layout(&buffer.size().into(), &env);
+        divider.render(&mut buffer, &layout, &env);
         assert_eq!(buffer.text[0][0], '|');
         assert_eq!(buffer.text[4][0], '|');
         assert_eq!(buffer.text[0][1], ' ');
@@ -149,8 +157,8 @@ mod tests {
         let divider = Divider::new(1);
         let mut buffer = FixedTextBuffer::<5, 5>::default();
         let env = TestEnv::default().with_direction(LayoutDirection::Vertical);
-        let layout = divider.layout(buffer.size().into(), &env);
-        divider.render(&mut buffer, &layout, Point::zero(), &env);
+        let layout = divider.layout(&buffer.size().into(), &env);
+        divider.render(&mut buffer, &layout, &env);
         assert_eq!(buffer.text[0][0], '-');
         assert_eq!(buffer.text[0][4], '-');
         assert_eq!(buffer.text[1][0], ' ');

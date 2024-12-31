@@ -33,7 +33,7 @@ impl<U: Layout, V: Layout> Layout for ConditionalView<U, V> {
 
     fn layout(
         &self,
-        offer: ProposedDimensions,
+        offer: &ProposedDimensions,
         env: &impl crate::environment::LayoutEnvironment,
     ) -> ResolvedLayout<Self::Sublayout> {
         if self.condition {
@@ -42,6 +42,7 @@ impl<U: Layout, V: Layout> Layout for ConditionalView<U, V> {
             ResolvedLayout {
                 sublayouts: ConditionalViewLayout::TrueLayout(child_layout),
                 resolved_size,
+                origin: Point::zero(),
             }
         } else {
             let child_layout = self.false_view.layout(offer, env);
@@ -49,6 +50,24 @@ impl<U: Layout, V: Layout> Layout for ConditionalView<U, V> {
             ResolvedLayout {
                 sublayouts: ConditionalViewLayout::FalseLayout(child_layout),
                 resolved_size,
+                origin: Point::zero(),
+            }
+        }
+    }
+
+    fn place_subviews(
+        &self,
+        layout: &mut ResolvedLayout<Self::Sublayout>,
+        origin: Point,
+        env: &impl crate::environment::LayoutEnvironment,
+    ) {
+        layout.origin = origin;
+        match &mut layout.sublayouts {
+            ConditionalViewLayout::TrueLayout(ref mut true_layout) => {
+                self.true_view.place_subviews(true_layout, origin, env)
+            }
+            ConditionalViewLayout::FalseLayout(ref mut false_layout) => {
+                self.false_view.place_subviews(false_layout, origin, env)
             }
         }
     }
@@ -81,15 +100,14 @@ where
         layout: &ResolvedLayout<
             ConditionalViewLayout<ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>>,
         >,
-        origin: Point,
         env: &impl crate::environment::RenderEnvironment<Color = Pixel>,
     ) {
         match &layout.sublayouts {
             ConditionalViewLayout::TrueLayout(true_layout) => {
-                self.true_view.render(target, true_layout, origin, env)
+                self.true_view.render(target, true_layout, env)
             }
             ConditionalViewLayout::FalseLayout(false_layout) => {
-                self.false_view.render(target, false_layout, origin, env)
+                self.false_view.render(target, false_layout, env)
             }
         }
     }
@@ -109,15 +127,14 @@ where
         &self,
         target: &mut impl DrawTarget<Color = Pixel>,
         layout: &ResolvedLayout<Self::Sublayout>,
-        origin: Point,
         env: &impl crate::environment::RenderEnvironment<Color = Pixel>,
     ) {
         match &layout.sublayouts {
             ConditionalViewLayout::TrueLayout(true_layout) => {
-                self.true_view.render(target, true_layout, origin, env)
+                self.true_view.render(target, true_layout, env)
             }
             ConditionalViewLayout::FalseLayout(false_layout) => {
-                self.false_view.render(target, false_layout, origin, env)
+                self.false_view.render(target, false_layout, env)
             }
         }
     }

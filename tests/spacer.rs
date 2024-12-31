@@ -15,7 +15,7 @@ fn test_horizontal_layout() {
     let spacer = Spacer::default();
     let offer = Size::new(10, 10);
     let env = TestEnv::colorless().with_direction(LayoutDirection::Horizontal);
-    let layout = spacer.layout(offer.into(), &env);
+    let layout = spacer.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(10, 0));
 }
 
@@ -24,7 +24,7 @@ fn test_vertical_layout() {
     let spacer = Spacer::default();
     let offer = Size::new(10, 10);
     let env = TestEnv::colorless().with_direction(LayoutDirection::Vertical);
-    let layout = spacer.layout(offer.into(), &env);
+    let layout = spacer.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(0, 10));
 }
 
@@ -33,7 +33,7 @@ fn test_horizontal_layout_zero() {
     let spacer = Spacer::default();
     let offer = Size::new(0, 10);
     let env = TestEnv::colorless().with_direction(LayoutDirection::Horizontal);
-    let layout = spacer.layout(offer.into(), &env);
+    let layout = spacer.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(0, 0));
 }
 
@@ -42,7 +42,7 @@ fn test_vertical_layout_zero() {
     let spacer = Spacer::default();
     let offer = Size::new(10, 0);
     let env = TestEnv::colorless().with_direction(LayoutDirection::Vertical);
-    let layout = spacer.layout(offer.into(), &env);
+    let layout = spacer.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(0, 0));
 }
 
@@ -54,7 +54,7 @@ fn test_horizontal_layout_infinite_width() {
         height: ProposedDimension::Exact(10),
     };
     let env = TestEnv::colorless().with_direction(LayoutDirection::Horizontal);
-    let layout = spacer.layout(offer, &env);
+    let layout = spacer.layout(&offer, &env);
     assert_eq!(
         layout.resolved_size,
         Dimensions {
@@ -73,7 +73,7 @@ fn test_horizontal_layout_compact_width() {
     };
 
     let env = TestEnv::colorless().with_direction(LayoutDirection::Horizontal);
-    let layout = spacer.layout(offer, &env);
+    let layout = spacer.layout(&offer, &env);
     assert_eq!(
         layout.resolved_size,
         Dimensions {
@@ -92,7 +92,7 @@ fn test_vertical_layout_infinite_height() {
     };
 
     let env = TestEnv::colorless().with_direction(LayoutDirection::Vertical);
-    let layout = spacer.layout(offer, &env);
+    let layout = spacer.layout(&offer, &env);
     assert_eq!(
         layout.resolved_size,
         Dimensions {
@@ -111,7 +111,7 @@ fn test_vertical_layout_compact_height() {
     };
 
     let env = TestEnv::colorless().with_direction(LayoutDirection::Vertical);
-    let layout = spacer.layout(offer, &env);
+    let layout = spacer.layout(&offer, &env);
     assert_eq!(layout.resolved_size, Dimensions::new(0, 0));
 }
 
@@ -121,8 +121,8 @@ fn test_render_fills_hstack() {
     let hstack = HStack::new((Spacer::default(), Text::str("67", &font))).with_spacing(1);
     let mut buffer = FixedTextBuffer::<9, 1>::default();
     let env = TestEnv::default().with_direction(LayoutDirection::Horizontal);
-    let layout = hstack.layout(buffer.size().into(), &env);
-    hstack.render(&mut buffer, &layout, Point::zero(), &env);
+    let layout = hstack.layout_and_place(buffer.size(), Point::zero(), &env);
+    hstack.render(&mut buffer, &layout, &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "       67");
 }
 
@@ -132,7 +132,7 @@ fn test_render_fills_vstack() {
     let vstack = VStack::new((Spacer::default(), Text::str("67", &font))).with_spacing(1);
     let mut buffer = FixedTextBuffer::<1, 9>::default();
     let env = TestEnv::default().with_direction(LayoutDirection::Horizontal);
-    let layout = vstack.layout(buffer.size().into(), &env);
-    vstack.render(&mut buffer, &layout, Point::zero(), &env);
+    let layout = vstack.layout_and_place(buffer.size(), Point::zero(), &env);
+    vstack.render(&mut buffer, &layout, &env);
     assert_eq!(collect_text(&buffer), "       67");
 }

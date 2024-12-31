@@ -1,7 +1,6 @@
 use crate::{
     environment::RenderEnvironment,
     layout::{Layout, ResolvedLayout},
-    primitives::Point,
     render_target::CharacterRenderTarget,
 };
 
@@ -12,7 +11,6 @@ pub trait CharacterRender<Pixel: Copy>: Layout {
         &self,
         target: &mut impl CharacterRenderTarget<Color = Pixel>,
         layout: &ResolvedLayout<Self::Sublayout>,
-        origin: Point,
         env: &impl RenderEnvironment<Color = Pixel>,
     );
 }
@@ -25,7 +23,24 @@ pub trait PixelRender<Pixel: embedded_graphics_core::pixelcolor::PixelColor>: La
         &self,
         target: &mut impl embedded_graphics_core::draw_target::DrawTarget<Color = Pixel>,
         layout: &ResolvedLayout<Self::Sublayout>,
-        origin: Point,
         env: &impl RenderEnvironment<Color = Pixel>,
     );
+
+    // fn render_animated(
+    //     target: &mut impl embedded_graphics_core::draw_target::DrawTarget,
+    //     source_view: &Self,
+    //     source_layout: &ResolvedLayout<Self::Sublayout>,
+    //     target_view: &Self,
+    //     target_layout: &ResolvedLayout<Self::Sublayout>,
+    //     env: &impl RenderEnvironment,
+    //     factor: Factor,
+    // ) {
+    // }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Factor {
+    Source,
+    Interpolated(u16, f32),
+    Target,
 }

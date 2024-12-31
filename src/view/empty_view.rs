@@ -12,13 +12,22 @@ impl Layout for EmptyView {
     type Sublayout = ();
     fn layout(
         &self,
-        _: ProposedDimensions,
+        _: &ProposedDimensions,
         _: &impl crate::environment::LayoutEnvironment,
     ) -> ResolvedLayout<Self::Sublayout> {
         ResolvedLayout {
             sublayouts: (),
             resolved_size: Dimensions::zero(),
+            origin: Point::zero(),
         }
+    }
+
+    fn place_subviews(
+        &self,
+        _: &mut ResolvedLayout<Self::Sublayout>,
+        _: Point,
+        _: &impl crate::environment::LayoutEnvironment,
+    ) {
     }
 
     fn priority(&self) -> i8 {
@@ -35,7 +44,6 @@ impl<Pixel: Copy> CharacterRender<Pixel> for EmptyView {
         &self,
         _: &mut impl CharacterRenderTarget<Color = Pixel>,
         _: &ResolvedLayout<Self::Sublayout>,
-        _: Point,
         _: &impl crate::environment::RenderEnvironment<Color = Pixel>,
     ) {
     }
@@ -52,7 +60,6 @@ impl<Pixel: embedded_graphics_core::pixelcolor::PixelColor> crate::render::Pixel
         &self,
         _: &mut impl DrawTarget<Color = Pixel>,
         _: &ResolvedLayout<Self::Sublayout>,
-        _: Point,
         _: &impl crate::environment::RenderEnvironment<Color = Pixel>,
     ) {
     }

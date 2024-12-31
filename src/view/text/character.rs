@@ -70,13 +70,13 @@ impl Slice for String {
     }
 }
 
-impl<'a, T, F> Text<'a, T, F> {
+impl<T, F> Text<'_, T, F> {
     pub fn multiline_text_alignment(self, alignment: HorizontalTextAlignment) -> Self {
         Text { alignment, ..self }
     }
 }
 
-impl<'a, T: PartialEq, F> PartialEq for Text<'a, T, F> {
+impl<T: PartialEq, F> PartialEq for Text<'_, T, F> {
     fn eq(&self, other: &Self) -> bool {
         self.text == other.text
     }
@@ -84,13 +84,13 @@ impl<'a, T: PartialEq, F> PartialEq for Text<'a, T, F> {
 
 // TODO: consolidate the layout implementations...this is getting ridiculous
 
-impl<'a, T: Slice, F: FontLayout> Layout for Text<'a, T, F> {
+impl<T: Slice, F: FontLayout> Layout for Text<'_, T, F> {
     // this could be used to store the precalculated line breaks
     type Sublayout = ();
 
     fn layout(
         &self,
-        offer: ProposedDimensions,
+        offer: &ProposedDimensions,
         _env: &impl LayoutEnvironment,
     ) -> ResolvedLayout<Self::Sublayout> {
         let line_height = self.font.line_height();
@@ -107,16 +107,25 @@ impl<'a, T: Slice, F: FontLayout> Layout for Text<'a, T, F> {
         ResolvedLayout {
             sublayouts: (),
             resolved_size: size.into(),
+            origin: Point::zero(),
         }
+    }
+
+    fn place_subviews(
+        &self,
+        layout: &mut ResolvedLayout<Self::Sublayout>,
+        origin: Point,
+        _env: &impl LayoutEnvironment,
+    ) {
+        layout.origin = origin;
     }
 }
 
-impl<'a, T: Slice, F: CharacterFont<Color>, Color: Copy> CharacterRender<Color> for Text<'a, T, F> {
+impl<T: Slice, F: CharacterFont<Color>, Color: Copy> CharacterRender<Color> for Text<'_, T, F> {
     fn render(
         &self,
         target: &mut impl CharacterRenderTarget<Color = Color>,
         layout: &ResolvedLayout<()>,
-        origin: Point,
         env: &impl RenderEnvironment<Color = Color>,
     ) {
         if layout.resolved_size.area() == 0 {
@@ -140,7 +149,7 @@ impl<'a, T: Slice, F: CharacterFont<Color>, Color: Copy> CharacterRender<Color> 
                 .align(layout.resolved_size.width.into(), width as i16);
             self.font.render_iter_solid(
                 target,
-                Point::new(origin.x + x, origin.y + height),
+                Point::new(layout.origin.x + x, layout.origin.y + height),
                 color,
                 line.chars(),
             );
@@ -158,17 +167,15 @@ use embedded_graphics::draw_target::DrawTarget;
 
 #[cfg(feature = "embedded-graphics")]
 impl<
-        'a,
         T: Slice,
         F: crate::font::PixelFont<Color>,
         Color: embedded_graphics_core::pixelcolor::PixelColor,
-    > crate::render::PixelRender<Color> for Text<'a, T, F>
+    > crate::render::PixelRender<Color> for Text<'_, T, F>
 {
     fn render(
         &self,
         target: &mut impl DrawTarget<Color = Color>,
         layout: &ResolvedLayout<()>,
-        origin: Point,
         env: &impl RenderEnvironment<Color = Color>,
     ) {
         if layout.resolved_size.area() == 0 {
@@ -192,7 +199,7 @@ impl<
                 .align(layout.resolved_size.width.into(), width as i16);
             self.font.render_iter(
                 target,
-                Point::new(origin.x + x, origin.y + height),
+                Point::new(layout.origin.x + x, layout.origin.y + height),
                 color,
                 line.chars(),
             );

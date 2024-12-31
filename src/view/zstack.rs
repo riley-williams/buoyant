@@ -48,9 +48,15 @@ impl<U, V> ZStack<(U, V)> {
 impl<U: Layout, V: Layout> Layout for ZStack<(U, V)> {
     type Sublayout = (ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>);
 
+    // fn flexibility(&self, axis: Axis, env: &impl LayoutEnvironment) -> (Dimensions, Dimensions) {
+    //     let layout0 = self.items.0.flexibility(axis, env);
+    //     let layout1 = self.items.1.flexibility(axis, env);
+    //     (layout0.0.union(layout1.0), layout0.1.union(layout1.1))
+    // }
+
     fn layout(
         &self,
-        offer: ProposedDimensions,
+        offer: &ProposedDimensions,
         env: &impl LayoutEnvironment,
     ) -> ResolvedLayout<Self::Sublayout> {
         let layout0 = self.items.0.layout(offer, env);
@@ -60,21 +66,15 @@ impl<U: Layout, V: Layout> Layout for ZStack<(U, V)> {
         ResolvedLayout {
             sublayouts: (layout0, layout1),
             resolved_size: size.intersecting_proposal(offer),
+            origin: Point::zero(),
         }
     }
-}
 
-impl<Pixel: Copy, U: Layout, V: Layout> CharacterRender<Pixel> for ZStack<(U, V)>
-where
-    U: CharacterRender<Pixel>,
-    V: CharacterRender<Pixel>,
-{
-    fn render(
+    fn place_subviews(
         &self,
-        target: &mut impl CharacterRenderTarget<Color = Pixel>,
-        layout: &ResolvedLayout<(ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>)>,
+        layout: &mut ResolvedLayout<Self::Sublayout>,
         origin: Point,
-        env: &impl RenderEnvironment<Color = Pixel>,
+        env: &impl LayoutEnvironment,
     ) {
         let new_origin = origin
             + Point::new(
@@ -90,7 +90,7 @@ where
 
         self.items
             .0
-            .render(target, &layout.sublayouts.0, new_origin, env);
+            .place_subviews(&mut layout.sublayouts.0, new_origin, env);
 
         let new_origin = origin
             + Point::new(
@@ -105,7 +105,23 @@ where
             );
         self.items
             .1
-            .render(target, &layout.sublayouts.1, new_origin, env);
+            .place_subviews(&mut layout.sublayouts.1, new_origin, env);
+    }
+}
+
+impl<Pixel: Copy, U: Layout, V: Layout> CharacterRender<Pixel> for ZStack<(U, V)>
+where
+    U: CharacterRender<Pixel>,
+    V: CharacterRender<Pixel>,
+{
+    fn render(
+        &self,
+        target: &mut impl CharacterRenderTarget<Color = Pixel>,
+        layout: &ResolvedLayout<(ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>)>,
+        env: &impl RenderEnvironment<Color = Pixel>,
+    ) {
+        self.items.0.render(target, &layout.sublayouts.0, env);
+        self.items.1.render(target, &layout.sublayouts.1, env);
     }
 }
 
@@ -123,38 +139,9 @@ where
         &self,
         target: &mut impl DrawTarget<Color = Pixel>,
         layout: &ResolvedLayout<(ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>)>,
-        origin: Point,
         env: &impl RenderEnvironment<Color = Pixel>,
     ) {
-        let new_origin = origin
-            + Point::new(
-                self.horizontal_alignment.align(
-                    layout.resolved_size.width.into(),
-                    layout.sublayouts.0.resolved_size.width.into(),
-                ),
-                self.vertical_alignment.align(
-                    layout.resolved_size.height.into(),
-                    layout.sublayouts.0.resolved_size.height.into(),
-                ),
-            );
-
-        self.items
-            .0
-            .render(target, &layout.sublayouts.0, new_origin, env);
-
-        let new_origin = origin
-            + Point::new(
-                self.horizontal_alignment.align(
-                    layout.resolved_size.width.into(),
-                    layout.sublayouts.1.resolved_size.width.into(),
-                ),
-                self.vertical_alignment.align(
-                    layout.resolved_size.height.into(),
-                    layout.sublayouts.1.resolved_size.height.into(),
-                ),
-            );
-        self.items
-            .1
-            .render(target, &layout.sublayouts.1, new_origin, env);
+        self.items.0.render(target, &layout.sublayouts.0, env);
+        self.items.1.render(target, &layout.sublayouts.1, env);
     }
 }

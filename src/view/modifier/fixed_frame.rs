@@ -46,7 +46,7 @@ impl<V: Layout> Layout for FixedFrame<V> {
 
     fn layout(
         &self,
-        offer: ProposedDimensions,
+        offer: &ProposedDimensions,
         env: &impl LayoutEnvironment,
     ) -> ResolvedLayout<Self::Sublayout> {
         let modified_offer = ProposedDimensions {
@@ -59,7 +59,7 @@ impl<V: Layout> Layout for FixedFrame<V> {
                 .map(ProposedDimension::Exact)
                 .unwrap_or(offer.height),
         };
-        let child_layout = self.child.layout(modified_offer, env);
+        let child_layout = self.child.layout(&modified_offer, env);
         let resolved_size = Dimensions {
             width: self
                 .width
@@ -73,21 +73,17 @@ impl<V: Layout> Layout for FixedFrame<V> {
         ResolvedLayout {
             sublayouts: child_layout,
             resolved_size,
+            origin: Point::zero(),
         }
     }
-}
 
-impl<Pixel: Copy, View: Layout> CharacterRender<Pixel> for FixedFrame<View>
-where
-    View: CharacterRender<Pixel>,
-{
-    fn render(
+    fn place_subviews(
         &self,
-        target: &mut impl CharacterRenderTarget<Color = Pixel>,
-        layout: &ResolvedLayout<ResolvedLayout<View::Sublayout>>,
+        layout: &mut ResolvedLayout<Self::Sublayout>,
         origin: Point,
-        env: &impl RenderEnvironment<Color = Pixel>,
+        env: &impl LayoutEnvironment,
     ) {
+        layout.origin = origin;
         let new_origin = origin
             + Point::new(
                 self.horizontal_alignment.unwrap_or_default().align(
@@ -101,7 +97,21 @@ where
             );
 
         self.child
-            .render(target, &layout.sublayouts, new_origin, env);
+            .place_subviews(&mut layout.sublayouts, new_origin, env);
+    }
+}
+
+impl<Pixel: Copy, View: Layout> CharacterRender<Pixel> for FixedFrame<View>
+where
+    View: CharacterRender<Pixel>,
+{
+    fn render(
+        &self,
+        target: &mut impl CharacterRenderTarget<Color = Pixel>,
+        layout: &ResolvedLayout<ResolvedLayout<View::Sublayout>>,
+        env: &impl RenderEnvironment<Color = Pixel>,
+    ) {
+        self.child.render(target, &layout.sublayouts, env);
     }
 }
 
@@ -118,22 +128,8 @@ where
         &self,
         target: &mut impl DrawTarget<Color = Pixel>,
         layout: &ResolvedLayout<ResolvedLayout<View::Sublayout>>,
-        origin: Point,
         env: &impl RenderEnvironment<Color = Pixel>,
     ) {
-        let new_origin = origin
-            + Point::new(
-                self.horizontal_alignment.unwrap_or_default().align(
-                    layout.resolved_size.width.into(),
-                    layout.sublayouts.resolved_size.width.into(),
-                ),
-                self.vertical_alignment.unwrap_or_default().align(
-                    layout.resolved_size.height.into(),
-                    layout.sublayouts.resolved_size.height.into(),
-                ),
-            );
-
-        self.child
-            .render(target, &layout.sublayouts, new_origin, env);
+        self.child.render(target, &layout.sublayouts, env);
     }
 }

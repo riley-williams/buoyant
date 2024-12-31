@@ -49,15 +49,15 @@ fn main() {
 
     println!("View size {}", std::mem::size_of_val(&stack));
     println!("Env size {}", std::mem::size_of_val(&env));
-    let sample_layout = stack.layout(size.into(), &env);
+    let sample_layout = stack.layout(&size.into(), &env);
     println!("Layout size {}", std::mem::size_of_val(&sample_layout));
 
     target.clear(None);
     for width in 1..100 {
         for height in 1..100 {
             size = Size::new(width, height);
-            let layout = stack.layout(size.into(), &env);
-            stack.render(&mut target, &layout, Point::zero(), &env);
+            let layout = stack.layout_and_place(size, Point::zero(), &env);
+            stack.render(&mut target, &layout, &env);
         }
     }
 }

@@ -51,8 +51,8 @@ fn foreach_with_inner_wrapping_hstack() {
     });
     let env = DefaultEnvironment::new(None);
     let mut buffer = FixedTextBuffer::<10, 5>::default();
-    let layout = view.layout(buffer.size().into(), &env);
-    view.render(&mut buffer, &layout, Point::zero(), &env);
+    let layout = view.layout_and_place(buffer.size(), Point::zero(), &env);
+    view.render(&mut buffer, &layout, &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "Alice   99");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "Bob      2");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "Person    ");
@@ -93,8 +93,8 @@ fn foreach_leading_aligned() {
     .with_alignment(HorizontalAlignment::Leading);
     let env = DefaultEnvironment::new(None);
     let mut buffer = FixedTextBuffer::<10, 5>::default();
-    let layout = view.layout(buffer.size().into(), &env);
-    view.render(&mut buffer, &layout, Point::zero(), &env);
+    let layout = view.layout_and_place(buffer.size(), Point::zero(), &env);
+    view.render(&mut buffer, &layout, &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "Alice 99  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "Bob 2     ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "Person    ");
@@ -135,8 +135,8 @@ fn foreach_trailing_aligned() {
     .with_alignment(HorizontalAlignment::Trailing);
     let env = DefaultEnvironment::new(None);
     let mut buffer = FixedTextBuffer::<10, 5>::default();
-    let layout = view.layout(buffer.size().into(), &env);
-    view.render(&mut buffer, &layout, Point::zero(), &env);
+    let layout = view.layout_and_place(buffer.size(), Point::zero(), &env);
+    view.render(&mut buffer, &layout, &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), " Alice 99 ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "    Bob 2 ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "Person    ");

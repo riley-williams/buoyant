@@ -15,24 +15,26 @@ fn test_fixed_width() {
     let env = DefaultEnvironment::new(());
 
     assert_eq!(
-        content.layout(Size::new(1, 1).into(), &env).resolved_size,
+        content.layout(&Size::new(1, 1).into(), &env).resolved_size,
         Dimensions::new(2, 1)
     );
 
     assert_eq!(
         content
-            .layout(Size::new(20, 123).into(), &env)
+            .layout(&Size::new(20, 123).into(), &env)
             .resolved_size,
         Dimensions::new(2, 3)
     );
 
     assert_eq!(
-        content.layout(Size::new(100, 1).into(), &env).resolved_size,
+        content
+            .layout(&Size::new(100, 1).into(), &env)
+            .resolved_size,
         Dimensions::new(2, 1)
     );
 
     assert_eq!(
-        content.layout(Size::new(1, 6).into(), &env).resolved_size,
+        content.layout(&Size::new(1, 6).into(), &env).resolved_size,
         Dimensions::new(2, 3)
     );
 }
@@ -43,21 +45,23 @@ fn test_fixed_height() {
     let content = Text::str("123456", &font).frame(None, Some(2), None, None);
     let env = DefaultEnvironment::new(());
     assert_eq!(
-        content.layout(Size::new(1, 1).into(), &env).resolved_size,
+        content.layout(&Size::new(1, 1).into(), &env).resolved_size,
         Dimensions::new(1, 2)
     );
     assert_eq!(
         content
-            .layout(Size::new(20, 123).into(), &env)
+            .layout(&Size::new(20, 123).into(), &env)
             .resolved_size,
         Dimensions::new(6, 2)
     );
     assert_eq!(
-        content.layout(Size::new(100, 1).into(), &env).resolved_size,
+        content
+            .layout(&Size::new(100, 1).into(), &env)
+            .resolved_size,
         Dimensions::new(6, 2)
     );
     assert_eq!(
-        content.layout(Size::new(2, 6).into(), &env).resolved_size,
+        content.layout(&Size::new(2, 6).into(), &env).resolved_size,
         Dimensions::new(2, 2)
     );
 }
@@ -71,7 +75,7 @@ fn test_fixed_frame_compact_width_height() {
     assert_eq!(
         content
             .layout(
-                ProposedDimensions {
+                &ProposedDimensions {
                     width: ProposedDimension::Compact,
                     height: ProposedDimension::Compact
                 },
@@ -84,7 +88,7 @@ fn test_fixed_frame_compact_width_height() {
     assert_eq!(
         content
             .layout(
-                ProposedDimensions {
+                &ProposedDimensions {
                     width: ProposedDimension::Exact(2),
                     height: ProposedDimension::Exact(2)
                 },
@@ -97,7 +101,7 @@ fn test_fixed_frame_compact_width_height() {
     assert_eq!(
         content
             .layout(
-                ProposedDimensions {
+                &ProposedDimensions {
                     width: ProposedDimension::Exact(3),
                     height: ProposedDimension::Exact(3)
                 },
@@ -117,7 +121,7 @@ fn test_fixed_frame_infinite_width_height() {
     assert_eq!(
         content
             .layout(
-                ProposedDimensions {
+                &ProposedDimensions {
                     width: ProposedDimension::Infinite,
                     height: ProposedDimension::Infinite
                 },
@@ -139,8 +143,8 @@ fn test_render_frame_top_leading_alignment() {
     );
     let env = DefaultEnvironment::new(None);
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let layout = content.layout(buffer.size().into(), &env);
-    content.render(&mut buffer, &layout, Point::zero(), &env);
+    let layout = content.layout_and_place(buffer.size(), Point::zero(), &env);
+    content.render(&mut buffer, &layout, &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aa    ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "bb    ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "cc    ");
@@ -155,8 +159,8 @@ fn test_render_frame_top_center_alignment() {
         Text::str("aa\nbb\ncc", &font).frame(Some(6), Some(5), None, Some(VerticalAlignment::Top));
     let env = DefaultEnvironment::new(None);
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let layout = content.layout(buffer.size().into(), &env);
-    content.render(&mut buffer, &layout, Point::zero(), &env);
+    let layout = content.layout_and_place(buffer.size(), Point::zero(), &env);
+    content.render(&mut buffer, &layout, &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "  aa  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "  bb  ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "  cc  ");
@@ -175,8 +179,8 @@ fn test_render_frame_top_trailing_alignment() {
     );
     let env = DefaultEnvironment::new(None);
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let layout = content.layout(buffer.size().into(), &env);
-    content.render(&mut buffer, &layout, Point::zero(), &env);
+    let layout = content.layout_and_place(buffer.size(), Point::zero(), &env);
+    content.render(&mut buffer, &layout, &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "    aa");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "    bb");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "    cc");
@@ -195,8 +199,8 @@ fn test_render_frame_center_leading_alignment() {
     );
     let env = DefaultEnvironment::new(None);
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let layout = content.layout(buffer.size().into(), &env);
-    content.render(&mut buffer, &layout, Point::zero(), &env);
+    let layout = content.layout_and_place(buffer.size(), Point::zero(), &env);
+    content.render(&mut buffer, &layout, &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "aa    ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "bb    ");
@@ -210,8 +214,8 @@ fn test_render_frame_center_center_alignment() {
     let content = Text::str("aa\nbb\ncc", &font).frame(Some(6), Some(5), None, None);
     let env = DefaultEnvironment::new(None);
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let layout = content.layout(buffer.size().into(), &env);
-    content.render(&mut buffer, &layout, Point::zero(), &env);
+    let layout = content.layout_and_place(buffer.size(), Point::zero(), &env);
+    content.render(&mut buffer, &layout, &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "  aa  ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "  bb  ");
@@ -230,8 +234,8 @@ fn test_render_frame_center_trailing_alignment() {
     );
     let env = DefaultEnvironment::new(None);
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let layout = content.layout(buffer.size().into(), &env);
-    content.render(&mut buffer, &layout, Point::zero(), &env);
+    let layout = content.layout_and_place(buffer.size(), Point::zero(), &env);
+    content.render(&mut buffer, &layout, &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "    aa");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "    bb");
@@ -250,8 +254,8 @@ fn test_render_frame_bottom_leading_alignment() {
     );
     let env = DefaultEnvironment::new(None);
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let layout = content.layout(buffer.size().into(), &env);
-    content.render(&mut buffer, &layout, Point::zero(), &env);
+    let layout = content.layout_and_place(buffer.size(), Point::zero(), &env);
+    content.render(&mut buffer, &layout, &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "aa    ");
@@ -270,8 +274,8 @@ fn test_render_frame_bottom_center_alignment() {
     );
     let env = DefaultEnvironment::new(None);
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let layout = content.layout(buffer.size().into(), &env);
-    content.render(&mut buffer, &layout, Point::zero(), &env);
+    let layout = content.layout_and_place(buffer.size(), Point::zero(), &env);
+    content.render(&mut buffer, &layout, &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "  aa  ");
@@ -290,8 +294,8 @@ fn test_render_frame_bottom_trailing_alignment() {
     );
     let env = DefaultEnvironment::new(None);
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let layout = content.layout(buffer.size().into(), &env);
-    content.render(&mut buffer, &layout, Point::zero(), &env);
+    let layout = content.layout_and_place(buffer.size(), Point::zero(), &env);
+    content.render(&mut buffer, &layout, &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "    aa");

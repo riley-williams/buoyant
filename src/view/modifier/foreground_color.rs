@@ -24,7 +24,7 @@ impl<Inner: Layout, Color: Copy> Layout for ForegroundStyle<Inner, Color> {
 
     fn layout(
         &self,
-        offer: ProposedDimensions,
+        offer: &ProposedDimensions,
         env: &impl LayoutEnvironment,
     ) -> ResolvedLayout<Self::Sublayout> {
         let modified_env = ForegroundStyleEnv {
@@ -32,6 +32,19 @@ impl<Inner: Layout, Color: Copy> Layout for ForegroundStyle<Inner, Color> {
             wrapped_env: env,
         };
         self.inner.layout(offer, &modified_env)
+    }
+
+    fn place_subviews(
+        &self,
+        layout: &mut ResolvedLayout<Self::Sublayout>,
+        origin: Point,
+        env: &impl LayoutEnvironment,
+    ) {
+        let modified_env = ForegroundStyleEnv {
+            color: self.style,
+            wrapped_env: env,
+        };
+        self.inner.place_subviews(layout, origin, &modified_env);
     }
 }
 
@@ -43,7 +56,6 @@ where
         &self,
         target: &mut impl CharacterRenderTarget<Color = Color>,
         layout: &ResolvedLayout<Inner::Sublayout>,
-        origin: Point,
         env: &impl RenderEnvironment<Color = Color>,
     ) {
         let modified_env = ForegroundStyleEnv {
@@ -51,7 +63,7 @@ where
             wrapped_env: env,
         };
 
-        self.inner.render(target, layout, origin, &modified_env);
+        self.inner.render(target, layout, &modified_env);
     }
 }
 
@@ -68,7 +80,6 @@ where
         &self,
         target: &mut impl DrawTarget<Color = Color>,
         layout: &ResolvedLayout<Inner::Sublayout>,
-        origin: Point,
         env: &impl RenderEnvironment<Color = Color>,
     ) {
         let modified_env = ForegroundStyleEnv {
@@ -76,7 +87,7 @@ where
             wrapped_env: env,
         };
 
-        self.inner.render(target, layout, origin, &modified_env);
+        self.inner.render(target, layout, &modified_env);
     }
 }
 

@@ -15,7 +15,7 @@ impl Layout for Spacer {
     type Sublayout = ();
     fn layout(
         &self,
-        offer: ProposedDimensions,
+        offer: &ProposedDimensions,
         env: &impl LayoutEnvironment,
     ) -> ResolvedLayout<()> {
         let size = match env.layout_direction() {
@@ -31,7 +31,16 @@ impl Layout for Spacer {
         ResolvedLayout {
             sublayouts: (),
             resolved_size: size,
+            origin: Point::zero(),
         }
+    }
+
+    fn place_subviews(
+        &self,
+        _layout: &mut ResolvedLayout<Self::Sublayout>,
+        _origin: Point,
+        _env: &impl LayoutEnvironment,
+    ) {
     }
 
     fn priority(&self) -> i8 {
@@ -45,7 +54,6 @@ impl<Pixel: Copy> CharacterRender<Pixel> for Spacer {
         &self,
         _target: &mut impl CharacterRenderTarget<Color = Pixel>,
         _layout: &ResolvedLayout<Self::Sublayout>,
-        _origin: Point,
         _env: &impl RenderEnvironment<Color = Pixel>,
     ) {
     }
@@ -59,7 +67,6 @@ impl<Pixel: embedded_graphics_core::pixelcolor::PixelColor> crate::render::Pixel
         &self,
         _target: &mut impl embedded_graphics_core::draw_target::DrawTarget<Color = Pixel>,
         _layout: &ResolvedLayout<Self::Sublayout>,
-        _origin: Point,
         _env: &impl RenderEnvironment<Color = Pixel>,
     ) {
     }

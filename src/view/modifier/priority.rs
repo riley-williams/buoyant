@@ -31,10 +31,19 @@ impl<V: Layout> Layout for Priority<V> {
 
     fn layout(
         &self,
-        offer: ProposedDimensions,
+        offer: &ProposedDimensions,
         env: &impl LayoutEnvironment,
     ) -> ResolvedLayout<Self::Sublayout> {
         self.child.layout(offer, env)
+    }
+
+    fn place_subviews(
+        &self,
+        layout: &mut ResolvedLayout<Self::Sublayout>,
+        origin: Point,
+        env: &impl LayoutEnvironment,
+    ) {
+        self.child.place_subviews(layout, origin, env);
     }
 }
 
@@ -46,10 +55,9 @@ where
         &self,
         target: &mut impl CharacterRenderTarget<Color = Pixel>,
         layout: &ResolvedLayout<Self::Sublayout>,
-        origin: Point,
         env: &impl RenderEnvironment<Color = Pixel>,
     ) {
-        self.child.render(target, layout, origin, env);
+        self.child.render(target, layout, env);
     }
 }
 
@@ -66,9 +74,8 @@ where
         &self,
         target: &mut impl DrawTarget<Color = Pixel>,
         layout: &ResolvedLayout<Self::Sublayout>,
-        origin: Point,
         env: &impl RenderEnvironment<Color = Pixel>,
     ) {
-        self.child.render(target, layout, origin, env);
+        self.child.render(target, layout, env);
     }
 }

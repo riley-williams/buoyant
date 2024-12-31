@@ -1,6 +1,6 @@
 use crate::{
     environment::LayoutEnvironment,
-    primitives::{Dimensions, ProposedDimensions},
+    primitives::{Dimensions, Point, ProposedDimension, ProposedDimensions},
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Default)]
@@ -65,16 +65,74 @@ impl VerticalAlignment {
 pub struct ResolvedLayout<C: Clone + PartialEq> {
     pub sublayouts: C,
     pub resolved_size: Dimensions,
+    pub origin: Point,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Axis {
+    FixedWidth(u16),
+    FixedHeight(u16),
+}
+
+impl Axis {
+    pub fn into_min_proposal(self) -> ProposedDimensions {
+        match self {
+            Axis::FixedWidth(w) => ProposedDimensions {
+                width: ProposedDimension::Exact(w),
+                height: ProposedDimension::Exact(0),
+            },
+            Axis::FixedHeight(h) => ProposedDimensions {
+                width: ProposedDimension::Exact(0),
+                height: ProposedDimension::Exact(h),
+            },
+        }
+    }
+
+    pub fn into_max_proposal(self) -> ProposedDimensions {
+        match self {
+            Axis::FixedWidth(w) => ProposedDimensions {
+                width: ProposedDimension::Exact(w),
+                height: ProposedDimension::Infinite,
+            },
+            Axis::FixedHeight(h) => ProposedDimensions {
+                width: ProposedDimension::Infinite,
+                height: ProposedDimension::Exact(h),
+            },
+        }
+    }
 }
 
 pub trait Layout: Sized {
     type Sublayout: Clone + PartialEq;
+
+    // fn flexibility(&self, axis: Axis, env: &impl LayoutEnvironment) -> (Dimensions, Dimensions);
+
     /// The size of the view given the offer
     fn layout(
         &self,
-        offer: ProposedDimensions,
+        offer: &ProposedDimensions,
         env: &impl LayoutEnvironment,
     ) -> ResolvedLayout<Self::Sublayout>;
+
+    fn place_subviews(
+        &self,
+        layout: &mut ResolvedLayout<Self::Sublayout>,
+        origin: Point,
+        env: &impl LayoutEnvironment,
+    );
+
+    // TODO: This should not be part of the trait itself
+    fn layout_and_place(
+        &self,
+        offer: impl Into<ProposedDimensions>,
+        origin: Point,
+        env: &impl LayoutEnvironment,
+    ) -> ResolvedLayout<Self::Sublayout> {
+        let offer = offer.into();
+        let mut layout = self.layout(&offer, env);
+        self.place_subviews(&mut layout, origin, env);
+        layout
+    }
 
     /// The layout priority of the view. Higher priority views are more likely to be given the size they want
     fn priority(&self) -> i8 {

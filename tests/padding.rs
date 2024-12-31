@@ -27,9 +27,9 @@ fn test_clipped_text_trails_correctly() {
     let env = DefaultEnvironment::new(None);
     let mut buffer = FixedTextBuffer::<30, 7>::default();
 
-    let layout = text.layout(buffer.size().into(), &env);
+    let layout = text.layout_and_place(buffer.size(), Point::zero(), &env);
 
-    text.render(&mut buffer, &layout, Point::zero(), &env);
+    text.render(&mut buffer, &layout, &env);
 
     let lines = [
         "                              ",
@@ -52,7 +52,7 @@ fn test_padding_is_oversized_for_oversized_child() {
     let env = DefaultEnvironment::new(());
 
     assert_eq!(
-        text.layout(Size::new(1, 1).into(), &env).resolved_size,
+        text.layout(&Size::new(1, 1).into(), &env).resolved_size,
         Dimensions::new(14, 14)
     );
 }

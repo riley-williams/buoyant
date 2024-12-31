@@ -94,7 +94,7 @@ impl<V: Layout> Layout for FlexFrame<V> {
 
     fn layout(
         &self,
-        offer: ProposedDimensions,
+        offer: &ProposedDimensions,
         env: &impl LayoutEnvironment,
     ) -> ResolvedLayout<Self::Sublayout> {
         let sublayout_width_offer = match offer.width {
@@ -141,7 +141,7 @@ impl<V: Layout> Layout for FlexFrame<V> {
             height: sublayout_height_offer,
         };
 
-        let sublayout = self.child.layout(sublayout_offer, env);
+        let sublayout = self.child.layout(&sublayout_offer, env);
 
         // restrict self size to min/max regardless of what the sublayout returns
         let sublayout_width = sublayout.resolved_size.width;
@@ -167,7 +167,31 @@ impl<V: Layout> Layout for FlexFrame<V> {
         ResolvedLayout {
             sublayouts: sublayout,
             resolved_size,
+            origin: Point::zero(),
         }
+    }
+
+    fn place_subviews(
+        &self,
+        layout: &mut ResolvedLayout<Self::Sublayout>,
+        origin: Point,
+        env: &impl LayoutEnvironment,
+    ) {
+        layout.origin = origin;
+        let new_origin = origin
+            + Point::new(
+                self.horizontal_alignment.align(
+                    layout.resolved_size.width.into(),
+                    layout.sublayouts.resolved_size.width.into(),
+                ),
+                self.vertical_alignment.align(
+                    layout.resolved_size.height.into(),
+                    layout.sublayouts.resolved_size.height.into(),
+                ),
+            );
+
+        self.child
+            .place_subviews(&mut layout.sublayouts, new_origin, env);
     }
 }
 
@@ -187,23 +211,9 @@ where
         &self,
         target: &mut impl CharacterRenderTarget<Color = Pixel>,
         layout: &ResolvedLayout<Self::Sublayout>,
-        origin: Point,
         env: &impl RenderEnvironment<Color = Pixel>,
     ) {
-        let new_origin = origin
-            + Point::new(
-                self.horizontal_alignment.align(
-                    layout.resolved_size.width.into(),
-                    layout.sublayouts.resolved_size.width.into(),
-                ),
-                self.vertical_alignment.align(
-                    layout.resolved_size.height.into(),
-                    layout.sublayouts.resolved_size.height.into(),
-                ),
-            );
-
-        self.child
-            .render(target, &layout.sublayouts, new_origin, env);
+        self.child.render(target, &layout.sublayouts, env);
     }
 }
 
@@ -220,22 +230,8 @@ where
         &self,
         target: &mut impl DrawTarget<Color = Pixel>,
         layout: &ResolvedLayout<Self::Sublayout>,
-        origin: Point,
         env: &impl RenderEnvironment<Color = Pixel>,
     ) {
-        let new_origin = origin
-            + Point::new(
-                self.horizontal_alignment.align(
-                    layout.resolved_size.width.into(),
-                    layout.sublayouts.resolved_size.width.into(),
-                ),
-                self.vertical_alignment.align(
-                    layout.resolved_size.height.into(),
-                    layout.sublayouts.resolved_size.height.into(),
-                ),
-            );
-
-        self.child
-            .render(target, &layout.sublayouts, new_origin, env);
+        self.child.render(target, &layout.sublayouts, env);
     }
 }

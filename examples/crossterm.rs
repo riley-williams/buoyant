@@ -80,8 +80,8 @@ fn main() {
     println!("View size {}", std::mem::size_of_val(&stack));
     println!("Env size {}", std::mem::size_of_val(&env));
 
-    let layout = stack.layout(target.size().into(), &env);
-    stack.render(&mut target, &layout, Point::zero(), &env);
+    let layout = stack.layout_and_place(target.size(), Point::zero(), &env);
+    stack.render(&mut target, &layout, &env);
 
     target.flush();
 
@@ -99,8 +99,8 @@ fn main() {
             Event::Resize(width, height) => {
                 target.clear(blank_color);
                 size = Size::new(width, height);
-                let layout = stack.layout(size.into(), &env);
-                stack.render(&mut target, &layout, Point::zero(), &env);
+                let layout = stack.layout_and_place(size, Point::zero(), &env);
+                stack.render(&mut target, &layout, &env);
 
                 target.flush();
             }

@@ -19,22 +19,26 @@ fn test_min() {
     let env = DefaultEnvironment::new(());
 
     assert_eq!(
-        content.layout(Size::new(1, 1).into(), &env).resolved_size,
+        content.layout(&Size::new(1, 1).into(), &env).resolved_size,
         Size::new(2, 2).into()
     );
 
     assert_eq!(
-        content.layout(Size::new(1, 123).into(), &env).resolved_size,
+        content
+            .layout(&Size::new(1, 123).into(), &env)
+            .resolved_size,
         Size::new(2, 3).into()
     );
 
     assert_eq!(
-        content.layout(Size::new(100, 1).into(), &env).resolved_size,
+        content
+            .layout(&Size::new(100, 1).into(), &env)
+            .resolved_size,
         Size::new(6, 2).into()
     );
 
     assert_eq!(
-        content.layout(Size::new(1, 6).into(), &env).resolved_size,
+        content.layout(&Size::new(1, 6).into(), &env).resolved_size,
         Size::new(2, 3).into()
     );
 }
@@ -50,22 +54,26 @@ fn test_max() {
     let env = DefaultEnvironment::new(());
 
     assert_eq!(
-        content.layout(Size::new(2, 1).into(), &env).resolved_size,
+        content.layout(&Size::new(2, 1).into(), &env).resolved_size,
         Size::new(2, 1).into()
     );
 
     assert_eq!(
-        content.layout(Size::new(1, 123).into(), &env).resolved_size,
+        content
+            .layout(&Size::new(1, 123).into(), &env)
+            .resolved_size,
         Size::new(1, 2).into()
     );
 
     assert_eq!(
-        content.layout(Size::new(100, 1).into(), &env).resolved_size,
+        content
+            .layout(&Size::new(100, 1).into(), &env)
+            .resolved_size,
         Size::new(2, 1).into()
     );
 
     assert_eq!(
-        content.layout(Size::new(1, 6).into(), &env).resolved_size,
+        content.layout(&Size::new(1, 6).into(), &env).resolved_size,
         Size::new(1, 2).into()
     );
 }
@@ -83,35 +91,39 @@ fn test_min_max() {
     let env = DefaultEnvironment::new(None);
 
     assert_eq!(
-        content.layout(Size::new(2, 1).into(), &env).resolved_size,
+        content.layout(&Size::new(2, 1).into(), &env).resolved_size,
         Size::new(2, 2).into()
     );
 
     assert_eq!(
-        content.layout(Size::new(1, 123).into(), &env).resolved_size,
-        Size::new(2, 4).into()
-    );
-
-    assert_eq!(
-        content.layout(Size::new(100, 1).into(), &env).resolved_size,
-        Size::new(4, 2).into()
-    );
-
-    assert_eq!(
-        content.layout(Size::new(1, 6).into(), &env).resolved_size,
+        content
+            .layout(&Size::new(1, 123).into(), &env)
+            .resolved_size,
         Size::new(2, 4).into()
     );
 
     assert_eq!(
         content
-            .layout(Size::new(1000, 1000).into(), &env)
+            .layout(&Size::new(100, 1).into(), &env)
+            .resolved_size,
+        Size::new(4, 2).into()
+    );
+
+    assert_eq!(
+        content.layout(&Size::new(1, 6).into(), &env).resolved_size,
+        Size::new(2, 4).into()
+    );
+
+    assert_eq!(
+        content
+            .layout(&Size::new(1000, 1000).into(), &env)
             .resolved_size,
         Size::new(4, 4).into()
     );
 
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let layout = content.layout(buffer.size().into(), &env);
-    content.render(&mut buffer, &layout, Point::zero(), &env);
+    let layout = content.layout_and_place(buffer.size(), Point::zero(), &env);
+    content.render(&mut buffer, &layout, &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "xxx|  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "xxx|  ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "xxx|  ");
@@ -130,8 +142,8 @@ fn test_render_min_flex_frame_top_leading_alignment() {
         .with_vertical_alignment(VerticalAlignment::Top);
     let env = DefaultEnvironment::new(None);
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let layout = content.layout(buffer.size().into(), &env);
-    content.render(&mut buffer, &layout, Point::zero(), &env);
+    let layout = content.layout_and_place(buffer.size(), Point::zero(), &env);
+    content.render(&mut buffer, &layout, &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aa    ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "bb    ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "cc    ");
@@ -149,8 +161,8 @@ fn test_render_min_flex_frame_top_center_alignment() {
         .with_vertical_alignment(VerticalAlignment::Top);
     let env = DefaultEnvironment::new(None);
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let layout = content.layout(buffer.size().into(), &env);
-    content.render(&mut buffer, &layout, Point::zero(), &env);
+    let layout = content.layout_and_place(buffer.size(), Point::zero(), &env);
+    content.render(&mut buffer, &layout, &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "  aa  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "  bb  ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "  cc  ");
@@ -169,8 +181,8 @@ fn test_render_min_flex_frame_top_trailing_alignment() {
         .with_vertical_alignment(VerticalAlignment::Top);
     let env = DefaultEnvironment::new(None);
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let layout = content.layout(buffer.size().into(), &env);
-    content.render(&mut buffer, &layout, Point::zero(), &env);
+    let layout = content.layout_and_place(buffer.size(), Point::zero(), &env);
+    content.render(&mut buffer, &layout, &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "    aa");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "    bb");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "    cc");
@@ -188,8 +200,8 @@ fn test_render_min_flex_frame_center_leading_alignment() {
         .with_horizontal_alignment(HorizontalAlignment::Leading);
     let env = DefaultEnvironment::new(None);
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let layout = content.layout(buffer.size().into(), &env);
-    content.render(&mut buffer, &layout, Point::zero(), &env);
+    let layout = content.layout_and_place(buffer.size(), Point::zero(), &env);
+    content.render(&mut buffer, &layout, &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "aa    ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "bb    ");
@@ -206,8 +218,8 @@ fn test_render_min_flex_frame_center_center_alignment() {
         .with_min_height(5);
     let env = DefaultEnvironment::new(None);
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let layout = content.layout(buffer.size().into(), &env);
-    content.render(&mut buffer, &layout, Point::zero(), &env);
+    let layout = content.layout_and_place(buffer.size(), Point::zero(), &env);
+    content.render(&mut buffer, &layout, &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "  aa  ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "  bb  ");
@@ -225,8 +237,8 @@ fn test_render_min_flex_frame_center_trailing_alignment() {
         .with_horizontal_alignment(HorizontalAlignment::Trailing);
     let env = DefaultEnvironment::new(None);
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let layout = content.layout(buffer.size().into(), &env);
-    content.render(&mut buffer, &layout, Point::zero(), &env);
+    let layout = content.layout_and_place(buffer.size(), Point::zero(), &env);
+    content.render(&mut buffer, &layout, &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "    aa");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "    bb");
@@ -245,9 +257,9 @@ fn test_render_min_flex_frame_bottom_leading_alignment() {
         .with_vertical_alignment(VerticalAlignment::Bottom);
     let env = DefaultEnvironment::new(None);
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let layout = content.layout(buffer.size().into(), &env);
+    let layout = content.layout_and_place(buffer.size(), Point::zero(), &env);
     assert_eq!(layout.resolved_size, Size::new(6, 5).into());
-    content.render(&mut buffer, &layout, Point::zero(), &env);
+    content.render(&mut buffer, &layout, &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "aa    ");
@@ -265,8 +277,8 @@ fn test_render_min_flex_frame_bottom_center_alignment() {
         .with_vertical_alignment(VerticalAlignment::Bottom);
     let env = DefaultEnvironment::new(None);
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let layout = content.layout(buffer.size().into(), &env);
-    content.render(&mut buffer, &layout, Point::zero(), &env);
+    let layout = content.layout_and_place(buffer.size(), Point::zero(), &env);
+    content.render(&mut buffer, &layout, &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "  aa  ");
@@ -285,8 +297,8 @@ fn test_render_min_flex_frame_bottom_trailing_alignment() {
         .with_vertical_alignment(VerticalAlignment::Bottom);
     let env = DefaultEnvironment::new(None);
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let layout = content.layout(buffer.size().into(), &env);
-    content.render(&mut buffer, &layout, Point::zero(), &env);
+    let layout = content.layout_and_place(buffer.size(), Point::zero(), &env);
+    content.render(&mut buffer, &layout, &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "    aa");
@@ -305,9 +317,9 @@ fn test_render_infinite_width_height_fills_space() {
         .with_vertical_alignment(VerticalAlignment::Center);
     let env = DefaultEnvironment::new(None);
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let layout = content.layout(buffer.size().into(), &env);
+    let layout = content.layout_and_place(buffer.size(), Point::zero(), &env);
     assert_eq!(layout.resolved_size, Size::new(6, 5).into());
-    content.render(&mut buffer, &layout, Point::zero(), &env);
+    content.render(&mut buffer, &layout, &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "  aa  ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "  bb  ");
@@ -328,9 +340,9 @@ fn test_render_oversize_mix() {
         .with_vertical_alignment(VerticalAlignment::Center);
     let env = DefaultEnvironment::new(None);
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let layout = content.layout(buffer.size().into(), &env);
+    let layout = content.layout_and_place(buffer.size(), Point::zero(), &env);
     assert_eq!(layout.resolved_size, Size::new(8, 8).into());
-    content.render(&mut buffer, &layout, Point::zero(), &env);
+    content.render(&mut buffer, &layout, &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "   aa ");
@@ -349,7 +361,7 @@ fn test_compact() {
         .with_min_height(2);
 
     let layout = content.layout(
-        ProposedDimensions {
+        &ProposedDimensions {
             width: ProposedDimension::Compact,
             height: ProposedDimension::Compact,
         },
@@ -365,7 +377,7 @@ fn test_infinite() {
     let content = Rectangle.flex_frame().with_min_width(2).with_min_height(2);
 
     let layout = content.layout(
-        ProposedDimensions {
+        &ProposedDimensions {
             width: ProposedDimension::Infinite,
             height: ProposedDimension::Infinite,
         },
@@ -381,7 +393,7 @@ fn test_infinite_width_only() {
     let env = DefaultEnvironment::new(());
     let content = Rectangle.flex_frame().with_min_width(4); // no ideal or max
     let layout = content.layout(
-        ProposedDimensions {
+        &ProposedDimensions {
             width: ProposedDimension::Infinite,
             height: ProposedDimension::Exact(6),
         },
@@ -396,7 +408,7 @@ fn test_infinite_width_with_min_ideal() {
     let env = DefaultEnvironment::new(());
     let content = Rectangle.flex_frame().with_min_width(2).with_ideal_width(8);
     let layout = content.layout(
-        ProposedDimensions {
+        &ProposedDimensions {
             width: ProposedDimension::Infinite,
             height: ProposedDimension::Compact,
         },
@@ -408,7 +420,7 @@ fn test_infinite_width_with_min_ideal() {
     assert_eq!(layout.resolved_size.height, 10.into());
 
     let layout2 = content.layout(
-        ProposedDimensions {
+        &ProposedDimensions {
             width: ProposedDimension::Infinite,
             height: ProposedDimension::Exact(2),
         },
@@ -423,7 +435,7 @@ fn test_infinite_height_only() {
     let env = DefaultEnvironment::new(());
     let content = Rectangle.flex_frame().with_min_height(5);
     let layout = content.layout(
-        ProposedDimensions {
+        &ProposedDimensions {
             width: ProposedDimension::Exact(7),
             height: ProposedDimension::Infinite,
         },
@@ -433,7 +445,7 @@ fn test_infinite_height_only() {
     assert!(layout.resolved_size.height.is_infinite());
 
     let layout2 = content.layout(
-        ProposedDimensions {
+        &ProposedDimensions {
             width: ProposedDimension::Exact(5),
             height: ProposedDimension::Infinite,
         },
@@ -451,7 +463,7 @@ fn test_infinite_height_with_min_ideal() {
         .with_min_height(2)
         .with_ideal_height(4);
     let layout = content.layout(
-        ProposedDimensions {
+        &ProposedDimensions {
             width: ProposedDimension::Compact,
             height: ProposedDimension::Infinite,
         },
@@ -463,7 +475,7 @@ fn test_infinite_height_with_min_ideal() {
     assert_eq!(layout.resolved_size.width, 10.into());
 
     let layout2 = content.layout(
-        ProposedDimensions {
+        &ProposedDimensions {
             width: ProposedDimension::Exact(3),
             height: ProposedDimension::Infinite,
         },
@@ -481,7 +493,7 @@ fn test_min_greater_than_ideal_height() {
         .with_min_height(10)
         .with_ideal_height(5);
     let layout = content.layout(
-        ProposedDimensions {
+        &ProposedDimensions {
             width: ProposedDimension::Exact(8),
             height: ProposedDimension::Compact,
         },
@@ -500,7 +512,7 @@ fn test_max_smaller_than_min_ideal_height() {
         .with_ideal_height(6)
         .with_max_height(3);
     let layout = content.layout(
-        ProposedDimensions {
+        &ProposedDimensions {
             width: ProposedDimension::Compact,
             height: ProposedDimension::Infinite,
         },
@@ -518,7 +530,7 @@ fn test_min_greater_than_ideal_width() {
         .with_min_width(12)
         .with_ideal_width(6);
     let layout = content.layout(
-        ProposedDimensions {
+        &ProposedDimensions {
             width: ProposedDimension::Compact,
             height: ProposedDimension::Exact(5),
         },
@@ -537,7 +549,7 @@ fn test_max_smaller_than_min_ideal_width() {
         .with_ideal_width(8)
         .with_max_width(3);
     let layout = content.layout(
-        ProposedDimensions {
+        &ProposedDimensions {
             width: ProposedDimension::Infinite,
             height: ProposedDimension::Compact,
         },
@@ -554,7 +566,7 @@ fn test_infinite_max_width() {
 
     // With Infinite offer
     let layout = content.layout(
-        ProposedDimensions {
+        &ProposedDimensions {
             width: ProposedDimension::Infinite,
             height: ProposedDimension::Exact(5),
         },
@@ -565,7 +577,7 @@ fn test_infinite_max_width() {
 
     // With Exact offer
     let layout = content.layout(
-        ProposedDimensions {
+        &ProposedDimensions {
             width: ProposedDimension::Exact(15),
             height: ProposedDimension::Exact(5),
         },
@@ -576,7 +588,7 @@ fn test_infinite_max_width() {
 
     // With Compact offer and no constraints
     let layout = content.layout(
-        ProposedDimensions {
+        &ProposedDimensions {
             width: ProposedDimension::Compact,
             height: ProposedDimension::Exact(5),
         },
@@ -597,7 +609,7 @@ fn test_infinite_max_width_with_min_ideal() {
 
     // With Compact offer, should use ideal
     let layout = content.layout(
-        ProposedDimensions {
+        &ProposedDimensions {
             width: ProposedDimension::Compact,
             height: ProposedDimension::Exact(5),
         },
@@ -608,7 +620,7 @@ fn test_infinite_max_width_with_min_ideal() {
 
     // With Exact offer below min
     let layout = content.layout(
-        ProposedDimensions {
+        &ProposedDimensions {
             width: ProposedDimension::Exact(3),
             height: ProposedDimension::Exact(5),
         },
@@ -625,7 +637,7 @@ fn test_infinite_max_height() {
 
     // With Infinite offer
     let layout = content.layout(
-        ProposedDimensions {
+        &ProposedDimensions {
             width: ProposedDimension::Exact(5),
             height: ProposedDimension::Infinite,
         },
@@ -636,7 +648,7 @@ fn test_infinite_max_height() {
 
     // With Exact offer
     let layout = content.layout(
-        ProposedDimensions {
+        &ProposedDimensions {
             width: ProposedDimension::Exact(5),
             height: ProposedDimension::Exact(15),
         },
@@ -647,7 +659,7 @@ fn test_infinite_max_height() {
 
     // With Compact offer and no constraints
     let layout = content.layout(
-        ProposedDimensions {
+        &ProposedDimensions {
             width: ProposedDimension::Exact(5),
             height: ProposedDimension::Compact,
         },
@@ -668,7 +680,7 @@ fn test_infinite_max_height_with_min_ideal() {
 
     // With Compact offer, should use ideal
     let layout = content.layout(
-        ProposedDimensions {
+        &ProposedDimensions {
             width: ProposedDimension::Exact(5),
             height: ProposedDimension::Compact,
         },
@@ -679,7 +691,7 @@ fn test_infinite_max_height_with_min_ideal() {
 
     // With Exact offer below min
     let layout = content.layout(
-        ProposedDimensions {
+        &ProposedDimensions {
             width: ProposedDimension::Exact(5),
             height: ProposedDimension::Exact(3),
         },

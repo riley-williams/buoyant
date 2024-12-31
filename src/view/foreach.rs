@@ -85,7 +85,7 @@ where
     // should be assumed that this is cheap
     fn layout(
         &self,
-        offer: ProposedDimensions,
+        offer: &ProposedDimensions,
         env: &impl LayoutEnvironment,
     ) -> ResolvedLayout<Self::Sublayout> {
         let env = &ForEachEnvironment::from(env);
@@ -107,7 +107,7 @@ where
             _ = subview_stages.push((view.priority(), view.is_empty()));
         }
 
-        let layout_fn = |index: usize, offer: ProposedDimensions| {
+        let layout_fn = |index: usize, offer: &ProposedDimensions| {
             let layout = (self.build_view)(&items[index]).layout(offer, env);
             let size = layout.resolved_size;
             sublayouts[index] = layout;
@@ -118,15 +118,44 @@ where
         ResolvedLayout {
             sublayouts,
             resolved_size: size,
+            origin: Point::zero(),
+        }
+    }
+
+    fn place_subviews(
+        &self,
+        layout: &mut ResolvedLayout<Self::Sublayout>,
+        origin: Point,
+        env: &impl LayoutEnvironment,
+    ) {
+        layout.origin = origin;
+        let env = &ForEachEnvironment::from(env);
+
+        let mut height = 0;
+
+        for (item_layout, item) in layout.sublayouts.iter_mut().zip(self.iter.into_iter()) {
+            let aligned_origin = origin
+                + Point::new(
+                    self.alignment.align(
+                        layout.resolved_size.width.into(),
+                        item_layout.resolved_size.width.into(),
+                    ),
+                    height,
+                );
+            let view = (self.build_view)(&item);
+            view.place_subviews(item_layout, aligned_origin, env);
+
+            let item_height: i16 = item_layout.resolved_size.height.into();
+            height += item_height;
         }
     }
 }
 
 fn layout_n<const N: usize>(
     subviews: &mut heapless::Vec<(i8, bool), N>,
-    offer: ProposedDimensions,
+    offer: &ProposedDimensions,
     spacing: u16,
-    mut layout_fn: impl FnMut(usize, ProposedDimensions) -> Dimensions,
+    mut layout_fn: impl FnMut(usize, &ProposedDimensions) -> Dimensions,
 ) -> Dimensions {
     let ProposedDimension::Exact(height) = offer.height else {
         let mut total_height: Dimension = 0.into();
@@ -156,23 +185,24 @@ fn layout_n<const N: usize>(
     // Flexibility is defined as the difference between the responses to 0 and infinite height offers
     let mut flexibilities: [Dimension; N] = [0.into(); N];
     let mut num_empty_views = 0;
+    let min_proposal = ProposedDimensions {
+        width: offer.width,
+        height: ProposedDimension::Exact(0),
+    };
+
+    let max_proposal = ProposedDimensions {
+        width: offer.width,
+        height: ProposedDimension::Infinite,
+    };
+
     for index in 0..subviews.len() {
-        let min_proposal = ProposedDimensions {
-            width: offer.width,
-            height: ProposedDimension::Exact(0),
-        };
-        let minimum_dimension = layout_fn(index, min_proposal);
+        let minimum_dimension = layout_fn(index, &min_proposal);
         // skip any further work for empty views
         if subviews[index].1 {
             num_empty_views += 1;
             continue;
         }
-
-        let max_proposal = ProposedDimensions {
-            width: offer.width,
-            height: ProposedDimension::Infinite,
-        };
-        let maximum_dimension = layout_fn(index, max_proposal);
+        let maximum_dimension = layout_fn(index, &max_proposal);
         flexibilities[index] = maximum_dimension.height - minimum_dimension.height;
     }
 
@@ -224,7 +254,7 @@ fn layout_n<const N: usize>(
                 remaining_height / remaining_group_size + remaining_height % remaining_group_size;
             let size = layout_fn(
                 *index,
-                ProposedDimensions {
+                &ProposedDimensions {
                     width: offer.width,
                     height: ProposedDimension::Exact(height_fraction),
                 },
@@ -251,28 +281,13 @@ where
         &self,
         target: &mut impl crate::render_target::CharacterRenderTarget<Color = Pixel>,
         layout: &ResolvedLayout<Self::Sublayout>,
-        origin: crate::primitives::Point,
         env: &impl RenderEnvironment<Color = Pixel>,
     ) {
         let env = &ForEachEnvironment::from(env);
 
-        let mut height = 0;
-
         for (item_layout, item) in layout.sublayouts.iter().zip(self.iter.into_iter()) {
-            // TODO: defaulting to center alignment
-            let aligned_origin = origin
-                + Point::new(
-                    self.alignment.align(
-                        layout.resolved_size.width.into(),
-                        item_layout.resolved_size.width.into(),
-                    ),
-                    height,
-                );
             let view = (self.build_view)(&item);
-            view.render(target, item_layout, aligned_origin, env);
-
-            let item_height: i16 = item_layout.resolved_size.height.into();
-            height += item_height;
+            view.render(target, item_layout, env);
         }
     }
 }
@@ -294,28 +309,13 @@ where
         &self,
         target: &mut impl DrawTarget<Color = Pixel>,
         layout: &ResolvedLayout<Self::Sublayout>,
-        origin: Point,
         env: &impl RenderEnvironment<Color = Pixel>,
     ) {
         let env = &ForEachEnvironment::from(env);
 
-        let mut height: i16 = 0;
-
         for (item_layout, item) in layout.sublayouts.iter().zip(self.iter.into_iter()) {
-            // TODO: defaulting to center alignment
-            let aligned_origin = origin
-                + Point::new(
-                    self.alignment.align(
-                        layout.resolved_size.width.into(),
-                        item_layout.resolved_size.width.into(),
-                    ),
-                    height,
-                );
             let view = (self.build_view)(&item);
-            view.render(target, item_layout, aligned_origin, env);
-
-            let item_height: i16 = item_layout.resolved_size.height.into();
-            height += item_height;
+            view.render(target, item_layout, env);
         }
     }
 }

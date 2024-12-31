@@ -31,20 +31,35 @@ impl<V: Layout> Layout for Padding<V> {
 
     fn layout(
         &self,
-        offer: ProposedDimensions,
+        offer: &ProposedDimensions,
         env: &impl LayoutEnvironment,
     ) -> ResolvedLayout<Self::Sublayout> {
         let padded_offer = ProposedDimensions {
             width: offer.width - (2 * self.padding),
             height: offer.height - (2 * self.padding),
         };
-        let child_layout = self.child.layout(padded_offer, env);
+        let child_layout = self.child.layout(&padded_offer, env);
         let padding_size =
             child_layout.resolved_size + Size::new(2 * self.padding, 2 * self.padding);
         ResolvedLayout {
             sublayouts: child_layout,
             resolved_size: padding_size,
+            origin: Point::zero(),
         }
+    }
+
+    fn place_subviews(
+        &self,
+        layout: &mut ResolvedLayout<Self::Sublayout>,
+        origin: Point,
+        env: &impl LayoutEnvironment,
+    ) {
+        layout.origin = origin;
+        self.child.place_subviews(
+            &mut layout.sublayouts,
+            origin + Point::new(self.padding as i16, self.padding as i16),
+            env,
+        );
     }
 }
 
@@ -56,12 +71,9 @@ where
         &self,
         target: &mut impl CharacterRenderTarget<Color = Pixel>,
         layout: &ResolvedLayout<Self::Sublayout>,
-        origin: Point,
         env: &impl RenderEnvironment<Color = Pixel>,
     ) {
-        let offset_origin = origin + Point::new(self.padding as i16, self.padding as i16);
-        self.child
-            .render(target, &layout.sublayouts, offset_origin, env);
+        self.child.render(target, &layout.sublayouts, env);
     }
 }
 
@@ -78,11 +90,8 @@ where
         &self,
         target: &mut impl DrawTarget<Color = Pixel>,
         layout: &ResolvedLayout<Self::Sublayout>,
-        origin: Point,
         env: &impl RenderEnvironment<Color = Pixel>,
     ) {
-        let offset_origin = origin + Point::new(self.padding as i16, self.padding as i16);
-        self.child
-            .render(target, &layout.sublayouts, offset_origin, env);
+        self.child.render(target, &layout.sublayouts, env);
     }
 }

@@ -29,6 +29,7 @@ pub trait LayoutExtensions: Sized {
     fn padding(self, amount: u16) -> Padding<Self> {
         Padding::new(amount, self)
     }
+
     fn frame(
         self,
         width: Option<u16>,

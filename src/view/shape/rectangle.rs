@@ -1,4 +1,5 @@
 use crate::{
+    environment::RenderEnvironment,
     layout::{Layout, ResolvedLayout},
     primitives::{Point, ProposedDimensions},
     render::CharacterRender,
@@ -19,13 +20,23 @@ impl Layout for Rectangle {
 
     fn layout(
         &self,
-        offer: ProposedDimensions,
+        offer: &ProposedDimensions,
         _: &impl crate::environment::LayoutEnvironment,
     ) -> ResolvedLayout<Self::Sublayout> {
         ResolvedLayout {
             sublayouts: (),
             resolved_size: offer.resolve_most_flexible(0, 10),
+            origin: Point::zero(),
         }
+    }
+
+    fn place_subviews(
+        &self,
+        layout: &mut ResolvedLayout<Self::Sublayout>,
+        origin: Point,
+        _: &impl crate::environment::LayoutEnvironment,
+    ) {
+        layout.origin = origin;
     }
 }
 
@@ -34,15 +45,14 @@ impl<P: Copy> CharacterRender<P> for Rectangle {
         &self,
         target: &mut impl CharacterRenderTarget<Color = P>,
         layout: &ResolvedLayout<Self::Sublayout>,
-        origin: Point,
-        env: &impl crate::environment::RenderEnvironment<Color = P>,
+        env: &impl RenderEnvironment<Color = P>,
     ) {
         let width = layout.resolved_size.width;
         let height = layout.resolved_size.height;
         let color = env.foreground_color();
         for y in 0..height.into() {
             for x in 0..width.into() {
-                target.draw(origin + Point::new(x, y), ' ', color);
+                target.draw(layout.origin + Point::new(x, y), ' ', color);
             }
         }
     }
@@ -61,15 +71,14 @@ impl<P: embedded_graphics_core::pixelcolor::PixelColor> crate::render::PixelRend
         &self,
         target: &mut impl DrawTarget<Color = P>,
         layout: &ResolvedLayout<Self::Sublayout>,
-        origin: Point,
-        env: &impl crate::environment::RenderEnvironment<Color = P>,
+        env: &impl RenderEnvironment<Color = P>,
     ) {
         let width = layout.resolved_size.width;
         let height = layout.resolved_size.height;
         let color = env.foreground_color();
         for y in 0..height.into() {
             for x in 0..width.into() {
-                let point = origin + Point::new(x, y);
+                let point = layout.origin + Point::new(x, y);
                 _ = target.draw_iter(core::iter::once(embedded_graphics::Pixel(
                     point.into(),
                     color,

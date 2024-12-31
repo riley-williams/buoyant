@@ -16,7 +16,7 @@ fn test_greedy_layout_2() {
     let hstack = HStack::new((Spacer::default(), Spacer::default()));
     let offer = Size::new(100, 100);
     let env = DefaultEnvironment::new(());
-    let layout = hstack.layout(offer.into(), &env);
+    let layout = hstack.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(100, 0));
 }
 
@@ -25,7 +25,7 @@ fn test_oversized_layout_2() {
     let vstack = HStack::new((Divider::default().padding(2), Spacer::default()));
     let offer = Size::new(10, 0);
     let env = DefaultEnvironment::new(());
-    let layout = vstack.layout(offer.into(), &env);
+    let layout = vstack.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(10, 0));
 }
 
@@ -38,7 +38,7 @@ fn test_oversized_layout_3() {
     ));
     let offer = Size::new(10, 0);
     let env = DefaultEnvironment::new(());
-    let layout = vstack.layout(offer.into(), &env);
+    let layout = vstack.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(10, 0));
 }
 
@@ -48,7 +48,7 @@ fn test_undersized_layout_2() {
     let hstack = HStack::new((Text::str("123", &font), Text::str("4567", &font))).with_spacing(1);
     let offer = Size::new(50, 1);
     let env = DefaultEnvironment::new(());
-    let layout = hstack.layout(offer.into(), &env);
+    let layout = hstack.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(8, 1));
 }
 
@@ -58,8 +58,8 @@ fn test_horizontal_render_2() {
     let hstack = HStack::new((Text::str("123", &font), Text::str("4567", &font))).with_spacing(1);
     let mut buffer = FixedTextBuffer::<9, 1>::default();
     let env = DefaultEnvironment::new(None);
-    let layout = hstack.layout(buffer.size().into(), &env);
-    hstack.render(&mut buffer, &layout, Point::zero(), &env);
+    let layout = hstack.layout_and_place(buffer.size(), Point::zero(), &env);
+    hstack.render(&mut buffer, &layout, &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "123 4567 ");
 }
 
@@ -73,10 +73,10 @@ fn test_undersized_layout_3_left_pad() {
     ));
     let offer = Size::new(10, 1);
     let env = DefaultEnvironment::new(None);
-    let layout = hstack.layout(offer.into(), &env);
+    let layout = hstack.layout_and_place(offer, Point::zero(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(10, 1));
     let mut buffer = FixedTextBuffer::<10, 1>::default();
-    hstack.render(&mut buffer, &layout, Point::zero(), &env);
+    hstack.render(&mut buffer, &layout, &env);
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "1234567   ");
 }
@@ -91,10 +91,10 @@ fn test_undersized_layout_3_right_pad_space() {
     .with_spacing(1);
     let offer = Size::new(10, 1);
     let env = DefaultEnvironment::new(None);
-    let layout = hstack.layout(offer.into(), &env);
+    let layout = hstack.layout_and_place(offer, Point::zero(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(10, 1));
     let mut buffer = FixedTextBuffer::<10, 1>::default();
-    hstack.render(&mut buffer, &layout, Point::zero(), &env);
+    hstack.render(&mut buffer, &layout, &env);
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "  234 5678");
 }
@@ -111,10 +111,10 @@ fn test_oversized_layout_3_leading_pad_space() {
     .with_spacing(1);
     let offer = Size::new(10, 1);
     let env = DefaultEnvironment::new(None);
-    let layout = hstack.layout(offer.into(), &env);
+    let layout = hstack.layout_and_place(offer, Point::zero(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(10, 1));
     let mut buffer = FixedTextBuffer::<10, 1>::default();
-    hstack.render(&mut buffer, &layout, Point::zero(), &env);
+    hstack.render(&mut buffer, &layout, &env);
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), " 234 56789");
 }
@@ -129,10 +129,10 @@ fn test_undersized_layout_3_middle_pad() {
     ));
     let offer = Size::new(10, 1);
     let env = DefaultEnvironment::new(None);
-    let layout = hstack.layout(offer.into(), &env);
+    let layout = hstack.layout_and_place(offer, Point::zero(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(10, 1));
     let mut buffer = FixedTextBuffer::<10, 1>::default();
-    hstack.render(&mut buffer, &layout, Point::zero(), &env);
+    hstack.render(&mut buffer, &layout, &env);
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "234   5678");
 }
@@ -149,10 +149,10 @@ fn test_oversized_layout_3_middle_pad_space() {
     .with_spacing(1);
     let offer = Size::new(10, 1);
     let env = DefaultEnvironment::new(None);
-    let layout = hstack.layout(offer.into(), &env);
+    let layout = hstack.layout_and_place(offer, Point::zero(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(10, 1));
     let mut buffer = FixedTextBuffer::<10, 1>::default();
-    hstack.render(&mut buffer, &layout, Point::zero(), &env);
+    hstack.render(&mut buffer, &layout, &env);
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "234  56789");
 }
@@ -169,10 +169,10 @@ fn test_oversized_layout_3_trailing_pad_space() {
     .with_spacing(1);
     let offer = Size::new(10, 1);
     let env = DefaultEnvironment::new(None);
-    let layout = hstack.layout(offer.into(), &env);
+    let layout = hstack.layout_and_place(offer, Point::zero(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(10, 1));
     let mut buffer = FixedTextBuffer::<10, 1>::default();
-    hstack.render(&mut buffer, &layout, Point::zero(), &env);
+    hstack.render(&mut buffer, &layout, &env);
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "234 56789 ");
 }
@@ -189,26 +189,26 @@ fn test_layout_3_remainder_allocation() {
     let env = DefaultEnvironment::new(None);
     let mut buffer = FixedTextBuffer::<10, 1>::default();
     let offer = Size::new(7, 1);
-    let layout = hstack.layout(offer.into(), &env);
-    hstack.render(&mut buffer, &layout, Point::zero(), &env);
+    let layout = hstack.layout_and_place(offer, Point::zero(), &env);
+    hstack.render(&mut buffer, &layout, &env);
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aaabbcc   ");
 
     let offer = Size::new(8, 1);
-    let layout = hstack.layout(offer.into(), &env);
-    hstack.render(&mut buffer, &layout, Point::zero(), &env);
+    let layout = hstack.layout_and_place(offer, Point::zero(), &env);
+    hstack.render(&mut buffer, &layout, &env);
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aaabbbcc  ");
 
     let offer = Size::new(9, 1);
-    let layout = hstack.layout(offer.into(), &env);
-    hstack.render(&mut buffer, &layout, Point::zero(), &env);
+    let layout = hstack.layout_and_place(offer, Point::zero(), &env);
+    hstack.render(&mut buffer, &layout, &env);
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aaabbbccc ");
 
     let offer = Size::new(10, 1);
-    let layout = hstack.layout(offer.into(), &env);
-    hstack.render(&mut buffer, &layout, Point::zero(), &env);
+    let layout = hstack.layout_and_place(offer, Point::zero(), &env);
+    hstack.render(&mut buffer, &layout, &env);
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aaabbbccc ");
 }
@@ -226,8 +226,8 @@ fn test_layout_3_vertical_alignment_bottom() {
     .with_spacing(1);
     let env = DefaultEnvironment::new(None);
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let layout = hstack.layout(buffer.size().into(), &env);
-    hstack.render(&mut buffer, &layout, Point::zero(), &env);
+    let layout = hstack.layout_and_place(buffer.size(), Point::zero(), &env);
+    hstack.render(&mut buffer, &layout, &env);
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "   |  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "   |  ");
@@ -249,8 +249,8 @@ fn test_layout_3_vertical_alignment_center() {
     .with_spacing(1);
     let env = DefaultEnvironment::new(None);
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let layout = hstack.layout(buffer.size().into(), &env);
-    hstack.render(&mut buffer, &layout, Point::zero(), &env);
+    let layout = hstack.layout_and_place(buffer.size(), Point::zero(), &env);
+    hstack.render(&mut buffer, &layout, &env);
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "   |  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "aa | c");
@@ -272,8 +272,8 @@ fn test_layout_3_vertical_alignment_top() {
     .with_spacing(1);
     let env = DefaultEnvironment::new(None);
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let layout = hstack.layout(buffer.size().into(), &env);
-    hstack.render(&mut buffer, &layout, Point::zero(), &env);
+    let layout = hstack.layout_and_place(buffer.size(), Point::zero(), &env);
+    hstack.render(&mut buffer, &layout, &env);
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aa | c");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "a  | c");
@@ -297,9 +297,9 @@ fn test_minimal_offer_extra_space_1() {
     let env = DefaultEnvironment::new(None);
     let mut buffer = FixedTextBuffer::<19, 5>::default();
 
-    let layout = hstack.layout(buffer.size().into(), &env);
+    let layout = hstack.layout_and_place(buffer.size(), Point::zero(), &env);
 
-    hstack.render(&mut buffer, &layout, Point::zero(), &env);
+    hstack.render(&mut buffer, &layout, &env);
 
     let lines = [
         "a b c d e f g h i j",
@@ -325,8 +325,8 @@ fn test_layout_3_extra_space_allocation() {
     .with_spacing(0);
     let env = DefaultEnvironment::new(None);
     let mut buffer = FixedTextBuffer::<9, 3>::default();
-    let layout = hstack.layout(buffer.size().into(), &env);
-    hstack.render(&mut buffer, &layout, Point::zero(), &env);
+    let layout = hstack.layout_and_place(buffer.size(), Point::zero(), &env);
+    hstack.render(&mut buffer, &layout, &env);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "xxxx ++++");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "xxxxT++++");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "xxxx ++++");
@@ -365,8 +365,8 @@ fn stack_fits_subviews_regardless_of_flexibility_order() {
         for w2 in 1..12 {
             for w3 in 1..12 {
                 let view = view(w1, w2, w3);
-                let layout = view.layout(buffer.size().into(), &env);
-                view.render(&mut buffer, &layout, Point::zero(), &env);
+                let layout = view.layout_and_place(buffer.size(), Point::zero(), &env);
+                view.render(&mut buffer, &layout, &env);
                 // This is the only arrangement that fits
                 assert_eq!(buffer.text[0].iter().collect::<String>(), "xxx--++++");
             }
@@ -383,8 +383,8 @@ fn empty_view_does_not_create_extra_spacing() {
         .with_spacing(2);
     let env = DefaultEnvironment::new(None);
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let layout = hstack.layout(buffer.size().into(), &env);
-    hstack.render(&mut buffer, &layout, Point::zero(), &env);
+    let layout = hstack.layout_and_place(buffer.size(), Point::zero(), &env);
+    hstack.render(&mut buffer, &layout, &env);
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aa  cc");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "a   c ");
@@ -406,7 +406,7 @@ fn infinite_width_offer_results_in_sum_of_subview_widths() {
         height: ProposedDimension::Exact(10),
     };
     let env = DefaultEnvironment::new(());
-    let layout = hstack.layout(offer, &env);
+    let layout = hstack.layout(&offer, &env);
     assert_eq!(layout.resolved_size, Dimensions::new(248 + 2, 8));
 }
 
@@ -423,7 +423,7 @@ fn compact_width_offer_results_in_sum_of_subview_widths() {
         height: ProposedDimension::Exact(10),
     };
     let env = DefaultEnvironment::new(());
-    let layout = hstack.layout(offer, &env);
+    let layout = hstack.layout(&offer, &env);
     assert_eq!(layout.resolved_size, Dimensions::new(248 + 2, 8));
 }
 
@@ -440,7 +440,7 @@ fn infinite_width_offer_results_in_sum_of_subview_widths_minus_empties() {
         height: ProposedDimension::Exact(10),
     };
     let env = DefaultEnvironment::new(());
-    let layout = hstack.layout(offer, &env);
+    let layout = hstack.layout(&offer, &env);
     assert_eq!(layout.resolved_size, Dimensions::new(208 + 1, 8));
 }
 
@@ -457,6 +457,6 @@ fn compact_width_offer_results_in_sum_of_subview_widths_minus_empties() {
         height: ProposedDimension::Exact(10),
     };
     let env = DefaultEnvironment::new(());
-    let layout = hstack.layout(offer, &env);
+    let layout = hstack.layout(&offer, &env);
     assert_eq!(layout.resolved_size, Dimensions::new(208 + 1, 8));
 }

@@ -75,22 +75,21 @@ impl<U: Layout, V: Layout> Layout for HStack<(U, V)> {
 
     fn layout(
         &self,
-        offer: ProposedDimensions,
+        offer: &ProposedDimensions,
         env: &impl LayoutEnvironment,
     ) -> ResolvedLayout<Self::Sublayout> {
         const N: usize = 2;
+        let env = HorizontalEnvironment::from(env);
         let mut c0: Option<ResolvedLayout<U::Sublayout>> = None;
         let mut c1: Option<ResolvedLayout<V::Sublayout>> = None;
 
-        let env = HorizontalEnvironment::from(env);
-
-        let mut f0 = |size: ProposedDimensions| {
+        let mut f0 = |size: &ProposedDimensions| {
             let layout = self.items.0.layout(size, &env);
             let size = layout.resolved_size;
             c0 = Some(layout);
             size
         };
-        let mut f1 = |size: ProposedDimensions| {
+        let mut f1 = |size: &ProposedDimensions| {
             let layout = self.items.1.layout(size, &env);
             let size = layout.resolved_size;
             c1 = Some(layout);
@@ -106,6 +105,48 @@ impl<U: Layout, V: Layout> Layout for HStack<(U, V)> {
         ResolvedLayout {
             sublayouts: (c0.unwrap(), c1.unwrap()),
             resolved_size: total_size,
+            origin: Point::zero(),
+        }
+    }
+
+    fn place_subviews(
+        &self,
+        layout: &mut ResolvedLayout<Self::Sublayout>,
+        origin: Point,
+        env: &impl LayoutEnvironment,
+    ) {
+        let env = HorizontalEnvironment::from(env);
+        let mut width: i16 = 0;
+
+        if !self.items.0.is_empty() {
+            let new_origin = origin
+                + Point::new(
+                    width,
+                    self.alignment.align(
+                        layout.resolved_size.height.into(),
+                        layout.sublayouts.0.resolved_size.height.into(),
+                    ),
+                );
+
+            self.items
+                .0
+                .place_subviews(&mut layout.sublayouts.0, new_origin, &env);
+            width += (u16::from(layout.sublayouts.0.resolved_size.width) + self.spacing) as i16;
+        }
+
+        if !self.items.1.is_empty() {
+            let new_origin = origin
+                + Point::new(
+                    width,
+                    self.alignment.align(
+                        layout.resolved_size.height.into(),
+                        layout.sublayouts.1.resolved_size.height.into(),
+                    ),
+                );
+
+            self.items
+                .1
+                .place_subviews(&mut layout.sublayouts.1, new_origin, &env);
         }
     }
 }
@@ -119,7 +160,7 @@ impl<U: Layout, V: Layout, W: Layout> Layout for HStack<(U, V, W)> {
 
     fn layout(
         &self,
-        offer: ProposedDimensions,
+        offer: &ProposedDimensions,
         env: &impl LayoutEnvironment,
     ) -> ResolvedLayout<Self::Sublayout> {
         const N: usize = 3;
@@ -129,19 +170,19 @@ impl<U: Layout, V: Layout, W: Layout> Layout for HStack<(U, V, W)> {
 
         let env = HorizontalEnvironment::from(env);
 
-        let mut f0 = |size: ProposedDimensions| {
+        let mut f0 = |size: &ProposedDimensions| {
             let layout = self.items.0.layout(size, &env);
             let size = layout.resolved_size;
             c0 = Some(layout);
             size
         };
-        let mut f1 = |size: ProposedDimensions| {
+        let mut f1 = |size: &ProposedDimensions| {
             let layout = self.items.1.layout(size, &env);
             let size = layout.resolved_size;
             c1 = Some(layout);
             size
         };
-        let mut f2 = |size: ProposedDimensions| {
+        let mut f2 = |size: &ProposedDimensions| {
             let layout = self.items.2.layout(size, &env);
             let size = layout.resolved_size;
             c2 = Some(layout);
@@ -158,15 +199,73 @@ impl<U: Layout, V: Layout, W: Layout> Layout for HStack<(U, V, W)> {
         ResolvedLayout {
             sublayouts: (c0.unwrap(), c1.unwrap(), c2.unwrap()),
             resolved_size: total_size,
+            origin: Point::zero(),
+        }
+    }
+
+    fn place_subviews(
+        &self,
+        layout: &mut ResolvedLayout<Self::Sublayout>,
+        origin: Point,
+        env: &impl LayoutEnvironment,
+    ) {
+        let env = HorizontalEnvironment::from(env);
+        let mut width = 0;
+
+        if !self.items.0.is_empty() {
+            let new_origin = origin
+                + Point::new(
+                    width,
+                    self.alignment.align(
+                        layout.resolved_size.height.into(),
+                        layout.sublayouts.0.resolved_size.height.into(),
+                    ),
+                );
+
+            self.items
+                .0
+                .place_subviews(&mut layout.sublayouts.0, new_origin, &env);
+            width += (u16::from(layout.sublayouts.0.resolved_size.width) + self.spacing) as i16;
+        }
+
+        if !self.items.1.is_empty() {
+            let new_origin = origin
+                + Point::new(
+                    width,
+                    self.alignment.align(
+                        layout.resolved_size.height.into(),
+                        layout.sublayouts.1.resolved_size.height.into(),
+                    ),
+                );
+
+            self.items
+                .1
+                .place_subviews(&mut layout.sublayouts.1, new_origin, &env);
+            width += (u16::from(layout.sublayouts.1.resolved_size.width) + self.spacing) as i16;
+        }
+
+        if !self.items.2.is_empty() {
+            let new_origin = origin
+                + Point::new(
+                    width,
+                    self.alignment.align(
+                        layout.resolved_size.height.into(),
+                        layout.sublayouts.2.resolved_size.height.into(),
+                    ),
+                );
+
+            self.items
+                .2
+                .place_subviews(&mut layout.sublayouts.2, new_origin, &env);
         }
     }
 }
 
-type LayoutFn<'a> = &'a mut dyn FnMut(ProposedDimensions) -> Dimensions;
+type LayoutFn<'a> = &'a mut dyn FnMut(&ProposedDimensions) -> Dimensions;
 
 fn layout_n<const N: usize>(
     subviews: &mut [(LayoutFn, i8, bool); N],
-    offer: ProposedDimensions,
+    offer: &ProposedDimensions,
     spacing: u16,
 ) -> Dimensions {
     let ProposedDimension::Exact(width) = offer.width else {
@@ -199,23 +298,25 @@ fn layout_n<const N: usize>(
     // Flexibility is defined as the difference between the responses to 0 and infinite width offers
     let mut flexibilities: [Dimension; N] = [0.into(); N];
     let mut num_empty_views = 0;
+
+    let min_proposal = ProposedDimensions {
+        width: ProposedDimension::Exact(0),
+        height: offer.height,
+    };
+
+    let max_proposal = ProposedDimensions {
+        width: ProposedDimension::Infinite,
+        height: offer.height,
+    };
+
     for index in 0..N {
-        let min_proposal = ProposedDimensions {
-            width: ProposedDimension::Exact(0),
-            height: offer.height,
-        };
-        let minimum_dimension = subviews[index].0(min_proposal);
+        let minimum_dimension = subviews[index].0(&min_proposal);
         // skip any further work for empty views
         if subviews[index].2 {
             num_empty_views += 1;
             continue;
         }
-
-        let max_proposal = ProposedDimensions {
-            width: ProposedDimension::Infinite,
-            height: offer.height,
-        };
-        let maximum_dimension = subviews[index].0(max_proposal);
+        let maximum_dimension = subviews[index].0(&max_proposal);
         flexibilities[index] = maximum_dimension.width - minimum_dimension.width;
     }
 
@@ -268,7 +369,7 @@ fn layout_n<const N: usize>(
         for index in group_indices {
             let width_fraction =
                 remaining_width / remaining_group_size + remaining_width % remaining_group_size;
-            let size = subviews[*index].0(ProposedDimensions {
+            let size = subviews[*index].0(&ProposedDimensions {
                 width: ProposedDimension::Exact(width_fraction),
                 height: offer.height,
             });
@@ -300,41 +401,12 @@ where
         &self,
         target: &mut impl CharacterRenderTarget<Color = Pixel>,
         layout: &ResolvedLayout<Self::Sublayout>,
-        origin: Point,
         env: &impl RenderEnvironment<Color = Pixel>,
     ) {
         let env = HorizontalEnvironment::from(env);
-        let mut width = 0;
 
-        if !self.items.0.is_empty() {
-            let offset = Point::new(
-                width,
-                self.alignment.align(
-                    layout.resolved_size.height.into(),
-                    layout.sublayouts.0.resolved_size.height.into(),
-                ),
-            );
-
-            self.items
-                .0
-                .render(target, &layout.sublayouts.0, origin + offset, &env);
-
-            width += (u16::from(layout.sublayouts.0.resolved_size.width) + self.spacing) as i16;
-        }
-
-        if !self.items.1.is_empty() {
-            let offset = Point::new(
-                width,
-                self.alignment.align(
-                    layout.resolved_size.height.into(),
-                    layout.sublayouts.1.resolved_size.height.into(),
-                ),
-            );
-
-            self.items
-                .1
-                .render(target, &layout.sublayouts.1, origin + offset, &env);
-        }
+        self.items.0.render(target, &layout.sublayouts.0, &env);
+        self.items.1.render(target, &layout.sublayouts.1, &env);
     }
 }
 
@@ -348,57 +420,13 @@ where
         &self,
         target: &mut impl CharacterRenderTarget<Color = Pixel>,
         layout: &ResolvedLayout<Self::Sublayout>,
-        origin: Point,
         env: &impl RenderEnvironment<Color = Pixel>,
     ) {
         let env = HorizontalEnvironment::from(env);
-        let mut width = 0;
 
-        if !self.items.0.is_empty() {
-            let offset = Point::new(
-                width,
-                self.alignment.align(
-                    layout.resolved_size.height.into(),
-                    layout.sublayouts.0.resolved_size.height.into(),
-                ),
-            );
-
-            self.items
-                .0
-                .render(target, &layout.sublayouts.0, origin + offset, &env);
-
-            width += (u16::from(layout.sublayouts.0.resolved_size.width) + self.spacing) as i16;
-        }
-
-        if !self.items.1.is_empty() {
-            let offset = Point::new(
-                width,
-                self.alignment.align(
-                    layout.resolved_size.height.into(),
-                    layout.sublayouts.1.resolved_size.height.into(),
-                ),
-            );
-
-            self.items
-                .1
-                .render(target, &layout.sublayouts.1, origin + offset, &env);
-
-            width += (u16::from(layout.sublayouts.1.resolved_size.width) + self.spacing) as i16;
-        }
-
-        if !self.items.2.is_empty() {
-            let offset = Point::new(
-                width,
-                self.alignment.align(
-                    layout.resolved_size.height.into(),
-                    layout.sublayouts.2.resolved_size.height.into(),
-                ),
-            );
-
-            self.items
-                .2
-                .render(target, &layout.sublayouts.2, origin + offset, &env);
-        }
+        self.items.0.render(target, &layout.sublayouts.0, &env);
+        self.items.1.render(target, &layout.sublayouts.1, &env);
+        self.items.2.render(target, &layout.sublayouts.2, &env);
     }
 }
 
@@ -418,41 +446,12 @@ where
         &self,
         target: &mut impl DrawTarget<Color = Pixel>,
         layout: &ResolvedLayout<Self::Sublayout>,
-        origin: Point,
         env: &impl RenderEnvironment<Color = Pixel>,
     ) {
         let env = HorizontalEnvironment::from(env);
-        let mut width = 0;
 
-        if !self.items.0.is_empty() {
-            let offset = Point::new(
-                width,
-                self.alignment.align(
-                    layout.resolved_size.height.into(),
-                    layout.sublayouts.0.resolved_size.height.into(),
-                ),
-            );
-
-            self.items
-                .0
-                .render(target, &layout.sublayouts.0, origin + offset, &env);
-
-            width += (u16::from(layout.sublayouts.0.resolved_size.width) + self.spacing) as i16;
-        }
-
-        if !self.items.1.is_empty() {
-            let offset = Point::new(
-                width,
-                self.alignment.align(
-                    layout.resolved_size.height.into(),
-                    layout.sublayouts.1.resolved_size.height.into(),
-                ),
-            );
-
-            self.items
-                .1
-                .render(target, &layout.sublayouts.1, origin + offset, &env);
-        }
+        self.items.0.render(target, &layout.sublayouts.0, &env);
+        self.items.1.render(target, &layout.sublayouts.1, &env);
     }
 }
 
@@ -468,56 +467,12 @@ where
         &self,
         target: &mut impl DrawTarget<Color = Pixel>,
         layout: &ResolvedLayout<Self::Sublayout>,
-        origin: Point,
         env: &impl RenderEnvironment<Color = Pixel>,
     ) {
         let env = HorizontalEnvironment::from(env);
-        let mut width = 0;
 
-        if !self.items.0.is_empty() {
-            let offset = Point::new(
-                width,
-                self.alignment.align(
-                    layout.resolved_size.height.into(),
-                    layout.sublayouts.0.resolved_size.height.into(),
-                ),
-            );
-
-            self.items
-                .0
-                .render(target, &layout.sublayouts.0, origin + offset, &env);
-
-            width += (u16::from(layout.sublayouts.0.resolved_size.width) + self.spacing) as i16;
-        }
-
-        if !self.items.1.is_empty() {
-            let offset = Point::new(
-                width,
-                self.alignment.align(
-                    layout.resolved_size.height.into(),
-                    layout.sublayouts.1.resolved_size.height.into(),
-                ),
-            );
-
-            self.items
-                .1
-                .render(target, &layout.sublayouts.1, origin + offset, &env);
-
-            width += (u16::from(layout.sublayouts.1.resolved_size.width) + self.spacing) as i16;
-        }
-
-        if !self.items.2.is_empty() {
-            let offset = Point::new(
-                width,
-                self.alignment.align(
-                    layout.resolved_size.height.into(),
-                    layout.sublayouts.2.resolved_size.height.into(),
-                ),
-            );
-
-            self.items
-                .2
-                .render(target, &layout.sublayouts.2, origin + offset, &env);
-        }
+        self.items.0.render(target, &layout.sublayouts.0, &env);
+        self.items.1.render(target, &layout.sublayouts.1, &env);
+        self.items.2.render(target, &layout.sublayouts.2, &env);
     }
 }

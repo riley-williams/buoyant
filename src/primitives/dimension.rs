@@ -113,7 +113,7 @@ impl core::ops::Div<u16> for ProposedDimension {
 /// u16::MAX is treated as infinity, and this type mostly exists to prevent accidental panics from
 /// operations overflowing
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Dimension(u16);
+pub struct Dimension(pub u16);
 
 impl Dimension {
     pub const fn infinite() -> Self {
@@ -130,6 +130,7 @@ impl From<Dimension> for u16 {
         value.0
     }
 }
+
 impl From<Dimension> for i16 {
     fn from(value: Dimension) -> Self {
         value.0.try_into().unwrap_or(i16::MAX)
@@ -139,6 +140,18 @@ impl From<Dimension> for i16 {
 impl From<Dimension> for u32 {
     fn from(value: Dimension) -> Self {
         value.0 as u32
+    }
+}
+
+impl From<Dimension> for i32 {
+    fn from(value: Dimension) -> Self {
+        value.0 as i32
+    }
+}
+
+impl From<Dimension> for f32 {
+    fn from(value: Dimension) -> Self {
+        value.0 as f32
     }
 }
 
@@ -269,7 +282,7 @@ impl Dimensions {
         }
     }
 
-    pub fn intersecting_proposal(self, offer: ProposedDimensions) -> Self {
+    pub fn intersecting_proposal(self, offer: &ProposedDimensions) -> Self {
         Self {
             width: match offer.width {
                 ProposedDimension::Compact => self.width,
@@ -308,6 +321,27 @@ impl core::ops::Add<Size> for Dimensions {
             width: self.width + rhs.width,
             height: self.height + rhs.height,
         }
+    }
+}
+
+pub struct HorizontalSpacing(pub u16);
+pub struct VerticalSpacing(pub u16);
+
+impl core::ops::Add<HorizontalSpacing> for Dimensions {
+    type Output = Dimensions;
+
+    fn add(mut self, rhs: HorizontalSpacing) -> Self::Output {
+        self.width += rhs.0;
+        self
+    }
+}
+
+impl core::ops::Add<VerticalSpacing> for Dimensions {
+    type Output = Dimensions;
+
+    fn add(mut self, rhs: VerticalSpacing) -> Self::Output {
+        self.height += rhs.0;
+        self
     }
 }
 
