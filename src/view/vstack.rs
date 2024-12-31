@@ -146,14 +146,14 @@ impl<U: Layout, V: Layout> Layout for VStack<(U, V)> {
         }
 
         if !self.items.1.is_empty() {
-            let new_origin = Point::new(
-                origin.x
-                    + self.alignment.align(
+            let new_origin = origin
+                + Point::new(
+                    self.alignment.align(
                         layout.resolved_size.width.into(),
                         layout.sublayouts.1.resolved_size.width.into(),
                     ),
-                height,
-            );
+                    height,
+                );
 
             self.items
                 .1
