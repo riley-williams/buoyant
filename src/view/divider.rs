@@ -1,8 +1,9 @@
 use crate::{
     environment::{LayoutEnvironment, RenderEnvironment},
     layout::{Layout, LayoutDirection, ResolvedLayout},
+    pixel::Interpolate,
     primitives::{Dimensions, Point, ProposedDimensions},
-    render::CharacterRender,
+    render::{AnimationConfiguration, CharacterRender},
     render_target::CharacterRenderTarget,
 };
 
@@ -70,7 +71,9 @@ impl Layout for Divider {
 use embedded_graphics::{draw_target::DrawTarget, primitives::Rectangle};
 
 #[cfg(feature = "embedded-graphics")]
-impl<C: embedded_graphics_core::pixelcolor::PixelColor> crate::render::PixelRender<C> for Divider {
+impl<C: embedded_graphics_core::pixelcolor::PixelColor + Interpolate> crate::render::PixelRender<C>
+    for Divider
+{
     fn render(
         &self,
         target: &mut impl DrawTarget<Color = C>,
@@ -82,6 +85,37 @@ impl<C: embedded_graphics_core::pixelcolor::PixelColor> crate::render::PixelRend
             &Rectangle {
                 top_left: layout.origin.into(),
                 size: layout.resolved_size.into(),
+            },
+            color,
+        );
+    }
+
+    fn render_animated(
+        target: &mut impl embedded_graphics_core::draw_target::DrawTarget<Color = C>,
+        _source_view: &Self,
+        source_layout: &ResolvedLayout<Self::Sublayout>,
+        _target_view: &Self,
+        target_layout: &ResolvedLayout<Self::Sublayout>,
+        source_env: &impl RenderEnvironment<Color = C>,
+        target_env: &impl RenderEnvironment<Color = C>,
+        config: &AnimationConfiguration,
+    ) {
+        let color = C::interpolate(
+            source_env.foreground_color(),
+            target_env.foreground_color(),
+            config.factor,
+        );
+
+        let origin = Point::interpolate(source_layout.origin, target_layout.origin, config.factor);
+        let size = Dimensions::interpolate(
+            source_layout.resolved_size,
+            target_layout.resolved_size,
+            config.factor,
+        );
+        _ = target.fill_solid(
+            &Rectangle {
+                top_left: origin.into(),
+                size: size.into(),
             },
             color,
         );

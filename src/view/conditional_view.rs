@@ -1,7 +1,7 @@
 use crate::{
     layout::{Layout, ResolvedLayout},
     primitives::{Point, ProposedDimensions},
-    render::CharacterRender,
+    render::{AnimationConfiguration, CharacterRender},
 };
 
 #[derive(Debug, Clone, PartialEq)]
@@ -136,6 +136,59 @@ where
             ConditionalViewLayout::FalseLayout(false_layout) => {
                 self.false_view.render(target, false_layout, env)
             }
+        }
+    }
+
+    fn render_animated(
+        target: &mut impl embedded_graphics_core::draw_target::DrawTarget<Color = Pixel>,
+        source_view: &Self,
+        source_layout: &ResolvedLayout<Self::Sublayout>,
+        target_view: &Self,
+        target_layout: &ResolvedLayout<Self::Sublayout>,
+        source_env: &impl crate::environment::RenderEnvironment<Color = Pixel>,
+        target_env: &impl crate::environment::RenderEnvironment<Color = Pixel>,
+        config: &AnimationConfiguration,
+    ) {
+        // TODO: This should result in a transition
+        match (&source_layout.sublayouts, &target_layout.sublayouts) {
+            (
+                ConditionalViewLayout::TrueLayout(source_layout),
+                ConditionalViewLayout::TrueLayout(target_layout),
+            ) => crate::render::PixelRender::render_animated(
+                target,
+                &source_view.true_view,
+                source_layout,
+                &target_view.true_view,
+                target_layout,
+                source_env,
+                target_env,
+                config,
+            ),
+            (
+                ConditionalViewLayout::FalseLayout(source_layout),
+                ConditionalViewLayout::FalseLayout(target_layout),
+            ) => crate::render::PixelRender::render_animated(
+                target,
+                &source_view.false_view,
+                source_layout,
+                &target_view.false_view,
+                target_layout,
+                source_env,
+                target_env,
+                config,
+            ),
+            (
+                ConditionalViewLayout::TrueLayout(_),
+                ConditionalViewLayout::FalseLayout(target_layout),
+            ) => target_view
+                .false_view
+                .render(target, target_layout, target_env),
+            (
+                ConditionalViewLayout::FalseLayout(_),
+                ConditionalViewLayout::TrueLayout(target_layout),
+            ) => target_view
+                .true_view
+                .render(target, target_layout, target_env),
         }
     }
 }

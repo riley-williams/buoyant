@@ -2,7 +2,8 @@ use crate::{
     environment::{LayoutEnvironment, RenderEnvironment},
     font::{CharacterFont, FontLayout},
     layout::{Layout, ResolvedLayout},
-    primitives::{Point, ProposedDimension, ProposedDimensions, Size},
+    pixel::Interpolate as _,
+    primitives::{Dimensions, Point, ProposedDimension, ProposedDimensions, Size},
     render::CharacterRender,
     render_target::CharacterRenderTarget,
 };
@@ -209,5 +210,29 @@ impl<
                 break;
             }
         }
+    }
+
+    fn render_animated(
+        target: &mut impl embedded_graphics_core::draw_target::DrawTarget<Color = Color>,
+        _source_view: &Self,
+        source_layout: &ResolvedLayout<Self::Sublayout>,
+        target_view: &Self,
+        target_layout: &ResolvedLayout<Self::Sublayout>,
+        _source_env: &impl RenderEnvironment<Color = Color>,
+        target_env: &impl RenderEnvironment<Color = Color>,
+        config: &crate::render::AnimationConfiguration,
+    ) {
+        let origin = Point::interpolate(source_layout.origin, target_layout.origin, config.factor);
+        let size = Dimensions::interpolate(
+            source_layout.resolved_size,
+            target_layout.resolved_size,
+            config.factor,
+        );
+        let interpolated_layout = ResolvedLayout {
+            origin,
+            resolved_size: size,
+            sublayouts: (),
+        };
+        target_view.render(target, &interpolated_layout, target_env);
     }
 }

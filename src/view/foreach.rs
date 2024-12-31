@@ -4,7 +4,7 @@ use crate::{
     environment::{LayoutEnvironment, RenderEnvironment},
     layout::{HorizontalAlignment, Layout, LayoutDirection, ResolvedLayout},
     primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions},
-    render::CharacterRender,
+    render::{AnimationConfiguration, CharacterRender},
 };
 
 struct ForEachEnvironment<'a, T> {
@@ -316,6 +316,38 @@ where
         for (item_layout, item) in layout.sublayouts.iter().zip(self.iter.into_iter()) {
             let view = (self.build_view)(&item);
             view.render(target, item_layout, env);
+        }
+    }
+
+    fn render_animated(
+        target: &mut impl embedded_graphics_core::draw_target::DrawTarget<Color = Pixel>,
+        source_view: &Self,
+        source_layout: &ResolvedLayout<Self::Sublayout>,
+        target_view: &Self,
+        target_layout: &ResolvedLayout<Self::Sublayout>,
+        source_env: &impl RenderEnvironment<Color = Pixel>,
+        target_env: &impl RenderEnvironment<Color = Pixel>,
+        config: &AnimationConfiguration,
+    ) {
+        let source_env = &ForEachEnvironment::from(source_env);
+        let target_env = &ForEachEnvironment::from(target_env);
+        let source_iter = source_layout.sublayouts.iter().zip(source_view.iter);
+        let target_iter = target_layout.sublayouts.iter().zip(target_view.iter);
+        for ((source_item_layout, source_item), (target_item_layout, target_item)) in
+            source_iter.zip(target_iter)
+        {
+            let v_source = (source_view.build_view)(&source_item);
+            let v_target = (target_view.build_view)(&target_item);
+            crate::render::PixelRender::render_animated(
+                target,
+                &v_source,
+                source_item_layout,
+                &v_target,
+                target_item_layout,
+                source_env,
+                target_env,
+                config,
+            );
         }
     }
 }

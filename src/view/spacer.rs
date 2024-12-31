@@ -70,4 +70,16 @@ impl<Pixel: embedded_graphics_core::pixelcolor::PixelColor> crate::render::Pixel
         _env: &impl RenderEnvironment<Color = Pixel>,
     ) {
     }
+
+    fn render_animated(
+        _target: &mut impl embedded_graphics_core::draw_target::DrawTarget,
+        _source_view: &Self,
+        _source_layout: &ResolvedLayout<Self::Sublayout>,
+        _target_view: &Self,
+        _target_layout: &ResolvedLayout<Self::Sublayout>,
+        _source_env: &impl RenderEnvironment,
+        _target_env: &impl RenderEnvironment,
+        _config: &crate::render::AnimationConfiguration,
+    ) {
+    }
 }

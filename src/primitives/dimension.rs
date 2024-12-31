@@ -1,3 +1,5 @@
+use crate::pixel::Interpolate;
+
 use super::Size;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -363,6 +365,24 @@ impl From<Dimensions> for Size {
     }
 }
 
+impl Interpolate for Dimensions {
+    fn interpolate(from: Self, to: Self, amount: u8) -> Self {
+        Dimensions {
+            width: Dimension::interpolate(from.width, to.width, amount),
+            height: Dimension::interpolate(from.height, to.height, amount),
+        }
+    }
+}
+
+impl Interpolate for Dimension {
+    fn interpolate(from: Self, to: Self, amount: u8) -> Self {
+        Dimension(
+            (((amount as u32 * to.0 as u32) + ((255 - amount) as u32 * from.0 as u32)) / 255)
+                as u16,
+        )
+    }
+}
+
 #[cfg(feature = "embedded-graphics")]
 impl From<Dimensions> for embedded_graphics_core::geometry::Size {
     fn from(value: Dimensions) -> Self {
@@ -372,7 +392,34 @@ impl From<Dimensions> for embedded_graphics_core::geometry::Size {
 
 #[cfg(test)]
 mod tests {
+    use crate::pixel::Interpolate as _;
+
     use super::ProposedDimension;
+
+    #[test]
+    fn interpolate_dimensions() {
+        let from = super::Dimensions::new(10, 20);
+        let to = super::Dimensions::new(20, 30);
+        let result = super::Dimensions::interpolate(from, to, 128);
+        assert_eq!(result.width.0, 15);
+        assert_eq!(result.height.0, 25);
+    }
+
+    #[test]
+    fn interpolate_dimension_min() {
+        let from = super::Dimension::from(10);
+        let to = super::Dimension::from(30);
+        let result = super::Dimension::interpolate(from, to, 0);
+        assert_eq!(result.0, 10);
+    }
+
+    #[test]
+    fn interpolate_dimension_max() {
+        let from = super::Dimension::from(10);
+        let to = super::Dimension::from(30);
+        let result = super::Dimension::interpolate(from, to, 255);
+        assert_eq!(result.0, 30);
+    }
 
     #[test]
     fn proposed_dimension_order() {

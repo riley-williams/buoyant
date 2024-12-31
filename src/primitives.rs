@@ -3,6 +3,8 @@ pub use dimension::*;
 
 use core::cmp::max;
 
+use crate::pixel::Interpolate;
+
 #[derive(Debug, PartialEq, Clone, Copy, Default)]
 pub struct Size {
     pub width: u16,
@@ -101,6 +103,17 @@ impl Point {
     }
 }
 
+impl Interpolate for Point {
+    fn interpolate(from: Self, to: Self, amount: u8) -> Self {
+        Point {
+            x: (((amount as i32 * to.x as i32) + ((255 - amount) as i32 * from.x as i32)) / 255)
+                as i16,
+            y: (((amount as i32 * to.y as i32) + ((255 - amount) as i32 * from.y as i32)) / 255)
+                as i16,
+        }
+    }
+}
+
 #[cfg(feature = "embedded-graphics")]
 impl From<Point> for embedded_graphics_core::geometry::Point {
     fn from(value: Point) -> Self {
@@ -144,5 +157,21 @@ impl From<embedded_graphics_core::primitives::Rectangle> for Frame {
             origin: value.top_left.into(),
             size: value.size.into(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::pixel::Interpolate as _;
+
+    use super::Point;
+
+    #[test]
+    fn interpolate_point() {
+        let from = Point::new(10, 0);
+        let to = Point::new(-10, 10000);
+        assert_eq!(Point::interpolate(from, to, 0), from);
+        assert_eq!(Point::interpolate(from, to, 255), to);
+        assert_eq!(Point::interpolate(from, to, 128), Point::new(0, 5019)); // imperfect resolution
     }
 }

@@ -37,6 +37,12 @@ pub trait Interpolate: Copy + PartialEq {
     }
 }
 
+impl Interpolate for u16 {
+    fn interpolate(from: Self, to: Self, amount: u8) -> Self {
+        (((amount as u32 * to as u32) + ((255 - amount) as u32 * from as u32)) / 255) as u16
+    }
+}
+
 #[cfg(feature = "crossterm")]
 impl Interpolate for crossterm::style::Colors {
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {

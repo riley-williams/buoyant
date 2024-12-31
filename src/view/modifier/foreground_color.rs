@@ -89,6 +89,37 @@ where
 
         self.inner.render(target, layout, &modified_env);
     }
+
+    fn render_animated(
+        target: &mut impl embedded_graphics_core::draw_target::DrawTarget<Color = Color>,
+        source_view: &Self,
+        source_layout: &ResolvedLayout<Self::Sublayout>,
+        target_view: &Self,
+        target_layout: &ResolvedLayout<Self::Sublayout>,
+        source_env: &impl RenderEnvironment<Color = Color>,
+        target_env: &impl RenderEnvironment<Color = Color>,
+        config: &crate::render::AnimationConfiguration,
+    ) {
+        let source_env = &ForegroundStyleEnv {
+            color: source_view.style,
+            wrapped_env: source_env,
+        };
+        let target_env = &ForegroundStyleEnv {
+            color: target_view.style,
+            wrapped_env: target_env,
+        };
+
+        crate::render::PixelRender::render_animated(
+            target,
+            &source_view.inner,
+            source_layout,
+            &target_view.inner,
+            target_layout,
+            source_env,
+            target_env,
+            config,
+        );
+    }
 }
 
 struct ForegroundStyleEnv<'a, Env, Style> {

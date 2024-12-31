@@ -1,4 +1,5 @@
 use crate::{
+    environment::RenderEnvironment,
     layout::{Layout, ResolvedLayout},
     primitives::{Dimensions, Point, ProposedDimensions},
     render::CharacterRender,
@@ -44,7 +45,7 @@ impl<Pixel: Copy> CharacterRender<Pixel> for EmptyView {
         &self,
         _: &mut impl CharacterRenderTarget<Color = Pixel>,
         _: &ResolvedLayout<Self::Sublayout>,
-        _: &impl crate::environment::RenderEnvironment<Color = Pixel>,
+        _: &impl RenderEnvironment<Color = Pixel>,
     ) {
     }
 }
@@ -60,7 +61,19 @@ impl<Pixel: embedded_graphics_core::pixelcolor::PixelColor> crate::render::Pixel
         &self,
         _: &mut impl DrawTarget<Color = Pixel>,
         _: &ResolvedLayout<Self::Sublayout>,
-        _: &impl crate::environment::RenderEnvironment<Color = Pixel>,
+        _: &impl RenderEnvironment<Color = Pixel>,
+    ) {
+    }
+
+    fn render_animated(
+        _target: &mut impl embedded_graphics_core::draw_target::DrawTarget,
+        _source_view: &Self,
+        _source_layout: &ResolvedLayout<Self::Sublayout>,
+        _target_view: &Self,
+        _target_layout: &ResolvedLayout<Self::Sublayout>,
+        _source_env: &impl RenderEnvironment,
+        _target_env: &impl RenderEnvironment,
+        _config: &crate::render::AnimationConfiguration,
     ) {
     }
 }

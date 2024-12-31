@@ -4,7 +4,7 @@ use crate::{
     environment::{LayoutEnvironment, RenderEnvironment},
     layout::{Layout, LayoutDirection, ResolvedLayout, VerticalAlignment},
     primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions},
-    render::CharacterRender,
+    render::{AnimationConfiguration, CharacterRender},
     render_target::CharacterRenderTarget,
 };
 
@@ -453,6 +453,42 @@ where
         self.items.0.render(target, &layout.sublayouts.0, &env);
         self.items.1.render(target, &layout.sublayouts.1, &env);
     }
+
+    fn render_animated(
+        target: &mut impl embedded_graphics_core::draw_target::DrawTarget<Color = Pixel>,
+        source_view: &Self,
+        source_layout: &ResolvedLayout<Self::Sublayout>,
+        target_view: &Self,
+        target_layout: &ResolvedLayout<Self::Sublayout>,
+        source_env: &impl RenderEnvironment<Color = Pixel>,
+        target_env: &impl RenderEnvironment<Color = Pixel>,
+        config: &AnimationConfiguration,
+    ) {
+        let source_env = &HorizontalEnvironment::from(source_env);
+        let target_env = &HorizontalEnvironment::from(target_env);
+
+        crate::render::PixelRender::render_animated(
+            target,
+            &source_view.items.0,
+            &source_layout.sublayouts.0,
+            &target_view.items.0,
+            &target_layout.sublayouts.0,
+            source_env,
+            target_env,
+            config,
+        );
+
+        crate::render::PixelRender::render_animated(
+            target,
+            &source_view.items.1,
+            &source_layout.sublayouts.1,
+            &target_view.items.1,
+            &target_layout.sublayouts.1,
+            source_env,
+            target_env,
+            config,
+        );
+    }
 }
 
 #[cfg(feature = "embedded-graphics")]
@@ -474,5 +510,51 @@ where
         self.items.0.render(target, &layout.sublayouts.0, &env);
         self.items.1.render(target, &layout.sublayouts.1, &env);
         self.items.2.render(target, &layout.sublayouts.2, &env);
+    }
+
+    fn render_animated(
+        target: &mut impl embedded_graphics_core::draw_target::DrawTarget<Color = Pixel>,
+        source_view: &Self,
+        source_layout: &ResolvedLayout<Self::Sublayout>,
+        target_view: &Self,
+        target_layout: &ResolvedLayout<Self::Sublayout>,
+        source_env: &impl RenderEnvironment<Color = Pixel>,
+        target_env: &impl RenderEnvironment<Color = Pixel>,
+        config: &AnimationConfiguration,
+    ) {
+        let source_env = &HorizontalEnvironment::from(source_env);
+        let target_env = &HorizontalEnvironment::from(target_env);
+        crate::render::PixelRender::render_animated(
+            target,
+            &source_view.items.0,
+            &source_layout.sublayouts.0,
+            &target_view.items.0,
+            &target_layout.sublayouts.0,
+            source_env,
+            target_env,
+            config,
+        );
+
+        crate::render::PixelRender::render_animated(
+            target,
+            &source_view.items.1,
+            &source_layout.sublayouts.1,
+            &target_view.items.1,
+            &target_layout.sublayouts.1,
+            source_env,
+            target_env,
+            config,
+        );
+
+        crate::render::PixelRender::render_animated(
+            target,
+            &source_view.items.2,
+            &source_layout.sublayouts.2,
+            &target_view.items.2,
+            &target_layout.sublayouts.2,
+            source_env,
+            target_env,
+            config,
+        );
     }
 }

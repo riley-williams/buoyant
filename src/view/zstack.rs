@@ -2,7 +2,7 @@ use crate::{
     environment::{LayoutEnvironment, RenderEnvironment},
     layout::{HorizontalAlignment, Layout, ResolvedLayout, VerticalAlignment},
     primitives::{Point, ProposedDimensions},
-    render::CharacterRender,
+    render::{AnimationConfiguration, CharacterRender},
     render_target::CharacterRenderTarget,
 };
 
@@ -143,5 +143,38 @@ where
     ) {
         self.items.0.render(target, &layout.sublayouts.0, env);
         self.items.1.render(target, &layout.sublayouts.1, env);
+    }
+
+    fn render_animated(
+        target: &mut impl embedded_graphics_core::draw_target::DrawTarget<Color = Pixel>,
+        source_view: &Self,
+        source_layout: &ResolvedLayout<Self::Sublayout>,
+        target_view: &Self,
+        target_layout: &ResolvedLayout<Self::Sublayout>,
+        source_env: &impl RenderEnvironment<Color = Pixel>,
+        target_env: &impl RenderEnvironment<Color = Pixel>,
+        config: &AnimationConfiguration,
+    ) {
+        crate::render::PixelRender::render_animated(
+            target,
+            &source_view.items.0,
+            &source_layout.sublayouts.0,
+            &target_view.items.0,
+            &target_layout.sublayouts.0,
+            source_env,
+            target_env,
+            config,
+        );
+
+        crate::render::PixelRender::render_animated(
+            target,
+            &source_view.items.1,
+            &source_layout.sublayouts.1,
+            &target_view.items.1,
+            &target_layout.sublayouts.1,
+            source_env,
+            target_env,
+            config,
+        );
     }
 }

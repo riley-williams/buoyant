@@ -1,6 +1,9 @@
 use crate::{
+    environment::RenderEnvironment,
     layout::{Layout, ResolvedLayout},
-    primitives::{Dimensions, Point, ProposedDimensions},
+    pixel::Interpolate,
+    primitives::{Dimension, Dimensions, Point, ProposedDimensions},
+    render::AnimationConfiguration,
 };
 
 #[derive(Debug, Copy, Clone, PartialEq, Default)]
@@ -67,7 +70,9 @@ impl<P: Copy> crate::render::CharacterRender<P> for Circle {
 use embedded_graphics::{draw_target::DrawTarget, primitives::StyledDrawable};
 
 #[cfg(feature = "embedded-graphics")]
-impl<P: embedded_graphics_core::pixelcolor::PixelColor> crate::render::PixelRender<P> for Circle {
+impl<P: embedded_graphics_core::pixelcolor::PixelColor + Interpolate> crate::render::PixelRender<P>
+    for Circle
+{
     fn render(
         &self,
         target: &mut impl DrawTarget<Color = P>,
@@ -83,5 +88,35 @@ impl<P: embedded_graphics_core::pixelcolor::PixelColor> crate::render::PixelRend
             layout.resolved_size.width.into(),
         )
         .draw_styled(&style, target);
+    }
+
+    fn render_animated(
+        target: &mut impl embedded_graphics_core::draw_target::DrawTarget<Color = P>,
+        _source_view: &Self,
+        source_layout: &ResolvedLayout<Self::Sublayout>,
+        _target_view: &Self,
+        target_layout: &ResolvedLayout<Self::Sublayout>,
+        source_env: &impl RenderEnvironment<Color = P>,
+        target_env: &impl RenderEnvironment<Color = P>,
+        config: &AnimationConfiguration,
+    ) {
+        let color = P::interpolate(
+            source_env.foreground_color(),
+            target_env.foreground_color(),
+            config.factor,
+        );
+
+        let origin = Point::interpolate(source_layout.origin, target_layout.origin, config.factor);
+        let width = Dimension::interpolate(
+            source_layout.resolved_size.width,
+            target_layout.resolved_size.width,
+            config.factor,
+        );
+
+        let style = embedded_graphics::primitives::PrimitiveStyleBuilder::new()
+            .fill_color(color)
+            .build();
+        _ = embedded_graphics::primitives::Circle::new(origin.into(), width.into())
+            .draw_styled(&style, target);
     }
 }
