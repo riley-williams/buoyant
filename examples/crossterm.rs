@@ -7,7 +7,9 @@ use buoyant::{
     layout::{Layout, VerticalAlignment},
     primitives::Size,
     render_target::{CharacterRenderTarget, CrosstermRenderTarget},
-    view::{Divider, HStack, HorizontalTextAlignment, Rectangle, Spacer, Text, VStack, ZStack},
+    view::{
+        shape::Rectangle, Divider, HStack, HorizontalTextAlignment, Spacer, Text, VStack, ZStack,
+    },
 };
 use crossterm::event::{read, Event};
 use crossterm::style::Colors;

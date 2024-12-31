@@ -7,7 +7,9 @@ use buoyant::{
     primitives::{Dimensions, Point, Size},
     render::CharacterRender,
     render_target::{CharacterRenderTarget, FixedTextBuffer},
-    view::{Divider, HorizontalTextAlignment, LayoutExtensions, Rectangle, Spacer, Text, VStack},
+    view::{
+        shape::Rectangle, Divider, HorizontalTextAlignment, LayoutExtensions, Spacer, Text, VStack,
+    },
 };
 
 #[test]

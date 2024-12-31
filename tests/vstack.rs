@@ -5,8 +5,8 @@ use buoyant::primitives::{Dimensions, Point, ProposedDimension, ProposedDimensio
 use buoyant::render::CharacterRender;
 use buoyant::render_target::{CharacterRenderTarget as _, FixedTextBuffer};
 use buoyant::view::{
-    CharacterRenderExtensions, Divider, EmptyView, HStack, HorizontalTextAlignment,
-    LayoutExtensions, Rectangle, Spacer, Text, VStack,
+    shape::Rectangle, CharacterRenderExtensions, Divider, EmptyView, HStack,
+    HorizontalTextAlignment, LayoutExtensions, Spacer, Text, VStack,
 };
 
 mod common;
