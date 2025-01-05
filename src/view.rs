@@ -26,7 +26,7 @@ use modifier::{FixedFrame, FlexFrame, ForegroundStyle, Padding, Priority};
 use crate::{
     environment::DefaultEnvironment,
     primitives::Size,
-    render::{shade::ShadeSolid, Render, Renderable},
+    render::{Render, Renderable},
 };
 
 pub trait LayoutExtensions: Sized {
@@ -59,14 +59,17 @@ pub trait LayoutExtensions: Sized {
     }
 }
 
-pub trait RenderExtensions<C: ShadeSolid + Clone>: Sized {
+pub trait RenderExtensions<C>: Sized {
     fn foreground_color(self, color: C) -> ForegroundStyle<Self, C> {
         ForegroundStyle::new(color, self)
+    }
+    fn foreign_color<U: Into<C>>(self, color: U) -> ForegroundStyle<Self, C> {
+        ForegroundStyle::new(color.into(), self)
     }
 }
 
 impl<T: crate::layout::Layout> LayoutExtensions for T {}
-impl<T: Renderable<C>, C: ShadeSolid + Clone> RenderExtensions<C> for T {}
+impl<T: Renderable<C>, C> RenderExtensions<C> for T {}
 
 pub fn make_render_tree<C, V: Renderable<C>>(view: &V, size: Size) -> impl Render<C>
 where
