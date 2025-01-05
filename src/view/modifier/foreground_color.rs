@@ -2,7 +2,7 @@ use crate::{
     environment::LayoutEnvironment,
     layout::{Layout, ResolvedLayout},
     primitives::{Point, ProposedDimensions},
-    render::{primitives::ShadeSubtree, shade::Shader, Renderable},
+    render::{primitives::ShadeSubtree, shade::ShadeSolid, Renderable},
 };
 
 /// Sets a foreground style
@@ -13,8 +13,11 @@ pub struct ForegroundStyle<V, S> {
 }
 
 impl<V, S> ForegroundStyle<V, S> {
-    pub fn new(shader: S, inner: V) -> Self {
-        Self { shader, inner }
+    pub fn new(color: S, inner: V) -> Self {
+        Self {
+            shader: color,
+            inner,
+        }
     }
 }
 
@@ -30,8 +33,8 @@ impl<Inner: Layout, Color> Layout for ForegroundStyle<Inner, Color> {
     }
 }
 
-impl<C, V: Renderable<C>, S: Clone + Shader<Color = C>> Renderable<C> for ForegroundStyle<V, S> {
-    type Renderables = ShadeSubtree<S, V::Renderables>;
+impl<C: Clone + ShadeSolid, V: Renderable<C>> Renderable<C> for ForegroundStyle<V, C> {
+    type Renderables = ShadeSubtree<C, V::Renderables>;
 
     fn render_tree(
         &self,
