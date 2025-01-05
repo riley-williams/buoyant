@@ -1,11 +1,10 @@
 use core::cmp::max;
 
 use crate::{
-    environment::{LayoutEnvironment, RenderEnvironment},
+    environment::LayoutEnvironment,
     layout::{HorizontalAlignment, Layout, LayoutDirection, ResolvedLayout},
     primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions},
-    render::{AnimationConfiguration, CharacterRender},
-    render_target::CharacterRenderTarget,
+    render::Renderable,
 };
 
 pub struct VStack<T> {
@@ -25,15 +24,6 @@ impl<T: LayoutEnvironment> LayoutEnvironment for VerticalEnvironment<'_, T> {
 
     fn layout_direction(&self) -> LayoutDirection {
         LayoutDirection::Vertical
-    }
-}
-
-impl<Color: Copy, T: RenderEnvironment<Color = Color>> RenderEnvironment
-    for VerticalEnvironment<'_, T>
-{
-    type Color = Color;
-    fn foreground_color(&self) -> Color {
-        self.inner_environment.foreground_color()
     }
 }
 
@@ -66,211 +56,6 @@ impl<T> VStack<T> {
 
     pub fn with_alignment(self, alignment: HorizontalAlignment) -> Self {
         Self { alignment, ..self }
-    }
-}
-
-impl<U: Layout, V: Layout> Layout for VStack<(U, V)> {
-    type Sublayout = (ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>);
-
-    // fn flexibility(&self, axis: Axis, env: &impl LayoutEnvironment) -> (Dimensions, Dimensions) {
-    //     let layout0 = if self.items.0.is_empty() { self.items.0.flexibility(axis, env);
-    //     let layout1 = self.items.1.flexibility(axis, env);
-    //
-    //     let min_width = layout0.0.width.max(layout1.0.width);
-    //     let max_width = layout0.1.width.max(layout1.1.width);
-    //     let min_height = 0;
-    //     layout0.0.height + layout1.0.height + self.spacing;
-    //     (layout0.0.union(layout1.0), layout0.1.union(layout1.1))
-    // }
-
-    fn layout(
-        &self,
-        offer: &ProposedDimensions,
-        env: &impl LayoutEnvironment,
-    ) -> ResolvedLayout<Self::Sublayout> {
-        const N: usize = 2;
-        let env = &VerticalEnvironment::from(env);
-        let mut c0: Option<ResolvedLayout<U::Sublayout>> = None;
-        let mut c1: Option<ResolvedLayout<V::Sublayout>> = None;
-
-        let mut f0 = |size: &ProposedDimensions| {
-            let layout = self.items.0.layout(size, env);
-            let size = layout.resolved_size;
-            c0 = Some(layout);
-            size
-        };
-        let mut f1 = |size: &ProposedDimensions| {
-            let layout = self.items.1.layout(size, env);
-            let size = layout.resolved_size;
-            c1 = Some(layout);
-            size
-        };
-
-        // precalculate priority to avoid multiple dynamic dispatch calls
-        let mut subviews: [(LayoutFn, i8, bool); N] = [
-            (&mut f0, self.items.0.priority(), self.items.0.is_empty()),
-            (&mut f1, self.items.1.priority(), self.items.1.is_empty()),
-        ];
-        let total_size = layout_n(&mut subviews, offer, self.spacing);
-        ResolvedLayout {
-            sublayouts: (c0.unwrap(), c1.unwrap()),
-            resolved_size: total_size,
-            origin: Point::zero(),
-        }
-    }
-
-    fn place_subviews(
-        &self,
-        layout: &mut ResolvedLayout<Self::Sublayout>,
-        origin: Point,
-        env: &impl LayoutEnvironment,
-    ) {
-        let env = &VerticalEnvironment::from(env);
-
-        let mut height: i16 = 0;
-
-        if !self.items.0.is_empty() {
-            let new_origin = origin
-                + Point::new(
-                    self.alignment.align(
-                        layout.resolved_size.width.into(),
-                        layout.sublayouts.0.resolved_size.width.into(),
-                    ),
-                    height,
-                );
-
-            self.items
-                .0
-                .place_subviews(&mut layout.sublayouts.0, new_origin, env);
-            height += (u16::from(layout.sublayouts.0.resolved_size.height) + self.spacing) as i16;
-        }
-
-        if !self.items.1.is_empty() {
-            let new_origin = origin
-                + Point::new(
-                    self.alignment.align(
-                        layout.resolved_size.width.into(),
-                        layout.sublayouts.1.resolved_size.width.into(),
-                    ),
-                    height,
-                );
-
-            self.items
-                .1
-                .place_subviews(&mut layout.sublayouts.1, new_origin, env);
-        }
-    }
-}
-
-impl<U: Layout, V: Layout, W: Layout> Layout for VStack<(U, V, W)> {
-    type Sublayout = (
-        ResolvedLayout<U::Sublayout>,
-        ResolvedLayout<V::Sublayout>,
-        ResolvedLayout<W::Sublayout>,
-    );
-
-    fn layout(
-        &self,
-        offer: &ProposedDimensions,
-        env: &impl LayoutEnvironment,
-    ) -> ResolvedLayout<Self::Sublayout> {
-        const N: usize = 3;
-        let env = &VerticalEnvironment::from(env);
-
-        let mut c0: Option<ResolvedLayout<U::Sublayout>> = None;
-        let mut c1: Option<ResolvedLayout<V::Sublayout>> = None;
-        let mut c2: Option<ResolvedLayout<W::Sublayout>> = None;
-
-        let mut f0 = |size: &ProposedDimensions| {
-            let layout = self.items.0.layout(size, env);
-            let size = layout.resolved_size;
-            c0 = Some(layout);
-            size
-        };
-        let mut f1 = |size: &ProposedDimensions| {
-            let layout = self.items.1.layout(size, env);
-            let size = layout.resolved_size;
-            c1 = Some(layout);
-            size
-        };
-        let mut f2 = |size: &ProposedDimensions| {
-            let layout = self.items.2.layout(size, env);
-            let size = layout.resolved_size;
-            c2 = Some(layout);
-            size
-        };
-
-        // precalculate priority to avoid multiple dynamic dispatch calls
-        let mut subviews: [(LayoutFn, i8, bool); N] = [
-            (&mut f0, self.items.0.priority(), self.items.0.is_empty()),
-            (&mut f1, self.items.1.priority(), self.items.1.is_empty()),
-            (&mut f2, self.items.2.priority(), self.items.2.is_empty()),
-        ];
-        let total_size = layout_n(&mut subviews, offer, self.spacing);
-        ResolvedLayout {
-            sublayouts: (c0.unwrap(), c1.unwrap(), c2.unwrap()),
-            resolved_size: total_size,
-            origin: Point::zero(),
-        }
-    }
-
-    fn place_subviews(
-        &self,
-        layout: &mut ResolvedLayout<Self::Sublayout>,
-        origin: Point,
-        env: &impl LayoutEnvironment,
-    ) {
-        let env = &VerticalEnvironment::from(env);
-
-        let mut height = 0;
-
-        if !self.items.0.is_empty() {
-            let new_origin = origin
-                + Point::new(
-                    self.alignment.align(
-                        layout.resolved_size.width.into(),
-                        layout.sublayouts.0.resolved_size.width.into(),
-                    ),
-                    height,
-                );
-            self.items
-                .0
-                .place_subviews(&mut layout.sublayouts.0, new_origin, env);
-
-            let child_height: u16 = layout.sublayouts.0.resolved_size.height.into();
-            height += (child_height + self.spacing) as i16;
-        }
-
-        if !self.items.1.is_empty() {
-            let new_origin = origin
-                + Point::new(
-                    self.alignment.align(
-                        layout.resolved_size.width.into(),
-                        layout.sublayouts.1.resolved_size.width.into(),
-                    ),
-                    height,
-                );
-            self.items
-                .1
-                .place_subviews(&mut layout.sublayouts.1, new_origin, env);
-
-            let child_height: u16 = layout.sublayouts.1.resolved_size.height.into();
-            height += (child_height + self.spacing) as i16;
-        }
-
-        if !self.items.2.is_empty() {
-            let new_origin = origin
-                + Point::new(
-                    self.alignment.align(
-                        layout.resolved_size.width.into(),
-                        layout.sublayouts.2.resolved_size.width.into(),
-                    ),
-                    height,
-                );
-            self.items
-                .2
-                .place_subviews(&mut layout.sublayouts.2, new_origin, env);
-        }
     }
 }
 
@@ -397,162 +182,147 @@ fn layout_n<const N: usize>(
     }
 }
 
-impl<Pixel: Copy, U: CharacterRender<Pixel>, V: CharacterRender<Pixel>> CharacterRender<Pixel>
-    for VStack<(U, V)>
-{
-    fn render(
-        &self,
-        target: &mut impl CharacterRenderTarget<Color = Pixel>,
-        layout: &ResolvedLayout<Self::Sublayout>,
-        env: &impl RenderEnvironment<Color = Pixel>,
-    ) {
-        let env = &VerticalEnvironment::from(env);
+use paste::paste;
 
-        self.items.0.render(target, &layout.sublayouts.0, env);
-        self.items.1.render(target, &layout.sublayouts.1, env);
+macro_rules! impl_layout_for_vstack {
+    ($(($n:tt, $type:ident)),+) => {
+        paste! {
+        impl<$($type: Layout),+> Layout for VStack<($($type),+)> {
+            type Sublayout = ($(ResolvedLayout<$type::Sublayout>),+);
+
+            fn layout(
+                &self,
+                offer: &ProposedDimensions,
+                env: &impl LayoutEnvironment,
+            ) -> ResolvedLayout<Self::Sublayout> {
+                const N: usize = count!($($n),+);
+                let env = &VerticalEnvironment::from(env);
+
+                $(
+                    let mut [<c$n>]: Option<ResolvedLayout<$type::Sublayout>> = None;
+                )+
+
+                $(
+                    let mut [<f$n>] = |size: &ProposedDimensions| {
+                        let layout = self.items.$n.layout(size, env);
+                        let size = layout.resolved_size;
+                        [<c$n>] = Some(layout);
+                        size
+                    };
+                )+
+
+                let mut subviews: [(LayoutFn, i8, bool); N] = [
+                    $(
+                        (&mut [<f$n>], self.items.$n.priority(), self.items.$n.is_empty()),
+                    )+
+                ];
+
+                let total_size = layout_n(&mut subviews, offer, self.spacing);
+                ResolvedLayout {
+                    sublayouts: ($([<c$n>].unwrap()),+),
+                    resolved_size: total_size,
+                }
+            }
+        }
+
+        impl<$($type: Renderable<C>),+, C> Renderable<C> for VStack<($($type),+)> {
+            type Renderables = ($($type::Renderables),+);
+
+            #[allow(unused_assignments)]
+            fn render_tree(
+                &self,
+                layout: &ResolvedLayout<Self::Sublayout>,
+                origin: Point,
+                env: &impl LayoutEnvironment,
+            ) -> Self::Renderables {
+                let env = &VerticalEnvironment::from(env);
+                let mut height_offset = 0;
+
+                $(
+                    let offset = origin + Point::new(
+                        self.alignment.align(
+                            layout.resolved_size.width.into(),
+                            layout.sublayouts.$n.resolved_size.width.into(),
+                        ),
+                        height_offset,
+                    );
+
+                    let [<subtree_$n>] = self.items.$n.render_tree(
+                        &layout.sublayouts.$n,
+                        offset,
+                        env
+                    );
+
+                    if !self.items.$n.is_empty() {
+                        let child_height: u16 = layout.sublayouts.$n.resolved_size.height.into();
+                        height_offset += (child_height + self.spacing) as i16;
+                    }
+                )+
+
+                ($([<subtree_$n>]),+)
+            }
+        }
     }
+    };
 }
 
-impl<Pixel: Copy, U, V, W> CharacterRender<Pixel> for VStack<(U, V, W)>
-where
-    U: CharacterRender<Pixel>,
-    V: CharacterRender<Pixel>,
-    W: CharacterRender<Pixel>,
-{
-    fn render(
-        &self,
-        target: &mut impl CharacterRenderTarget<Color = Pixel>,
-        layout: &ResolvedLayout<Self::Sublayout>,
-        env: &impl RenderEnvironment<Color = Pixel>,
-    ) {
-        let env = &VerticalEnvironment::from(env);
-        self.items.0.render(target, &layout.sublayouts.0, env);
-        self.items.1.render(target, &layout.sublayouts.1, env);
-        self.items.2.render(target, &layout.sublayouts.2, env);
-    }
+// Smarter count?
+// macro_rules! count_tts {
+//     () => { 0 };
+//     ($odd:tt $($a:tt $b:tt)*) => { (count_tts!($($a)*) << 1) | 1 };
+//     ($($a:tt $even:tt)*) => { count_tts!($($a)*) << 1 };
+// }
+
+// Helper macro to count the number of elements
+macro_rules! count {
+    () => (0);
+    ($head:tt $(, $rest:tt)*) => (1 + count!($($rest),*));
 }
 
-// -- Embedded Render
-
-#[cfg(feature = "embedded-graphics")]
-use embedded_graphics::draw_target::DrawTarget;
-
-#[cfg(feature = "embedded-graphics")]
-impl<Pixel, U: crate::render::PixelRender<Pixel>, V: crate::render::PixelRender<Pixel>>
-    crate::render::PixelRender<Pixel> for VStack<(U, V)>
-where
-    Pixel: embedded_graphics_core::pixelcolor::PixelColor,
-{
-    fn render(
-        &self,
-        target: &mut impl DrawTarget<Color = Pixel>,
-        layout: &ResolvedLayout<Self::Sublayout>,
-        env: &impl RenderEnvironment<Color = Pixel>,
-    ) {
-        let env = &VerticalEnvironment::from(env);
-        self.items.0.render(target, &layout.sublayouts.0, env);
-        self.items.1.render(target, &layout.sublayouts.1, env);
-    }
-
-    fn render_animated(
-        target: &mut impl embedded_graphics_core::draw_target::DrawTarget<Color = Pixel>,
-        source_view: &Self,
-        source_layout: &ResolvedLayout<Self::Sublayout>,
-        target_view: &Self,
-        target_layout: &ResolvedLayout<Self::Sublayout>,
-        source_env: &impl RenderEnvironment<Color = Pixel>,
-        target_env: &impl RenderEnvironment<Color = Pixel>,
-        config: &AnimationConfiguration,
-    ) {
-        let source_env = &VerticalEnvironment::from(source_env);
-        let target_env = &VerticalEnvironment::from(target_env);
-        crate::render::PixelRender::render_animated(
-            target,
-            &source_view.items.0,
-            &source_layout.sublayouts.0,
-            &target_view.items.0,
-            &target_layout.sublayouts.0,
-            source_env,
-            target_env,
-            config,
-        );
-
-        crate::render::PixelRender::render_animated(
-            target,
-            &source_view.items.1,
-            &source_layout.sublayouts.1,
-            &target_view.items.1,
-            &target_layout.sublayouts.1,
-            source_env,
-            target_env,
-            config,
-        );
-    }
-}
-
-#[cfg(feature = "embedded-graphics")]
-impl<Pixel, U, V, W> crate::render::PixelRender<Pixel> for VStack<(U, V, W)>
-where
-    U: crate::render::PixelRender<Pixel>,
-    V: crate::render::PixelRender<Pixel>,
-    W: crate::render::PixelRender<Pixel>,
-    Pixel: embedded_graphics_core::pixelcolor::PixelColor,
-{
-    fn render(
-        &self,
-        target: &mut impl DrawTarget<Color = Pixel>,
-        layout: &ResolvedLayout<Self::Sublayout>,
-        env: &impl RenderEnvironment<Color = Pixel>,
-    ) {
-        let env = &VerticalEnvironment::from(env);
-        self.items.0.render(target, &layout.sublayouts.0, env);
-        self.items.1.render(target, &layout.sublayouts.1, env);
-        self.items.2.render(target, &layout.sublayouts.2, env);
-    }
-
-    fn render_animated(
-        target: &mut impl embedded_graphics_core::draw_target::DrawTarget<Color = Pixel>,
-        source_view: &Self,
-        source_layout: &ResolvedLayout<Self::Sublayout>,
-        target_view: &Self,
-        target_layout: &ResolvedLayout<Self::Sublayout>,
-        source_env: &impl RenderEnvironment<Color = Pixel>,
-        target_env: &impl RenderEnvironment<Color = Pixel>,
-        config: &AnimationConfiguration,
-    ) {
-        let source_env = &VerticalEnvironment::from(source_env);
-        let target_env = &VerticalEnvironment::from(target_env);
-        crate::render::PixelRender::render_animated(
-            target,
-            &source_view.items.0,
-            &source_layout.sublayouts.0,
-            &target_view.items.0,
-            &target_layout.sublayouts.0,
-            source_env,
-            target_env,
-            config,
-        );
-
-        crate::render::PixelRender::render_animated(
-            target,
-            &source_view.items.1,
-            &source_layout.sublayouts.1,
-            &target_view.items.1,
-            &target_layout.sublayouts.1,
-            source_env,
-            target_env,
-            config,
-        );
-
-        crate::render::PixelRender::render_animated(
-            target,
-            &source_view.items.2,
-            &source_layout.sublayouts.2,
-            &target_view.items.2,
-            &target_layout.sublayouts.2,
-            source_env,
-            target_env,
-            config,
-        );
-    }
-}
+impl_layout_for_vstack!((0, T0), (1, T1));
+impl_layout_for_vstack!((0, T0), (1, T1), (2, T2));
+impl_layout_for_vstack!((0, T0), (1, T1), (2, T2), (3, T3));
+impl_layout_for_vstack!((0, T0), (1, T1), (2, T2), (3, T3), (4, T4));
+impl_layout_for_vstack!((0, T0), (1, T1), (2, T2), (3, T3), (4, T4), (5, T5));
+impl_layout_for_vstack!(
+    (0, T0),
+    (1, T1),
+    (2, T2),
+    (3, T3),
+    (4, T4),
+    (5, T5),
+    (6, T6)
+);
+impl_layout_for_vstack!(
+    (0, T0),
+    (1, T1),
+    (2, T2),
+    (3, T3),
+    (4, T4),
+    (5, T5),
+    (6, T6),
+    (7, T7)
+);
+impl_layout_for_vstack!(
+    (0, T0),
+    (1, T1),
+    (2, T2),
+    (3, T3),
+    (4, T4),
+    (5, T5),
+    (6, T6),
+    (7, T7),
+    (8, T8)
+);
+impl_layout_for_vstack!(
+    (0, T0),
+    (1, T1),
+    (2, T2),
+    (3, T3),
+    (4, T4),
+    (5, T5),
+    (6, T6),
+    (7, T7),
+    (8, T8),
+    (9, T9)
+);

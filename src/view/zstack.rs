@@ -1,10 +1,11 @@
 use crate::{
-    environment::{LayoutEnvironment, RenderEnvironment},
+    environment::LayoutEnvironment,
     layout::{HorizontalAlignment, Layout, ResolvedLayout, VerticalAlignment},
     primitives::{Point, ProposedDimensions},
-    render::{AnimationConfiguration, CharacterRender},
-    render_target::CharacterRenderTarget,
+    render::Renderable,
 };
+
+use paste::paste;
 
 pub struct ZStack<T> {
     items: T,
@@ -35,146 +36,119 @@ impl<T> ZStack<T> {
     }
 }
 
-impl<U, V> ZStack<(U, V)> {
-    pub fn two(item0: U, item1: V) -> Self {
+impl<T> ZStack<T> {
+    pub fn new(items: T) -> Self {
         ZStack {
-            items: (item0, item1),
+            items,
             horizontal_alignment: HorizontalAlignment::default(),
             vertical_alignment: VerticalAlignment::default(),
         }
     }
 }
 
-impl<U: Layout, V: Layout> Layout for ZStack<(U, V)> {
-    type Sublayout = (ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>);
+macro_rules! impl_layout_for_zstack {
+    ($(($n:tt, $type:ident)),+) => {
+        paste! {
+        impl<$($type: Layout),+> Layout for ZStack<($($type),+)> {
+            type Sublayout = ($(ResolvedLayout<$type::Sublayout>),+);
 
-    // fn flexibility(&self, axis: Axis, env: &impl LayoutEnvironment) -> (Dimensions, Dimensions) {
-    //     let layout0 = self.items.0.flexibility(axis, env);
-    //     let layout1 = self.items.1.flexibility(axis, env);
-    //     (layout0.0.union(layout1.0), layout0.1.union(layout1.1))
-    // }
+            fn layout(
+                &self,
+                offer: &ProposedDimensions,
+                env: &impl LayoutEnvironment,
+            ) -> ResolvedLayout<Self::Sublayout> {
+                $(
+                    let [<layout$n>] = self.items.$n.layout(offer, env);
+                )+
+                let size = layout0.resolved_size $(.union([<layout$n>].resolved_size))+;
 
-    fn layout(
-        &self,
-        offer: &ProposedDimensions,
-        env: &impl LayoutEnvironment,
-    ) -> ResolvedLayout<Self::Sublayout> {
-        let layout0 = self.items.0.layout(offer, env);
-        let layout1 = self.items.1.layout(offer, env);
-        let size = layout0.resolved_size.union(layout1.resolved_size);
+                ResolvedLayout {
+                    sublayouts: ($(
+                        [<layout$n>]
+                    ),+),
+                    resolved_size: size.intersecting_proposal(offer),
+                }
+            }
+        }
 
-        ResolvedLayout {
-            sublayouts: (layout0, layout1),
-            resolved_size: size.intersecting_proposal(offer),
-            origin: Point::zero(),
+        impl<$($type: Renderable<C>),+, C> Renderable<C> for ZStack<($($type),+)> {
+            type Renderables = ($($type::Renderables),+);
+
+            fn render_tree(
+                &self,
+                layout: &ResolvedLayout<Self::Sublayout>,
+                origin: Point,
+                env: &impl LayoutEnvironment,
+            ) -> Self::Renderables {
+                $(
+                    let [<offset_$n>] = origin
+                        + Point::new(
+                            self.horizontal_alignment.align(
+                                layout.resolved_size.width.into(),
+                                layout.sublayouts.$n.resolved_size.width.into(),
+                            ),
+                            self.vertical_alignment.align(
+                                layout.resolved_size.height.into(),
+                                layout.sublayouts.$n.resolved_size.height.into(),
+                            ),
+                        );
+                )+
+
+                (
+                    $(
+                        self.items.$n.render_tree(&layout.sublayouts.$n, [<offset_$n>], env)
+                    ),+
+                )
+            }
         }
     }
-
-    fn place_subviews(
-        &self,
-        layout: &mut ResolvedLayout<Self::Sublayout>,
-        origin: Point,
-        env: &impl LayoutEnvironment,
-    ) {
-        let new_origin = origin
-            + Point::new(
-                self.horizontal_alignment.align(
-                    layout.resolved_size.width.into(),
-                    layout.sublayouts.0.resolved_size.width.into(),
-                ),
-                self.vertical_alignment.align(
-                    layout.resolved_size.height.into(),
-                    layout.sublayouts.0.resolved_size.height.into(),
-                ),
-            );
-
-        self.items
-            .0
-            .place_subviews(&mut layout.sublayouts.0, new_origin, env);
-
-        let new_origin = origin
-            + Point::new(
-                self.horizontal_alignment.align(
-                    layout.resolved_size.width.into(),
-                    layout.sublayouts.1.resolved_size.width.into(),
-                ),
-                self.vertical_alignment.align(
-                    layout.resolved_size.height.into(),
-                    layout.sublayouts.1.resolved_size.height.into(),
-                ),
-            );
-        self.items
-            .1
-            .place_subviews(&mut layout.sublayouts.1, new_origin, env);
     }
 }
 
-impl<Pixel: Copy, U: Layout, V: Layout> CharacterRender<Pixel> for ZStack<(U, V)>
-where
-    U: CharacterRender<Pixel>,
-    V: CharacterRender<Pixel>,
-{
-    fn render(
-        &self,
-        target: &mut impl CharacterRenderTarget<Color = Pixel>,
-        layout: &ResolvedLayout<(ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>)>,
-        env: &impl RenderEnvironment<Color = Pixel>,
-    ) {
-        self.items.0.render(target, &layout.sublayouts.0, env);
-        self.items.1.render(target, &layout.sublayouts.1, env);
-    }
-}
-
-#[cfg(feature = "embedded-graphics")]
-use embedded_graphics::draw_target::DrawTarget;
-
-#[cfg(feature = "embedded-graphics")]
-impl<Pixel, U: Layout, V: Layout> crate::render::PixelRender<Pixel> for ZStack<(U, V)>
-where
-    U: crate::render::PixelRender<Pixel>,
-    V: crate::render::PixelRender<Pixel>,
-    Pixel: embedded_graphics_core::pixelcolor::PixelColor,
-{
-    fn render(
-        &self,
-        target: &mut impl DrawTarget<Color = Pixel>,
-        layout: &ResolvedLayout<(ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>)>,
-        env: &impl RenderEnvironment<Color = Pixel>,
-    ) {
-        self.items.0.render(target, &layout.sublayouts.0, env);
-        self.items.1.render(target, &layout.sublayouts.1, env);
-    }
-
-    fn render_animated(
-        target: &mut impl embedded_graphics_core::draw_target::DrawTarget<Color = Pixel>,
-        source_view: &Self,
-        source_layout: &ResolvedLayout<Self::Sublayout>,
-        target_view: &Self,
-        target_layout: &ResolvedLayout<Self::Sublayout>,
-        source_env: &impl RenderEnvironment<Color = Pixel>,
-        target_env: &impl RenderEnvironment<Color = Pixel>,
-        config: &AnimationConfiguration,
-    ) {
-        crate::render::PixelRender::render_animated(
-            target,
-            &source_view.items.0,
-            &source_layout.sublayouts.0,
-            &target_view.items.0,
-            &target_layout.sublayouts.0,
-            source_env,
-            target_env,
-            config,
-        );
-
-        crate::render::PixelRender::render_animated(
-            target,
-            &source_view.items.1,
-            &source_layout.sublayouts.1,
-            &target_view.items.1,
-            &target_layout.sublayouts.1,
-            source_env,
-            target_env,
-            config,
-        );
-    }
-}
+impl_layout_for_zstack!((0, T0), (1, T1));
+impl_layout_for_zstack!((0, T0), (1, T1), (2, T2));
+impl_layout_for_zstack!((0, T0), (1, T1), (2, T2), (3, T3));
+impl_layout_for_zstack!((0, T0), (1, T1), (2, T2), (3, T3), (4, T4));
+impl_layout_for_zstack!((0, T0), (1, T1), (2, T2), (3, T3), (4, T4), (5, T5));
+impl_layout_for_zstack!(
+    (0, T0),
+    (1, T1),
+    (2, T2),
+    (3, T3),
+    (4, T4),
+    (5, T5),
+    (6, T6)
+);
+impl_layout_for_zstack!(
+    (0, T0),
+    (1, T1),
+    (2, T2),
+    (3, T3),
+    (4, T4),
+    (5, T5),
+    (6, T6),
+    (7, T7)
+);
+impl_layout_for_zstack!(
+    (0, T0),
+    (1, T1),
+    (2, T2),
+    (3, T3),
+    (4, T4),
+    (5, T5),
+    (6, T6),
+    (7, T7),
+    (8, T8)
+);
+impl_layout_for_zstack!(
+    (0, T0),
+    (1, T1),
+    (2, T2),
+    (3, T3),
+    (4, T4),
+    (5, T5),
+    (6, T6),
+    (7, T7),
+    (8, T8),
+    (9, T9)
+);

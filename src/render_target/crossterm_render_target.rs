@@ -2,15 +2,15 @@ use crossterm::{
     cursor, execute,
     style::{self, Stylize},
     terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
-    ExecutableCommand, QueueableCommand,
+    ExecutableCommand as _, QueueableCommand,
 };
 
 #[cfg(feature = "std")]
 use std::io::{stdout, Stdout, Write};
 
-use crate::primitives::Size;
+use crate::primitives::{Point, Size};
 
-use super::CharacterRenderTarget;
+use super::RenderTarget;
 
 pub struct CrosstermRenderTarget {
     stdout: Stdout,
@@ -28,6 +28,13 @@ impl CrosstermRenderTarget {
     pub fn flush(&mut self) {
         self.stdout.flush().unwrap();
     }
+
+    pub fn clear(&mut self) {
+        _ = self
+            .stdout
+            .execute(terminal::Clear(terminal::ClearType::All))
+            .unwrap();
+    }
 }
 
 impl Default for CrosstermRenderTarget {
@@ -43,7 +50,7 @@ impl Drop for CrosstermRenderTarget {
     }
 }
 
-impl CharacterRenderTarget for CrosstermRenderTarget {
+impl RenderTarget for CrosstermRenderTarget {
     type Color = crossterm::style::Colors;
 
     fn size(&self) -> Size {
@@ -52,20 +59,8 @@ impl CharacterRenderTarget for CrosstermRenderTarget {
             .unwrap_or_default()
     }
 
-    fn clear(&mut self, _: crossterm::style::Colors) {
-        _ = self
-            .stdout
-            .execute(terminal::Clear(terminal::ClearType::All))
-            .unwrap();
-    }
-
-    fn draw(
-        &mut self,
-        point: crate::primitives::Point,
-        item: char,
-        color: crossterm::style::Colors,
-    ) {
-        let mut styled_char = item.stylize();
+    fn draw(&mut self, point: crate::primitives::Point, color: crossterm::style::Colors) {
+        let mut styled_char = ' '.stylize();
         if let Some(foreground) = color.foreground {
             styled_char = styled_char.with(foreground);
         }
@@ -77,5 +72,29 @@ impl CharacterRenderTarget for CrosstermRenderTarget {
             .unwrap()
             .queue(style::PrintStyledContent(styled_char))
             .unwrap();
+    }
+
+    fn draw_text(
+        &mut self,
+        text: &str,
+        position: crate::primitives::Point,
+        shader: &impl crate::render::shade::Shader<Color = Self::Color>,
+    ) {
+        text.chars().enumerate().for_each(|(i, c)| {
+            let point = Point::new(position.x + i as i16, position.y);
+            let color = shader.shade(point);
+            let mut styled_char = c.stylize();
+            if let Some(foreground) = color.foreground {
+                styled_char = styled_char.with(foreground);
+            }
+            if let Some(background) = color.background {
+                styled_char = styled_char.on(background);
+            }
+            self.stdout
+                .queue(cursor::MoveTo(point.x as u16, point.y as u16))
+                .unwrap()
+                .queue(style::PrintStyledContent(styled_char))
+                .unwrap();
+        });
     }
 }

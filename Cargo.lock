@@ -22,12 +22,13 @@ checksum = "b048fb63fd8b5923fc5aa7b340d8e156aec7ec02f0c78fa8a6ddc2613f6f71de"
 
 [[package]]
 name = "buoyant"
-version = "0.2.5-alpha.2"
+version = "0.3.0-alpha.0"
 dependencies = [
  "crossterm",
  "embedded-graphics",
  "embedded-graphics-core",
  "heapless",
+ "paste",
 ]
 
 [[package]]
@@ -205,6 +206,12 @@ dependencies = [
  "smallvec",
  "windows-targets",
 ]
+
+[[package]]
+name = "paste"
+version = "1.0.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
 
 [[package]]
 name = "redox_syscall"

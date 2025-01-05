@@ -1,12 +1,11 @@
-use buoyant::font::TerminalCharFont;
-use buoyant::primitives::Point;
-use buoyant::render::CharacterRender;
-use buoyant::view::{CharacterRenderExtensions, LayoutExtensions};
+use buoyant::font::CharacterBufferFont;
+use buoyant::render::Renderable;
+use buoyant::render::Render;
+use buoyant::view::{make_render_tree, LayoutExtensions, RenderExtensions};
 use buoyant::{
-    environment::DefaultEnvironment,
-    layout::{Layout, VerticalAlignment},
+    layout::VerticalAlignment,
     primitives::Size,
-    render_target::{CharacterRenderTarget, CrosstermRenderTarget},
+    render_target::{CrosstermRenderTarget, RenderTarget},
     view::{
         shape::Rectangle, Divider, HStack, HorizontalTextAlignment, Spacer, Text, VStack, ZStack,
     },
@@ -14,35 +13,27 @@ use buoyant::{
 use crossterm::event::{read, Event};
 use crossterm::style::Colors;
 
-fn main() {
-    let mut target = CrosstermRenderTarget::default();
+const FONT: CharacterBufferFont = CharacterBufferFont;
 
-    let blank_color = Colors {
-        foreground: None,
-        background: None,
-    };
 
-    target.enter_fullscreen();
-    target.clear(blank_color);
-    let mut size = target.size();
-    println!("Size {:?}", size);
-
-    let env = DefaultEnvironment::new(blank_color);
-    let font = TerminalCharFont {};
-    let stack = VStack::new((
+fn view() -> impl Renderable<Colors> {
+    VStack::new((
         HStack::new((
             Text::str(
                 "This red text is aligned to the leading edge of its space\nThe stack however, has bottom alignment.",
-                &font,
+                &FONT,
             )
                 .multiline_text_alignment(HorizontalTextAlignment::Leading)
                 .foreground_color(
-                    Colors { foreground: Some(crossterm::style::Color::Red), background: None },
+                    Colors { 
+                        foreground: Some(crossterm::style::Color::Red),
+                        background: None
+                    },
                 ),
             Spacer::default(),
             Text::str(
                 "This text is aligned to the right, with trailing multi-line text alignment",
-                &font,
+                &FONT,
             )
                 .multiline_text_alignment(HorizontalTextAlignment::Trailing)
                 .flex_frame().with_min_width(10).with_max_width(35),
@@ -51,7 +42,7 @@ fn main() {
             .with_alignment(VerticalAlignment::Bottom),
         Divider::default(),
         VStack::new((
-            ZStack::two(
+            ZStack::new((
                 Rectangle
                     .foreground_color(
                         Colors {
@@ -61,31 +52,42 @@ fn main() {
                     ),
                 Text::str(
                     "This is in a fixed size box",
-                    &font,
+                    &FONT,
                 )
                     .frame(Some(10), Some(10), None, None),
-            ),
+            )),
             Text::str(
                 "This is several lines of text.\nEach line is centered in the available space.\n The rectangle fills all the remaining verical space and aligns the content within it.\n2 points of padding are around this text",
-                &font,
+                &FONT,
             )
                 .multiline_text_alignment(HorizontalTextAlignment::Center)
                 .foreground_color(
-                    Colors { foreground:Some(crossterm::style::Color::Rgb { r: 255, g: 0, b: 255 }), background: None }
+                    Colors { 
+                        foreground: Some(crossterm::style::Color::Rgb { r: 255, g: 0, b: 255 }),
+                        background: None
+                    }
                 )
                 .padding(2),
             Divider::default()
-                .foreground_color(Colors { foreground: Some(crossterm::style::Color::DarkYellow), background: None })
+                .foreground_color(Colors { 
+                    foreground: Some(crossterm::style::Color::DarkYellow),
+                    background: None
+                })
         )),
-    ));
+    ))
+}
 
-    println!("View size {}", std::mem::size_of_val(&stack));
-    println!("Env size {}", std::mem::size_of_val(&env));
+fn main() {
+    let mut target = CrosstermRenderTarget::default();
 
-    let layout = stack.layout_and_place(target.size(), Point::zero(), &env);
-    stack.render(&mut target, &layout, &env);
+    target.enter_fullscreen();
+    target.clear();
+    let mut size = target.size();
+    println!("Size {:?}", size);
 
-    target.flush();
+    let view = view();
+
+    println!("View size {}", std::mem::size_of_val(&view));
 
     loop {
         // `read()` blocks until an `Event` is available
@@ -99,10 +101,20 @@ fn main() {
             }
             Event::Mouse(_) => (),
             Event::Resize(width, height) => {
-                target.clear(blank_color);
+                target.clear();
                 size = Size::new(width, height);
-                let layout = stack.layout_and_place(size, Point::zero(), &env);
-                stack.render(&mut target, &layout, &env);
+                let tree = make_render_tree(&view, size);
+                tree.render(
+                    &mut target,
+                    &Colors {
+                        foreground: Some(crossterm::style::Color::Rgb {
+                            r: 255,
+                            g: 0,
+                            b: 255,
+                        }),
+                        background: None,
+                    },
+                );
 
                 target.flush();
             }

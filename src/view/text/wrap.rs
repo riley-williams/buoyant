@@ -126,10 +126,11 @@ impl<'a, F: FontLayout> Iterator for WhitespaceWrap<'a, F> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{font::BufferCharacterFont, primitives::ProposedDimension};
-
+    use crate::{font::CharacterBufferFont, primitives::ProposedDimension};
+    use std::vec;
+    use std::vec::Vec;
     // a basic font for which all characters are 1 unit wide
-    static FONT: BufferCharacterFont = BufferCharacterFont;
+    static FONT: CharacterBufferFont = CharacterBufferFont;
 
     #[test]
     fn empty_text() {

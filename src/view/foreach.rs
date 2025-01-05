@@ -1,10 +1,10 @@
 use core::cmp::max;
 
 use crate::{
-    environment::{LayoutEnvironment, RenderEnvironment},
+    environment::LayoutEnvironment,
     layout::{HorizontalAlignment, Layout, LayoutDirection, ResolvedLayout},
     primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions},
-    render::{AnimationConfiguration, CharacterRender},
+    render::Renderable,
 };
 
 struct ForEachEnvironment<'a, T> {
@@ -18,15 +18,6 @@ impl<T: LayoutEnvironment> LayoutEnvironment for ForEachEnvironment<'_, T> {
 
     fn layout_direction(&self) -> LayoutDirection {
         LayoutDirection::Vertical
-    }
-}
-
-impl<Color: Copy, T: RenderEnvironment<Color = Color>> RenderEnvironment
-    for ForEachEnvironment<'_, T>
-{
-    type Color = Color;
-    fn foreground_color(&self) -> Color {
-        self.inner_environment.foreground_color()
     }
 }
 
@@ -118,36 +109,50 @@ where
         ResolvedLayout {
             sublayouts,
             resolved_size: size,
-            origin: Point::zero(),
         }
     }
+}
 
-    fn place_subviews(
+impl<const N: usize, I: IntoIterator + Copy, V: Renderable<C>, C, F> Renderable<C>
+    for ForEach<N, I, V, F>
+where
+    V: Layout,
+    F: Fn(&I::Item) -> V,
+{
+    type Renderables = heapless::Vec<V::Renderables, N>;
+
+    fn render_tree(
         &self,
-        layout: &mut ResolvedLayout<Self::Sublayout>,
+        layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
         env: &impl LayoutEnvironment,
-    ) {
-        layout.origin = origin;
+    ) -> Self::Renderables {
         let env = &ForEachEnvironment::from(env);
 
-        let mut height = 0;
+        let mut accumulated_height = 0;
+        let mut renderables = heapless::Vec::new();
 
-        for (item_layout, item) in layout.sublayouts.iter_mut().zip(self.iter.into_iter()) {
+        for (item_layout, item) in layout.sublayouts.iter().zip(self.iter.into_iter()) {
             let aligned_origin = origin
                 + Point::new(
                     self.alignment.align(
                         layout.resolved_size.width.into(),
                         item_layout.resolved_size.width.into(),
                     ),
-                    height,
+                    accumulated_height,
                 );
             let view = (self.build_view)(&item);
-            view.place_subviews(item_layout, aligned_origin, env);
+            // TODO: If we include an ID here, rows can be animated and transitioned
+            let item = renderables.push(view.render_tree(item_layout, aligned_origin, env));
+            assert!(item.is_ok());
 
-            let item_height: i16 = item_layout.resolved_size.height.into();
-            height += item_height;
+            if !view.is_empty() {
+                let item_height: i16 = item_layout.resolved_size.height.into();
+                accumulated_height += item_height;
+            }
         }
+
+        renderables
     }
 }
 
@@ -268,86 +273,5 @@ fn layout_n<const N: usize>(
     Dimensions {
         width: max_width,
         height: (height.saturating_sub(remaining_height)).into(),
-    }
-}
-
-impl<const N: usize, Pixel: Copy, I: IntoIterator + Copy, V, F> CharacterRender<Pixel>
-    for ForEach<N, I, V, F>
-where
-    V: CharacterRender<Pixel>,
-    F: Fn(&I::Item) -> V,
-{
-    fn render(
-        &self,
-        target: &mut impl crate::render_target::CharacterRenderTarget<Color = Pixel>,
-        layout: &ResolvedLayout<Self::Sublayout>,
-        env: &impl RenderEnvironment<Color = Pixel>,
-    ) {
-        let env = &ForEachEnvironment::from(env);
-
-        for (item_layout, item) in layout.sublayouts.iter().zip(self.iter.into_iter()) {
-            let view = (self.build_view)(&item);
-            view.render(target, item_layout, env);
-        }
-    }
-}
-
-// -- Embedded Render
-
-#[cfg(feature = "embedded-graphics")]
-use embedded_graphics::draw_target::DrawTarget;
-
-#[cfg(feature = "embedded-graphics")]
-impl<const N: usize, Pixel: Copy, I: IntoIterator + Copy, V, F> crate::render::PixelRender<Pixel>
-    for ForEach<N, I, V, F>
-where
-    V: crate::render::PixelRender<Pixel>,
-    F: Fn(&I::Item) -> V,
-    Pixel: embedded_graphics_core::pixelcolor::PixelColor,
-{
-    fn render(
-        &self,
-        target: &mut impl DrawTarget<Color = Pixel>,
-        layout: &ResolvedLayout<Self::Sublayout>,
-        env: &impl RenderEnvironment<Color = Pixel>,
-    ) {
-        let env = &ForEachEnvironment::from(env);
-
-        for (item_layout, item) in layout.sublayouts.iter().zip(self.iter.into_iter()) {
-            let view = (self.build_view)(&item);
-            view.render(target, item_layout, env);
-        }
-    }
-
-    fn render_animated(
-        target: &mut impl embedded_graphics_core::draw_target::DrawTarget<Color = Pixel>,
-        source_view: &Self,
-        source_layout: &ResolvedLayout<Self::Sublayout>,
-        target_view: &Self,
-        target_layout: &ResolvedLayout<Self::Sublayout>,
-        source_env: &impl RenderEnvironment<Color = Pixel>,
-        target_env: &impl RenderEnvironment<Color = Pixel>,
-        config: &AnimationConfiguration,
-    ) {
-        let source_env = &ForEachEnvironment::from(source_env);
-        let target_env = &ForEachEnvironment::from(target_env);
-        let source_iter = source_layout.sublayouts.iter().zip(source_view.iter);
-        let target_iter = target_layout.sublayouts.iter().zip(target_view.iter);
-        for ((source_item_layout, source_item), (target_item_layout, target_item)) in
-            source_iter.zip(target_iter)
-        {
-            let v_source = (source_view.build_view)(&source_item);
-            let v_target = (target_view.build_view)(&target_item);
-            crate::render::PixelRender::render_animated(
-                target,
-                &v_source,
-                source_item_layout,
-                &v_target,
-                target_item_layout,
-                source_env,
-                target_env,
-                config,
-            );
-        }
     }
 }

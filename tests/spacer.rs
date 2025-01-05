@@ -1,11 +1,9 @@
-use buoyant::font::BufferCharacterFont;
+use buoyant::font::CharacterBufferFont;
 use buoyant::layout::{Layout, LayoutDirection};
-use buoyant::primitives::{
-    Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions, Size,
-};
-use buoyant::render::CharacterRender;
-use buoyant::render_target::{CharacterRenderTarget, FixedTextBuffer};
-use buoyant::view::{HStack, Spacer, Text, VStack};
+use buoyant::primitives::{Dimension, Dimensions, ProposedDimension, ProposedDimensions, Size};
+use buoyant::render::Render;
+use buoyant::render_target::{FixedTextBuffer, RenderTarget, TxtColor};
+use buoyant::view::{make_render_tree, HStack, Spacer, Text, VStack};
 use common::{collect_text, TestEnv};
 
 mod common;
@@ -14,7 +12,7 @@ mod common;
 fn test_horizontal_layout() {
     let spacer = Spacer::default();
     let offer = Size::new(10, 10);
-    let env = TestEnv::colorless().with_direction(LayoutDirection::Horizontal);
+    let env = TestEnv::default().with_direction(LayoutDirection::Horizontal);
     let layout = spacer.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(10, 0));
 }
@@ -23,7 +21,7 @@ fn test_horizontal_layout() {
 fn test_vertical_layout() {
     let spacer = Spacer::default();
     let offer = Size::new(10, 10);
-    let env = TestEnv::colorless().with_direction(LayoutDirection::Vertical);
+    let env = TestEnv::default().with_direction(LayoutDirection::Vertical);
     let layout = spacer.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(0, 10));
 }
@@ -32,7 +30,7 @@ fn test_vertical_layout() {
 fn test_horizontal_layout_zero() {
     let spacer = Spacer::default();
     let offer = Size::new(0, 10);
-    let env = TestEnv::colorless().with_direction(LayoutDirection::Horizontal);
+    let env = TestEnv::default().with_direction(LayoutDirection::Horizontal);
     let layout = spacer.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(0, 0));
 }
@@ -41,7 +39,7 @@ fn test_horizontal_layout_zero() {
 fn test_vertical_layout_zero() {
     let spacer = Spacer::default();
     let offer = Size::new(10, 0);
-    let env = TestEnv::colorless().with_direction(LayoutDirection::Vertical);
+    let env = TestEnv::default().with_direction(LayoutDirection::Vertical);
     let layout = spacer.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(0, 0));
 }
@@ -53,7 +51,7 @@ fn test_horizontal_layout_infinite_width() {
         width: ProposedDimension::Infinite,
         height: ProposedDimension::Exact(10),
     };
-    let env = TestEnv::colorless().with_direction(LayoutDirection::Horizontal);
+    let env = TestEnv::default().with_direction(LayoutDirection::Horizontal);
     let layout = spacer.layout(&offer, &env);
     assert_eq!(
         layout.resolved_size,
@@ -72,7 +70,7 @@ fn test_horizontal_layout_compact_width() {
         height: ProposedDimension::Exact(10),
     };
 
-    let env = TestEnv::colorless().with_direction(LayoutDirection::Horizontal);
+    let env = TestEnv::default().with_direction(LayoutDirection::Horizontal);
     let layout = spacer.layout(&offer, &env);
     assert_eq!(
         layout.resolved_size,
@@ -91,7 +89,7 @@ fn test_vertical_layout_infinite_height() {
         height: ProposedDimension::Infinite,
     };
 
-    let env = TestEnv::colorless().with_direction(LayoutDirection::Vertical);
+    let env = TestEnv::default().with_direction(LayoutDirection::Vertical);
     let layout = spacer.layout(&offer, &env);
     assert_eq!(
         layout.resolved_size,
@@ -110,29 +108,27 @@ fn test_vertical_layout_compact_height() {
         height: ProposedDimension::Compact,
     };
 
-    let env = TestEnv::colorless().with_direction(LayoutDirection::Vertical);
+    let env = TestEnv::default().with_direction(LayoutDirection::Vertical);
     let layout = spacer.layout(&offer, &env);
     assert_eq!(layout.resolved_size, Dimensions::new(0, 0));
 }
 
 #[test]
 fn test_render_fills_hstack() {
-    let font = BufferCharacterFont {};
+    let font = CharacterBufferFont {};
     let hstack = HStack::new((Spacer::default(), Text::str("67", &font))).with_spacing(1);
     let mut buffer = FixedTextBuffer::<9, 1>::default();
-    let env = TestEnv::default().with_direction(LayoutDirection::Horizontal);
-    let layout = hstack.layout_and_place(buffer.size(), Point::zero(), &env);
-    hstack.render(&mut buffer, &layout, &env);
+    let tree = make_render_tree(&hstack, buffer.size());
+    tree.render(&mut buffer, &TxtColor::default());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "       67");
 }
 
 #[test]
 fn test_render_fills_vstack() {
-    let font = BufferCharacterFont {};
+    let font = CharacterBufferFont {};
     let vstack = VStack::new((Spacer::default(), Text::str("67", &font))).with_spacing(1);
     let mut buffer = FixedTextBuffer::<1, 9>::default();
-    let env = TestEnv::default().with_direction(LayoutDirection::Horizontal);
-    let layout = vstack.layout_and_place(buffer.size(), Point::zero(), &env);
-    vstack.render(&mut buffer, &layout, &env);
+    let tree = make_render_tree(&vstack, buffer.size());
+    tree.render(&mut buffer, &TxtColor::default());
     assert_eq!(collect_text(&buffer), "       67");
 }

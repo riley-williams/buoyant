@@ -16,11 +16,18 @@ pub use empty_view::EmptyView;
 pub use foreach::ForEach;
 pub use hstack::HStack;
 pub use spacer::Spacer;
+pub(crate) use text::WhitespaceWrap;
 pub use text::{HorizontalTextAlignment, Text};
 pub use vstack::VStack;
 pub use zstack::ZStack;
 
 use modifier::{FixedFrame, FlexFrame, ForegroundStyle, Padding, Priority};
+
+use crate::{
+    environment::DefaultEnvironment,
+    primitives::Size,
+    render::{Render, Renderable},
+};
 
 pub trait LayoutExtensions: Sized {
     fn padding(self, amount: u16) -> Padding<Self> {
@@ -52,27 +59,23 @@ pub trait LayoutExtensions: Sized {
     }
 }
 
+pub trait RenderExtensions<C>: Sized {
+    fn foreground_color(self, color: C) -> ForegroundStyle<Self, C> {
+        ForegroundStyle::new(color, self)
+    }
+    fn foreign_color<U: Into<C>>(self, color: U) -> ForegroundStyle<Self, C> {
+        ForegroundStyle::new(color.into(), self)
+    }
+}
+
 impl<T: crate::layout::Layout> LayoutExtensions for T {}
+impl<T: Renderable<C>, C> RenderExtensions<C> for T {}
 
-pub trait CharacterRenderExtensions<Color: Copy>: Sized {
-    fn foreground_color(self, color: Color) -> ForegroundStyle<Self, Color> {
-        ForegroundStyle::new(color, self)
-    }
-}
-
-impl<Color: Copy, T: crate::render::CharacterRender<Color>> CharacterRenderExtensions<Color> for T {}
-
-#[cfg(feature = "embedded-graphics")]
-pub trait PixelRenderExtensions<Color: Copy>: Sized {
-    fn foreground_color(self, color: Color) -> ForegroundStyle<Self, Color> {
-        ForegroundStyle::new(color, self)
-    }
-}
-
-#[cfg(feature = "embedded-graphics")]
-impl<
-        Color: embedded_graphics_core::pixelcolor::PixelColor,
-        T: crate::render::PixelRender<Color>,
-    > PixelRenderExtensions<Color> for T
+pub fn make_render_tree<C, V: Renderable<C>>(view: &V, size: Size) -> impl Render<C>
+where
+    V::Renderables: Render<C>,
 {
+    let env = DefaultEnvironment;
+    let layout = view.layout(&size.into(), &env);
+    view.render_tree(&layout, Default::default(), &env)
 }

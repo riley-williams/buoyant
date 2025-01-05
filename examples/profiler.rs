@@ -1,23 +1,26 @@
 use buoyant::{
     environment::DefaultEnvironment,
-    font::BufferCharacterFont,
+    font::CharacterBufferFont,
     layout::{Layout, VerticalAlignment},
-    primitives::{Point, Size},
-    render::CharacterRender,
-    render_target::{CharacterRenderTarget, FixedTextBuffer},
-    view::{Divider, HStack, HorizontalTextAlignment, LayoutExtensions, Spacer, Text, VStack},
+    primitives::Size,
+    render::Render,
+    render_target::{FixedTextBuffer, RenderTarget, TxtColor},
+    view::{
+        make_render_tree, Divider, HStack, HorizontalTextAlignment, LayoutExtensions,
+        RenderExtensions as _, Spacer, Text, VStack,
+    },
 };
 
 fn main() {
     let mut target = FixedTextBuffer::<100, 100>::default();
 
-    target.clear(None);
+    target.clear();
     let mut size = target.size();
     println!("Size {:?}", size);
 
-    let env = DefaultEnvironment::new(None);
+    let env = DefaultEnvironment;
 
-    let font = BufferCharacterFont {};
+    let font = CharacterBufferFont {};
     let stack = VStack::new((
     HStack::new((
         Text::str(
@@ -25,7 +28,7 @@ fn main() {
             &font,
                 )
                 .multiline_text_alignment(HorizontalTextAlignment::Center),
-        Divider::default(),
+        Divider::default().foreground_color(TxtColor::new('|')),
         Text::str(
             "This text is aligned to the right, with trailing multi-line text alignment",
             &font,
@@ -34,7 +37,7 @@ fn main() {
         ))
         .with_spacing(1)
         .with_alignment(VerticalAlignment::Bottom),
-    Divider::default(),
+    Divider::default().foreground_color(TxtColor::new('-')),
     VStack::new((
         Spacer::default(),
         Text::str(
@@ -43,7 +46,7 @@ fn main() {
         )
             .multiline_text_alignment(HorizontalTextAlignment::Center)
             .padding(2),
-        Divider::default(),
+        Divider::default().foreground_color(TxtColor::new('-')),
         )),
     ));
 
@@ -52,12 +55,12 @@ fn main() {
     let sample_layout = stack.layout(&size.into(), &env);
     println!("Layout size {}", std::mem::size_of_val(&sample_layout));
 
-    target.clear(None);
+    target.clear();
     for width in 1..100 {
         for height in 1..100 {
             size = Size::new(width, height);
-            let layout = stack.layout_and_place(size, Point::zero(), &env);
-            stack.render(&mut target, &layout, &env);
+            let tree = make_render_tree(&stack, size);
+            tree.render(&mut target, &TxtColor::default());
         }
     }
 }

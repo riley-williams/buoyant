@@ -1,6 +1,6 @@
 use crate::{
     environment::LayoutEnvironment,
-    primitives::{Dimensions, Point, ProposedDimension, ProposedDimensions},
+    primitives::{Dimensions, ProposedDimension, ProposedDimensions},
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Default)]
@@ -65,7 +65,6 @@ impl VerticalAlignment {
 pub struct ResolvedLayout<C: Clone + PartialEq> {
     pub sublayouts: C,
     pub resolved_size: Dimensions,
-    pub origin: Point,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -104,7 +103,6 @@ impl Axis {
 
 pub trait Layout: Sized {
     type Sublayout: Clone + PartialEq;
-
     // fn flexibility(&self, axis: Axis, env: &impl LayoutEnvironment) -> (Dimensions, Dimensions);
 
     /// The size of the view given the offer
@@ -113,26 +111,6 @@ pub trait Layout: Sized {
         offer: &ProposedDimensions,
         env: &impl LayoutEnvironment,
     ) -> ResolvedLayout<Self::Sublayout>;
-
-    fn place_subviews(
-        &self,
-        layout: &mut ResolvedLayout<Self::Sublayout>,
-        origin: Point,
-        env: &impl LayoutEnvironment,
-    );
-
-    // TODO: This should not be part of the trait itself
-    fn layout_and_place(
-        &self,
-        offer: impl Into<ProposedDimensions>,
-        origin: Point,
-        env: &impl LayoutEnvironment,
-    ) -> ResolvedLayout<Self::Sublayout> {
-        let offer = offer.into();
-        let mut layout = self.layout(&offer, env);
-        self.place_subviews(&mut layout, origin, env);
-        layout
-    }
 
     /// The layout priority of the view. Higher priority views are more likely to be given the size they want
     fn priority(&self) -> i8 {

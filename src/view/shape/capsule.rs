@@ -1,9 +1,8 @@
 use crate::{
-    environment::RenderEnvironment,
+    environment::LayoutEnvironment,
     layout::{Layout, ResolvedLayout},
-    pixel::Interpolate,
-    primitives::{Dimensions, Point, ProposedDimensions},
-    render::AnimationConfiguration,
+    primitives::{Point, ProposedDimensions},
+    render::Renderable,
 };
 
 #[derive(Debug, Copy, Clone, PartialEq, Default)]
@@ -20,92 +19,19 @@ impl Layout for Capsule {
         ResolvedLayout {
             sublayouts: (),
             resolved_size: offer.resolve_most_flexible(0, 10),
-            origin: Point::zero(),
         }
-    }
-
-    fn place_subviews(
-        &self,
-        layout: &mut ResolvedLayout<Self::Sublayout>,
-        origin: Point,
-        _env: &impl crate::environment::LayoutEnvironment,
-    ) {
-        layout.origin = origin;
     }
 }
 
-#[cfg(feature = "embedded-graphics")]
-use embedded_graphics::{draw_target::DrawTarget, primitives::StyledDrawable};
+impl<C> Renderable<C> for Capsule {
+    type Renderables = crate::render::primitives::Capsule;
 
-#[cfg(feature = "embedded-graphics")]
-impl<P: embedded_graphics_core::pixelcolor::PixelColor + Interpolate> crate::render::PixelRender<P>
-    for Capsule
-{
-    fn render(
+    fn render_tree(
         &self,
-        target: &mut impl DrawTarget<Color = P>,
         layout: &ResolvedLayout<Self::Sublayout>,
-        env: &impl crate::environment::RenderEnvironment<Color = P>,
-    ) {
-        let color = env.foreground_color();
-        let style = embedded_graphics::primitives::PrimitiveStyleBuilder::new()
-            .fill_color(color)
-            .build();
-        let radius = layout.resolved_size.height.min(layout.resolved_size.width) / 2;
-        let rectangle = embedded_graphics::primitives::Rectangle {
-            top_left: layout.origin.into(),
-            size: layout.resolved_size.into(),
-        };
-
-        _ = embedded_graphics::primitives::RoundedRectangle::with_equal_corners(
-            rectangle,
-            embedded_graphics::prelude::Size {
-                width: radius.into(),
-                height: radius.into(),
-            },
-        )
-        .draw_styled(&style, target);
-    }
-
-    fn render_animated(
-        target: &mut impl embedded_graphics_core::draw_target::DrawTarget<Color = P>,
-        _source_view: &Self,
-        source_layout: &ResolvedLayout<Self::Sublayout>,
-        _target_view: &Self,
-        target_layout: &ResolvedLayout<Self::Sublayout>,
-        source_env: &impl RenderEnvironment<Color = P>,
-        target_env: &impl RenderEnvironment<Color = P>,
-        config: &AnimationConfiguration,
-    ) {
-        let color = P::interpolate(
-            source_env.foreground_color(),
-            target_env.foreground_color(),
-            config.factor,
-        );
-
-        let origin = Point::interpolate(source_layout.origin, target_layout.origin, config.factor);
-        let size = Dimensions::interpolate(
-            source_layout.resolved_size,
-            target_layout.resolved_size,
-            config.factor,
-        );
-
-        let radius = size.height.min(size.width) / 2;
-        let rectangle = embedded_graphics::primitives::Rectangle {
-            top_left: origin.into(),
-            size: size.into(),
-        };
-        let style = embedded_graphics::primitives::PrimitiveStyleBuilder::new()
-            .fill_color(color)
-            .build();
-
-        _ = embedded_graphics::primitives::RoundedRectangle::with_equal_corners(
-            rectangle,
-            embedded_graphics::prelude::Size {
-                width: radius.into(),
-                height: radius.into(),
-            },
-        )
-        .draw_styled(&style, target);
+        origin: Point,
+        _env: &impl LayoutEnvironment,
+    ) -> Self::Renderables {
+        crate::render::primitives::Capsule::new(origin, layout.resolved_size.into())
     }
 }

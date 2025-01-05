@@ -43,6 +43,12 @@ impl Interpolate for u16 {
     }
 }
 
+impl Interpolate for i16 {
+    fn interpolate(from: Self, to: Self, amount: u8) -> Self {
+        (((amount as i32 * to as i32) + ((255 - amount) as i32 * from as i32)) / 255) as i16
+    }
+}
+
 #[cfg(feature = "crossterm")]
 impl Interpolate for crossterm::style::Colors {
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {

@@ -2,20 +2,21 @@ use std::iter::zip;
 
 use buoyant::{
     environment::DefaultEnvironment,
-    font::BufferCharacterFont,
+    font::CharacterBufferFont,
     layout::Layout,
-    primitives::{Dimensions, Point, Size},
-    render::CharacterRender,
-    render_target::{CharacterRenderTarget, FixedTextBuffer},
+    primitives::{Dimensions, Size},
+    render::Render,
+    render_target::{FixedTextBuffer, RenderTarget, TxtColor},
     view::{
-        shape::Rectangle, Divider, HorizontalTextAlignment, LayoutExtensions, Spacer, Text, VStack,
+        make_render_tree, shape::Rectangle, Divider, HorizontalTextAlignment, LayoutExtensions,
+        RenderExtensions, Spacer, Text, VStack,
     },
 };
 
 #[test]
 fn test_clipped_text_trails_correctly() {
-    let font = BufferCharacterFont {};
-    let text = VStack::new((
+    let font = CharacterBufferFont {};
+    let view = VStack::new((
         Spacer::default(),
         Text::str(
             "Padding respects\nparent alignment\nshouldnt affect alignment",
@@ -23,15 +24,14 @@ fn test_clipped_text_trails_correctly() {
         )
         .multiline_text_alignment(HorizontalTextAlignment::Trailing)
         .padding(2),
-        Divider::default(),
+        Divider::default().foreground_color(TxtColor::new('-')),
     ));
 
-    let env = DefaultEnvironment::new(None);
     let mut buffer = FixedTextBuffer::<30, 7>::default();
 
-    let layout = text.layout_and_place(buffer.size(), Point::zero(), &env);
+    let tree = make_render_tree(&view, buffer.size());
 
-    text.render(&mut buffer, &layout, &env);
+    tree.render(&mut buffer, &TxtColor::default());
 
     let lines = [
         "                              ",
@@ -51,7 +51,7 @@ fn test_clipped_text_trails_correctly() {
 fn test_padding_is_oversized_for_oversized_child() {
     let text = Rectangle.frame(Some(10), Some(10), None, None).padding(2);
 
-    let env = DefaultEnvironment::new(());
+    let env = DefaultEnvironment;
 
     assert_eq!(
         text.layout(&Size::new(1, 1).into(), &env).resolved_size,

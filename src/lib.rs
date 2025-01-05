@@ -1,11 +1,11 @@
-#![cfg_attr(not(feature = "std"), no_std)]
+#![no_std]
 #![feature(type_alias_impl_trait)]
 
-#[cfg(feature = "std")]
+#[cfg(any(test, feature = "std"))]
 extern crate std;
 
-#[cfg(not(feature = "std"))]
-extern crate core as std;
+// #[cfg(not(feature = "std"))]
+// extern crate core as std;
 
 pub mod environment;
 pub mod font;

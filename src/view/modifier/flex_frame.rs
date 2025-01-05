@@ -1,9 +1,8 @@
 use crate::{
-    environment::{LayoutEnvironment, RenderEnvironment},
+    environment::LayoutEnvironment,
     layout::{HorizontalAlignment, Layout, ResolvedLayout, VerticalAlignment},
     primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions},
-    render::{AnimationConfiguration, CharacterRender},
-    render_target::CharacterRenderTarget,
+    render::Renderable,
 };
 
 pub struct FlexFrame<T> {
@@ -167,17 +166,27 @@ impl<V: Layout> Layout for FlexFrame<V> {
         ResolvedLayout {
             sublayouts: sublayout,
             resolved_size,
-            origin: Point::zero(),
         }
     }
+}
 
-    fn place_subviews(
+fn greatest_possible(proposal: ProposedDimension, ideal: Dimension) -> Dimension {
+    match proposal {
+        ProposedDimension::Exact(d) => d.into(),
+        ProposedDimension::Compact => ideal,
+        ProposedDimension::Infinite => Dimension::infinite(),
+    }
+}
+
+impl<T: Renderable<C>, C> Renderable<C> for FlexFrame<T> {
+    type Renderables = T::Renderables;
+
+    fn render_tree(
         &self,
-        layout: &mut ResolvedLayout<Self::Sublayout>,
+        layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
         env: &impl LayoutEnvironment,
-    ) {
-        layout.origin = origin;
+    ) -> Self::Renderables {
         let new_origin = origin
             + Point::new(
                 self.horizontal_alignment.align(
@@ -190,70 +199,6 @@ impl<V: Layout> Layout for FlexFrame<V> {
                 ),
             );
 
-        self.child
-            .place_subviews(&mut layout.sublayouts, new_origin, env);
-    }
-}
-
-fn greatest_possible(proposal: ProposedDimension, ideal: Dimension) -> Dimension {
-    match proposal {
-        ProposedDimension::Exact(d) => d.into(),
-        ProposedDimension::Compact => ideal,
-        ProposedDimension::Infinite => Dimension::infinite(),
-    }
-}
-
-impl<Pixel: Copy, View: Layout> CharacterRender<Pixel> for FlexFrame<View>
-where
-    View: CharacterRender<Pixel>,
-{
-    fn render(
-        &self,
-        target: &mut impl CharacterRenderTarget<Color = Pixel>,
-        layout: &ResolvedLayout<Self::Sublayout>,
-        env: &impl RenderEnvironment<Color = Pixel>,
-    ) {
-        self.child.render(target, &layout.sublayouts, env);
-    }
-}
-
-#[cfg(feature = "embedded-graphics")]
-use embedded_graphics::draw_target::DrawTarget;
-
-#[cfg(feature = "embedded-graphics")]
-impl<Pixel, View: Layout> crate::render::PixelRender<Pixel> for FlexFrame<View>
-where
-    View: crate::render::PixelRender<Pixel>,
-    Pixel: embedded_graphics_core::pixelcolor::PixelColor,
-{
-    fn render(
-        &self,
-        target: &mut impl DrawTarget<Color = Pixel>,
-        layout: &ResolvedLayout<Self::Sublayout>,
-        env: &impl RenderEnvironment<Color = Pixel>,
-    ) {
-        self.child.render(target, &layout.sublayouts, env);
-    }
-
-    fn render_animated(
-        target: &mut impl embedded_graphics_core::draw_target::DrawTarget<Color = Pixel>,
-        source_view: &Self,
-        source_layout: &ResolvedLayout<Self::Sublayout>,
-        target_view: &Self,
-        target_layout: &ResolvedLayout<Self::Sublayout>,
-        source_env: &impl RenderEnvironment<Color = Pixel>,
-        target_env: &impl RenderEnvironment<Color = Pixel>,
-        config: &AnimationConfiguration,
-    ) {
-        crate::render::PixelRender::render_animated(
-            target,
-            &source_view.child,
-            &source_layout.sublayouts,
-            &target_view.child,
-            &target_layout.sublayouts,
-            source_env,
-            target_env,
-            config,
-        );
+        self.child.render_tree(&layout.sublayouts, new_origin, env)
     }
 }

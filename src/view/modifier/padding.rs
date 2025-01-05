@@ -1,9 +1,8 @@
 use crate::{
-    environment::{LayoutEnvironment, RenderEnvironment},
+    environment::LayoutEnvironment,
     layout::{Layout, ResolvedLayout},
     primitives::{Point, ProposedDimensions, Size},
-    render::{AnimationConfiguration, CharacterRender},
-    render_target::CharacterRenderTarget,
+    render::Renderable,
 };
 
 /// A view that adds padding around a child view.
@@ -44,76 +43,23 @@ impl<V: Layout> Layout for Padding<V> {
         ResolvedLayout {
             sublayouts: child_layout,
             resolved_size: padding_size,
-            origin: Point::zero(),
         }
     }
+}
 
-    fn place_subviews(
+impl<T: Renderable<C>, C> Renderable<C> for Padding<T> {
+    type Renderables = T::Renderables;
+
+    fn render_tree(
         &self,
-        layout: &mut ResolvedLayout<Self::Sublayout>,
+        layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
         env: &impl LayoutEnvironment,
-    ) {
-        layout.origin = origin;
-        self.child.place_subviews(
-            &mut layout.sublayouts,
+    ) -> Self::Renderables {
+        self.child.render_tree(
+            &layout.sublayouts,
             origin + Point::new(self.padding as i16, self.padding as i16),
             env,
-        );
-    }
-}
-
-impl<Pixel: Copy, View: Layout> CharacterRender<Pixel> for Padding<View>
-where
-    View: CharacterRender<Pixel>,
-{
-    fn render(
-        &self,
-        target: &mut impl CharacterRenderTarget<Color = Pixel>,
-        layout: &ResolvedLayout<Self::Sublayout>,
-        env: &impl RenderEnvironment<Color = Pixel>,
-    ) {
-        self.child.render(target, &layout.sublayouts, env);
-    }
-}
-
-#[cfg(feature = "embedded-graphics")]
-use embedded_graphics::draw_target::DrawTarget;
-
-#[cfg(feature = "embedded-graphics")]
-impl<Pixel, View: Layout> crate::render::PixelRender<Pixel> for Padding<View>
-where
-    View: crate::render::PixelRender<Pixel>,
-    Pixel: embedded_graphics_core::pixelcolor::PixelColor,
-{
-    fn render(
-        &self,
-        target: &mut impl DrawTarget<Color = Pixel>,
-        layout: &ResolvedLayout<Self::Sublayout>,
-        env: &impl RenderEnvironment<Color = Pixel>,
-    ) {
-        self.child.render(target, &layout.sublayouts, env);
-    }
-
-    fn render_animated(
-        target: &mut impl embedded_graphics_core::draw_target::DrawTarget<Color = Pixel>,
-        source_view: &Self,
-        source_layout: &ResolvedLayout<Self::Sublayout>,
-        target_view: &Self,
-        target_layout: &ResolvedLayout<Self::Sublayout>,
-        source_env: &impl RenderEnvironment<Color = Pixel>,
-        target_env: &impl RenderEnvironment<Color = Pixel>,
-        config: &AnimationConfiguration,
-    ) {
-        crate::render::PixelRender::render_animated(
-            target,
-            &source_view.child,
-            &source_layout.sublayouts,
-            &target_view.child,
-            &target_layout.sublayouts,
-            source_env,
-            target_env,
-            config,
-        );
+        )
     }
 }

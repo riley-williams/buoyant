@@ -1,4 +1,4 @@
-use crate::{primitives::Point, render_target::CharacterRenderTarget};
+use crate::primitives::Point;
 
 /// A font that renders individual characters at a time.
 /// Multi-character graphemes are not supported, making
@@ -20,31 +20,12 @@ pub trait FontLayout {
     }
 }
 
-/// A font that renders individual characters at a time to a character render target
-/// Multi-character graphemes are not supported
-pub trait CharacterFont<C: Copy>: FontLayout {
-    /// Render a sequence of characters with a solid color
-    fn render_iter_solid<T, I>(&self, target: &mut T, origin: Point, color: C, characters: I)
-    where
-        T: CharacterRenderTarget<Color = C>,
-        I: IntoIterator<Item = char>,
-    {
-        self.render_iter(target, origin, characters.into_iter().map(|c| (c, color)));
-    }
-
-    /// Render a sequence of characters with individually defined colors
-    fn render_iter<T, I>(&self, target: &mut T, origin: Point, characters: I)
-    where
-        T: CharacterRenderTarget<Color = C>,
-        I: IntoIterator<Item = (char, C)>;
-}
-
 /// A simple font for rendering non-unicode characters in a text buffer
 /// The width and height of all characters is 1.
 #[derive(Default, Clone, Copy, Debug, PartialEq, Eq)]
-pub struct BufferCharacterFont;
+pub struct CharacterBufferFont;
 
-impl FontLayout for BufferCharacterFont {
+impl FontLayout for CharacterBufferFont {
     #[inline]
     fn line_height(&self) -> u16 {
         1
@@ -56,18 +37,6 @@ impl FontLayout for BufferCharacterFont {
     }
 }
 
-impl<C: Copy> CharacterFont<C> for BufferCharacterFont {
-    fn render_iter<T, I>(&self, target: &mut T, origin: Point, characters: I)
-    where
-        T: CharacterRenderTarget<Color = C>,
-        I: IntoIterator<Item = (char, C)>,
-    {
-        for (i, (character, color)) in characters.into_iter().enumerate() {
-            target.draw(origin + Point::new(i as i16, 0), character, color);
-        }
-    }
-}
-
 #[cfg(feature = "embedded-graphics")]
 use embedded_graphics::draw_target::DrawTarget;
 
@@ -76,51 +45,11 @@ use embedded_graphics::draw_target::DrawTarget;
 /// this primarily useful for embedded devices.
 #[cfg(feature = "embedded-graphics")]
 pub trait PixelFont<C>: FontLayout {
+    // TODO: should this just accept a string.....? or have analternative that accepts &str?
     fn render_iter<T, I>(&self, target: &mut T, origin: Point, color: C, characters: I)
     where
         T: DrawTarget<Color = C>,
         I: IntoIterator<Item = char>;
-}
-
-#[cfg(feature = "crossterm")]
-pub use crossterm_font::TerminalCharFont;
-
-#[cfg(feature = "crossterm")]
-mod crossterm_font {
-    use crate::{primitives::Point, render_target::CharacterRenderTarget};
-
-    use super::{CharacterFont, FontLayout};
-
-    /// A simple font for rendering non-unicode characters in a text buffer
-    /// The width and height of all characters is 1.
-    #[derive(Default, Clone, Copy, Debug, PartialEq, Eq)]
-    pub struct TerminalCharFont;
-
-    impl FontLayout for TerminalCharFont {
-        #[inline]
-        fn line_height(&self) -> u16 {
-            1
-        }
-
-        #[inline]
-        fn character_width(&self, _: char) -> u16 {
-            1
-        }
-    }
-
-    impl CharacterFont<crossterm::style::Colors> for TerminalCharFont {
-        // TODO: Add render_iter_solid impl once character render target draws strings
-
-        fn render_iter<T, I>(&self, target: &mut T, origin: Point, characters: I)
-        where
-            T: CharacterRenderTarget<Color = crossterm::style::Colors>,
-            I: IntoIterator<Item = (char, crossterm::style::Colors)>,
-        {
-            for (i, (character, color)) in characters.into_iter().enumerate() {
-                target.draw(origin + Point::new(i as i16, 0), character, color);
-            }
-        }
-    }
 }
 
 #[cfg(feature = "embedded-graphics")]

@@ -5,7 +5,7 @@ use core::cmp::max;
 
 use crate::pixel::Interpolate;
 
-#[derive(Debug, PartialEq, Clone, Copy, Default)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct Size {
     pub width: u16,
     pub height: u16,
@@ -77,7 +77,7 @@ impl From<Size> for embedded_graphics_core::geometry::Size {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct Point {
     pub x: i16,
     pub y: i16,
