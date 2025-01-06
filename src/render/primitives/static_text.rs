@@ -1,5 +1,6 @@
 use crate::{
     font::FontLayout,
+    pixel::Interpolate,
     primitives::{Point, Size},
     render::{shade::Shader, AnimationDomain, Render},
     render_target::RenderTarget,
@@ -44,18 +45,10 @@ impl<C, F: FontLayout> Render<C> for StaticText<'_, &F> {
         }
     }
 
-    fn render_animated(
-        render_target: &mut impl RenderTarget<Color = C>,
-        _source: &Self,
-        _: &impl Shader<Color = C>,
-        target: &Self,
-        target_shader: &impl Shader<Color = C>,
-        _config: &AnimationDomain,
-    ) {
-        target.render(render_target, target_shader);
-    }
-
-    fn join(_source: Self, target: Self, _config: &AnimationDomain) -> Self {
+    fn join(source: Self, mut target: Self, config: &AnimationDomain) -> Self {
+        let x = i16::interpolate(source.origin.x, target.origin.x, config.factor);
+        let y = i16::interpolate(source.origin.y, target.origin.y, config.factor);
+        target.origin = Point::new(x, y);
         target
     }
 }
