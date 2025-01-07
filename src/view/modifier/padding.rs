@@ -1,3 +1,5 @@
+use embedded_graphics::prelude::PixelColor;
+
 use crate::{
     environment::LayoutEnvironment,
     layout::{Layout, ResolvedLayout},
@@ -47,7 +49,7 @@ impl<V: Layout> Layout for Padding<V> {
     }
 }
 
-impl<T: Renderable<C>, C> Renderable<C> for Padding<T> {
+impl<T: Renderable<C>, C: PixelColor> Renderable<C> for Padding<T> {
     type Renderables = T::Renderables;
 
     fn render_tree(

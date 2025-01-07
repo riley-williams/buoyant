@@ -14,15 +14,14 @@ exclude = [".github"]
 maintenance = { status = "experimental" }
 
 [features]
-default = ["embedded-graphics", "crossterm"]
+default = ["crossterm"]
 std = []
 crossterm = ["dep:crossterm", "std"]
-embedded-graphics = ["dep:embedded-graphics-core", "dep:embedded-graphics"]
 
 [dependencies]
 crossterm = { version = "^0.28", optional = true }
-embedded-graphics-core = { version = "^0.4", optional = true }
-embedded-graphics = { version = "^0.8", optional = true }
+embedded-graphics-core = { version = "^0.4" }
+embedded-graphics = { version = "^0.8" }
 heapless = "^0.8"
 paste = "1.0.15"
 

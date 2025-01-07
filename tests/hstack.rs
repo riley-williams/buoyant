@@ -5,7 +5,7 @@ use buoyant::font::CharacterBufferFont;
 use buoyant::layout::{Layout, VerticalAlignment};
 use buoyant::primitives::{Dimensions, Point, ProposedDimension, ProposedDimensions, Size};
 use buoyant::render::{Render, Renderable};
-use buoyant::render_target::{FixedTextBuffer, RenderTarget, TxtColor};
+use buoyant::render_target::{CharColor, FixedTextBuffer, RenderTarget};
 use buoyant::view::{make_render_tree, RenderExtensions as _};
 use buoyant::view::{shape::Rectangle, Divider, EmptyView, HStack, LayoutExtensions, Spacer, Text};
 
@@ -56,7 +56,7 @@ fn test_horizontal_render_2() {
     let hstack = HStack::new((Text::str("123", &font), Text::str("4567", &font))).with_spacing(1);
     let mut buffer = FixedTextBuffer::<9, 1>::default();
     let tree = make_render_tree(&hstack, buffer.size());
-    tree.render(&mut buffer, &TxtColor::clear());
+    tree.render(&mut buffer, &CharColor::clear());
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "123 4567 ");
 }
@@ -69,7 +69,7 @@ fn test_undersized_layout_3_left_pad() {
         Text::str("4567", &font),
         Spacer::default(),
     ))
-    .foreground_color(TxtColor::default());
+    .foreground_color(CharColor::default());
     let offer = Size::new(10, 1);
     let env = DefaultEnvironment;
     let layout = hstack.layout(&offer.into(), &env);
@@ -77,7 +77,7 @@ fn test_undersized_layout_3_left_pad() {
     let mut buffer = FixedTextBuffer::<10, 1>::default();
     hstack
         .render_tree(&layout, Point::zero(), &env)
-        .render(&mut buffer, &TxtColor::clear());
+        .render(&mut buffer, &CharColor::clear());
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "1234567   ");
 }
@@ -90,7 +90,7 @@ fn test_undersized_layout_3_right_pad_space() {
         Text::str("5678", &font),
     ))
     .with_spacing(1)
-    .foreground_color(TxtColor::default());
+    .foreground_color(CharColor::default());
     let offer = Size::new(10, 1);
     let env = DefaultEnvironment;
     let layout = hstack.layout(&offer.into(), &env);
@@ -98,7 +98,7 @@ fn test_undersized_layout_3_right_pad_space() {
     let mut buffer = FixedTextBuffer::<10, 1>::default();
     hstack
         .render_tree(&layout, Point::zero(), &env)
-        .render(&mut buffer, &TxtColor::clear());
+        .render(&mut buffer, &CharColor::clear());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "  234 5678");
 }
 
@@ -112,7 +112,7 @@ fn test_oversized_layout_3_leading_pad_space() {
         Text::str("56789", &font),
     ))
     .with_spacing(1)
-    .foreground_color(TxtColor::default());
+    .foreground_color(CharColor::default());
     let offer = Size::new(10, 1);
     let env = DefaultEnvironment;
     let layout = hstack.layout(&offer.into(), &env);
@@ -120,7 +120,7 @@ fn test_oversized_layout_3_leading_pad_space() {
     let mut buffer = FixedTextBuffer::<10, 1>::default();
     hstack
         .render_tree(&layout, Point::zero(), &env)
-        .render(&mut buffer, &TxtColor::clear());
+        .render(&mut buffer, &CharColor::clear());
     assert_eq!(buffer.text[0].iter().collect::<String>(), " 234 56789");
 }
 
@@ -132,7 +132,7 @@ fn test_undersized_layout_3_middle_pad() {
         Spacer::default(),
         Text::str("5678", &font),
     ))
-    .foreground_color(TxtColor::default());
+    .foreground_color(CharColor::default());
     let offer = Size::new(10, 1);
     let env = DefaultEnvironment;
     let layout = hstack.layout(&offer.into(), &env);
@@ -140,7 +140,7 @@ fn test_undersized_layout_3_middle_pad() {
     let mut buffer = FixedTextBuffer::<10, 1>::default();
     hstack
         .render_tree(&layout, Point::zero(), &env)
-        .render(&mut buffer, &TxtColor::clear());
+        .render(&mut buffer, &CharColor::clear());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "234   5678");
 }
 
@@ -154,7 +154,7 @@ fn test_oversized_layout_3_middle_pad_space() {
         Text::str("56789", &font),
     ))
     .with_spacing(1)
-    .foreground_color(TxtColor::default());
+    .foreground_color(CharColor::default());
     let offer = Size::new(10, 1);
     let env = DefaultEnvironment;
     let layout = hstack.layout(&offer.into(), &env);
@@ -162,7 +162,7 @@ fn test_oversized_layout_3_middle_pad_space() {
     let mut buffer = FixedTextBuffer::<10, 1>::default();
     hstack
         .render_tree(&layout, Point::zero(), &env)
-        .render(&mut buffer, &TxtColor::clear());
+        .render(&mut buffer, &CharColor::clear());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "234  56789");
 }
 
@@ -176,7 +176,7 @@ fn test_oversized_layout_3_trailing_pad_space() {
         Spacer::default(),
     ))
     .with_spacing(1)
-    .foreground_color(TxtColor::default());
+    .foreground_color(CharColor::default());
     let offer = Size::new(10, 1);
     let env = DefaultEnvironment;
     let layout = hstack.layout(&offer.into(), &env);
@@ -184,7 +184,7 @@ fn test_oversized_layout_3_trailing_pad_space() {
     let mut buffer = FixedTextBuffer::<10, 1>::default();
     hstack
         .render_tree(&layout, Point::zero(), &env)
-        .render(&mut buffer, &TxtColor::clear());
+        .render(&mut buffer, &CharColor::clear());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "234 56789 ");
 }
 
@@ -197,35 +197,35 @@ fn test_layout_3_remainder_allocation() {
         Text::str("bbb", &font),
         Text::str("ccc", &font),
     ))
-    .foreground_color(TxtColor::default());
+    .foreground_color(CharColor::default());
     let env = DefaultEnvironment;
     let mut buffer = FixedTextBuffer::<10, 1>::default();
     let offer = Size::new(7, 1);
     let layout = hstack.layout(&offer.into(), &env);
     hstack
         .render_tree(&layout, Point::zero(), &env)
-        .render(&mut buffer, &TxtColor::clear());
+        .render(&mut buffer, &CharColor::clear());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aaabbcc   ");
 
     let offer = Size::new(8, 1);
     let layout = hstack.layout(&offer.into(), &env);
     hstack
         .render_tree(&layout, Point::zero(), &env)
-        .render(&mut buffer, &TxtColor::clear());
+        .render(&mut buffer, &CharColor::clear());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aaabbbcc  ");
 
     let offer = Size::new(9, 1);
     let layout = hstack.layout(&offer.into(), &env);
     hstack
         .render_tree(&layout, Point::zero(), &env)
-        .render(&mut buffer, &TxtColor::clear());
+        .render(&mut buffer, &CharColor::clear());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aaabbbccc ");
 
     let offer = Size::new(10, 1);
     let layout = hstack.layout(&offer.into(), &env);
     hstack
         .render_tree(&layout, Point::zero(), &env)
-        .render(&mut buffer, &TxtColor::clear());
+        .render(&mut buffer, &CharColor::clear());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aaabbbccc ");
 }
 
@@ -235,14 +235,14 @@ fn test_layout_3_vertical_alignment_bottom() {
     let font = CharacterBufferFont {};
     let hstack = HStack::new((
         Text::str("aaa", &font),
-        Divider::default().foreground_color(TxtColor::new('|')),
+        Divider::default().foreground_color(CharColor::new('|')),
         Text::str("ccc", &font),
     ))
     .with_alignment(VerticalAlignment::Bottom)
     .with_spacing(1);
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&hstack, buffer.size());
-    tree.render(&mut buffer, &TxtColor::clear());
+    tree.render(&mut buffer, &CharColor::clear());
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "   |  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "   |  ");
@@ -257,14 +257,14 @@ fn test_layout_3_vertical_alignment_center() {
     let font = CharacterBufferFont {};
     let hstack = HStack::new((
         Text::str("aaa", &font),
-        Divider::default().foreground_color(TxtColor::new('|')),
+        Divider::default().foreground_color(CharColor::new('|')),
         Text::str("ccc", &font),
     ))
     .with_alignment(VerticalAlignment::Center)
     .with_spacing(1);
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&hstack, buffer.size());
-    tree.render(&mut buffer, &TxtColor::clear());
+    tree.render(&mut buffer, &CharColor::clear());
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "   |  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "aa | c");
@@ -279,14 +279,14 @@ fn test_layout_3_vertical_alignment_top() {
     let font = CharacterBufferFont {};
     let hstack = HStack::new((
         Text::str("aaa", &font),
-        Divider::default().foreground_color(TxtColor::new('|')),
+        Divider::default().foreground_color(CharColor::new('|')),
         Text::str("ccc", &font),
     ))
     .with_alignment(VerticalAlignment::Top)
     .with_spacing(1);
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&hstack, buffer.size());
-    tree.render(&mut buffer, &TxtColor::clear());
+    tree.render(&mut buffer, &CharColor::clear());
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aa | c");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "a  | c");
@@ -310,7 +310,7 @@ fn test_minimal_offer_extra_space_1() {
     let mut buffer = FixedTextBuffer::<19, 5>::default();
 
     let tree = make_render_tree(&hstack, buffer.size());
-    tree.render(&mut buffer, &TxtColor::clear());
+    tree.render(&mut buffer, &CharColor::clear());
 
     let lines = [
         "a b c d e f g h i j",
@@ -329,34 +329,34 @@ fn test_layout_3_extra_space_allocation() {
     // The HStack should attempt to lay out the views into the full width of the offer.
     let font = CharacterBufferFont {};
     let hstack = HStack::new((
-        Rectangle.foreground_color(TxtColor::new('x')),
+        Rectangle.foreground_color(CharColor::new('x')),
         Text::str("T", &font),
-        Rectangle.foreground_color(TxtColor::new('+')),
+        Rectangle.foreground_color(CharColor::new('+')),
     ))
     .with_spacing(0);
     let mut buffer = FixedTextBuffer::<9, 3>::default();
     let tree = make_render_tree(&hstack, buffer.size());
-    tree.render(&mut buffer, &TxtColor::clear());
+    tree.render(&mut buffer, &CharColor::clear());
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "xxxx ++++");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "xxxxT++++");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "xxxx ++++");
 }
 
-fn view(max_width_1: u16, max_width_2: u16, max_width_3: u16) -> impl Renderable<TxtColor> {
+fn view(max_width_1: u16, max_width_2: u16, max_width_3: u16) -> impl Renderable<CharColor> {
     HStack::new((
         Rectangle
-            .foreground_color(TxtColor::new('x'))
+            .foreground_color(CharColor::new('x'))
             .flex_frame()
             .with_min_width(3)
             .with_max_width(max_width_1),
         Rectangle
-            .foreground_color(TxtColor::new('-'))
+            .foreground_color(CharColor::new('-'))
             .flex_frame()
             .with_min_width(2)
             .with_max_width(max_width_2),
         Rectangle
-            .foreground_color(TxtColor::new('+'))
+            .foreground_color(CharColor::new('+'))
             .flex_frame()
             .with_min_width(4)
             .with_max_width(max_width_3),
@@ -372,7 +372,7 @@ fn stack_fits_subviews_regardless_of_flexibility_order() {
             for w3 in 1..12 {
                 let view = view(w1, w2, w3);
                 let tree = make_render_tree(&view, buffer.size());
-                tree.render(&mut buffer, &TxtColor::clear());
+                tree.render(&mut buffer, &CharColor::clear());
                 // This is the only arrangement that fits
                 assert_eq!(buffer.text[0].iter().collect::<String>(), "xxx--++++");
             }
@@ -389,7 +389,7 @@ fn empty_view_does_not_create_extra_spacing() {
         .with_spacing(2);
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&hstack, buffer.size());
-    tree.render(&mut buffer, &TxtColor::clear());
+    tree.render(&mut buffer, &CharColor::clear());
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aa  cc");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "a   c ");

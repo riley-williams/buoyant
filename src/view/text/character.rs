@@ -1,3 +1,5 @@
+use embedded_graphics::{mono_font::MonoFont, prelude::PixelColor};
+
 use crate::{
     environment::LayoutEnvironment,
     font::FontLayout,
@@ -12,8 +14,8 @@ use core::marker::PhantomData;
 
 use super::{wrap::WhitespaceWrap, HorizontalTextAlignment, Text};
 
-impl<'a, F> Text<'a, &'a str, F> {
-    pub fn str(text: &'a str, font: &'a F) -> Self {
+impl<'a> Text<'a, &'a str> {
+    pub fn str(text: &'a str, font: &'a MonoFont<'a>) -> Self {
         Text {
             text,
             font,
@@ -23,8 +25,8 @@ impl<'a, F> Text<'a, &'a str, F> {
     }
 }
 
-impl<'a, const N: usize, F> Text<'a, heapless::String<N>, F> {
-    pub fn heapless(text: heapless::String<N>, font: &'a F) -> Self {
+impl<'a, const N: usize> Text<'a, heapless::String<N>> {
+    pub fn heapless(text: heapless::String<N>, font: &'a MonoFont<'a>) -> Self {
         Text {
             text,
             font,
@@ -35,8 +37,8 @@ impl<'a, const N: usize, F> Text<'a, heapless::String<N>, F> {
 }
 
 #[cfg(feature = "std")]
-impl<'a, F> Text<'a, std::string::String, F> {
-    pub fn string(text: std::string::String, font: &'a F) -> Self {
+impl<'a> Text<'a, std::string::String> {
+    pub fn string(text: std::string::String, font: &'a MonoFont<'a>) -> Self {
         Text {
             text,
             font,
@@ -86,7 +88,7 @@ impl<T: PartialEq, F> PartialEq for Text<'_, T, F> {
 
 // TODO: consolidate the layout implementations...this is getting ridiculous
 
-impl<'a, F: FontLayout> Layout for Text<'a, &'a str, F> {
+impl<'a> Layout for Text<'a, &'a str> {
     // this could be used to store the precalculated line breaks
     type Sublayout = ();
 
@@ -113,8 +115,8 @@ impl<'a, F: FontLayout> Layout for Text<'a, &'a str, F> {
     }
 }
 
-impl<'a, F: FontLayout, C> Renderable<C> for Text<'a, &'a str, F> {
-    type Renderables = StaticText<'a, &'a F>;
+impl<'a, C: PixelColor> Renderable<C> for Text<'a, &'a str> {
+    type Renderables = StaticText<'a>;
 
     fn render_tree(
         &self,
@@ -159,8 +161,10 @@ impl<const N: usize, F: FontLayout> Layout for Text<'_, heapless::String<N>, F> 
     }
 }
 
-impl<'a, const N: usize, F: FontLayout, C> Renderable<C> for Text<'a, heapless::String<N>, F> {
-    type Renderables = OwnedText<N, &'a F>;
+impl<'a, const N: usize, C: PixelColor> Renderable<C>
+    for Text<'a, heapless::String<N>, MonoFont<'_>>
+{
+    type Renderables = OwnedText<'a, N>;
 
     fn render_tree(
         &self,

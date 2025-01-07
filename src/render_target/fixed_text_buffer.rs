@@ -1,9 +1,7 @@
 use core::fmt::{Display, Formatter, Result};
 
-use crate::primitives::{Point, Size};
-use crate::render::shade::ShadeSolid;
-
-use super::RenderTarget;
+use embedded_graphics::pixelcolor::raw::RawU32;
+use embedded_graphics::prelude::{DrawTarget, OriginDimensions};
 
 /// A fixed size text buffer
 pub struct FixedTextBuffer<const W: usize, const H: usize> {
@@ -36,39 +34,29 @@ impl<const W: usize, const H: usize> Default for FixedTextBuffer<W, H> {
     }
 }
 
-impl<const W: usize, const H: usize> RenderTarget for FixedTextBuffer<W, H> {
-    type Color = TxtColor;
+impl<const W: usize, const H: usize> DrawTarget for FixedTextBuffer<W, H> {
+    type Color = CharColor;
 
-    fn size(&self) -> Size {
-        Size::new(W as u16, H as u16)
+    type Error = ();
+
+    fn draw_iter<I>(&mut self, pixels: I) -> core::result::Result<(), Self::Error>
+    where
+        I: IntoIterator<Item = embedded_graphics::Pixel<Self::Color>>,
+    {
+        todo!()
     }
+}
 
-    fn draw(&mut self, point: Point, color: Self::Color) {
-        let x = point.x as usize;
-        let y = point.y as usize;
-        if y < H && x < W {
-            if let Some(color) = color.0 {
-                self.text[y][x] = color;
-            }
-        }
-    }
-
-    fn draw_text(
-        &mut self,
-        text: &str,
-        position: Point,
-        _shader: &impl crate::render::shade::Shader<Color = Self::Color>,
-    ) {
-        for (i, c) in text.chars().enumerate() {
-            self.draw(position + Point::new(i as i16, 0), TxtColor::new(c));
-        }
+impl<const W: usize, const H: usize> OriginDimensions for FixedTextBuffer<W, H> {
+    fn size(&self) -> embedded_graphics::geometry::Size {
+        embedded_graphics::geometry::Size::new(W as u32, H as u32)
     }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct TxtColor(Option<char>);
+pub struct CharColor(Option<char>);
 
-impl TxtColor {
+impl CharColor {
     pub fn new(color: char) -> Self {
         Self(Some(color))
     }
@@ -78,20 +66,18 @@ impl TxtColor {
     }
 }
 
-impl From<char> for TxtColor {
+impl From<char> for CharColor {
     fn from(color: char) -> Self {
         Self::new(color)
     }
 }
 
-impl Default for TxtColor {
+impl Default for CharColor {
     fn default() -> Self {
         Self::clear()
     }
 }
 
-impl ShadeSolid for TxtColor {
-    fn color(&self) -> TxtColor {
-        *self
-    }
+impl embedded_graphics::pixelcolor::PixelColor for CharColor {
+    type Raw = RawU32;
 }

@@ -35,7 +35,6 @@ impl FontLayout for CharacterBufferFont {
     }
 }
 
-#[cfg(feature = "embedded-graphics")]
 mod embedded_graphics_fonts {
     // use embedded_graphics::{draw_target::DrawTarget, mono_font::MonoTextStyle, text::Text};
     // use embedded_graphics_core::pixelcolor::PixelColor;

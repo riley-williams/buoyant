@@ -2,7 +2,7 @@ use buoyant::font::CharacterBufferFont;
 use buoyant::layout::{Layout, LayoutDirection};
 use buoyant::primitives::{Dimension, Dimensions, ProposedDimension, ProposedDimensions, Size};
 use buoyant::render::Render;
-use buoyant::render_target::{FixedTextBuffer, RenderTarget, TxtColor};
+use buoyant::render_target::{CharColor, FixedTextBuffer, RenderTarget};
 use buoyant::view::{make_render_tree, HStack, Spacer, Text, VStack};
 use common::{collect_text, TestEnv};
 
@@ -119,7 +119,7 @@ fn test_render_fills_hstack() {
     let hstack = HStack::new((Spacer::default(), Text::str("67", &font))).with_spacing(1);
     let mut buffer = FixedTextBuffer::<9, 1>::default();
     let tree = make_render_tree(&hstack, buffer.size());
-    tree.render(&mut buffer, &TxtColor::default());
+    tree.render(&mut buffer, &CharColor::default());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "       67");
 }
 
@@ -129,6 +129,6 @@ fn test_render_fills_vstack() {
     let vstack = VStack::new((Spacer::default(), Text::str("67", &font))).with_spacing(1);
     let mut buffer = FixedTextBuffer::<1, 9>::default();
     let tree = make_render_tree(&vstack, buffer.size());
-    tree.render(&mut buffer, &TxtColor::default());
+    tree.render(&mut buffer, &CharColor::default());
     assert_eq!(collect_text(&buffer), "       67");
 }

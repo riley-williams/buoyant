@@ -1,9 +1,14 @@
 use crate::{
     pixel::Interpolate,
     primitives::{Point, Size},
-    render::{shade::Shader, AnimationDomain, Render},
-    render_target::RenderTarget,
+    render::{AnimationDomain, Render},
 };
+
+use embedded_graphics::{
+    prelude::PixelColor,
+    primitives::{PrimitiveStyle, StyledDrawable as _},
+};
+use embedded_graphics_core::draw_target::DrawTarget;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Capsule {
@@ -18,18 +23,22 @@ impl Capsule {
 }
 
 // TODO: this draws a rectangle
-impl<C> Render<C> for Capsule {
-    fn render(
-        &self,
-        render_target: &mut impl RenderTarget<Color = C>,
-        shader: &impl Shader<Color = C>,
-    ) {
-        for y in self.origin.y..(self.origin.y + self.size.height as i16) {
-            for x in self.origin.x..(self.origin.x + self.size.width as i16) {
-                let p = Point::new(x, y);
-                render_target.draw(p, shader.shade(p));
-            }
-        }
+impl<C: PixelColor> Render<C> for Capsule {
+    fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &PrimitiveStyle<C>) {
+        let radius = self.size.height.min(self.size.width) / 2;
+        let rectangle = embedded_graphics::primitives::Rectangle {
+            top_left: self.origin.into(),
+            size: self.size.into(),
+        };
+
+        _ = embedded_graphics::primitives::RoundedRectangle::with_equal_corners(
+            rectangle,
+            embedded_graphics::prelude::Size {
+                width: radius.into(),
+                height: radius.into(),
+            },
+        )
+        .draw_styled(style, render_target);
     }
 
     fn join(source: Self, target: Self, config: &AnimationDomain) -> Self {

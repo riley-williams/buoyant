@@ -2,7 +2,7 @@ use buoyant::{
     font::CharacterBufferFont,
     layout::{HorizontalAlignment, VerticalAlignment},
     render::Render,
-    render_target::{FixedTextBuffer, RenderTarget, TxtColor},
+    render_target::{CharColor, FixedTextBuffer, RenderTarget},
     view::{make_render_tree, ForEach, HStack, Spacer, Text},
 };
 
@@ -49,7 +49,7 @@ fn foreach_with_inner_wrapping_hstack() {
     });
     let mut buffer = FixedTextBuffer::<10, 5>::default();
     let tree = make_render_tree(&view, buffer.size());
-    tree.render(&mut buffer, &TxtColor::default());
+    tree.render(&mut buffer, &CharColor::default());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "Alice   99");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "Bob      2");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "Person    ");
@@ -90,7 +90,7 @@ fn foreach_leading_aligned() {
     .with_alignment(HorizontalAlignment::Leading);
     let mut buffer = FixedTextBuffer::<10, 5>::default();
     let tree = make_render_tree(&view, buffer.size());
-    tree.render(&mut buffer, &TxtColor::default());
+    tree.render(&mut buffer, &CharColor::default());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "Alice 99  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "Bob 2     ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "Person    ");
@@ -131,7 +131,7 @@ fn foreach_trailing_aligned() {
     .with_alignment(HorizontalAlignment::Trailing);
     let mut buffer = FixedTextBuffer::<10, 5>::default();
     let tree = make_render_tree(&view, buffer.size());
-    tree.render(&mut buffer, &TxtColor::default());
+    tree.render(&mut buffer, &CharColor::default());
     assert_eq!(buffer.text[0].iter().collect::<String>(), " Alice 99 ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "    Bob 2 ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "Person    ");

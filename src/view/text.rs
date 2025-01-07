@@ -1,5 +1,6 @@
 use core::marker::PhantomData;
 
+use embedded_graphics::mono_font::MonoFont;
 pub use wrap::WhitespaceWrap;
 
 mod character;
@@ -7,9 +8,9 @@ mod wrap;
 
 // W is hardcoded elsewhere to WhitespaceWrap, leaving generic for future fix
 
-pub struct Text<'a, T, F, W = WhitespaceWrap<'a, F>> {
+pub struct Text<'a, T, W = WhitespaceWrap<'a, MonoFont<'a>>> {
     pub(crate) text: T,
-    pub(crate) font: &'a F,
+    pub(crate) font: &'a MonoFont<'a>,
     pub(crate) alignment: HorizontalTextAlignment,
     pub(crate) _wrap: PhantomData<W>,
 }

@@ -1,8 +1,7 @@
-use crate::{
-    primitives::Size,
-    render::{shade::Shader, Render},
-    render_target::RenderTarget,
-};
+use crate::{primitives::Size, render::Render};
+
+use embedded_graphics::{prelude::PixelColor, primitives::PrimitiveStyle};
+use embedded_graphics_core::draw_target::DrawTarget;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ConditionalTree<T, F> {
@@ -16,11 +15,11 @@ pub enum Subtree<T, F> {
     False(F),
 }
 
-impl<C, T: Render<C>, F: Render<C>> Render<C> for ConditionalTree<T, F> {
-    fn render(&self, target: &mut impl RenderTarget<Color = C>, shader: &impl Shader<Color = C>) {
+impl<C: PixelColor, T: Render<C>, F: Render<C>> Render<C> for ConditionalTree<T, F> {
+    fn render(&self, target: &mut impl DrawTarget<Color = C>, style: &PrimitiveStyle<C>) {
         match &self.subtree {
-            Subtree::True(true_tree) => true_tree.render(target, shader),
-            Subtree::False(false_tree) => false_tree.render(target, shader),
+            Subtree::True(true_tree) => true_tree.render(target, style),
+            Subtree::False(false_tree) => false_tree.render(target, style),
         }
     }
 

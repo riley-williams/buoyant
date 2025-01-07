@@ -1,9 +1,14 @@
 use crate::{
     pixel::Interpolate,
     primitives::{Point, Size},
-    render::{shade::Shader, AnimationDomain, Render},
-    render_target::RenderTarget,
+    render::{AnimationDomain, Render},
 };
+
+use embedded_graphics::{
+    prelude::PixelColor,
+    primitives::{PrimitiveStyle, StyledDrawable as _},
+};
+use embedded_graphics_core::draw_target::DrawTarget;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RoundedRect {
@@ -13,46 +18,18 @@ pub struct RoundedRect {
 }
 
 // TODO: This draws a rectangle
-impl<C> Render<C> for RoundedRect {
-    fn render(
-        &self,
-        render_target: &mut impl RenderTarget<Color = C>,
-        shader: &impl Shader<Color = C>,
-    ) {
-        for y in self.origin.y..(self.origin.y + self.size.height as i16) {
-            for x in self.origin.x..(self.origin.x + self.size.width as i16) {
-                let p = Point::new(x, y);
-                render_target.draw(p, shader.shade(p));
-            }
-        }
-    }
-
-    fn render_animated(
-        render_target: &mut impl RenderTarget<Color = C>,
-        source: &Self,
-        source_shader: &impl Shader<Color = C>,
-        target: &Self,
-        target_shader: &impl Shader<Color = C>,
-        config: &AnimationDomain,
-    ) {
-        let min_x = source.origin.x.min(target.origin.x);
-        let max_x = (source.origin.x + source.size.width as i16)
-            .max(target.origin.x + target.size.width as i16);
-        let min_y = source.origin.y.min(target.origin.y);
-        let max_y = (source.origin.y + source.size.height as i16)
-            .max(target.origin.y + target.size.height as i16);
-
-        for y in min_y..max_y {
-            for x in min_x..max_x {
-                let p = Point::new(x, y);
-                let color = if config.factor < 128 {
-                    source_shader.shade(p)
-                } else {
-                    target_shader.shade(p)
-                };
-                render_target.draw(p, color);
-            }
-        }
+impl<C: PixelColor> Render<C> for RoundedRect {
+    fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &PrimitiveStyle<C>) {
+        _ = embedded_graphics::primitives::RoundedRectangle::new(
+            embedded_graphics::primitives::Rectangle {
+                top_left: self.origin.into(),
+                size: self.size.into(),
+            },
+            embedded_graphics::primitives::CornerRadii::new(
+                (self.corner_radius as u32, self.corner_radius as u32).into(),
+            ),
+        )
+        .draw_styled(style, render_target);
     }
 
     fn join(source: Self, target: Self, config: &AnimationDomain) -> Self {

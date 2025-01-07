@@ -1,3 +1,5 @@
+use embedded_graphics::prelude::PixelColor;
+
 use crate::{
     environment::LayoutEnvironment,
     layout::{Layout, ResolvedLayout},
@@ -37,7 +39,7 @@ impl<V: Layout> Layout for Priority<V> {
     }
 }
 
-impl<T: Renderable<C>, C> Renderable<C> for Priority<T> {
+impl<T: Renderable<C>, C: PixelColor> Renderable<C> for Priority<T> {
     type Renderables = T::Renderables;
 
     fn render_tree(

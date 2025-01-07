@@ -1,35 +1,36 @@
-use crate::render_target::RenderTarget;
-
-use super::{shade::Shader, Render};
+use super::Render;
+use embedded_graphics::primitives::PrimitiveStyle;
+use embedded_graphics_core::draw_target::DrawTarget;
+use embedded_graphics_core::prelude::PixelColor;
 
 macro_rules! impl_render_for_collections {
     ($(($n:tt, $type:ident)),+) => {
-        impl<Color, $($type: Render<Color> ),+> Render<Color> for ($($type),+) {
+        impl<Color: PixelColor, $($type: Render<Color> ),+> Render<Color> for ($($type),+) {
             fn render(
                 &self,
-                target: &mut impl RenderTarget<Color = Color>,
-                shader: &impl Shader<Color = Color>,
+                target: &mut impl DrawTarget<Color = Color>,
+                style: &PrimitiveStyle<Color>,
             ) {
                 $(
-                    self.$n.render(target, shader);
+                    self.$n.render(target, style);
                 )+
             }
 
             fn render_animated(
-                render_target: &mut impl RenderTarget<Color = Color>,
+                render_target: &mut impl DrawTarget<Color = Color>,
                 source: &Self,
-                source_shader: &impl Shader<Color = Color>,
+                source_style: &PrimitiveStyle<Color>,
                 target: &Self,
-                target_shader: &impl Shader<Color = Color>,
+                target_style: &PrimitiveStyle<Color>,
                 config: &super::AnimationDomain,
             ) {
                 $(
                     $type::render_animated(
                         render_target,
                         &source.$n,
-                        source_shader,
+                        source_style,
                         &target.$n,
-                        target_shader,
+                        target_style,
                         config,
                     );
                 )+
@@ -95,22 +96,22 @@ impl_render_for_collections!(
     (9, T9)
 );
 
-impl<Color, T: Render<Color>, const N: usize> Render<Color> for heapless::Vec<T, N> {
+impl<Color: PixelColor, T: Render<Color>, const N: usize> Render<Color> for heapless::Vec<T, N> {
     fn render(
         &self,
-        render_target: &mut impl RenderTarget<Color = Color>,
-        shader: &impl Shader<Color = Color>,
+        render_target: &mut impl DrawTarget<Color = Color>,
+        style: &PrimitiveStyle<Color>,
     ) {
         self.iter()
-            .for_each(|item| item.render(render_target, shader));
+            .for_each(|item| item.render(render_target, style));
     }
 
     fn render_animated(
-        render_target: &mut impl RenderTarget<Color = Color>,
+        render_target: &mut impl DrawTarget<Color = Color>,
         source: &Self,
-        source_shader: &impl Shader<Color = Color>,
+        source_style: &PrimitiveStyle<Color>,
         target: &Self,
-        target_shader: &impl Shader<Color = Color>,
+        target_style: &PrimitiveStyle<Color>,
         config: &super::AnimationDomain,
     ) {
         source
@@ -120,9 +121,9 @@ impl<Color, T: Render<Color>, const N: usize> Render<Color> for heapless::Vec<T,
                 T::render_animated(
                     render_target,
                     source,
-                    source_shader,
+                    source_style,
                     target,
-                    target_shader,
+                    target_style,
                     config,
                 )
             });

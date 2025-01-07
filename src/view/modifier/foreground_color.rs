@@ -1,20 +1,22 @@
+use embedded_graphics::{prelude::PixelColor, primitives::PrimitiveStyle};
+
 use crate::{
     environment::LayoutEnvironment,
     layout::{Layout, ResolvedLayout},
     primitives::{Point, ProposedDimensions},
-    render::{primitives::ShadeSubtree, shade::Shader, Renderable},
+    render::{primitives::ShadeSubtree, Renderable},
 };
 
 /// Sets a foreground style
 #[derive(Debug, PartialEq)]
 pub struct ForegroundStyle<V, S> {
     inner: V,
-    shader: S,
+    style: S,
 }
 
 impl<V, S> ForegroundStyle<V, S> {
-    pub fn new(shader: S, inner: V) -> Self {
-        Self { shader, inner }
+    pub fn new(style: S, inner: V) -> Self {
+        Self { style, inner }
     }
 }
 
@@ -30,8 +32,8 @@ impl<Inner: Layout, Color> Layout for ForegroundStyle<Inner, Color> {
     }
 }
 
-impl<C, V: Renderable<C>, S: Clone + Shader<Color = C>> Renderable<C> for ForegroundStyle<V, S> {
-    type Renderables = ShadeSubtree<S, V::Renderables>;
+impl<C: PixelColor, V: Renderable<C>> Renderable<C> for ForegroundStyle<V, C> {
+    type Renderables = ShadeSubtree<PrimitiveStyle<C>, V::Renderables>;
 
     fn render_tree(
         &self,
@@ -40,7 +42,7 @@ impl<C, V: Renderable<C>, S: Clone + Shader<Color = C>> Renderable<C> for Foregr
         env: &impl LayoutEnvironment,
     ) -> Self::Renderables {
         ShadeSubtree::new(
-            self.shader.clone(),
+            PrimitiveStyle::with_fill(self.style),
             self.inner.render_tree(layout, origin, env),
         )
     }

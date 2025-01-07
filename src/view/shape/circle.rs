@@ -1,3 +1,5 @@
+use embedded_graphics::prelude::PixelColor;
+
 use crate::{
     environment::LayoutEnvironment,
     layout::{Layout, ResolvedLayout},
@@ -33,7 +35,7 @@ impl Layout for Circle {
     }
 }
 
-impl<C> Renderable<C> for Circle {
+impl<C: PixelColor> Renderable<C> for Circle {
     type Renderables = crate::render::primitives::Circle;
 
     fn render_tree(

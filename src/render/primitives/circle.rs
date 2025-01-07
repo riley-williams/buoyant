@@ -1,9 +1,14 @@
 use crate::{
     pixel::Interpolate,
     primitives::Point,
-    render::{shade::Shader, AnimationDomain, Render},
-    render_target::RenderTarget,
+    render::{AnimationDomain, Render},
 };
+
+use embedded_graphics::{
+    prelude::PixelColor,
+    primitives::{PrimitiveStyle, StyledDrawable as _},
+};
+use embedded_graphics_core::draw_target::DrawTarget;
 
 /// A circle with the origin at the top-left corner
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -13,18 +18,10 @@ pub struct Circle {
 }
 
 // TODO: This draws a rectangle
-impl<C> Render<C> for Circle {
-    fn render(
-        &self,
-        render_target: &mut impl RenderTarget<Color = C>,
-        shader: &impl Shader<Color = C>,
-    ) {
-        for y in self.origin.y..(self.origin.y + self.diameter as i16) {
-            for x in self.origin.x..(self.origin.x + self.diameter as i16) {
-                let p = Point::new(x, y);
-                render_target.draw(p, shader.shade(p));
-            }
-        }
+impl<C: PixelColor> Render<C> for Circle {
+    fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &PrimitiveStyle<C>) {
+        _ = embedded_graphics::primitives::Circle::new(self.origin.into(), self.diameter.into())
+            .draw_styled(style, render_target);
     }
 
     fn join(source: Self, target: Self, config: &AnimationDomain) -> Self {

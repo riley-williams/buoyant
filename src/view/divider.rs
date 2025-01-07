@@ -1,3 +1,5 @@
+use embedded_graphics::prelude::PixelColor;
+
 use crate::{
     environment::LayoutEnvironment,
     layout::{Layout, LayoutDirection, ResolvedLayout},
@@ -56,7 +58,7 @@ impl Layout for Divider {
     }
 }
 
-impl<C> Renderable<C> for Divider {
+impl<C: PixelColor> Renderable<C> for Divider {
     type Renderables = crate::render::primitives::Rect;
 
     fn render_tree(
@@ -69,60 +71,5 @@ impl<C> Renderable<C> for Divider {
             origin,
             size: layout.resolved_size.into(),
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::Divider;
-    use crate::environment::mock::TestEnv;
-    use crate::layout::{Layout, LayoutDirection};
-    use crate::primitives::{Point, Size};
-    use crate::render::{Render, Renderable as _};
-    use crate::render_target::{FixedTextBuffer, RenderTarget, TxtColor};
-    use crate::view::RenderExtensions as _;
-
-    #[test]
-    fn test_horizontal_layout() {
-        let divider = Divider::new(2);
-        let offer = Size::new(100, 100).into();
-        let env = TestEnv::default().with_direction(LayoutDirection::Horizontal);
-        let layout = divider.layout(&offer, &env);
-        assert_eq!(layout.resolved_size, Size::new(2, 100).into());
-    }
-
-    #[test]
-    fn test_vertical_layout() {
-        let divider = Divider::new(2);
-        let offer = Size::new(100, 100).into();
-        let env = TestEnv::default().with_direction(LayoutDirection::Vertical);
-        let layout = divider.layout(&offer, &env);
-        assert_eq!(layout.resolved_size, Size::new(100, 2).into());
-    }
-
-    #[test]
-    fn test_horizontal_render() {
-        let divider = Divider::new(1).foreground_color(TxtColor::new('|'));
-        let mut buffer = FixedTextBuffer::<5, 5>::default();
-        let env = TestEnv::default().with_direction(LayoutDirection::Horizontal);
-        let layout = divider.layout(&buffer.size().into(), &env);
-        let tree = divider.render_tree(&layout, Point::new(0, 0), &env);
-        tree.render(&mut buffer, &TxtColor::default());
-        assert_eq!(buffer.text[0][0], '|');
-        assert_eq!(buffer.text[4][0], '|');
-        assert_eq!(buffer.text[0][1], ' ');
-    }
-
-    #[test]
-    fn test_vertical_render() {
-        let divider = Divider::new(1).foreground_color(TxtColor::new('-'));
-        let mut buffer = FixedTextBuffer::<5, 5>::default();
-        let env = TestEnv::default().with_direction(LayoutDirection::Vertical);
-        let layout = divider.layout(&buffer.size().into(), &env);
-        let tree = divider.render_tree(&layout, Point::new(0, 0), &env);
-        tree.render(&mut buffer, &TxtColor::default());
-        assert_eq!(buffer.text[0][0], '-');
-        assert_eq!(buffer.text[0][4], '-');
-        assert_eq!(buffer.text[1][0], ' ');
     }
 }

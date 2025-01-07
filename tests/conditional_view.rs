@@ -3,7 +3,7 @@ use buoyant::layout::Layout;
 use buoyant::primitives::{Point, Size};
 use buoyant::render::{Render as _, Renderable as _};
 use buoyant::render_target::RenderTarget;
-use buoyant::render_target::{FixedTextBuffer, TxtColor};
+use buoyant::render_target::{CharColor, FixedTextBuffer};
 use buoyant::view::{ConditionalView, RenderExtensions, Text};
 use common::TestEnv;
 
@@ -16,7 +16,7 @@ fn test_conditional_view_layout() {
         ConditionalView::new(
             condition,
             Text::str("true\n!!!", &font),
-            Text::str("f", &font).foreground_color(TxtColor::clear()),
+            Text::str("f", &font).foreground_color(CharColor::clear()),
         )
     };
     let mut buffer = FixedTextBuffer::<5, 5>::default();

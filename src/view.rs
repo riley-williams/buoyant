@@ -12,6 +12,7 @@ mod zstack;
 
 pub use conditional_view::ConditionalView;
 pub use divider::Divider;
+use embedded_graphics::prelude::PixelColor;
 pub use empty_view::EmptyView;
 pub use foreach::ForEach;
 pub use hstack::HStack;
@@ -69,9 +70,9 @@ pub trait RenderExtensions<C>: Sized {
 }
 
 impl<T: crate::layout::Layout> LayoutExtensions for T {}
-impl<T: Renderable<C>, C> RenderExtensions<C> for T {}
+impl<T: Renderable<C>, C: PixelColor> RenderExtensions<C> for T {}
 
-pub fn make_render_tree<C, V: Renderable<C>>(view: &V, size: Size) -> impl Render<C>
+pub fn make_render_tree<C: PixelColor, V: Renderable<C>>(view: &V, size: Size) -> impl Render<C>
 where
     V::Renderables: Render<C>,
 {

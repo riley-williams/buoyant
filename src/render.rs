@@ -1,17 +1,15 @@
-use shade::Shader;
-
 use crate::{
     environment::LayoutEnvironment,
     layout::{Layout, ResolvedLayout},
     primitives::Point,
-    render_target::RenderTarget,
 };
+use embedded_graphics::{prelude::PixelColor, primitives::PrimitiveStyle};
+use embedded_graphics_core::draw_target::DrawTarget;
 
 pub mod collections;
 pub mod primitives;
-pub mod shade;
 
-pub trait Renderable<Color>: Layout
+pub trait Renderable<Color: PixelColor>: Layout
 where
     Self::Renderables: Render<Color>,
 {
@@ -26,7 +24,7 @@ where
 
 pub trait NullRender {}
 
-impl<C, T: NullRender + Layout> Renderable<C> for T {
+impl<C: PixelColor, T: NullRender + Layout> Renderable<C> for T {
     type Renderables = ();
 
     fn render_tree(
@@ -39,50 +37,48 @@ impl<C, T: NullRender + Layout> Renderable<C> for T {
 }
 
 /// A view that can be rendered to a target
-pub trait Render<Color>: Sized + Clone {
+pub trait Render<Color: PixelColor>: Sized + Clone {
     /// Render the view to the screen
     fn render(
         &self,
-        render_target: &mut impl RenderTarget<Color = Color>,
-        shader: &impl Shader<Color = Color>,
+        render_target: &mut impl DrawTarget<Color = Color>,
+        style: &PrimitiveStyle<Color>,
     );
 
     /// Render view and all subviews, animating from a source view to a target view
     fn render_animated(
-        render_target: &mut impl RenderTarget<Color = Color>,
+        render_target: &mut impl DrawTarget<Color = Color>,
         source: &Self,
-        _source_shader: &impl Shader<Color = Color>,
+        _source_style: &PrimitiveStyle<Color>,
         target: &Self,
-        target_shader: &impl Shader<Color = Color>,
+        target_style: &PrimitiveStyle<Color>,
         config: &AnimationDomain,
     ) {
         let intermediate = Self::join(source.clone(), target.clone(), config);
-        // TODO: interpolate shaders
-        intermediate.render(render_target, target_shader);
+        // TODO: interpolate styles
+        intermediate.render(render_target, target_style);
     }
 
     /// Produces a new tree by consuming and interpolating between two partially animated trees
     fn join(source: Self, target: Self, config: &AnimationDomain) -> Self;
 }
 
-impl<C> Render<C> for () {
-    fn render(
-        &self,
-        _render_target: &mut impl RenderTarget<Color = C>,
-        _shader: &impl Shader<Color = C>,
-    ) {
-    }
+impl<C: PixelColor> Render<C> for () {
+    /// Render the view to the screen
+    fn render(&self, _render_target: &mut impl DrawTarget<Color = C>, _style: &PrimitiveStyle<C>) {}
 
+    /// Render view and all subviews, animating from a source view to a target view
     fn render_animated(
-        _render_target: &mut impl RenderTarget<Color = C>,
+        _render_target: &mut impl DrawTarget<Color = C>,
         _source: &Self,
-        _source_shader: &impl Shader<Color = C>,
+        _source_style: &PrimitiveStyle<C>,
         _target: &Self,
-        _target_shader: &impl Shader<Color = C>,
+        _target_style: &PrimitiveStyle<C>,
         _config: &AnimationDomain,
     ) {
     }
 
+    /// Produces a new tree by consuming and interpolating between two partially animated trees
     fn join(_source: Self, _target: Self, _config: &AnimationDomain) -> Self {}
 }
 
