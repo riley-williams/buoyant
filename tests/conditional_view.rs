@@ -2,7 +2,6 @@ use buoyant::font::CharacterBufferFont;
 use buoyant::layout::Layout;
 use buoyant::primitives::{Point, Size};
 use buoyant::render::{Render as _, Renderable as _};
-use buoyant::render_target::RenderTarget;
 use buoyant::render_target::{CharColor, FixedTextBuffer};
 use buoyant::view::{ConditionalView, RenderExtensions, Text};
 use common::TestEnv;

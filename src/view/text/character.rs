@@ -86,8 +86,6 @@ impl<T: PartialEq, F> PartialEq for Text<'_, T, F> {
     }
 }
 
-// TODO: consolidate the layout implementations...this is getting ridiculous
-
 impl<'a> Layout for Text<'a, &'a str> {
     // this could be used to store the precalculated line breaks
     type Sublayout = ();
@@ -134,7 +132,7 @@ impl<'a, C: PixelColor> Renderable<C> for Text<'a, &'a str> {
     }
 }
 
-impl<const N: usize, F: FontLayout> Layout for Text<'_, heapless::String<N>, F> {
+impl<const N: usize> Layout for Text<'_, heapless::String<N>> {
     // this could be used to store the precalculated line breaks
     type Sublayout = ();
 
@@ -161,9 +159,7 @@ impl<const N: usize, F: FontLayout> Layout for Text<'_, heapless::String<N>, F> 
     }
 }
 
-impl<'a, const N: usize, C: PixelColor> Renderable<C>
-    for Text<'a, heapless::String<N>, MonoFont<'_>>
-{
+impl<'a, const N: usize, C: PixelColor> Renderable<C> for Text<'a, heapless::String<N>> {
     type Renderables = OwnedText<'a, N>;
 
     fn render_tree(
