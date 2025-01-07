@@ -43,7 +43,7 @@ impl<C: PixelColor> Render<C> for StaticText<'_> {
             let x = self.alignment.align(self.size.width as i16, width as i16);
             // embedded_graphics draws text at the baseline
             let txt_start = self.origin + Point::new(x, height + baseline);
-            _ = embedded_graphics::text::Text::new(self.text, txt_start.into(), style)
+            _ = embedded_graphics::text::Text::new(line, txt_start.into(), style)
                 .draw(render_target);
 
             height += line_height;
