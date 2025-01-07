@@ -31,8 +31,7 @@ impl<C: PixelColor> Render<C> for StaticText<'_> {
 
         let line_height = self.font.line_height() as i16;
 
-        let mut origin: embedded_graphics_core::geometry::Point = self.origin.into();
-        origin.y += self.font.baseline() as i32;
+        let baseline = self.font.baseline() as i16;
         // TODO: add default?
         let style = MonoTextStyle::new(self.font, style.fill_color.unwrap());
         let mut height = 0;
@@ -42,7 +41,8 @@ impl<C: PixelColor> Render<C> for StaticText<'_> {
             let width = self.font.str_width(line);
 
             let x = self.alignment.align(self.size.width as i16, width as i16);
-            let txt_start = self.origin + Point::new(x, height);
+            // embedded_graphics draws text at the baseline
+            let txt_start = self.origin + Point::new(x, height + baseline);
             _ = embedded_graphics::text::Text::new(self.text, txt_start.into(), style)
                 .draw(render_target);
 
