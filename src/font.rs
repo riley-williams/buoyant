@@ -35,14 +35,8 @@ impl FontLayout for CharacterBufferFont {
     }
 }
 
+#[cfg(feature = "embedded-graphics")]
 mod embedded_graphics_fonts {
-    // use embedded_graphics::{draw_target::DrawTarget, mono_font::MonoTextStyle, text::Text};
-    // use embedded_graphics_core::pixelcolor::PixelColor;
-    // use embedded_graphics_core::Drawable;
-    // use heapless::String;
-    //
-    // use crate::primitives::Point;
-
     use super::FontLayout;
 
     impl FontLayout for embedded_graphics::mono_font::MonoFont<'_> {
@@ -61,27 +55,4 @@ mod embedded_graphics_fonts {
             self.baseline as u16
         }
     }
-    //
-    // impl<C: PixelColor> FontRender<C> for embedded_graphics::mono_font::MonoFont<'_> {
-    //     fn render_text(
-    //         &self,
-    //         target: &mut impl crate::render_target::RenderTarget<Color = C>,
-    //         origin: Point,
-    //         color: C,
-    //         characters: &str,
-    //     ) {
-    //         // embedded graphics Text is drawn at the baseline
-    //         let mut origin: embedded_graphics_core::geometry::Point = origin.into();
-    //         origin.y += self.baseline as i32;
-    //         let style = MonoTextStyle::new(self, color);
-    //
-    //         for character in characters {
-    //             let text = String::<1>::from_iter(core::iter::once(character));
-    //             origin = match Text::new(&text, origin, style).draw(target) {
-    //                 Ok(o) => o,
-    //                 Err(_) => break,
-    //             };
-    //         }
-    //     }
-    // }
 }

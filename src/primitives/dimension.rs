@@ -35,6 +35,7 @@ impl From<Size> for ProposedDimensions {
     }
 }
 
+#[cfg(feature = "embedded-graphics")]
 impl From<embedded_graphics_core::geometry::Size> for ProposedDimensions {
     fn from(size: embedded_graphics_core::geometry::Size) -> Self {
         ProposedDimensions {
@@ -382,6 +383,7 @@ impl Interpolate for Dimension {
     }
 }
 
+#[cfg(feature = "embedded-graphics")]
 impl From<Dimensions> for embedded_graphics_core::geometry::Size {
     fn from(value: Dimensions) -> Self {
         embedded_graphics_core::geometry::Size::new(value.width.0 as u32, value.height.0 as u32)

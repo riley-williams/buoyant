@@ -3,8 +3,6 @@ use crate::{
     layout::{Layout, ResolvedLayout},
     primitives::{Point, Size},
 };
-use embedded_graphics::prelude::PixelColor;
-use embedded_graphics_core::draw_target::DrawTarget;
 
 pub mod collections;
 pub mod primitives;
@@ -33,7 +31,13 @@ impl<C, T: NullRender + Layout> Renderable<C> for T {
     }
 }
 
+#[cfg(feature = "embedded-graphics")]
+use embedded_graphics::prelude::PixelColor;
+#[cfg(feature = "embedded-graphics")]
+use embedded_graphics_core::draw_target::DrawTarget;
+
 /// A view that can be rendered to an embedded_graphics target
+#[cfg(feature = "embedded-graphics")]
 pub trait EmbeddedGraphicsRender<Color: PixelColor>: Sized + Clone {
     /// Render the view to the screen
     fn render(&self, render_target: &mut impl DrawTarget<Color = Color>, style: &Color);
@@ -55,6 +59,7 @@ pub trait EmbeddedGraphicsRender<Color: PixelColor>: Sized + Clone {
     fn join(source: Self, target: Self, config: &AnimationDomain) -> Self;
 }
 
+#[cfg(feature = "embedded-graphics")]
 impl<C: PixelColor> EmbeddedGraphicsRender<C> for () {
     /// Render the view to the screen
     fn render(&self, _render_target: &mut impl DrawTarget<Color = C>, _style: &C) {}

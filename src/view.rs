@@ -12,7 +12,6 @@ mod zstack;
 
 pub use conditional_view::ConditionalView;
 pub use divider::Divider;
-use embedded_graphics::prelude::PixelColor;
 pub use empty_view::EmptyView;
 pub use foreach::ForEach;
 pub use hstack::HStack;
@@ -27,7 +26,7 @@ use modifier::{FixedFrame, FlexFrame, ForegroundStyle, Padding, Priority};
 use crate::{
     environment::DefaultEnvironment,
     primitives::Size,
-    render::{CharacterRender, EmbeddedGraphicsRender, Renderable},
+    render::{CharacterRender, Renderable},
 };
 
 pub trait LayoutExtensions: Sized {
@@ -72,13 +71,17 @@ pub trait RenderExtensions<C>: Sized {
 impl<T: crate::layout::Layout> LayoutExtensions for T {}
 impl<T: Renderable<C>, C> RenderExtensions<C> for T {}
 
+#[cfg(feature = "embedded-graphics")]
+use embedded_graphics::prelude::PixelColor;
+
 // TODO: this should be a fn on the trait, not a global fn
+#[cfg(feature = "embedded-graphics")]
 pub fn make_eg_render_tree<C: PixelColor, V: Renderable<C>>(
     view: &V,
     size: Size,
-) -> impl EmbeddedGraphicsRender<C>
+) -> impl crate::render::EmbeddedGraphicsRender<C>
 where
-    V::Renderables: EmbeddedGraphicsRender<C>,
+    V::Renderables: crate::render::EmbeddedGraphicsRender<C>,
 {
     let env = DefaultEnvironment;
     let layout = view.layout(&size.into(), &env);

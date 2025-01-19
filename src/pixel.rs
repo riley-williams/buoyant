@@ -5,6 +5,7 @@ pub struct Pixel<C> {
     pub color: C,
 }
 
+#[cfg(feature = "embedded-graphics")]
 impl<T: embedded_graphics_core::pixelcolor::PixelColor> From<Pixel<T>>
     for embedded_graphics_core::Pixel<T>
 {
@@ -13,6 +14,7 @@ impl<T: embedded_graphics_core::pixelcolor::PixelColor> From<Pixel<T>>
     }
 }
 
+#[cfg(feature = "embedded-graphics")]
 impl<T: embedded_graphics_core::pixelcolor::PixelColor> From<embedded_graphics_core::Pixel<T>>
     for Pixel<T>
 {
@@ -106,47 +108,52 @@ fn interpolate_crossterm_colors(
     }
 }
 
-impl Interpolate for embedded_graphics_core::pixelcolor::BinaryColor {}
+#[cfg(feature = "embedded-graphics")]
+mod embedded_graphics_impl {
 
-use embedded_graphics::primitives::PrimitiveStyle;
-use embedded_graphics_core::pixelcolor::{Rgb565, RgbColor};
+    use super::Interpolate;
+    use embedded_graphics::primitives::PrimitiveStyle;
+    use embedded_graphics_core::pixelcolor::{Rgb565, RgbColor};
 
-impl Interpolate for embedded_graphics_core::pixelcolor::Rgb565 {
-    fn interpolate(from: Self, to: Self, amount: u8) -> Self {
-        let t_fixed = amount as i16;
+    impl Interpolate for embedded_graphics_core::pixelcolor::BinaryColor {}
 
-        let r = interpolate_channel(from.r(), to.r(), t_fixed);
-        let g = interpolate_channel(from.g(), to.g(), t_fixed);
-        let b = interpolate_channel(from.b(), to.b(), t_fixed);
-        Rgb565::new(r, g, b)
+    impl Interpolate for embedded_graphics_core::pixelcolor::Rgb565 {
+        fn interpolate(from: Self, to: Self, amount: u8) -> Self {
+            let t_fixed = amount as i16;
+
+            let r = interpolate_channel(from.r(), to.r(), t_fixed);
+            let g = interpolate_channel(from.g(), to.g(), t_fixed);
+            let b = interpolate_channel(from.b(), to.b(), t_fixed);
+            Rgb565::new(r, g, b)
+        }
     }
-}
 
-impl<C: embedded_graphics::prelude::PixelColor + Interpolate> Interpolate for PrimitiveStyle<C> {
-    fn interpolate(from: Self, to: Self, amount: u8) -> Self {
-        let mut style = embedded_graphics::primitives::PrimitiveStyleBuilder::new();
-        style = match (from.fill_color, to.fill_color) {
-            (Some(from), Some(to)) => style.fill_color(C::interpolate(from, to, amount)),
-            (Some(from), None) => style.fill_color(from),
-            (None, Some(to)) => style.fill_color(to),
-            (None, None) => style,
-        };
-
-        style = match (from.stroke_color, to.stroke_color) {
-            (Some(from), Some(to)) => style.stroke_color(C::interpolate(from, to, amount)),
-            (Some(from), None) => style.stroke_color(from),
-            (None, Some(to)) => style.stroke_color(to),
-            (None, None) => style,
-        };
-
-        style.build()
+    #[inline]
+    /// Interpolate between two colors, using a u16 between 0 and 256
+    fn interpolate_channel(a: u8, b: u8, t: i16) -> u8 {
+        (a as i16 + (((b as i16).wrapping_sub(a as i16)).wrapping_mul(t) as u16 >> 8) as i16) as u8
     }
-}
 
-#[inline]
-/// Interpolate between two colors, using a u16 between 0 and 256
-fn interpolate_channel(a: u8, b: u8, t: i16) -> u8 {
-    (a as i16 + (((b as i16).wrapping_sub(a as i16)).wrapping_mul(t) as u16 >> 8) as i16) as u8
+    impl<C: embedded_graphics::prelude::PixelColor + Interpolate> Interpolate for PrimitiveStyle<C> {
+        fn interpolate(from: Self, to: Self, amount: u8) -> Self {
+            let mut style = embedded_graphics::primitives::PrimitiveStyleBuilder::new();
+            style = match (from.fill_color, to.fill_color) {
+                (Some(from), Some(to)) => style.fill_color(C::interpolate(from, to, amount)),
+                (Some(from), None) => style.fill_color(from),
+                (None, Some(to)) => style.fill_color(to),
+                (None, None) => style,
+            };
+
+            style = match (from.stroke_color, to.stroke_color) {
+                (Some(from), Some(to)) => style.stroke_color(C::interpolate(from, to, amount)),
+                (Some(from), None) => style.stroke_color(from),
+                (None, Some(to)) => style.stroke_color(to),
+                (None, None) => style,
+            };
+
+            style.build()
+        }
+    }
 }
 
 #[cfg(test)]

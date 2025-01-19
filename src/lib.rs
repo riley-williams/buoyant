@@ -4,9 +4,6 @@
 #[cfg(any(test, feature = "std"))]
 extern crate std;
 
-// #[cfg(not(feature = "std"))]
-// extern crate core as std;
-
 pub mod environment;
 pub mod font;
 pub mod layout;

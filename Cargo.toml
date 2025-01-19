@@ -16,12 +16,13 @@ maintenance = { status = "experimental" }
 [features]
 default = ["crossterm"]
 std = []
+embedded-graphics = ["dep:embedded-graphics", "dep:embedded-graphics-core"]
 crossterm = ["dep:crossterm", "std"]
 
 [dependencies]
 crossterm = { version = "^0.28", optional = true }
-embedded-graphics-core = { version = "^0.4" }
-embedded-graphics = { version = "^0.8" }
+embedded-graphics-core = { version = "^0.4", optional = true }
+embedded-graphics = { version = "^0.8", optional = true }
 heapless = "^0.8"
 paste = "1.0.15"
 
