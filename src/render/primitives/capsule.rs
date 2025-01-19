@@ -23,7 +23,7 @@ impl Capsule {
 }
 
 impl<C: PixelColor> EmbeddedGraphicsRender<C> for Capsule {
-    fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &PrimitiveStyle<C>) {
+    fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &C) {
         let radius = self.size.height.min(self.size.width) / 2;
         let rectangle = embedded_graphics::primitives::Rectangle {
             top_left: self.origin.into(),
@@ -37,7 +37,7 @@ impl<C: PixelColor> EmbeddedGraphicsRender<C> for Capsule {
                 height: radius.into(),
             },
         )
-        .draw_styled(style, render_target);
+        .draw_styled(&PrimitiveStyle::with_fill(*style), render_target);
     }
 
     fn join(source: Self, target: Self, config: &AnimationDomain) -> Self {

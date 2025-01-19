@@ -3,7 +3,7 @@ use crate::{
     render::{AnimationDomain, CharacterRender, CharacterRenderTarget, EmbeddedGraphicsRender},
 };
 
-use embedded_graphics::{prelude::PixelColor, primitives::PrimitiveStyle};
+use embedded_graphics::prelude::PixelColor;
 use embedded_graphics_core::draw_target::DrawTarget;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -19,9 +19,9 @@ impl<C, T> ShadeSubtree<C, T> {
 }
 
 impl<C: PixelColor + Interpolate, T: EmbeddedGraphicsRender<C>> EmbeddedGraphicsRender<C>
-    for ShadeSubtree<PrimitiveStyle<C>, T>
+    for ShadeSubtree<C, T>
 {
-    fn render(&self, render_target: &mut impl DrawTarget<Color = C>, _: &PrimitiveStyle<C>) {
+    fn render(&self, render_target: &mut impl DrawTarget<Color = C>, _: &C) {
         self.subtree.render(render_target, &self.style);
     }
 
@@ -29,7 +29,7 @@ impl<C: PixelColor + Interpolate, T: EmbeddedGraphicsRender<C>> EmbeddedGraphics
         render_target: &mut impl DrawTarget<Color = C>,
         source: &Self,
         target: &Self,
-        _: &PrimitiveStyle<C>,
+        _: &C,
         config: &AnimationDomain,
     ) {
         let style = Interpolate::interpolate(source.style, target.style, config.factor);

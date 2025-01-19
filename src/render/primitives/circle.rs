@@ -18,9 +18,9 @@ pub struct Circle {
 }
 
 impl<C: PixelColor> EmbeddedGraphicsRender<C> for Circle {
-    fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &PrimitiveStyle<C>) {
+    fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &C) {
         _ = embedded_graphics::primitives::Circle::new(self.origin.into(), self.diameter.into())
-            .draw_styled(style, render_target);
+            .draw_styled(&PrimitiveStyle::with_fill(*style), render_target);
     }
 
     fn join(source: Self, target: Self, config: &AnimationDomain) -> Self {

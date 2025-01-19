@@ -10,7 +10,6 @@ use embedded_graphics_core::Drawable;
 use embedded_graphics::{
     mono_font::{MonoFont, MonoTextStyle},
     prelude::PixelColor,
-    primitives::PrimitiveStyle,
 };
 use embedded_graphics_core::draw_target::DrawTarget;
 
@@ -24,7 +23,7 @@ pub struct StaticText<'a, F> {
 }
 
 impl<C: PixelColor> EmbeddedGraphicsRender<C> for StaticText<'_, MonoFont<'_>> {
-    fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &PrimitiveStyle<C>) {
+    fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &C) {
         if self.size.area() == 0 {
             return;
         }
@@ -33,7 +32,7 @@ impl<C: PixelColor> EmbeddedGraphicsRender<C> for StaticText<'_, MonoFont<'_>> {
 
         let baseline = self.font.baseline() as i16;
         // TODO: add default?
-        let style = MonoTextStyle::new(self.font, style.fill_color.unwrap());
+        let style = MonoTextStyle::new(self.font, *style);
         let mut height = 0;
         let wrap = WhitespaceWrap::new(self.text, self.size.width, self.font);
         for line in wrap {

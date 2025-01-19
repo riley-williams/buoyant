@@ -3,7 +3,7 @@ use crate::{
     layout::{Layout, ResolvedLayout},
     primitives::{Point, Size},
 };
-use embedded_graphics::{prelude::PixelColor, primitives::PrimitiveStyle};
+use embedded_graphics::prelude::PixelColor;
 use embedded_graphics_core::draw_target::DrawTarget;
 
 pub mod collections;
@@ -36,18 +36,14 @@ impl<C, T: NullRender + Layout> Renderable<C> for T {
 /// A view that can be rendered to an embedded_graphics target
 pub trait EmbeddedGraphicsRender<Color: PixelColor>: Sized + Clone {
     /// Render the view to the screen
-    fn render(
-        &self,
-        render_target: &mut impl DrawTarget<Color = Color>,
-        style: &PrimitiveStyle<Color>,
-    );
+    fn render(&self, render_target: &mut impl DrawTarget<Color = Color>, style: &Color);
 
     /// Render view and all subviews, animating from a source view to a target view
     fn render_animated(
         render_target: &mut impl DrawTarget<Color = Color>,
         source: &Self,
         target: &Self,
-        style: &PrimitiveStyle<Color>,
+        style: &Color,
         config: &AnimationDomain,
     ) {
         let intermediate = Self::join(source.clone(), target.clone(), config);
@@ -61,14 +57,14 @@ pub trait EmbeddedGraphicsRender<Color: PixelColor>: Sized + Clone {
 
 impl<C: PixelColor> EmbeddedGraphicsRender<C> for () {
     /// Render the view to the screen
-    fn render(&self, _render_target: &mut impl DrawTarget<Color = C>, _style: &PrimitiveStyle<C>) {}
+    fn render(&self, _render_target: &mut impl DrawTarget<Color = C>, _style: &C) {}
 
     /// Render view and all subviews, animating from a source view to a target view
     fn render_animated(
         _render_target: &mut impl DrawTarget<Color = C>,
         _source: &Self,
         _target: &Self,
-        _style: &PrimitiveStyle<C>,
+        _style: &C,
         _config: &AnimationDomain,
     ) {
     }

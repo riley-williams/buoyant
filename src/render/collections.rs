@@ -1,5 +1,4 @@
 use super::{CharacterRender, CharacterRenderTarget, EmbeddedGraphicsRender};
-use embedded_graphics::primitives::PrimitiveStyle;
 use embedded_graphics_core::draw_target::DrawTarget;
 use embedded_graphics_core::prelude::PixelColor;
 
@@ -9,7 +8,7 @@ macro_rules! impl_render_for_collections {
             fn render(
                 &self,
                 target: &mut impl DrawTarget<Color = Color>,
-                style: &PrimitiveStyle<Color>,
+                style: &Color,
             ) {
                 $(
                     self.$n.render(target, style);
@@ -20,7 +19,7 @@ macro_rules! impl_render_for_collections {
                 render_target: &mut impl DrawTarget<Color = Color>,
                 source: &Self,
                 target: &Self,
-                style: &PrimitiveStyle<Color>,
+                style: &Color,
                 config: &super::AnimationDomain,
             ) {
                 $(
@@ -97,11 +96,7 @@ impl_render_for_collections!(
 impl<Color: PixelColor, T: EmbeddedGraphicsRender<Color>, const N: usize>
     EmbeddedGraphicsRender<Color> for heapless::Vec<T, N>
 {
-    fn render(
-        &self,
-        render_target: &mut impl DrawTarget<Color = Color>,
-        style: &PrimitiveStyle<Color>,
-    ) {
+    fn render(&self, render_target: &mut impl DrawTarget<Color = Color>, style: &Color) {
         self.iter()
             .for_each(|item| item.render(render_target, style));
     }
@@ -110,7 +105,7 @@ impl<Color: PixelColor, T: EmbeddedGraphicsRender<Color>, const N: usize>
         render_target: &mut impl DrawTarget<Color = Color>,
         source: &Self,
         target: &Self,
-        style: &PrimitiveStyle<Color>,
+        style: &Color,
         config: &super::AnimationDomain,
     ) {
         source

@@ -3,7 +3,7 @@ use crate::{
     render::{CharacterRender, CharacterRenderTarget, EmbeddedGraphicsRender},
 };
 
-use embedded_graphics::{prelude::PixelColor, primitives::PrimitiveStyle};
+use embedded_graphics::prelude::PixelColor;
 use embedded_graphics_core::draw_target::DrawTarget;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -21,7 +21,7 @@ pub enum Subtree<T, F> {
 impl<C: PixelColor, T: EmbeddedGraphicsRender<C>, F: EmbeddedGraphicsRender<C>>
     EmbeddedGraphicsRender<C> for ConditionalTree<T, F>
 {
-    fn render(&self, target: &mut impl DrawTarget<Color = C>, style: &PrimitiveStyle<C>) {
+    fn render(&self, target: &mut impl DrawTarget<Color = C>, style: &C) {
         match &self.subtree {
             Subtree::True(true_tree) => true_tree.render(target, style),
             Subtree::False(false_tree) => false_tree.render(target, style),
