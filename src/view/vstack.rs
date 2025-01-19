@@ -1,5 +1,4 @@
 use core::cmp::max;
-use embedded_graphics_core::pixelcolor::PixelColor;
 
 use crate::{
     environment::LayoutEnvironment,
@@ -226,7 +225,7 @@ macro_rules! impl_layout_for_vstack {
             }
         }
 
-        impl<$($type: Renderable<C>),+, C: PixelColor> Renderable<C> for VStack<($($type),+)> {
+        impl<$($type: Renderable<C>),+, C> Renderable<C> for VStack<($($type),+)> {
             type Renderables = ($($type::Renderables),+);
 
             #[allow(unused_assignments)]

@@ -1,7 +1,7 @@
 use crate::{
     pixel::Interpolate,
     primitives::{Point, Size},
-    render::{AnimationDomain, Render},
+    render::{AnimationDomain, EmbeddedGraphicsRender},
 };
 
 use embedded_graphics::{
@@ -17,8 +17,7 @@ pub struct RoundedRect {
     pub corner_radius: u16,
 }
 
-// TODO: This draws a rectangle
-impl<C: PixelColor> Render<C> for RoundedRect {
+impl<C: PixelColor> EmbeddedGraphicsRender<C> for RoundedRect {
     fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &PrimitiveStyle<C>) {
         _ = embedded_graphics::primitives::RoundedRectangle::new(
             embedded_graphics::primitives::Rectangle {

@@ -1,7 +1,5 @@
 use core::cmp::max;
 
-use embedded_graphics::prelude::PixelColor;
-
 use crate::{
     environment::LayoutEnvironment,
     layout::{HorizontalAlignment, Layout, LayoutDirection, ResolvedLayout},
@@ -115,7 +113,7 @@ where
     }
 }
 
-impl<const N: usize, I: IntoIterator + Copy, V: Renderable<C>, C: PixelColor, F> Renderable<C>
+impl<const N: usize, I: IntoIterator + Copy, V: Renderable<C>, C, F> Renderable<C>
     for ForEach<N, I, V, F>
 where
     V: Layout,

@@ -1,5 +1,3 @@
-use embedded_graphics::prelude::PixelColor;
-
 use crate::{
     environment::LayoutEnvironment,
     layout::{HorizontalAlignment, Layout, ResolvedLayout, VerticalAlignment},
@@ -180,7 +178,7 @@ fn greatest_possible(proposal: ProposedDimension, ideal: Dimension) -> Dimension
     }
 }
 
-impl<T: Renderable<C>, C: PixelColor> Renderable<C> for FlexFrame<T> {
+impl<T: Renderable<C>, C> Renderable<C> for FlexFrame<T> {
     type Renderables = T::Renderables;
 
     fn render_tree(

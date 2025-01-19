@@ -1,5 +1,3 @@
-use embedded_graphics::{mono_font::MonoFont, prelude::PixelColor};
-
 use crate::{
     environment::LayoutEnvironment,
     font::FontLayout,
@@ -14,8 +12,8 @@ use core::marker::PhantomData;
 
 use super::{wrap::WhitespaceWrap, HorizontalTextAlignment, Text};
 
-impl<'a> Text<'a, &'a str> {
-    pub fn str(text: &'a str, font: &'a MonoFont<'a>) -> Self {
+impl<'a, F> Text<'a, &'a str, F> {
+    pub fn str(text: &'a str, font: &'a F) -> Self {
         Text {
             text,
             font,
@@ -25,8 +23,8 @@ impl<'a> Text<'a, &'a str> {
     }
 }
 
-impl<'a, const N: usize> Text<'a, heapless::String<N>> {
-    pub fn heapless(text: heapless::String<N>, font: &'a MonoFont<'a>) -> Self {
+impl<'a, const N: usize, F> Text<'a, heapless::String<N>, F> {
+    pub fn heapless(text: heapless::String<N>, font: &'a F) -> Self {
         Text {
             text,
             font,
@@ -37,8 +35,8 @@ impl<'a, const N: usize> Text<'a, heapless::String<N>> {
 }
 
 #[cfg(feature = "std")]
-impl<'a> Text<'a, std::string::String> {
-    pub fn string(text: std::string::String, font: &'a MonoFont<'a>) -> Self {
+impl<'a, F> Text<'a, std::string::String, F> {
+    pub fn string(text: std::string::String, font: &'a F) -> Self {
         Text {
             text,
             font,
@@ -86,7 +84,7 @@ impl<T: PartialEq, F> PartialEq for Text<'_, T, F> {
     }
 }
 
-impl<'a> Layout for Text<'a, &'a str> {
+impl<'a, F: FontLayout> Layout for Text<'a, &'a str, F> {
     // this could be used to store the precalculated line breaks
     type Sublayout = ();
 
@@ -113,8 +111,8 @@ impl<'a> Layout for Text<'a, &'a str> {
     }
 }
 
-impl<'a, C: PixelColor> Renderable<C> for Text<'a, &'a str> {
-    type Renderables = StaticText<'a>;
+impl<'a, C, F: FontLayout> Renderable<C> for Text<'a, &'a str, F> {
+    type Renderables = StaticText<'a, F>;
 
     fn render_tree(
         &self,
@@ -132,7 +130,7 @@ impl<'a, C: PixelColor> Renderable<C> for Text<'a, &'a str> {
     }
 }
 
-impl<const N: usize> Layout for Text<'_, heapless::String<N>> {
+impl<const N: usize, F: FontLayout> Layout for Text<'_, heapless::String<N>, F> {
     // this could be used to store the precalculated line breaks
     type Sublayout = ();
 
@@ -159,8 +157,8 @@ impl<const N: usize> Layout for Text<'_, heapless::String<N>> {
     }
 }
 
-impl<'a, const N: usize, C: PixelColor> Renderable<C> for Text<'a, heapless::String<N>> {
-    type Renderables = OwnedText<'a, N>;
+impl<'a, const N: usize, C, F: FontLayout> Renderable<C> for Text<'a, heapless::String<N>, F> {
+    type Renderables = OwnedText<'a, N, F>;
 
     fn render_tree(
         &self,

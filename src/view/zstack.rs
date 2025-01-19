@@ -5,7 +5,6 @@ use crate::{
     render::Renderable,
 };
 
-use embedded_graphics_core::pixelcolor::PixelColor;
 use paste::paste;
 
 pub struct ZStack<T> {
@@ -72,7 +71,7 @@ macro_rules! impl_layout_for_zstack {
             }
         }
 
-        impl<$($type: Renderable<C>),+, C: PixelColor> Renderable<C> for ZStack<($($type),+)> {
+        impl<$($type: Renderable<C>),+, C> Renderable<C> for ZStack<($($type),+)> {
             type Renderables = ($($type::Renderables),+);
 
             fn render_tree(

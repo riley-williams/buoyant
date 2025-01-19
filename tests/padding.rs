@@ -1,12 +1,13 @@
 use std::iter::zip;
 
+use buoyant::render::CharacterRender;
+use buoyant::render::CharacterRenderTarget;
 use buoyant::{
     environment::DefaultEnvironment,
     font::CharacterBufferFont,
     layout::Layout,
     primitives::{Dimensions, Size},
-    render::Render,
-    render_target::{CharColor, FixedTextBuffer, RenderTarget},
+    render_target::FixedTextBuffer,
     view::{
         make_render_tree, shape::Rectangle, Divider, HorizontalTextAlignment, LayoutExtensions,
         RenderExtensions, Spacer, Text, VStack,
@@ -24,14 +25,14 @@ fn test_clipped_text_trails_correctly() {
         )
         .multiline_text_alignment(HorizontalTextAlignment::Trailing)
         .padding(2),
-        Divider::default().foreground_color(CharColor::new('-')),
+        Divider::default().foreground_color('-'),
     ));
 
     let mut buffer = FixedTextBuffer::<30, 7>::default();
 
     let tree = make_render_tree(&view, buffer.size());
 
-    tree.render(&mut buffer, &CharColor::default());
+    tree.render(&mut buffer, &' ');
 
     let lines = [
         "                              ",

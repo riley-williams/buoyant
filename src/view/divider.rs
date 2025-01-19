@@ -1,5 +1,3 @@
-use embedded_graphics::prelude::PixelColor;
-
 use crate::{
     environment::LayoutEnvironment,
     layout::{Layout, LayoutDirection, ResolvedLayout},
@@ -58,7 +56,7 @@ impl Layout for Divider {
     }
 }
 
-impl<C: PixelColor> Renderable<C> for Divider {
+impl<C> Renderable<C> for Divider {
     type Renderables = crate::render::primitives::Rect;
 
     fn render_tree(

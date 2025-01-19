@@ -1,5 +1,3 @@
-use embedded_graphics::prelude::PixelColor;
-
 use crate::{
     environment::LayoutEnvironment,
     layout::{Layout, ResolvedLayout},
@@ -25,7 +23,7 @@ impl Layout for Capsule {
     }
 }
 
-impl<C: PixelColor> Renderable<C> for Capsule {
+impl<C> Renderable<C> for Capsule {
     type Renderables = crate::render::primitives::Capsule;
 
     fn render_tree(

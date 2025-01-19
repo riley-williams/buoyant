@@ -2,7 +2,7 @@ use crate::{
     font::FontLayout,
     pixel::Interpolate,
     primitives::{Point, Size},
-    render::{AnimationDomain, Render},
+    render::{AnimationDomain, EmbeddedGraphicsRender},
     view::{HorizontalTextAlignment, WhitespaceWrap},
 };
 use embedded_graphics_core::Drawable;
@@ -15,15 +15,15 @@ use embedded_graphics::{
 use embedded_graphics_core::draw_target::DrawTarget;
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct OwnedText<'a, const N: usize> {
+pub struct OwnedText<'a, const N: usize, F> {
     pub origin: Point,
     pub size: Size,
-    pub font: &'a MonoFont<'a>,
+    pub font: &'a F,
     pub text: heapless::String<N>,
     pub alignment: HorizontalTextAlignment,
 }
 
-impl<C: PixelColor, const N: usize> Render<C> for OwnedText<'_, N> {
+impl<C: PixelColor, const N: usize> EmbeddedGraphicsRender<C> for OwnedText<'_, N, MonoFont<'_>> {
     fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &PrimitiveStyle<C>) {
         if self.size.area() == 0 {
             return;

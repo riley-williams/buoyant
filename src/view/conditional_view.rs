@@ -1,5 +1,3 @@
-use embedded_graphics::prelude::PixelColor;
-
 use crate::{
     layout::{Layout, ResolvedLayout},
     primitives::{Point, ProposedDimensions},
@@ -74,7 +72,7 @@ impl<U: Layout, V: Layout> Layout for ConditionalView<U, V> {
     }
 }
 
-impl<U: Renderable<C>, V: Renderable<C>, C: PixelColor> Renderable<C> for ConditionalView<U, V> {
+impl<U: Renderable<C>, V: Renderable<C>, C> Renderable<C> for ConditionalView<U, V> {
     type Renderables = ConditionalTree<U::Renderables, V::Renderables>;
 
     fn render_tree(

@@ -1,3 +1,5 @@
+use buoyant::render::CharacterRender;
+use buoyant::render::CharacterRenderTarget;
 use std::iter::zip;
 
 use buoyant::{
@@ -5,8 +7,8 @@ use buoyant::{
     font::{CharacterBufferFont, FontLayout},
     layout::Layout as _,
     primitives::{Dimensions, Point, ProposedDimension, ProposedDimensions, Size},
-    render::{Render, Renderable as _},
-    render_target::{CharColor, FixedTextBuffer, RenderTarget},
+    render::Renderable as _,
+    render_target::FixedTextBuffer,
     view::{
         make_render_tree, HorizontalTextAlignment, LayoutExtensions as _, RenderExtensions as _,
         Text,
@@ -206,8 +208,8 @@ fn test_compact_height_wrapping() {
 fn test_render_wrapping_leading() {
     let font = CharacterBufferFont {};
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let text = Text::str("This is a lengthy text here", &font);
-    make_render_tree(&text, buffer.size()).render(&mut buffer, &CharColor::clear());
+    let text = Text::str("This is a lengthy text here", &font).foreground_color(' ');
+    make_render_tree(&text, buffer.size()).render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "This  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "is a  ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "length");
@@ -220,8 +222,9 @@ fn test_render_wrapping_center_even() {
     let font = CharacterBufferFont {};
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let text = Text::str("This is a lengthy text here", &font)
-        .multiline_text_alignment(HorizontalTextAlignment::Center);
-    make_render_tree(&text, buffer.size()).render(&mut buffer, &CharColor::clear());
+        .multiline_text_alignment(HorizontalTextAlignment::Center)
+        .foreground_color(' ');
+    make_render_tree(&text, buffer.size()).render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), " This ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), " is a ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "length");
@@ -234,8 +237,9 @@ fn test_render_wrapping_center_odd() {
     let font = CharacterBufferFont {};
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let text = Text::str("This is a lengthy text 12345", &font)
-        .multiline_text_alignment(HorizontalTextAlignment::Center);
-    make_render_tree(&text, buffer.size()).render(&mut buffer, &CharColor::clear());
+        .multiline_text_alignment(HorizontalTextAlignment::Center)
+        .foreground_color(' ');
+    make_render_tree(&text, buffer.size()).render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), " This ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), " is a ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "length");
@@ -248,8 +252,9 @@ fn test_render_wrapping_trailing() {
     let font = CharacterBufferFont {};
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let text = Text::str("This is a lengthy text here", &font)
-        .multiline_text_alignment(HorizontalTextAlignment::Trailing);
-    make_render_tree(&text, buffer.size()).render(&mut buffer, &CharColor::clear());
+        .multiline_text_alignment(HorizontalTextAlignment::Trailing)
+        .foreground_color(' ');
+    make_render_tree(&text, buffer.size()).render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "  This");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "  is a");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "length");
@@ -265,7 +270,7 @@ fn test_clipped_text_is_centered_correctly() {
         &font,
     )
     .multiline_text_alignment(HorizontalTextAlignment::Center)
-    .foreground_color(CharColor::clear());
+    .foreground_color(' ');
 
     let env = DefaultEnvironment;
     let mut buffer = FixedTextBuffer::<40, 2>::default();
@@ -275,7 +280,7 @@ fn test_clipped_text_is_centered_correctly() {
     assert_eq!(layout.resolved_size, Dimensions::new(13, 2));
 
     let tree = view.render_tree(&layout, Point::zero(), &env);
-    tree.render(&mut buffer, &CharColor::clear());
+    tree.render(&mut buffer, &' ');
 
     let lines = [
         "Several lines                           ",
@@ -295,7 +300,7 @@ fn test_clipped_text_trails_correctly() {
     )
     .multiline_text_alignment(HorizontalTextAlignment::Trailing)
     .frame(None, Some(2), None, None) // constrain to 2 pts tall
-    .foreground_color(CharColor::clear());
+    .foreground_color(' ');
 
     let env = DefaultEnvironment;
     let mut buffer = FixedTextBuffer::<40, 3>::default();
@@ -305,7 +310,7 @@ fn test_clipped_text_trails_correctly() {
     assert_eq!(layout.resolved_size, Dimensions::new(13, 2));
 
     let tree = view.render_tree(&layout, Point::zero(), &env);
-    tree.render(&mut buffer, &CharColor::clear());
+    tree.render(&mut buffer, &' ');
 
     let lines = [
         "Several lines                           ",

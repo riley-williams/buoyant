@@ -1,7 +1,6 @@
 use core::fmt::{Display, Formatter, Result};
 
-use embedded_graphics::pixelcolor::raw::RawU32;
-use embedded_graphics::prelude::{DrawTarget, OriginDimensions};
+use crate::{primitives::Size, render::CharacterRenderTarget};
 
 /// A fixed size text buffer
 pub struct FixedTextBuffer<const W: usize, const H: usize> {
@@ -34,50 +33,27 @@ impl<const W: usize, const H: usize> Default for FixedTextBuffer<W, H> {
     }
 }
 
-impl<const W: usize, const H: usize> DrawTarget for FixedTextBuffer<W, H> {
-    type Color = CharColor;
+impl<const W: usize, const H: usize> CharacterRenderTarget for FixedTextBuffer<W, H> {
+    type Color = char;
 
-    type Error = ();
-
-    fn draw_iter<I>(&mut self, pixels: I) -> core::result::Result<(), Self::Error>
-    where
-        I: IntoIterator<Item = embedded_graphics::Pixel<Self::Color>>,
-    {
-        todo!()
-    }
-}
-
-impl<const W: usize, const H: usize> OriginDimensions for FixedTextBuffer<W, H> {
-    fn size(&self) -> embedded_graphics::geometry::Size {
-        embedded_graphics::geometry::Size::new(W as u32, H as u32)
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct CharColor(Option<char>);
-
-impl CharColor {
-    pub fn new(color: char) -> Self {
-        Self(Some(color))
+    fn draw_character(
+        &mut self,
+        point: crate::primitives::Point,
+        character: char,
+        _color: &Self::Color,
+    ) {
+        if point.x < W as i16 && point.y < H as i16 && point.x >= 0 && point.y >= 0 {
+            self.text[point.y as usize][point.x as usize] = character;
+        }
     }
 
-    pub fn clear() -> Self {
-        Self(None)
+    fn draw_color(&mut self, point: crate::primitives::Point, color: &Self::Color) {
+        if point.x < W as i16 && point.y < H as i16 && point.x >= 0 && point.y >= 0 {
+            self.text[point.y as usize][point.x as usize] = *color;
+        }
     }
-}
 
-impl From<char> for CharColor {
-    fn from(color: char) -> Self {
-        Self::new(color)
+    fn size(&self) -> Size {
+        Size::new(W as u16, H as u16)
     }
-}
-
-impl Default for CharColor {
-    fn default() -> Self {
-        Self::clear()
-    }
-}
-
-impl embedded_graphics::pixelcolor::PixelColor for CharColor {
-    type Raw = RawU32;
 }

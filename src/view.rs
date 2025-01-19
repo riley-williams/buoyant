@@ -27,7 +27,7 @@ use modifier::{FixedFrame, FlexFrame, ForegroundStyle, Padding, Priority};
 use crate::{
     environment::DefaultEnvironment,
     primitives::Size,
-    render::{Render, Renderable},
+    render::{CharacterRender, EmbeddedGraphicsRender, Renderable},
 };
 
 pub trait LayoutExtensions: Sized {
@@ -70,11 +70,25 @@ pub trait RenderExtensions<C>: Sized {
 }
 
 impl<T: crate::layout::Layout> LayoutExtensions for T {}
-impl<T: Renderable<C>, C: PixelColor> RenderExtensions<C> for T {}
+impl<T: Renderable<C>, C> RenderExtensions<C> for T {}
 
-pub fn make_render_tree<C: PixelColor, V: Renderable<C>>(view: &V, size: Size) -> impl Render<C>
+// TODO: this should be a fn on the trait, not a global fn
+pub fn make_eg_render_tree<C: PixelColor, V: Renderable<C>>(
+    view: &V,
+    size: Size,
+) -> impl EmbeddedGraphicsRender<C>
 where
-    V::Renderables: Render<C>,
+    V::Renderables: EmbeddedGraphicsRender<C>,
+{
+    let env = DefaultEnvironment;
+    let layout = view.layout(&size.into(), &env);
+    view.render_tree(&layout, Default::default(), &env)
+}
+
+pub fn make_render_tree<C, V>(view: &V, size: Size) -> V::Renderables
+where
+    V: Renderable<C>,
+    V::Renderables: CharacterRender<C>,
 {
     let env = DefaultEnvironment;
     let layout = view.layout(&size.into(), &env);

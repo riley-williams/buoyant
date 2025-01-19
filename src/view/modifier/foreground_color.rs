@@ -1,5 +1,3 @@
-use embedded_graphics::{prelude::PixelColor, primitives::PrimitiveStyle};
-
 use crate::{
     environment::LayoutEnvironment,
     layout::{Layout, ResolvedLayout},
@@ -32,8 +30,8 @@ impl<Inner: Layout, Color> Layout for ForegroundStyle<Inner, Color> {
     }
 }
 
-impl<C: PixelColor, V: Renderable<C>> Renderable<C> for ForegroundStyle<V, C> {
-    type Renderables = ShadeSubtree<PrimitiveStyle<C>, V::Renderables>;
+impl<C: Clone, V: Renderable<C>> Renderable<C> for ForegroundStyle<V, C> {
+    type Renderables = ShadeSubtree<C, V::Renderables>;
 
     fn render_tree(
         &self,
@@ -42,7 +40,7 @@ impl<C: PixelColor, V: Renderable<C>> Renderable<C> for ForegroundStyle<V, C> {
         env: &impl LayoutEnvironment,
     ) -> Self::Renderables {
         ShadeSubtree::new(
-            PrimitiveStyle::with_fill(self.style),
+            self.style.clone(),
             self.inner.render_tree(layout, origin, env),
         )
     }

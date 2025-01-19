@@ -1,13 +1,13 @@
 use buoyant::{
     environment::LayoutEnvironment,
     layout::{Alignment, LayoutDirection},
-    render_target::{CharColor, FixedTextBuffer},
+    render_target::FixedTextBuffer,
 };
 
 pub struct TestEnv {
     pub direction: LayoutDirection,
     pub alignment: Alignment,
-    pub foreground_color: CharColor,
+    pub foreground_color: char,
 }
 
 impl LayoutEnvironment for TestEnv {
@@ -25,7 +25,7 @@ impl Default for TestEnv {
         Self {
             direction: LayoutDirection::Horizontal,
             alignment: Alignment::default(),
-            foreground_color: CharColor::default(),
+            foreground_color: 'x',
         }
     }
 }

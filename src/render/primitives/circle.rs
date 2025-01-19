@@ -1,7 +1,7 @@
 use crate::{
     pixel::Interpolate,
     primitives::Point,
-    render::{AnimationDomain, Render},
+    render::{AnimationDomain, EmbeddedGraphicsRender},
 };
 
 use embedded_graphics::{
@@ -17,8 +17,7 @@ pub struct Circle {
     pub diameter: u16,
 }
 
-// TODO: This draws a rectangle
-impl<C: PixelColor> Render<C> for Circle {
+impl<C: PixelColor> EmbeddedGraphicsRender<C> for Circle {
     fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &PrimitiveStyle<C>) {
         _ = embedded_graphics::primitives::Circle::new(self.origin.into(), self.diameter.into())
             .draw_styled(style, render_target);

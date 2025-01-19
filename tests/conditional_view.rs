@@ -1,21 +1,22 @@
 use buoyant::font::CharacterBufferFont;
 use buoyant::layout::Layout;
 use buoyant::primitives::{Point, Size};
-use buoyant::render::{Render as _, Renderable as _};
-use buoyant::render_target::{CharColor, FixedTextBuffer};
-use buoyant::view::{ConditionalView, RenderExtensions, Text};
+use buoyant::render::CharacterRenderTarget;
+use buoyant::render::{CharacterRender as _, Renderable as _};
+use buoyant::render_target::FixedTextBuffer;
+use buoyant::view::{ConditionalView, RenderExtensions as _, Text};
 use common::TestEnv;
 
 mod common;
 
 #[test]
 fn test_conditional_view_layout() {
-    let font = CharacterBufferFont {};
+    let font = CharacterBufferFont;
     let make_view = |condition| {
         ConditionalView::new(
             condition,
             Text::str("true\n!!!", &font),
-            Text::str("f", &font).foreground_color(CharColor::clear()),
+            Text::str("f", &font).foreground_color(' '),
         )
     };
     let mut buffer = FixedTextBuffer::<5, 5>::default();

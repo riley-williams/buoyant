@@ -1,5 +1,3 @@
-use embedded_graphics::prelude::PixelColor;
-
 use crate::{
     environment::LayoutEnvironment,
     layout::{Layout, ResolvedLayout},
@@ -33,7 +31,7 @@ impl Layout for Rectangle {
     }
 }
 
-impl<C: PixelColor> Renderable<C> for Rectangle {
+impl<C> Renderable<C> for Rectangle {
     type Renderables = crate::render::primitives::Rect;
 
     fn render_tree(

@@ -1,7 +1,7 @@
 use crate::{
     pixel::Interpolate,
     primitives::{Point, Size},
-    render::{AnimationDomain, Render},
+    render::{AnimationDomain, EmbeddedGraphicsRender},
 };
 
 use embedded_graphics::{
@@ -22,8 +22,7 @@ impl Capsule {
     }
 }
 
-// TODO: this draws a rectangle
-impl<C: PixelColor> Render<C> for Capsule {
+impl<C: PixelColor> EmbeddedGraphicsRender<C> for Capsule {
     fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &PrimitiveStyle<C>) {
         let radius = self.size.height.min(self.size.width) / 2;
         let rectangle = embedded_graphics::primitives::Rectangle {

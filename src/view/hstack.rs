@@ -1,5 +1,4 @@
 use core::cmp::max;
-use embedded_graphics_core::pixelcolor::PixelColor;
 use paste::paste;
 
 use crate::{
@@ -236,7 +235,7 @@ macro_rules! impl_layout_for_hstack {
             }
         }
 
-        impl<$($type: Renderable<C>),+, C: PixelColor> Renderable<C> for HStack<($($type),+)> {
+        impl<$($type: Renderable<C>),+, C> Renderable<C> for HStack<($($type),+)> {
             type Renderables = ($($type::Renderables),+);
 
             #[allow(unused_assignments)]
