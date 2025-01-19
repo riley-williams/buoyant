@@ -47,6 +47,13 @@ impl Interpolate for i16 {
     }
 }
 
+// TODO: This isn't correct...close enough for now
+impl Interpolate for u32 {
+    fn interpolate(from: Self, to: Self, amount: u8) -> Self {
+        ((amount as u32 * to) + ((255 - amount) as u32 * from)) / 255
+    }
+}
+
 #[cfg(feature = "crossterm")]
 impl Interpolate for crossterm::style::Colors {
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
@@ -101,6 +108,7 @@ fn interpolate_crossterm_colors(
 
 impl Interpolate for embedded_graphics_core::pixelcolor::BinaryColor {}
 
+use embedded_graphics::primitives::PrimitiveStyle;
 use embedded_graphics_core::pixelcolor::{Rgb565, RgbColor};
 
 impl Interpolate for embedded_graphics_core::pixelcolor::Rgb565 {
@@ -111,6 +119,27 @@ impl Interpolate for embedded_graphics_core::pixelcolor::Rgb565 {
         let g = interpolate_channel(from.g(), to.g(), t_fixed);
         let b = interpolate_channel(from.b(), to.b(), t_fixed);
         Rgb565::new(r, g, b)
+    }
+}
+
+impl<C: embedded_graphics::prelude::PixelColor + Interpolate> Interpolate for PrimitiveStyle<C> {
+    fn interpolate(from: Self, to: Self, amount: u8) -> Self {
+        let mut style = embedded_graphics::primitives::PrimitiveStyleBuilder::new();
+        style = match (from.fill_color, to.fill_color) {
+            (Some(from), Some(to)) => style.fill_color(C::interpolate(from, to, amount)),
+            (Some(from), None) => style.fill_color(from),
+            (None, Some(to)) => style.fill_color(to),
+            (None, None) => style,
+        };
+
+        style = match (from.stroke_color, to.stroke_color) {
+            (Some(from), Some(to)) => style.stroke_color(C::interpolate(from, to, amount)),
+            (Some(from), None) => style.stroke_color(from),
+            (None, Some(to)) => style.stroke_color(to),
+            (None, None) => style,
+        };
+
+        style.build()
     }
 }
 

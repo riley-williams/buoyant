@@ -46,14 +46,13 @@ pub trait EmbeddedGraphicsRender<Color: PixelColor>: Sized + Clone {
     fn render_animated(
         render_target: &mut impl DrawTarget<Color = Color>,
         source: &Self,
-        _source_style: &PrimitiveStyle<Color>,
         target: &Self,
-        target_style: &PrimitiveStyle<Color>,
+        style: &PrimitiveStyle<Color>,
         config: &AnimationDomain,
     ) {
         let intermediate = Self::join(source.clone(), target.clone(), config);
         // TODO: interpolate styles
-        intermediate.render(render_target, target_style);
+        intermediate.render(render_target, style);
     }
 
     /// Produces a new tree by consuming and interpolating between two partially animated trees
@@ -68,9 +67,8 @@ impl<C: PixelColor> EmbeddedGraphicsRender<C> for () {
     fn render_animated(
         _render_target: &mut impl DrawTarget<Color = C>,
         _source: &Self,
-        _source_style: &PrimitiveStyle<C>,
         _target: &Self,
-        _target_style: &PrimitiveStyle<C>,
+        _style: &PrimitiveStyle<C>,
         _config: &AnimationDomain,
     ) {
     }
@@ -87,9 +85,8 @@ impl<C> CharacterRender<C> for () {
     fn render_animated(
         _render_target: &mut impl CharacterRenderTarget<Color = C>,
         _source: &Self,
-        _source_style: &C,
         _target: &Self,
-        _target_style: &C,
+        _style: &C,
         _config: &AnimationDomain,
     ) {
     }
@@ -129,14 +126,13 @@ pub trait CharacterRender<Color>: Sized + Clone {
     fn render_animated(
         render_target: &mut impl CharacterRenderTarget<Color = Color>,
         source: &Self,
-        _source_style: &Color,
         target: &Self,
-        target_style: &Color,
+        style: &Color,
         config: &AnimationDomain,
     ) {
         let intermediate = Self::join(source.clone(), target.clone(), config);
         // TODO: interpolate styles
-        intermediate.render(render_target, target_style);
+        intermediate.render(render_target, style);
     }
 
     /// Produces a new tree by consuming and interpolating between two partially animated trees

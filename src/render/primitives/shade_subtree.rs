@@ -1,5 +1,6 @@
-use crate::render::{
-    AnimationDomain, CharacterRender, CharacterRenderTarget, EmbeddedGraphicsRender,
+use crate::{
+    pixel::Interpolate,
+    render::{AnimationDomain, CharacterRender, CharacterRenderTarget, EmbeddedGraphicsRender},
 };
 
 use embedded_graphics::{prelude::PixelColor, primitives::PrimitiveStyle};
@@ -17,7 +18,7 @@ impl<C, T> ShadeSubtree<C, T> {
     }
 }
 
-impl<C: PixelColor, T: EmbeddedGraphicsRender<C>> EmbeddedGraphicsRender<C>
+impl<C: PixelColor + Interpolate, T: EmbeddedGraphicsRender<C>> EmbeddedGraphicsRender<C>
     for ShadeSubtree<PrimitiveStyle<C>, T>
 {
     fn render(&self, render_target: &mut impl DrawTarget<Color = C>, _: &PrimitiveStyle<C>) {
@@ -27,17 +28,16 @@ impl<C: PixelColor, T: EmbeddedGraphicsRender<C>> EmbeddedGraphicsRender<C>
     fn render_animated(
         render_target: &mut impl DrawTarget<Color = C>,
         source: &Self,
-        _: &PrimitiveStyle<C>,
         target: &Self,
         _: &PrimitiveStyle<C>,
         config: &AnimationDomain,
     ) {
+        let style = Interpolate::interpolate(source.style, target.style, config.factor);
         T::render_animated(
             render_target,
             &source.subtree,
-            &source.style,
             &target.subtree,
-            &target.style,
+            &style,
             config,
         );
     }
@@ -59,15 +59,22 @@ impl<C: Clone, T: CharacterRender<C>> CharacterRender<C> for ShadeSubtree<C, T> 
     fn render_animated(
         render_target: &mut impl CharacterRenderTarget<Color = C>,
         source: &Self,
-        _: &C,
         target: &Self,
         _: &C,
         config: &AnimationDomain,
     ) {
+        // TODO: This should be animated, but then I'd need to update all the char types in tests
+        // let style = Interpolate::interpolate(source.style, target.style, config.factor);
+        // T::render_animated(
+        //     render_target,
+        //     &source.subtree,
+        //     &target.subtree,
+        //     &style,
+        //     config,
+        // );
         T::render_animated(
             render_target,
             &source.subtree,
-            &source.style,
             &target.subtree,
             &target.style,
             config,

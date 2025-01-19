@@ -19,18 +19,16 @@ macro_rules! impl_render_for_collections {
             fn render_animated(
                 render_target: &mut impl DrawTarget<Color = Color>,
                 source: &Self,
-                source_style: &PrimitiveStyle<Color>,
                 target: &Self,
-                target_style: &PrimitiveStyle<Color>,
+                style: &PrimitiveStyle<Color>,
                 config: &super::AnimationDomain,
             ) {
                 $(
                     $type::render_animated(
                         render_target,
                         &source.$n,
-                        source_style,
                         &target.$n,
-                        target_style,
+                        style,
                         config,
                     );
                 )+
@@ -111,23 +109,15 @@ impl<Color: PixelColor, T: EmbeddedGraphicsRender<Color>, const N: usize>
     fn render_animated(
         render_target: &mut impl DrawTarget<Color = Color>,
         source: &Self,
-        source_style: &PrimitiveStyle<Color>,
         target: &Self,
-        target_style: &PrimitiveStyle<Color>,
+        style: &PrimitiveStyle<Color>,
         config: &super::AnimationDomain,
     ) {
         source
             .iter()
             .zip(target.iter())
             .for_each(|(source, target)| {
-                T::render_animated(
-                    render_target,
-                    source,
-                    source_style,
-                    target,
-                    target_style,
-                    config,
-                )
+                T::render_animated(render_target, source, target, style, config)
             });
     }
 
@@ -158,18 +148,16 @@ macro_rules! impl_char_render_for_collections {
             fn render_animated(
                 render_target: &mut impl CharacterRenderTarget<Color = Color>,
                 source: &Self,
-                source_style: &Color,
                 target: &Self,
-                target_style: &Color,
+                style: &Color,
                 config: &super::AnimationDomain,
             ) {
                 $(
                     $type::render_animated(
                         render_target,
                         &source.$n,
-                        source_style,
                         &target.$n,
-                        target_style,
+                        style,
                         config,
                     );
                 )+
@@ -246,23 +234,15 @@ impl<Color, T: CharacterRender<Color>, const N: usize> CharacterRender<Color>
     fn render_animated(
         render_target: &mut impl CharacterRenderTarget<Color = Color>,
         source: &Self,
-        source_style: &Color,
         target: &Self,
-        target_style: &Color,
+        style: &Color,
         config: &super::AnimationDomain,
     ) {
         source
             .iter()
             .zip(target.iter())
             .for_each(|(source, target)| {
-                T::render_animated(
-                    render_target,
-                    source,
-                    source_style,
-                    target,
-                    target_style,
-                    config,
-                )
+                T::render_animated(render_target, source, target, style, config)
             });
     }
 
