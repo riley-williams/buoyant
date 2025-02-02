@@ -16,9 +16,9 @@ fn main() {
 
     target.clear();
     let mut size = target.size();
-    println!("Size {:?}", size);
+    println!("Size {size:?}");
 
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
 
     let font = CharacterBufferFont {};
     let stack = VStack::new((

@@ -9,6 +9,7 @@ pub struct VerticalGradient<Color: Interpolate> {
 }
 
 impl<Color: Interpolate> VerticalGradient<Color> {
+    #[must_use]
     pub fn new(start: Color, end: Color) -> Self {
         Self { start, end }
     }

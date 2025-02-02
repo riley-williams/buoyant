@@ -19,6 +19,10 @@ impl<T: LayoutEnvironment> LayoutEnvironment for ForEachEnvironment<'_, T> {
     fn layout_direction(&self) -> LayoutDirection {
         LayoutDirection::Vertical
     }
+
+    fn app_time(&self) -> core::time::Duration {
+        self.inner_environment.app_time()
+    }
 }
 
 impl<'a, T: LayoutEnvironment> From<&'a T> for ForEachEnvironment<'a, T> {
@@ -53,11 +57,13 @@ where
         }
     }
 
+    #[must_use]
     pub fn with_alignment(mut self, alignment: HorizontalAlignment) -> Self {
         self.alignment = alignment;
         self
     }
 
+    #[must_use]
     pub fn with_spacing(mut self, spacing: u16) -> Self {
         self.spacing = spacing;
         self
@@ -98,14 +104,14 @@ where
             _ = subview_stages.push((view.priority(), view.is_empty()));
         }
 
-        let layout_fn = |index: usize, offer: &ProposedDimensions| {
-            let layout = (self.build_view)(&items[index]).layout(offer, env);
+        let layout_fn = |index: usize, offer: ProposedDimensions| {
+            let layout = (self.build_view)(&items[index]).layout(&offer, env);
             let size = layout.resolved_size;
             sublayouts[index] = layout;
             size
         };
 
-        let size = layout_n(&mut subview_stages, offer, self.spacing, layout_fn);
+        let size = layout_n(&mut subview_stages, *offer, self.spacing, layout_fn);
         ResolvedLayout {
             sublayouts,
             resolved_size: size,
@@ -158,9 +164,9 @@ where
 
 fn layout_n<const N: usize>(
     subviews: &mut heapless::Vec<(i8, bool), N>,
-    offer: &ProposedDimensions,
+    offer: ProposedDimensions,
     spacing: u16,
-    mut layout_fn: impl FnMut(usize, &ProposedDimensions) -> Dimensions,
+    mut layout_fn: impl FnMut(usize, ProposedDimensions) -> Dimensions,
 ) -> Dimensions {
     let ProposedDimension::Exact(height) = offer.height else {
         let mut total_height: Dimension = 0.into();
@@ -201,13 +207,13 @@ fn layout_n<const N: usize>(
     };
 
     for index in 0..subviews.len() {
-        let minimum_dimension = layout_fn(index, &min_proposal);
+        let minimum_dimension = layout_fn(index, min_proposal);
         // skip any further work for empty views
         if subviews[index].1 {
             num_empty_views += 1;
             continue;
         }
-        let maximum_dimension = layout_fn(index, &max_proposal);
+        let maximum_dimension = layout_fn(index, max_proposal);
         flexibilities[index] = maximum_dimension.height - minimum_dimension.height;
     }
 
@@ -240,7 +246,7 @@ fn layout_n<const N: usize>(
                     subviews_indecies[slice_start + slice_len] = i;
                     slice_len += 1;
                 }
-                _ => {}
+                core::cmp::Ordering::Greater => {}
             }
         }
         last_priority_group = Some(max);
@@ -259,7 +265,7 @@ fn layout_n<const N: usize>(
                 remaining_height / remaining_group_size + remaining_height % remaining_group_size;
             let size = layout_fn(
                 *index,
-                &ProposedDimensions {
+                ProposedDimensions {
                     width: offer.width,
                     height: ProposedDimension::Exact(height_fraction),
                 },

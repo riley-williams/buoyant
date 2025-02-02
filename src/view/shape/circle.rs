@@ -9,6 +9,7 @@ use crate::{
 pub struct Circle;
 
 impl Circle {
+    #[must_use]
     pub fn new() -> Self {
         Self
     }
@@ -34,7 +35,7 @@ impl Layout for Circle {
 }
 
 impl<C> Renderable<C> for Circle {
-    type Renderables = crate::render::primitives::Circle;
+    type Renderables = crate::render::Circle;
 
     fn render_tree(
         &self,
@@ -42,7 +43,7 @@ impl<C> Renderable<C> for Circle {
         origin: Point,
         _env: &impl LayoutEnvironment,
     ) -> Self::Renderables {
-        crate::render::primitives::Circle {
+        crate::render::Circle {
             origin,
             diameter: layout.resolved_size.width.into(),
         }

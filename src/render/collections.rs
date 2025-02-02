@@ -117,7 +117,7 @@ mod embedded_graphics_impl {
                 .iter()
                 .zip(target.iter())
                 .for_each(|(source, target)| {
-                    T::render_animated(render_target, source, target, style, config)
+                    T::render_animated(render_target, source, target, style, config);
                 });
         }
 
@@ -242,7 +242,7 @@ impl<Color, T: CharacterRender<Color>, const N: usize> CharacterRender<Color>
             .iter()
             .zip(target.iter())
             .for_each(|(source, target)| {
-                T::render_animated(render_target, source, target, style, config)
+                T::render_animated(render_target, source, target, style, config);
             });
     }
 

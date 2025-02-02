@@ -14,7 +14,7 @@ use buoyant::view::{shape::Rectangle, Divider, EmptyView, HStack, LayoutExtensio
 fn test_greedy_layout_2() {
     let hstack = HStack::new((Spacer::default(), Spacer::default()));
     let offer = Size::new(100, 100);
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = hstack.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(100, 0));
 }
@@ -23,7 +23,7 @@ fn test_greedy_layout_2() {
 fn test_oversized_layout_2() {
     let vstack = HStack::new((Divider::default().padding(2), Spacer::default()));
     let offer = Size::new(10, 0);
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = vstack.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(10, 0));
 }
@@ -36,7 +36,7 @@ fn test_oversized_layout_3() {
         Spacer::default(),
     ));
     let offer = Size::new(10, 0);
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = vstack.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(10, 0));
 }
@@ -46,7 +46,7 @@ fn test_undersized_layout_2() {
     let font = CharacterBufferFont {};
     let hstack = HStack::new((Text::str("123", &font), Text::str("4567", &font))).with_spacing(1);
     let offer = Size::new(50, 1);
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = hstack.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(8, 1));
 }
@@ -74,7 +74,7 @@ fn test_undersized_layout_3_left_pad() {
     ))
     .foreground_color(' ');
     let offer = Size::new(10, 1);
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = hstack.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(10, 1));
     let mut buffer = FixedTextBuffer::<10, 1>::default();
@@ -95,7 +95,7 @@ fn test_undersized_layout_3_right_pad_space() {
     .with_spacing(1)
     .foreground_color(' ');
     let offer = Size::new(10, 1);
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = hstack.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(10, 1));
     let mut buffer = FixedTextBuffer::<10, 1>::default();
@@ -117,7 +117,7 @@ fn test_oversized_layout_3_leading_pad_space() {
     .with_spacing(1)
     .foreground_color(' ');
     let offer = Size::new(10, 1);
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = hstack.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(10, 1));
     let mut buffer = FixedTextBuffer::<10, 1>::default();
@@ -137,7 +137,7 @@ fn test_undersized_layout_3_middle_pad() {
     ))
     .foreground_color(' ');
     let offer = Size::new(10, 1);
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = hstack.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(10, 1));
     let mut buffer = FixedTextBuffer::<10, 1>::default();
@@ -159,7 +159,7 @@ fn test_oversized_layout_3_middle_pad_space() {
     .with_spacing(1)
     .foreground_color(' ');
     let offer = Size::new(10, 1);
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = hstack.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(10, 1));
     let mut buffer = FixedTextBuffer::<10, 1>::default();
@@ -181,7 +181,7 @@ fn test_oversized_layout_3_trailing_pad_space() {
     .with_spacing(1)
     .foreground_color(' ');
     let offer = Size::new(10, 1);
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = hstack.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(10, 1));
     let mut buffer = FixedTextBuffer::<10, 1>::default();
@@ -201,7 +201,7 @@ fn test_layout_3_remainder_allocation() {
         Text::str("ccc", &font),
     ))
     .foreground_color(' ');
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let mut buffer = FixedTextBuffer::<10, 1>::default();
     let offer = Size::new(7, 1);
     let layout = hstack.layout(&offer.into(), &env);
@@ -419,7 +419,7 @@ fn infinite_width_offer_results_in_sum_of_subview_widths() {
         width: ProposedDimension::Infinite,
         height: ProposedDimension::Exact(10),
     };
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = hstack.layout(&offer, &env);
     assert_eq!(layout.resolved_size, Dimensions::new(248 + 2, 8));
 }
@@ -436,7 +436,7 @@ fn compact_width_offer_results_in_sum_of_subview_widths() {
         width: ProposedDimension::Compact,
         height: ProposedDimension::Exact(10),
     };
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = hstack.layout(&offer, &env);
     assert_eq!(layout.resolved_size, Dimensions::new(248 + 2, 8));
 }
@@ -453,7 +453,7 @@ fn infinite_width_offer_results_in_sum_of_subview_widths_minus_empties() {
         width: ProposedDimension::Infinite,
         height: ProposedDimension::Exact(10),
     };
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = hstack.layout(&offer, &env);
     assert_eq!(layout.resolved_size, Dimensions::new(208 + 1, 8));
 }
@@ -470,7 +470,7 @@ fn compact_width_offer_results_in_sum_of_subview_widths_minus_empties() {
         width: ProposedDimension::Compact,
         height: ProposedDimension::Exact(10),
     };
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = hstack.layout(&offer, &env);
     assert_eq!(layout.resolved_size, Dimensions::new(208 + 1, 8));
 }

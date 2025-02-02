@@ -49,25 +49,17 @@ impl<V: Layout> Layout for FixedFrame<V> {
         env: &impl LayoutEnvironment,
     ) -> ResolvedLayout<Self::Sublayout> {
         let modified_offer = ProposedDimensions {
-            width: self
-                .width
-                .map(ProposedDimension::Exact)
-                .unwrap_or(offer.width),
-            height: self
-                .height
-                .map(ProposedDimension::Exact)
-                .unwrap_or(offer.height),
+            width: self.width.map_or(offer.width, ProposedDimension::Exact),
+            height: self.height.map_or(offer.height, ProposedDimension::Exact),
         };
         let child_layout = self.child.layout(&modified_offer, env);
         let resolved_size = Dimensions {
             width: self
                 .width
-                .map(Dimension::from)
-                .unwrap_or(child_layout.resolved_size.width),
+                .map_or(child_layout.resolved_size.width, Dimension::from),
             height: self
                 .height
-                .map(Dimension::from)
-                .unwrap_or(child_layout.resolved_size.height),
+                .map_or(child_layout.resolved_size.height, Dimension::from),
         };
         ResolvedLayout {
             sublayouts: child_layout,

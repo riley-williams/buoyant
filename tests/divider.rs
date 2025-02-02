@@ -1,40 +1,11 @@
-use buoyant::environment::LayoutEnvironment;
-use buoyant::layout::{Alignment, Layout, LayoutDirection};
+use buoyant::layout::{Layout, LayoutDirection};
 use buoyant::primitives::{Point, Size};
 use buoyant::render::{CharacterRender, CharacterRenderTarget as _, Renderable as _};
 use buoyant::render_target::FixedTextBuffer;
 use buoyant::view::{Divider, RenderExtensions as _};
 
-pub struct TestEnv {
-    pub direction: LayoutDirection,
-    pub alignment: Alignment,
-}
-
-impl LayoutEnvironment for TestEnv {
-    fn layout_direction(&self) -> LayoutDirection {
-        self.direction
-    }
-
-    fn alignment(&self) -> Alignment {
-        self.alignment
-    }
-}
-
-impl Default for TestEnv {
-    fn default() -> Self {
-        Self {
-            direction: LayoutDirection::Horizontal,
-            alignment: Alignment::default(),
-        }
-    }
-}
-
-impl TestEnv {
-    pub fn with_direction(mut self, direction: LayoutDirection) -> Self {
-        self.direction = direction;
-        self
-    }
-}
+mod common;
+use common::TestEnv;
 
 #[test]
 fn test_horizontal_layout() {

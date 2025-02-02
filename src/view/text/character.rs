@@ -4,8 +4,7 @@ use crate::{
     layout::{Layout, ResolvedLayout},
     primitives::{Point, ProposedDimension, ProposedDimensions, Size},
     render::{
-        primitives::{OwnedText, StaticText},
-        Renderable,
+        Renderable, {OwnedText, StaticText},
     },
 };
 use core::marker::PhantomData;
@@ -13,6 +12,7 @@ use core::marker::PhantomData;
 use super::{wrap::WhitespaceWrap, HorizontalTextAlignment, Text};
 
 impl<'a, F> Text<'a, &'a str, F> {
+    #[must_use]
     pub fn str(text: &'a str, font: &'a F) -> Self {
         Text {
             text,
@@ -24,6 +24,7 @@ impl<'a, F> Text<'a, &'a str, F> {
 }
 
 impl<'a, const N: usize, F> Text<'a, heapless::String<N>, F> {
+    #[must_use]
     pub fn heapless(text: heapless::String<N>, font: &'a F) -> Self {
         Text {
             text,
@@ -36,6 +37,7 @@ impl<'a, const N: usize, F> Text<'a, heapless::String<N>, F> {
 
 #[cfg(feature = "std")]
 impl<'a, F> Text<'a, std::string::String, F> {
+    #[must_use]
     pub fn string(text: std::string::String, font: &'a F) -> Self {
         Text {
             text,
@@ -73,6 +75,7 @@ impl Slice for std::string::String {
 }
 
 impl<T, F> Text<'_, T, F> {
+    #[must_use]
     pub fn multiline_text_alignment(self, alignment: HorizontalTextAlignment) -> Self {
         Text { alignment, ..self }
     }

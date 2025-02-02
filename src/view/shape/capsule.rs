@@ -24,7 +24,7 @@ impl Layout for Capsule {
 }
 
 impl<C> Renderable<C> for Capsule {
-    type Renderables = crate::render::primitives::Capsule;
+    type Renderables = crate::render::Capsule;
 
     fn render_tree(
         &self,
@@ -32,6 +32,6 @@ impl<C> Renderable<C> for Capsule {
         origin: Point,
         _env: &impl LayoutEnvironment,
     ) -> Self::Renderables {
-        crate::render::primitives::Capsule::new(origin, layout.resolved_size.into())
+        crate::render::Capsule::new(origin, layout.resolved_size.into())
     }
 }

@@ -18,7 +18,7 @@ use common::collect_text;
 fn test_greedy_layout_2() {
     let vstack = VStack::new((Spacer::default(), Spacer::default()));
     let offer = Size::new(100, 100);
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = vstack.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(0, 100));
 }
@@ -28,7 +28,7 @@ fn test_greedy_layout_2() {
 fn test_oversized_layout_2() {
     let vstack = VStack::new((Divider::default().padding(2), Spacer::default()));
     let offer = Size::new(0, 10);
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = vstack.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(0, 10));
 }
@@ -41,7 +41,7 @@ fn test_oversized_layout_3() {
         Spacer::default(),
     ));
     let offer = Size::new(0, 10);
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = vstack.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(0, 10));
 }
@@ -58,7 +58,7 @@ fn infinite_height_offer_results_in_sum_of_subview_heights() {
         width: ProposedDimension::Exact(10),
         height: ProposedDimension::Infinite,
     };
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = vstack.layout(&offer, &env);
     assert_eq!(layout.resolved_size, Dimensions::new(8, 248 + 2));
 }
@@ -75,7 +75,7 @@ fn compact_height_offer_results_in_sum_of_subview_heights() {
         width: ProposedDimension::Exact(10),
         height: ProposedDimension::Compact,
     };
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = vstack.layout(&offer, &env);
     assert_eq!(layout.resolved_size, Dimensions::new(8, 248 + 2));
 }
@@ -92,7 +92,7 @@ fn infinite_height_offer_results_in_sum_of_subview_heights_minus_empties() {
         width: ProposedDimension::Exact(10),
         height: ProposedDimension::Infinite,
     };
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = vstack.layout(&offer, &env);
     assert_eq!(layout.resolved_size, Dimensions::new(8, 208 + 1));
 }
@@ -109,7 +109,7 @@ fn compact_height_offer_results_in_sum_of_subview_heights_minus_empties() {
         width: ProposedDimension::Exact(10),
         height: ProposedDimension::Compact,
     };
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = vstack.layout(&offer, &env);
     assert_eq!(layout.resolved_size, Dimensions::new(8, 208 + 1));
 }
@@ -124,7 +124,7 @@ fn test_undersized_layout_3_bottom_pad() {
     ))
     .foreground_color(' ');
     let offer = Size::new(1, 10);
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = vstack.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(1, 10));
     let mut buffer = FixedTextBuffer::<1, 10>::default();
@@ -153,7 +153,7 @@ fn test_undersized_layout_3_right_pad_space() {
     .with_spacing(1)
     .foreground_color(' ');
     let offer = Size::new(1, 10);
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = vstack.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(1, 10));
     let mut buffer = FixedTextBuffer::<1, 10>::default();
@@ -174,7 +174,7 @@ fn test_oversized_layout_3_right_pad_space() {
     .with_spacing(1)
     .foreground_color(' ');
     let offer = Size::new(1, 10);
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = vstack.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(1, 10));
     let mut buffer = FixedTextBuffer::<1, 10>::default();
@@ -195,7 +195,7 @@ fn test_oversized_layout_3_middle_pad_space() {
     .with_spacing(1)
     .foreground_color(' ');
     let offer = Size::new(1, 10);
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = vstack.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(1, 10));
     let mut buffer = FixedTextBuffer::<1, 10>::default();
@@ -216,7 +216,7 @@ fn test_oversized_layout_3_trailing_pad_space() {
     .with_spacing(1)
     .foreground_color(' ');
     let offer = Size::new(1, 10);
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = vstack.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(1, 10));
     let mut buffer = FixedTextBuffer::<1, 10>::default();
@@ -235,7 +235,7 @@ fn test_undersized_layout_3_middle_pad() {
     ))
     .foreground_color(' ');
     let offer = Size::new(1, 10);
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = vstack.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(1, 10));
     let mut buffer = FixedTextBuffer::<1, 10>::default();
@@ -286,7 +286,7 @@ fn test_layout_3_remainder_allocation_sizing_only() {
         Text::str("bbb", &font),
         Text::str("ccc", &font),
     ));
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     for height in 1..9 {
         let offer = Size::new(1, height);
         let layout = vstack.layout(&offer.into(), &env);
@@ -427,7 +427,7 @@ fn test_flexible_layout_fills_frame_10k() {
         )),
     ));
 
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     // The spacers in this view should always cause the stack size to equal the offer size
     for width in 1..100 {
         for height in 1..100 {

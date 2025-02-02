@@ -2,7 +2,7 @@ use crate::{
     environment::LayoutEnvironment,
     layout::{Layout, ResolvedLayout},
     primitives::{Point, ProposedDimensions},
-    render::{primitives::ShadeSubtree, Renderable},
+    render::{Renderable, ShadeSubtree},
 };
 
 /// Sets a foreground style
@@ -14,7 +14,7 @@ pub struct ForegroundStyle<V, S> {
 
 impl<V, S> ForegroundStyle<V, S> {
     pub fn new(style: S, inner: V) -> Self {
-        Self { style, inner }
+        Self { inner, style }
     }
 }
 

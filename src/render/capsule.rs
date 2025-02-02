@@ -7,6 +7,7 @@ pub struct Capsule {
 }
 
 impl Capsule {
+    #[must_use]
     pub fn new(origin: Point, size: Size) -> Self {
         Self { origin, size }
     }
@@ -14,7 +15,10 @@ impl Capsule {
 
 #[cfg(feature = "embedded-graphics")]
 mod embedded_graphics_impl {
-    use crate::pixel::Interpolate;
+    use crate::{
+        pixel::Interpolate,
+        primitives::{Point, Size},
+    };
     use embedded_graphics::{
         prelude::PixelColor,
         primitives::{PrimitiveStyle, StyledDrawable as _},
@@ -23,7 +27,7 @@ mod embedded_graphics_impl {
 
     use crate::render::{AnimationDomain, EmbeddedGraphicsRender};
 
-    use super::*;
+    use super::Capsule;
     impl<C: PixelColor> EmbeddedGraphicsRender<C> for Capsule {
         fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &C) {
             let radius = self.size.height.min(self.size.width) / 2;

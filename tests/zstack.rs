@@ -13,7 +13,7 @@ use buoyant::view::{
 fn test_layout_fills_two() {
     let stack = ZStack::new((Spacer::default(), Divider::default()));
     let offer = Size::new(100, 42);
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = stack.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(100, 42));
 }
@@ -22,7 +22,7 @@ fn test_layout_fills_two() {
 fn test_oversized_layout_2() {
     let stack = ZStack::new((Divider::default().padding(2), Spacer::default()));
     let offer = Size::new(0, 10);
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = stack.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(0, 10));
 }

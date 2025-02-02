@@ -10,6 +10,7 @@ pub struct Divider {
 }
 
 impl Divider {
+    #[must_use]
     pub fn new(weight: u16) -> Self {
         Self { weight }
     }
@@ -57,7 +58,7 @@ impl Layout for Divider {
 }
 
 impl<C> Renderable<C> for Divider {
-    type Renderables = crate::render::primitives::Rect;
+    type Renderables = crate::render::Rect;
 
     fn render_tree(
         &self,
@@ -65,7 +66,7 @@ impl<C> Renderable<C> for Divider {
         origin: Point,
         _env: &impl LayoutEnvironment,
     ) -> Self::Renderables {
-        crate::render::primitives::Rect {
+        crate::render::Rect {
             origin,
             size: layout.resolved_size.into(),
         }

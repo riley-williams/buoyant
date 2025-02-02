@@ -25,6 +25,9 @@ impl<T: LayoutEnvironment> LayoutEnvironment for HorizontalEnvironment<'_, T> {
     fn layout_direction(&self) -> LayoutDirection {
         LayoutDirection::Horizontal
     }
+    fn app_time(&self) -> core::time::Duration {
+        self.inner_environment.app_time()
+    }
 }
 
 impl<'a, T: LayoutEnvironment> From<&'a T> for HorizontalEnvironment<'a, T> {
@@ -36,10 +39,12 @@ impl<'a, T: LayoutEnvironment> From<&'a T> for HorizontalEnvironment<'a, T> {
 }
 
 impl<T> HStack<T> {
+    #[must_use]
     pub fn with_spacing(self, spacing: u16) -> Self {
         Self { spacing, ..self }
     }
 
+    #[must_use]
     pub fn with_alignment(self, alignment: VerticalAlignment) -> Self {
         Self { alignment, ..self }
     }
@@ -61,11 +66,11 @@ impl<T> HStack<T> {
     }
 }
 
-type LayoutFn<'a> = &'a mut dyn FnMut(&ProposedDimensions) -> Dimensions;
+type LayoutFn<'a> = &'a mut dyn FnMut(ProposedDimensions) -> Dimensions;
 
 fn layout_n<const N: usize>(
     subviews: &mut [(LayoutFn, i8, bool); N],
-    offer: &ProposedDimensions,
+    offer: ProposedDimensions,
     spacing: u16,
 ) -> Dimensions {
     let ProposedDimension::Exact(width) = offer.width else {
@@ -110,13 +115,13 @@ fn layout_n<const N: usize>(
     };
 
     for index in 0..N {
-        let minimum_dimension = subviews[index].0(&min_proposal);
+        let minimum_dimension = subviews[index].0(min_proposal);
         // skip any further work for empty views
         if subviews[index].2 {
             num_empty_views += 1;
             continue;
         }
-        let maximum_dimension = subviews[index].0(&max_proposal);
+        let maximum_dimension = subviews[index].0(max_proposal);
         flexibilities[index] = maximum_dimension.width - minimum_dimension.width;
     }
 
@@ -169,7 +174,7 @@ fn layout_n<const N: usize>(
         for index in group_indices {
             let width_fraction =
                 remaining_width / remaining_group_size + remaining_width % remaining_group_size;
-            let size = subviews[*index].0(&ProposedDimensions {
+            let size = subviews[*index].0(ProposedDimensions {
                 width: ProposedDimension::Exact(width_fraction),
                 height: offer.height,
             });
@@ -211,8 +216,8 @@ macro_rules! impl_layout_for_hstack {
 
                 $(
                     let mut [<c $n>]: Option<ResolvedLayout<$type::Sublayout>> = None;
-                    let mut [<f $n>] = |size: &ProposedDimensions| {
-                        let layout = self.items.$n.layout(size, env);
+                    let mut [<f $n>] = |size: ProposedDimensions| {
+                        let layout = self.items.$n.layout(&size, env);
                         let size = layout.resolved_size;
                         [<c $n>] = Some(layout);
                         size
@@ -225,7 +230,7 @@ macro_rules! impl_layout_for_hstack {
                     )+
                 ];
 
-                let total_size = layout_n(&mut subviews, offer, self.spacing);
+                let total_size = layout_n(&mut subviews, *offer, self.spacing);
                 ResolvedLayout {
                     sublayouts: ($(
                         [<c $n>] .unwrap()

@@ -10,9 +10,10 @@ pub struct Circle {
 #[cfg(feature = "embedded-graphics")]
 mod embedded_graphics_impl {
     use crate::pixel::Interpolate;
+    use crate::primitives::Point;
     use crate::render::{AnimationDomain, EmbeddedGraphicsRender};
 
-    use super::*;
+    use super::Circle;
     use embedded_graphics::{
         prelude::PixelColor,
         primitives::{PrimitiveStyle, StyledDrawable as _},

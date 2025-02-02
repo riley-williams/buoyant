@@ -119,6 +119,9 @@ mod embedded_graphics_impl {
 
     impl Interpolate for embedded_graphics_core::pixelcolor::Rgb565 {
         fn interpolate(from: Self, to: Self, amount: u8) -> Self {
+            if amount == 255 {
+                return to;
+            }
             let t_fixed = amount as i16;
 
             let r = interpolate_channel(from.r(), to.r(), t_fixed);
@@ -156,13 +159,12 @@ mod embedded_graphics_impl {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "embedded-graphics"))]
 mod tests {
     use embedded_graphics_core::pixelcolor::Rgb565;
 
     use super::Interpolate;
 
-    #[ignore]
     #[test]
     fn interpolate_rgb() {
         let start = Rgb565::new(0, 30, 10);

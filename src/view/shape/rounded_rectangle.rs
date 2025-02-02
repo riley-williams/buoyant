@@ -11,6 +11,7 @@ pub struct RoundedRectangle {
 }
 
 impl RoundedRectangle {
+    #[must_use]
     pub fn new(corner_radius: u16) -> Self {
         Self { corner_radius }
     }
@@ -32,7 +33,7 @@ impl Layout for RoundedRectangle {
 }
 
 impl<C> Renderable<C> for RoundedRectangle {
-    type Renderables = crate::render::primitives::RoundedRect;
+    type Renderables = crate::render::RoundedRect;
 
     fn render_tree(
         &self,
@@ -40,7 +41,7 @@ impl<C> Renderable<C> for RoundedRectangle {
         origin: Point,
         _env: &impl LayoutEnvironment,
     ) -> Self::Renderables {
-        crate::render::primitives::RoundedRect {
+        crate::render::RoundedRect {
             origin,
             size: layout.resolved_size.into(),
             corner_radius: self.corner_radius,

@@ -12,11 +12,13 @@ pub struct Size {
 }
 
 impl Size {
+    #[must_use]
     pub fn new(width: u16, height: u16) -> Self {
         Size { width, height }
     }
 
     /// Returns the smallest size that contains both sizes.
+    #[must_use]
     pub fn union(&self, rhs: Size) -> Size {
         Size {
             width: max(self.width, rhs.width),
@@ -25,6 +27,7 @@ impl Size {
     }
 
     /// Returns the overlapping area of the two sizes, which is the min of the two dimensions.
+    #[must_use]
     pub fn intersection(&self, rhs: Size) -> Size {
         Size {
             width: self.width.min(rhs.width),
@@ -32,6 +35,7 @@ impl Size {
         }
     }
 
+    #[must_use]
     pub fn zero() -> Self {
         Size {
             width: 0,
@@ -40,11 +44,13 @@ impl Size {
     }
 
     /// Returns true if the point is non-negative and within the bounds of the size.
+    #[must_use]
     pub fn contains(&self, point: Point) -> bool {
         point.x >= 0 && point.y >= 0 && point.x < self.width as i16 && point.y < self.height as i16
     }
 
     #[inline]
+    #[must_use]
     pub fn area(&self) -> u16 {
         self.width * self.height
     }
@@ -94,16 +100,19 @@ impl core::ops::Add for Point {
 }
 
 impl Point {
+    #[must_use]
     pub fn new(x: i16, y: i16) -> Self {
         Point { x, y }
     }
 
+    #[must_use]
     pub fn zero() -> Self {
         Point { x: 0, y: 0 }
     }
 }
 
 impl Interpolate for Point {
+    #[must_use]
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
         Point {
             x: (((amount as i32 * to.x as i32) + ((255 - amount) as i32 * from.x as i32)) / 255)
@@ -138,8 +147,9 @@ pub struct Frame {
 }
 
 impl Frame {
+    #[must_use]
     pub fn new(origin: Point, size: Size) -> Self {
-        Frame { origin, size }
+        Frame { size, origin }
     }
 }
 

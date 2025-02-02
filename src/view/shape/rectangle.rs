@@ -11,6 +11,7 @@ use super::RoundedRectangle;
 pub struct Rectangle;
 
 impl Rectangle {
+    #[must_use]
     pub fn corner_radius(self, radius: u16) -> RoundedRectangle {
         RoundedRectangle::new(radius)
     }
@@ -32,7 +33,7 @@ impl Layout for Rectangle {
 }
 
 impl<C> Renderable<C> for Rectangle {
-    type Renderables = crate::render::primitives::Rect;
+    type Renderables = crate::render::Rect;
 
     fn render_tree(
         &self,
@@ -40,7 +41,7 @@ impl<C> Renderable<C> for Rectangle {
         origin: Point,
         _env: &impl LayoutEnvironment,
     ) -> Self::Renderables {
-        crate::render::primitives::Rect {
+        crate::render::Rect {
             origin,
             size: layout.resolved_size.into(),
         }

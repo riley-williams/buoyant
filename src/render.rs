@@ -1,11 +1,31 @@
+use core::time::Duration;
+
 use crate::{
     environment::LayoutEnvironment,
     layout::{Layout, ResolvedLayout},
     primitives::{Point, Size},
 };
 
+mod animate;
+mod capsule;
+mod circle;
 pub mod collections;
-pub mod primitives;
+mod conditional_tree;
+mod owned_text;
+mod rect;
+mod rounded_rect;
+mod shade_subtree;
+mod static_text;
+
+pub use animate::Animate;
+pub use capsule::Capsule;
+pub use circle::Circle;
+pub use conditional_tree::{ConditionalTree, Subtree};
+pub use owned_text::OwnedText;
+pub use rect::Rect;
+pub use rounded_rect::RoundedRect;
+pub use shade_subtree::ShadeSubtree;
+pub use static_text::StaticText;
 
 pub trait Renderable<Color>: Layout {
     type Renderables;
@@ -36,7 +56,7 @@ use embedded_graphics::prelude::PixelColor;
 #[cfg(feature = "embedded-graphics")]
 use embedded_graphics_core::draw_target::DrawTarget;
 
-/// A view that can be rendered to an embedded_graphics target
+/// A view that can be rendered to an `embedded_graphics` target
 #[cfg(feature = "embedded-graphics")]
 pub trait EmbeddedGraphicsRender<Color: PixelColor>: Sized + Clone {
     /// Render the view to the screen
@@ -100,9 +120,20 @@ impl<C> CharacterRender<C> for () {
 pub struct AnimationDomain {
     /// The animation factor of this domain, ranging from 0 to 255
     pub factor: u8,
-    /// The time elapsed in milliseconds from when the animation started
-    /// This is primarily useful for creating a subdomain with a different speed
-    pub offset_ms: u64,
+    /// The duration since the application started
+    pub app_time: Duration,
+}
+
+impl AnimationDomain {
+    #[must_use]
+    pub fn new(factor: u8, app_time: Duration) -> Self {
+        Self { factor, app_time }
+    }
+
+    #[must_use]
+    pub fn is_complete(&self) -> bool {
+        self.factor == 255
+    }
 }
 
 pub trait CharacterRenderTarget {
@@ -118,7 +149,7 @@ pub trait CharacterRenderTarget {
     fn size(&self) -> Size;
 }
 
-/// A view that can be rendered to an embedded_graphics target
+/// A view that can be rendered to an `embedded_graphics` target
 pub trait CharacterRender<Color>: Sized + Clone {
     /// Render the view to the screen
     fn render(&self, render_target: &mut impl CharacterRenderTarget<Color = Color>, style: &Color);
@@ -129,13 +160,13 @@ pub trait CharacterRender<Color>: Sized + Clone {
         source: &Self,
         target: &Self,
         style: &Color,
-        config: &AnimationDomain,
+        domain: &AnimationDomain,
     ) {
-        let intermediate = Self::join(source.clone(), target.clone(), config);
+        let intermediate = Self::join(source.clone(), target.clone(), domain);
         // TODO: interpolate styles
         intermediate.render(render_target, style);
     }
 
     /// Produces a new tree by consuming and interpolating between two partially animated trees
-    fn join(source: Self, target: Self, config: &AnimationDomain) -> Self;
+    fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self;
 }

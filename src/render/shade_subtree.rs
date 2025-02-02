@@ -46,8 +46,7 @@ mod embedded_graphics_impl {
 
         fn join(source: Self, target: Self, config: &AnimationDomain) -> Self {
             Self {
-                // TODO: This "jumps" to the target style, should be an interpolated intermetiate
-                style: target.style,
+                style: Interpolate::interpolate(source.style, target.style, config.factor),
                 subtree: T::join(source.subtree, target.subtree, config),
             }
         }

@@ -2,8 +2,7 @@ use crate::{
     layout::{Layout, ResolvedLayout},
     primitives::{Point, ProposedDimensions},
     render::{
-        primitives::{ConditionalTree, Subtree},
-        Renderable,
+        Renderable, {ConditionalTree, Subtree},
     },
 };
 

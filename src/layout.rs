@@ -30,6 +30,7 @@ pub enum HorizontalAlignment {
 }
 
 impl HorizontalAlignment {
+    #[must_use]
     pub fn align(&self, available: i16, content: i16) -> i16 {
         match self {
             HorizontalAlignment::Leading => 0,
@@ -52,6 +53,7 @@ pub enum VerticalAlignment {
 }
 
 impl VerticalAlignment {
+    #[must_use]
     pub fn align(&self, available: i16, content: i16) -> i16 {
         match self {
             VerticalAlignment::Top => 0,
@@ -74,6 +76,7 @@ pub enum Axis {
 }
 
 impl Axis {
+    #[must_use]
     pub fn into_min_proposal(self) -> ProposedDimensions {
         match self {
             Axis::FixedWidth(w) => ProposedDimensions {
@@ -87,6 +90,7 @@ impl Axis {
         }
     }
 
+    #[must_use]
     pub fn into_max_proposal(self) -> ProposedDimensions {
         match self {
             Axis::FixedWidth(w) => ProposedDimensions {
@@ -117,7 +121,7 @@ pub trait Layout: Sized {
         0
     }
 
-    /// Returns true if the view should not included in layout. ConditionalView is the primary example of this
+    /// Returns true if the view should not included in layout. `ConditionalView` is the primary example of this
     fn is_empty(&self) -> bool {
         false
     }

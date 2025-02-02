@@ -100,7 +100,7 @@ impl<V: Layout> Layout for FlexFrame<V> {
             ProposedDimension::Exact(d) => ProposedDimension::Exact(clamp_optional(
                 d,
                 self.min_width,
-                self.max_width.map(|d| d.into()),
+                self.max_width.map(Into::into),
             )),
             ProposedDimension::Compact => match self.ideal_width {
                 Some(ideal_width) => ProposedDimension::Exact(
@@ -119,7 +119,7 @@ impl<V: Layout> Layout for FlexFrame<V> {
             ProposedDimension::Exact(d) => ProposedDimension::Exact(clamp_optional(
                 d,
                 self.min_height,
-                self.max_height.map(|d| d.into()),
+                self.max_height.map(Into::into),
             )),
             ProposedDimension::Compact => match self.ideal_height {
                 Some(ideal_height) => ProposedDimension::Exact(
@@ -150,13 +150,13 @@ impl<V: Layout> Layout for FlexFrame<V> {
             .max_width
             .unwrap_or(sublayout_width)
             .min(greatest_possible(sublayout_width_offer, sublayout_width))
-            .max(self.min_width.map_or(sublayout_width, |f| f.into()));
+            .max(self.min_width.map_or(sublayout_width, Into::into));
 
         let h = self
             .max_height
             .unwrap_or(sublayout_height)
             .min(greatest_possible(sublayout_height_offer, sublayout_height))
-            .max(self.min_height.map_or(sublayout_height, |f| f.into()));
+            .max(self.min_height.map_or(sublayout_height, Into::into));
 
         let resolved_size = Dimensions {
             width: w,

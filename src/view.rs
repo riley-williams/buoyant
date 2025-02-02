@@ -21,12 +21,13 @@ pub use text::{HorizontalTextAlignment, Text};
 pub use vstack::VStack;
 pub use zstack::ZStack;
 
-use modifier::{FixedFrame, FlexFrame, ForegroundStyle, Padding, Priority};
+use modifier::{Animated, FixedFrame, FlexFrame, ForegroundStyle, Padding, Priority};
 
 use crate::{
     environment::DefaultEnvironment,
-    primitives::Size,
+    primitives::{Point, Size},
     render::{CharacterRender, Renderable},
+    Animation,
 };
 
 pub trait LayoutExtensions: Sized {
@@ -57,6 +58,10 @@ pub trait LayoutExtensions: Sized {
     fn priority(self, priority: u16) -> Priority<Self> {
         Priority::new(priority, self)
     }
+
+    fn animated<T: PartialEq + Clone>(self, animation: Animation, value: T) -> Animated<Self, T> {
+        Animated::new(self, animation, value)
+    }
 }
 
 pub trait RenderExtensions<C>: Sized {
@@ -83,9 +88,9 @@ pub fn make_eg_render_tree<C: PixelColor, V: Renderable<C>>(
 where
     V::Renderables: crate::render::EmbeddedGraphicsRender<C>,
 {
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::default();
     let layout = view.layout(&size.into(), &env);
-    view.render_tree(&layout, Default::default(), &env)
+    view.render_tree(&layout, Point::default(), &env)
 }
 
 pub fn make_render_tree<C, V>(view: &V, size: Size) -> V::Renderables
@@ -93,7 +98,7 @@ where
     V: Renderable<C>,
     V::Renderables: CharacterRender<C>,
 {
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::default();
     let layout = view.layout(&size.into(), &env);
-    view.render_tree(&layout, Default::default(), &env)
+    view.render_tree(&layout, Point::default(), &env)
 }

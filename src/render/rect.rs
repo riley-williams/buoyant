@@ -1,6 +1,7 @@
 use crate::pixel::Interpolate;
 use crate::primitives::{Point, Size};
 use crate::render::{AnimationDomain, CharacterRender, CharacterRenderTarget};
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Rect {
     pub origin: Point,
@@ -8,6 +9,7 @@ pub struct Rect {
 }
 
 impl Rect {
+    #[must_use]
     pub fn new(origin: Point, size: Size) -> Self {
         Self { origin, size }
     }
@@ -19,9 +21,11 @@ mod embedded_graphics_impl {
     use embedded_graphics::primitives::{PrimitiveStyle, StyledDrawable as _};
     use embedded_graphics_core::draw_target::DrawTarget;
 
-    use crate::render::EmbeddedGraphicsRender;
+    use crate::pixel::Interpolate;
+    use crate::primitives::{Point, Size};
+    use crate::render::{AnimationDomain, EmbeddedGraphicsRender};
 
-    use super::*;
+    use super::Rect;
     // TODO: not really ideal...reimplement later
     impl<C: PixelColor> EmbeddedGraphicsRender<C> for Rect {
         fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &C) {

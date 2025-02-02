@@ -18,7 +18,7 @@ fn test_min() {
         .with_min_width(2)
         .with_min_height(2);
 
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
 
     assert_eq!(
         content.layout(&Size::new(1, 1).into(), &env).resolved_size,
@@ -53,7 +53,7 @@ fn test_max() {
         .with_max_width(2)
         .with_max_height(2);
 
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
 
     assert_eq!(
         content.layout(&Size::new(2, 1).into(), &env).resolved_size,
@@ -91,7 +91,7 @@ fn test_min_max() {
         .with_max_height(4)
         .foreground_color(' ');
 
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
 
     assert_eq!(
         content.layout(&Size::new(2, 1).into(), &env).resolved_size,
@@ -352,7 +352,7 @@ fn test_render_oversize_mix() {
 
 #[test]
 fn test_compact() {
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let content = Rectangle
         .flex_frame()
         .with_ideal_width(8)
@@ -373,7 +373,7 @@ fn test_compact() {
 
 #[test]
 fn test_infinite() {
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let content = Rectangle.flex_frame().with_min_width(2).with_min_height(2);
 
     let layout = content.layout(
@@ -390,7 +390,7 @@ fn test_infinite() {
 
 #[test]
 fn test_infinite_width_only() {
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let content = Rectangle.flex_frame().with_min_width(4); // no ideal or max
     let layout = content.layout(
         &ProposedDimensions {
@@ -405,7 +405,7 @@ fn test_infinite_width_only() {
 
 #[test]
 fn test_infinite_width_with_min_ideal() {
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let content = Rectangle.flex_frame().with_min_width(2).with_ideal_width(8);
     let layout = content.layout(
         &ProposedDimensions {
@@ -432,7 +432,7 @@ fn test_infinite_width_with_min_ideal() {
 
 #[test]
 fn test_infinite_height_only() {
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let content = Rectangle.flex_frame().with_min_height(5);
     let layout = content.layout(
         &ProposedDimensions {
@@ -457,7 +457,7 @@ fn test_infinite_height_only() {
 
 #[test]
 fn test_infinite_height_with_min_ideal() {
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let content = Rectangle
         .flex_frame()
         .with_min_height(2)
@@ -487,7 +487,7 @@ fn test_infinite_height_with_min_ideal() {
 
 #[test]
 fn test_min_greater_than_ideal_height() {
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let content = Rectangle
         .flex_frame()
         .with_min_height(10)
@@ -505,7 +505,7 @@ fn test_min_greater_than_ideal_height() {
 
 #[test]
 fn test_max_smaller_than_min_ideal_height() {
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let content = Rectangle
         .flex_frame()
         .with_min_height(4)
@@ -524,7 +524,7 @@ fn test_max_smaller_than_min_ideal_height() {
 
 #[test]
 fn test_min_greater_than_ideal_width() {
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let content = Rectangle
         .flex_frame()
         .with_min_width(12)
@@ -542,7 +542,7 @@ fn test_min_greater_than_ideal_width() {
 
 #[test]
 fn test_max_smaller_than_min_ideal_width() {
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let content = Rectangle
         .flex_frame()
         .with_min_width(5)
@@ -561,7 +561,7 @@ fn test_max_smaller_than_min_ideal_width() {
 
 #[test]
 fn test_infinite_max_width() {
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let content = Rectangle.flex_frame().with_infinite_max_width();
 
     // With Infinite offer
@@ -600,7 +600,7 @@ fn test_infinite_max_width() {
 
 #[test]
 fn test_infinite_max_width_with_min_ideal() {
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let content = Rectangle
         .flex_frame()
         .with_infinite_max_width()
@@ -632,7 +632,7 @@ fn test_infinite_max_width_with_min_ideal() {
 
 #[test]
 fn test_infinite_max_height() {
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let content = Rectangle.flex_frame().with_infinite_max_height();
 
     // With Infinite offer
@@ -671,7 +671,7 @@ fn test_infinite_max_height() {
 
 #[test]
 fn test_infinite_max_height_with_min_ideal() {
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let content = Rectangle
         .flex_frame()
         .with_infinite_max_height()

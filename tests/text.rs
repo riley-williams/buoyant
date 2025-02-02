@@ -38,7 +38,7 @@ fn test_single_character() {
     };
     let text = Text::str("A", &font);
     let offer = Size::new(100, 100);
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = text.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(5, 10));
 }
@@ -51,7 +51,7 @@ fn test_single_character_constrained() {
     };
     let text = Text::str("A", &font);
     let offer = Size::new(4, 10);
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = text.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(5, 10));
 }
@@ -64,7 +64,7 @@ fn test_text_layout() {
     };
     let text = Text::str("Hello, world!", &font);
     let offer = Size::new(100, 100);
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = text.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(5 * 13, 10));
 }
@@ -77,7 +77,7 @@ fn test_text_layout_wraps() {
     };
     let text = Text::str("Hello, world!", &font);
     let offer = Size::new(50, 100);
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = text.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(6 * 5, 20));
 }
@@ -90,7 +90,7 @@ fn test_wraps_partial_words() {
     };
     let text = Text::str("123412341234", &font);
     let offer = Size::new(20, 100);
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = text.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(20, 30));
 }
@@ -103,7 +103,7 @@ fn test_newline() {
     };
     let text = Text::str("1234\n12\n\n123\n", &font);
     let offer = Size::new(25, 100);
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = text.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(20, 40));
 }
@@ -119,7 +119,7 @@ fn test_infinite_width() {
         width: ProposedDimension::Infinite,
         height: 100.into(),
     };
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = text.layout(&offer, &env);
     assert_eq!(layout.resolved_size, Dimensions::new(8, 1));
 }
@@ -135,7 +135,7 @@ fn test_compact_width() {
         width: ProposedDimension::Compact,
         height: 100.into(),
     };
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = text.layout(&offer, &env);
     assert_eq!(layout.resolved_size, Dimensions::new(8, 1));
 }
@@ -151,7 +151,7 @@ fn test_infinite_height() {
         width: 10.into(),
         height: ProposedDimension::Infinite,
     };
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = text.layout(&offer, &env);
     assert_eq!(layout.resolved_size, Dimensions::new(10, 1));
 }
@@ -167,7 +167,7 @@ fn test_compact_height() {
         width: 10.into(),
         height: ProposedDimension::Compact,
     };
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = text.layout(&offer, &env);
     assert_eq!(layout.resolved_size, Dimensions::new(10, 1));
 }
@@ -183,7 +183,7 @@ fn test_infinite_height_wrapping() {
         width: 10.into(),
         height: ProposedDimension::Infinite,
     };
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = text.layout(&offer, &env);
     assert_eq!(layout.resolved_size, Dimensions::new(8, 2));
 }
@@ -199,7 +199,7 @@ fn test_compact_height_wrapping() {
         width: 10.into(),
         height: ProposedDimension::Compact,
     };
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let layout = text.layout(&offer, &env);
     assert_eq!(layout.resolved_size, Dimensions::new(8, 2));
 }
@@ -272,7 +272,7 @@ fn test_clipped_text_is_centered_correctly() {
     .multiline_text_alignment(HorizontalTextAlignment::Center)
     .foreground_color(' ');
 
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let mut buffer = FixedTextBuffer::<40, 2>::default();
 
     let layout = view.layout(&buffer.size().into(), &env);
@@ -302,7 +302,7 @@ fn test_clipped_text_trails_correctly() {
     .frame(None, Some(2), None, None) // constrain to 2 pts tall
     .foreground_color(' ');
 
-    let env = DefaultEnvironment;
+    let env = DefaultEnvironment::non_animated();
     let mut buffer = FixedTextBuffer::<40, 3>::default();
 
     let layout = view.layout(&buffer.size().into(), &env);
