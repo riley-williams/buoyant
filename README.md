@@ -2,83 +2,90 @@
 
 <!--toc:start-->
 - [Buoyant](#buoyant)
-  - [Capabilities](#capabilities)
-  - [Layout and rendering](#layout-and-rendering)
   - [Available render targets](#available-render-targets)
-  - [Roadmap](#roadmap)
-  - [Usage notes](#usage-notes)
+  - [Feature progress](#feature-progress)
+    - [Layout and Rendering](#layout-and-rendering)
+    - [Interactivity](#interactivity)
+  - [Who should use this?](#who-should-use-this)
   - [License](#license)
   - [Contribution](#contribution)
 <!--toc:end-->
 
-This is a library for writing and rendering SwiftUI-like layouts in Rust,
-primarily intended for use on embedded systems.
-
-## Capabilities
-
-- Embedded / no_std support:
-  - Zero heap allocation
-  - Minimal memory footprint
-- Support for both character-based and pixel-based rendering and layout
-- Ability to support a variety of render devices (terminal,
-  framebuffer, SPI display, ...)
-
-## Layout and rendering
-
-Layout code is shared across all pixel types. Views produce a layout
-which can then be rendered to a render target, calling the rendering code
-specific to the render target's pixel type. This allows creating support for
-arbitrary render backends.
+This is a library for writing and rendering SwiftUI-like views in Rust,
+primarily intended for use on `no_std` memory-constrained embedded systems.
+Floating point math is aggressively avoided.
 
 ## Available render targets
 
-- `embedded-graphics` displays, with "native" fonts and colors.
+- `DrawTarget`: `embedded-graphics` displays.
 - `TextBuffer`: A basic fixed-size `char` buffer. Does not respect graphemes.
   This is primarily useful for testing and debugging.
 - `CrossTerm`: Renders colored character-pixels to a terminal using
   the `crossterm` crate.
 
-## Roadmap
+## A Quick Example
 
-Right now, core components exist to build and render a wide variety of
-basic static views. In the current state, usability far exceeds manual
-layout using embedded-graphics primitives directly.
+Here's what an Apple-like toggle button component would look like,
+implemented with Buoyant:
 
-These are the currently planned features:
+```rust
+// Omitting the large number of imports...
 
-### Distinct View and Widget trees
+fn toggle_button(is_on: bool) -> impl Renderable<Rgb565, Renderables: EmbeddedGraphicsRender<Rgb565>> {
+    let alignment = if is_on {
+        HorizontalAlignment::Trailing
+    } else {
+        HorizontalAlignment::Leading
+    };
 
-- State management
-  - Layout reuse
-  - Animation
+    let color = if is_on { Rgb565::GREEN } else { Rgb565::RED };
 
-- Interactivity
-  - click/tap routing
-  - focus management + keyboard input
+    ZStack::new((
+        Capsule.foreground_color(color),
+        Circle.foreground_color(Rgb565::WHITE).padding(2),
+    ))
+    .with_horizontal_alignment(alignment)
+    .frame(Some(50), Some(25), None, None)
+    .animated(Animation::Linear(Duration::from_millis(200)), is_on)
+}
+```
 
-### Rendering
+As state management isn't yet implemented, this isn't really a useful component yet.
+Maybe I should have picked a different example....
 
-- Canvas view for arbitrary path/shape/raster drawing
-  - The rendering implementation exclusively targets embedded-graphics,
-    but migrating everything to a canvas interface would enable reusing
-    the rendering logic for other backends.
-- Shape stroke/fill
-- Embedded SPI displays with built-in fonts
-- Alpha blending
-  - Rendering is currently write-only, enabling framebufferless rendering
+## Feature progress
 
-### Text
+### Layout and Rendering
 
-- Unicode breaking character support for better text wrapping on
-  less resource-constrained devices.
+- [x] Fixed-size Stacks with hetereogeneos children (VStack, HStack, ZStack)
+- [x] Stacks with homogeneous children (ForEach) - partial, vertical only
+- [x] Common SwiftUI primitives (Spacer, Divider)
+- [x] Conditional views - partial, no unwrapping
+- [x] Text, basic line breaking
+- [ ] Text, Unicode line breaking
+- [x] Text, monospaced fonts
+- [ ] Text, arbitrary fonts
+- [x] Animation
+- [ ] Transition
+- [x] Common embedded-graphics shape primitives
+- [ ] Canvas for arbitrary path/shape/raster drawing
+- [ ] Shape stroke/fill
+- [ ] Shape styles (gradients, fragment shaders)
+- [ ] Images
+- [ ] Alpha rendering
+- [ ] Adaptive antialiasing
 
-## Usage notes
+### Interactivity
 
-This project is a work in progress and should not be used in production.
+- [ ] State management
+- [ ] Click/tap routing
+- [ ] Focus management + keyboard input (Text input view)
 
-At this point in time, all public API should be considered unstable,
-and this library does not yet respect SemVer. Yeah I should have
-started at 0.0.x. Sorry.
+## Who should use this?
+
+This project should not be used in production...yet. For hobby projects it's
+lightyears better than dealing with raw embedded-graphics. If you're familiar
+with SwiftUI, you should feel especially at home.
 
 ## License
 
