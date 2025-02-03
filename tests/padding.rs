@@ -1,19 +1,23 @@
 use std::iter::zip;
 
+use buoyant::render::CharacterRender;
+use buoyant::render::CharacterRenderTarget;
 use buoyant::{
     environment::DefaultEnvironment,
-    font::BufferCharacterFont,
+    font::CharacterBufferFont,
     layout::Layout,
-    primitives::{Dimensions, Point, Size},
-    render::CharacterRender,
-    render_target::{CharacterRenderTarget, FixedTextBuffer},
-    view::{Divider, HorizontalTextAlignment, LayoutExtensions, Rectangle, Spacer, Text, VStack},
+    primitives::{Dimensions, Size},
+    render_target::FixedTextBuffer,
+    view::{
+        make_render_tree, shape::Rectangle, Divider, HorizontalTextAlignment, LayoutExtensions,
+        RenderExtensions, Spacer, Text, VStack,
+    },
 };
 
 #[test]
 fn test_clipped_text_trails_correctly() {
-    let font = BufferCharacterFont {};
-    let text = VStack::new((
+    let font = CharacterBufferFont {};
+    let view = VStack::new((
         Spacer::default(),
         Text::str(
             "Padding respects\nparent alignment\nshouldnt affect alignment",
@@ -21,15 +25,14 @@ fn test_clipped_text_trails_correctly() {
         )
         .multiline_text_alignment(HorizontalTextAlignment::Trailing)
         .padding(2),
-        Divider::default(),
+        Divider::default().foreground_color('-'),
     ));
 
-    let env = DefaultEnvironment::new(None);
     let mut buffer = FixedTextBuffer::<30, 7>::default();
 
-    let layout = text.layout(buffer.size().into(), &env);
+    let tree = make_render_tree(&view, buffer.size());
 
-    text.render(&mut buffer, &layout, Point::zero(), &env);
+    tree.render(&mut buffer, &' ');
 
     let lines = [
         "                              ",
@@ -49,10 +52,10 @@ fn test_clipped_text_trails_correctly() {
 fn test_padding_is_oversized_for_oversized_child() {
     let text = Rectangle.frame(Some(10), Some(10), None, None).padding(2);
 
-    let env = DefaultEnvironment::new(());
+    let env = DefaultEnvironment::non_animated();
 
     assert_eq!(
-        text.layout(Size::new(1, 1).into(), &env).resolved_size,
+        text.layout(&Size::new(1, 1).into(), &env).resolved_size,
         Dimensions::new(14, 14)
     );
 }

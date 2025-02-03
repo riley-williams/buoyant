@@ -1,14 +1,14 @@
 use crate::{
     environment::LayoutEnvironment,
-    primitives::{Dimensions, ProposedDimensions},
+    primitives::{Dimensions, ProposedDimension, ProposedDimensions},
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Default)]
 pub enum LayoutDirection {
-    /// Content is laid out horizontally, from left to right. Typically in a HStack
+    /// Content is laid out horizontally, from left to right. Typically in a `HStack`
     #[default]
     Horizontal,
-    /// Content is laid out vertically, from top to bottom. Typically in a VStack
+    /// Content is laid out vertically, from top to bottom. Typically in a `VStack`
     Vertical,
 }
 
@@ -30,6 +30,7 @@ pub enum HorizontalAlignment {
 }
 
 impl HorizontalAlignment {
+    #[must_use]
     pub fn align(&self, available: i16, content: i16) -> i16 {
         match self {
             HorizontalAlignment::Leading => 0,
@@ -52,6 +53,7 @@ pub enum VerticalAlignment {
 }
 
 impl VerticalAlignment {
+    #[must_use]
     pub fn align(&self, available: i16, content: i16) -> i16 {
         match self {
             VerticalAlignment::Top => 0,
@@ -67,12 +69,50 @@ pub struct ResolvedLayout<C: Clone + PartialEq> {
     pub resolved_size: Dimensions,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Axis {
+    FixedWidth(u16),
+    FixedHeight(u16),
+}
+
+impl Axis {
+    #[must_use]
+    pub fn into_min_proposal(self) -> ProposedDimensions {
+        match self {
+            Axis::FixedWidth(w) => ProposedDimensions {
+                width: ProposedDimension::Exact(w),
+                height: ProposedDimension::Exact(0),
+            },
+            Axis::FixedHeight(h) => ProposedDimensions {
+                width: ProposedDimension::Exact(0),
+                height: ProposedDimension::Exact(h),
+            },
+        }
+    }
+
+    #[must_use]
+    pub fn into_max_proposal(self) -> ProposedDimensions {
+        match self {
+            Axis::FixedWidth(w) => ProposedDimensions {
+                width: ProposedDimension::Exact(w),
+                height: ProposedDimension::Infinite,
+            },
+            Axis::FixedHeight(h) => ProposedDimensions {
+                width: ProposedDimension::Infinite,
+                height: ProposedDimension::Exact(h),
+            },
+        }
+    }
+}
+
 pub trait Layout: Sized {
     type Sublayout: Clone + PartialEq;
+    // fn flexibility(&self, axis: Axis, env: &impl LayoutEnvironment) -> (Dimensions, Dimensions);
+
     /// The size of the view given the offer
     fn layout(
         &self,
-        offer: ProposedDimensions,
+        offer: &ProposedDimensions,
         env: &impl LayoutEnvironment,
     ) -> ResolvedLayout<Self::Sublayout>;
 
@@ -81,7 +121,7 @@ pub trait Layout: Sized {
         0
     }
 
-    /// Returns true if the view should not included in layout. ConditionalView is the primary example of this
+    /// Returns true if the view should not included in layout. `ConditionalView` is the primary example of this
     fn is_empty(&self) -> bool {
         false
     }

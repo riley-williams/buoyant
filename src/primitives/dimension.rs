@@ -1,3 +1,5 @@
+use crate::pixel::Interpolate;
+
 use super::Size;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -7,6 +9,7 @@ pub struct ProposedDimensions {
 }
 
 impl ProposedDimensions {
+    #[must_use]
     pub fn resolve_most_flexible(self, minimum: u16, ideal: u16) -> Dimensions {
         Dimensions {
             width: self.width.resolve_most_flexible(minimum, ideal),
@@ -46,6 +49,7 @@ impl From<embedded_graphics_core::geometry::Size> for ProposedDimensions {
 impl ProposedDimension {
     /// Returns the most flexible dimension within the proposal
     /// Magic size of 10 points is applied to views that have no implicit size
+    #[must_use]
     pub fn resolve_most_flexible(self, minimum: u16, ideal: u16) -> Dimension {
         match self {
             ProposedDimension::Compact => Dimension(ideal),
@@ -110,16 +114,18 @@ impl core::ops::Div<u16> for ProposedDimension {
 }
 
 /// The dimension of a single axis
-/// u16::MAX is treated as infinity, and this type mostly exists to prevent accidental panics from
+/// `u16::MAX` is treated as infinity, and this type mostly exists to prevent accidental panics from
 /// operations overflowing
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Dimension(u16);
+pub struct Dimension(pub u16);
 
 impl Dimension {
+    #[must_use]
     pub const fn infinite() -> Self {
         Self(u16::MAX)
     }
 
+    #[must_use]
     pub const fn is_infinite(self) -> bool {
         self.0 == u16::MAX
     }
@@ -130,6 +136,7 @@ impl From<Dimension> for u16 {
         value.0
     }
 }
+
 impl From<Dimension> for i16 {
     fn from(value: Dimension) -> Self {
         value.0.try_into().unwrap_or(i16::MAX)
@@ -138,7 +145,19 @@ impl From<Dimension> for i16 {
 
 impl From<Dimension> for u32 {
     fn from(value: Dimension) -> Self {
-        value.0 as u32
+        u32::from(value.0)
+    }
+}
+
+impl From<Dimension> for i32 {
+    fn from(value: Dimension) -> Self {
+        i32::from(value.0)
+    }
+}
+
+impl From<Dimension> for f32 {
+    fn from(value: Dimension) -> Self {
+        f32::from(value.0)
     }
 }
 
@@ -241,6 +260,7 @@ pub struct Dimensions {
 }
 
 impl Dimensions {
+    #[must_use]
     pub fn new(width: u16, height: u16) -> Self {
         Self {
             width: Dimension(width),
@@ -248,6 +268,7 @@ impl Dimensions {
         }
     }
 
+    #[must_use]
     pub fn zero() -> Self {
         Self {
             width: Dimension(0),
@@ -255,6 +276,7 @@ impl Dimensions {
         }
     }
 
+    #[must_use]
     pub fn union(self, other: Self) -> Self {
         Self {
             width: self.width.max(other.width),
@@ -262,6 +284,7 @@ impl Dimensions {
         }
     }
 
+    #[must_use]
     pub fn intersection(self, other: Self) -> Self {
         Self {
             width: self.width.min(other.width),
@@ -269,21 +292,21 @@ impl Dimensions {
         }
     }
 
-    pub fn intersecting_proposal(self, offer: ProposedDimensions) -> Self {
+    #[must_use]
+    pub fn intersecting_proposal(self, offer: &ProposedDimensions) -> Self {
         Self {
             width: match offer.width {
-                ProposedDimension::Compact => self.width,
                 ProposedDimension::Exact(d) => Dimension(self.width.0.min(d)),
-                ProposedDimension::Infinite => self.width,
+                ProposedDimension::Infinite | ProposedDimension::Compact => self.width,
             },
             height: match offer.height {
-                ProposedDimension::Compact => self.height,
                 ProposedDimension::Exact(d) => Dimension(self.height.0.min(d)),
-                ProposedDimension::Infinite => self.height,
+                ProposedDimension::Infinite | ProposedDimension::Compact => self.height,
             },
         }
     }
 
+    #[must_use]
     pub fn area(self) -> u16 {
         (self.width * self.height).0
     }
@@ -311,6 +334,27 @@ impl core::ops::Add<Size> for Dimensions {
     }
 }
 
+pub struct HorizontalSpacing(pub u16);
+pub struct VerticalSpacing(pub u16);
+
+impl core::ops::Add<HorizontalSpacing> for Dimensions {
+    type Output = Dimensions;
+
+    fn add(mut self, rhs: HorizontalSpacing) -> Self::Output {
+        self.width += rhs.0;
+        self
+    }
+}
+
+impl core::ops::Add<VerticalSpacing> for Dimensions {
+    type Output = Dimensions;
+
+    fn add(mut self, rhs: VerticalSpacing) -> Self::Output {
+        self.height += rhs.0;
+        self
+    }
+}
+
 impl From<Size> for Dimensions {
     fn from(value: Size) -> Self {
         Self {
@@ -329,16 +373,65 @@ impl From<Dimensions> for Size {
     }
 }
 
+impl Interpolate for Dimensions {
+    fn interpolate(from: Self, to: Self, amount: u8) -> Self {
+        Dimensions {
+            width: Dimension::interpolate(from.width, to.width, amount),
+            height: Dimension::interpolate(from.height, to.height, amount),
+        }
+    }
+}
+
+impl Interpolate for Dimension {
+    fn interpolate(from: Self, to: Self, amount: u8) -> Self {
+        Dimension(
+            (((u32::from(amount) * u32::from(to.0))
+                + (u32::from(255 - amount) * u32::from(from.0)))
+                / 255) as u16,
+        )
+    }
+}
+
 #[cfg(feature = "embedded-graphics")]
 impl From<Dimensions> for embedded_graphics_core::geometry::Size {
     fn from(value: Dimensions) -> Self {
-        embedded_graphics_core::geometry::Size::new(value.width.0 as u32, value.height.0 as u32)
+        embedded_graphics_core::geometry::Size::new(
+            u32::from(value.width.0),
+            u32::from(value.height.0),
+        )
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::pixel::Interpolate as _;
+
     use super::ProposedDimension;
+
+    #[test]
+    fn interpolate_dimensions() {
+        let from = super::Dimensions::new(10, 20);
+        let to = super::Dimensions::new(20, 30);
+        let result = super::Dimensions::interpolate(from, to, 128);
+        assert_eq!(result.width.0, 15);
+        assert_eq!(result.height.0, 25);
+    }
+
+    #[test]
+    fn interpolate_dimension_min() {
+        let from = super::Dimension::from(10);
+        let to = super::Dimension::from(30);
+        let result = super::Dimension::interpolate(from, to, 0);
+        assert_eq!(result.0, 10);
+    }
+
+    #[test]
+    fn interpolate_dimension_max() {
+        let from = super::Dimension::from(10);
+        let to = super::Dimension::from(30);
+        let result = super::Dimension::interpolate(from, to, 255);
+        assert_eq!(result.0, 30);
+    }
 
     #[test]
     fn proposed_dimension_order() {

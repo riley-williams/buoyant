@@ -1,11 +1,11 @@
 use core::cmp::max;
+use paste::paste;
 
 use crate::{
-    environment::{LayoutEnvironment, RenderEnvironment},
+    environment::LayoutEnvironment,
     layout::{Layout, LayoutDirection, ResolvedLayout, VerticalAlignment},
     primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions},
-    render::CharacterRender,
-    render_target::CharacterRenderTarget,
+    render::Renderable,
 };
 
 pub struct HStack<T> {
@@ -25,14 +25,8 @@ impl<T: LayoutEnvironment> LayoutEnvironment for HorizontalEnvironment<'_, T> {
     fn layout_direction(&self) -> LayoutDirection {
         LayoutDirection::Horizontal
     }
-}
-
-impl<Color: Copy, T: RenderEnvironment<Color = Color>> RenderEnvironment
-    for HorizontalEnvironment<'_, T>
-{
-    type Color = Color;
-    fn foreground_color(&self) -> Color {
-        self.inner_environment.foreground_color()
+    fn app_time(&self) -> core::time::Duration {
+        self.inner_environment.app_time()
     }
 }
 
@@ -45,10 +39,12 @@ impl<'a, T: LayoutEnvironment> From<&'a T> for HorizontalEnvironment<'a, T> {
 }
 
 impl<T> HStack<T> {
+    #[must_use]
     pub fn with_spacing(self, spacing: u16) -> Self {
         Self { spacing, ..self }
     }
 
+    #[must_use]
     pub fn with_alignment(self, alignment: VerticalAlignment) -> Self {
         Self { alignment, ..self }
     }
@@ -66,98 +62,6 @@ impl<T> HStack<T> {
             items,
             alignment: VerticalAlignment::default(),
             spacing: 0,
-        }
-    }
-}
-
-impl<U: Layout, V: Layout> Layout for HStack<(U, V)> {
-    type Sublayout = (ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>);
-
-    fn layout(
-        &self,
-        offer: ProposedDimensions,
-        env: &impl LayoutEnvironment,
-    ) -> ResolvedLayout<Self::Sublayout> {
-        const N: usize = 2;
-        let mut c0: Option<ResolvedLayout<U::Sublayout>> = None;
-        let mut c1: Option<ResolvedLayout<V::Sublayout>> = None;
-
-        let env = HorizontalEnvironment::from(env);
-
-        let mut f0 = |size: ProposedDimensions| {
-            let layout = self.items.0.layout(size, &env);
-            let size = layout.resolved_size;
-            c0 = Some(layout);
-            size
-        };
-        let mut f1 = |size: ProposedDimensions| {
-            let layout = self.items.1.layout(size, &env);
-            let size = layout.resolved_size;
-            c1 = Some(layout);
-            size
-        };
-
-        // precalculate priority to avoid multiple dynamic dispatch calls
-        let mut subviews: [(LayoutFn, i8, bool); N] = [
-            (&mut f0, self.items.0.priority(), self.items.0.is_empty()),
-            (&mut f1, self.items.1.priority(), self.items.1.is_empty()),
-        ];
-        let total_size = layout_n(&mut subviews, offer, self.spacing);
-        ResolvedLayout {
-            sublayouts: (c0.unwrap(), c1.unwrap()),
-            resolved_size: total_size,
-        }
-    }
-}
-
-impl<U: Layout, V: Layout, W: Layout> Layout for HStack<(U, V, W)> {
-    type Sublayout = (
-        ResolvedLayout<U::Sublayout>,
-        ResolvedLayout<V::Sublayout>,
-        ResolvedLayout<W::Sublayout>,
-    );
-
-    fn layout(
-        &self,
-        offer: ProposedDimensions,
-        env: &impl LayoutEnvironment,
-    ) -> ResolvedLayout<Self::Sublayout> {
-        const N: usize = 3;
-        let mut c0: Option<ResolvedLayout<U::Sublayout>> = None;
-        let mut c1: Option<ResolvedLayout<V::Sublayout>> = None;
-        let mut c2: Option<ResolvedLayout<W::Sublayout>> = None;
-
-        let env = HorizontalEnvironment::from(env);
-
-        let mut f0 = |size: ProposedDimensions| {
-            let layout = self.items.0.layout(size, &env);
-            let size = layout.resolved_size;
-            c0 = Some(layout);
-            size
-        };
-        let mut f1 = |size: ProposedDimensions| {
-            let layout = self.items.1.layout(size, &env);
-            let size = layout.resolved_size;
-            c1 = Some(layout);
-            size
-        };
-        let mut f2 = |size: ProposedDimensions| {
-            let layout = self.items.2.layout(size, &env);
-            let size = layout.resolved_size;
-            c2 = Some(layout);
-            size
-        };
-
-        // precalculate priority to avoid multiple dynamic dispatch calls
-        let mut subviews: [(LayoutFn, i8, bool); N] = [
-            (&mut f0, self.items.0.priority(), self.items.0.is_empty()),
-            (&mut f1, self.items.1.priority(), self.items.1.is_empty()),
-            (&mut f2, self.items.2.priority(), self.items.2.is_empty()),
-        ];
-        let total_size = layout_n(&mut subviews, offer, self.spacing);
-        ResolvedLayout {
-            sublayouts: (c0.unwrap(), c1.unwrap(), c2.unwrap()),
-            resolved_size: total_size,
         }
     }
 }
@@ -199,22 +103,24 @@ fn layout_n<const N: usize>(
     // Flexibility is defined as the difference between the responses to 0 and infinite width offers
     let mut flexibilities: [Dimension; N] = [0.into(); N];
     let mut num_empty_views = 0;
+
+    let min_proposal = ProposedDimensions {
+        width: ProposedDimension::Exact(0),
+        height: offer.height,
+    };
+
+    let max_proposal = ProposedDimensions {
+        width: ProposedDimension::Infinite,
+        height: offer.height,
+    };
+
     for index in 0..N {
-        let min_proposal = ProposedDimensions {
-            width: ProposedDimension::Exact(0),
-            height: offer.height,
-        };
         let minimum_dimension = subviews[index].0(min_proposal);
         // skip any further work for empty views
         if subviews[index].2 {
             num_empty_views += 1;
             continue;
         }
-
-        let max_proposal = ProposedDimensions {
-            width: ProposedDimension::Infinite,
-            height: offer.height,
-        };
         let maximum_dimension = subviews[index].0(max_proposal);
         flexibilities[index] = maximum_dimension.width - minimum_dimension.width;
     }
@@ -249,7 +155,7 @@ fn layout_n<const N: usize>(
                     subviews_indices[slice_start + slice_len] = i;
                     slice_len += 1;
                 }
-                _ => {}
+                core::cmp::Ordering::Greater => {}
             }
         }
         last_priority_group = Some(max);
@@ -289,235 +195,135 @@ fn layout_n<const N: usize>(
     }
 }
 
-// -- Character Render
+macro_rules! count {
+    () => (0);
+    ($head:tt $(, $rest:tt)*) => (1 + count!($($rest),*));
+}
 
-impl<Pixel: Copy, U, V> CharacterRender<Pixel> for HStack<(U, V)>
-where
-    U: CharacterRender<Pixel>,
-    V: CharacterRender<Pixel>,
-{
-    fn render(
-        &self,
-        target: &mut impl CharacterRenderTarget<Color = Pixel>,
-        layout: &ResolvedLayout<Self::Sublayout>,
-        origin: Point,
-        env: &impl RenderEnvironment<Color = Pixel>,
-    ) {
-        let env = HorizontalEnvironment::from(env);
-        let mut width = 0;
+macro_rules! impl_layout_for_hstack {
+    ($(($n:tt, $type:ident)),+) => {
+        paste! {
+        impl<$($type: Layout),+> Layout for HStack<($($type),+)> {
+            type Sublayout = ($(ResolvedLayout<$type::Sublayout>),+);
 
-        if !self.items.0.is_empty() {
-            let offset = Point::new(
-                width,
-                self.alignment.align(
-                    layout.resolved_size.height.into(),
-                    layout.sublayouts.0.resolved_size.height.into(),
-                ),
-            );
+            fn layout(
+                &self,
+                offer: &ProposedDimensions,
+                env: &impl LayoutEnvironment,
+            ) -> ResolvedLayout<Self::Sublayout> {
+                const N: usize = count!($($n),+);
+                let env = &HorizontalEnvironment::from(env);
 
-            self.items
-                .0
-                .render(target, &layout.sublayouts.0, origin + offset, &env);
+                $(
+                    let mut [<c $n>]: Option<ResolvedLayout<$type::Sublayout>> = None;
+                    let mut [<f $n>] = |size: ProposedDimensions| {
+                        let layout = self.items.$n.layout(&size, env);
+                        let size = layout.resolved_size;
+                        [<c $n>] = Some(layout);
+                        size
+                    };
+                )+
 
-            width += (u16::from(layout.sublayouts.0.resolved_size.width) + self.spacing) as i16;
+                let mut subviews: [(LayoutFn, i8, bool); N] = [
+                    $(
+                        (&mut paste::paste!{[<f $n>]}, self.items.$n.priority(), self.items.$n.is_empty()),
+                    )+
+                ];
+
+                let total_size = layout_n(&mut subviews, *offer, self.spacing);
+                ResolvedLayout {
+                    sublayouts: ($(
+                        [<c $n>] .unwrap()
+                    ),+),
+                    resolved_size: total_size,
+                }
+            }
         }
 
-        if !self.items.1.is_empty() {
-            let offset = Point::new(
-                width,
-                self.alignment.align(
-                    layout.resolved_size.height.into(),
-                    layout.sublayouts.1.resolved_size.height.into(),
-                ),
-            );
+        impl<$($type: Renderable<C>),+, C> Renderable<C> for HStack<($($type),+)> {
+            type Renderables = ($($type::Renderables),+);
 
-            self.items
-                .1
-                .render(target, &layout.sublayouts.1, origin + offset, &env);
+            #[allow(unused_assignments)]
+            fn render_tree(
+                &self,
+                layout: &ResolvedLayout<Self::Sublayout>,
+                origin: Point,
+                env: &impl LayoutEnvironment,
+            ) -> Self::Renderables {
+                let env = HorizontalEnvironment::from(env);
+                let mut width_offset = 0;
+                $(
+                    let offset = origin + Point::new(
+                        width_offset,
+                        self.alignment.align(
+                            layout.resolved_size.height.into(),
+                            layout.sublayouts.$n.resolved_size.height.into(),
+                        ),
+                    );
+
+                    let [<subtree_$n>] = self.items.$n.render_tree(
+                        &layout.sublayouts.$n,
+                        offset,
+                        &env
+                    );
+
+                    if !self.items.$n.is_empty() {
+                        let child_width: u16 = layout.sublayouts.$n.resolved_size.width.into();
+                        width_offset += (child_width + self.spacing) as i16;
+                    }
+                )+
+
+                ($([<subtree_$n>]),+)
+            }
         }
+    }
     }
 }
 
-impl<Pixel: Copy, U, V, W> CharacterRender<Pixel> for HStack<(U, V, W)>
-where
-    U: CharacterRender<Pixel>,
-    V: CharacterRender<Pixel>,
-    W: CharacterRender<Pixel>,
-{
-    fn render(
-        &self,
-        target: &mut impl CharacterRenderTarget<Color = Pixel>,
-        layout: &ResolvedLayout<Self::Sublayout>,
-        origin: Point,
-        env: &impl RenderEnvironment<Color = Pixel>,
-    ) {
-        let env = HorizontalEnvironment::from(env);
-        let mut width = 0;
-
-        if !self.items.0.is_empty() {
-            let offset = Point::new(
-                width,
-                self.alignment.align(
-                    layout.resolved_size.height.into(),
-                    layout.sublayouts.0.resolved_size.height.into(),
-                ),
-            );
-
-            self.items
-                .0
-                .render(target, &layout.sublayouts.0, origin + offset, &env);
-
-            width += (u16::from(layout.sublayouts.0.resolved_size.width) + self.spacing) as i16;
-        }
-
-        if !self.items.1.is_empty() {
-            let offset = Point::new(
-                width,
-                self.alignment.align(
-                    layout.resolved_size.height.into(),
-                    layout.sublayouts.1.resolved_size.height.into(),
-                ),
-            );
-
-            self.items
-                .1
-                .render(target, &layout.sublayouts.1, origin + offset, &env);
-
-            width += (u16::from(layout.sublayouts.1.resolved_size.width) + self.spacing) as i16;
-        }
-
-        if !self.items.2.is_empty() {
-            let offset = Point::new(
-                width,
-                self.alignment.align(
-                    layout.resolved_size.height.into(),
-                    layout.sublayouts.2.resolved_size.height.into(),
-                ),
-            );
-
-            self.items
-                .2
-                .render(target, &layout.sublayouts.2, origin + offset, &env);
-        }
-    }
-}
-
-// -- Embedded Render
-
-#[cfg(feature = "embedded-graphics")]
-use embedded_graphics::draw_target::DrawTarget;
-
-#[cfg(feature = "embedded-graphics")]
-impl<Pixel, U, V> crate::render::PixelRender<Pixel> for HStack<(U, V)>
-where
-    U: crate::render::PixelRender<Pixel>,
-    V: crate::render::PixelRender<Pixel>,
-    Pixel: embedded_graphics_core::pixelcolor::PixelColor,
-{
-    fn render(
-        &self,
-        target: &mut impl DrawTarget<Color = Pixel>,
-        layout: &ResolvedLayout<Self::Sublayout>,
-        origin: Point,
-        env: &impl RenderEnvironment<Color = Pixel>,
-    ) {
-        let env = HorizontalEnvironment::from(env);
-        let mut width = 0;
-
-        if !self.items.0.is_empty() {
-            let offset = Point::new(
-                width,
-                self.alignment.align(
-                    layout.resolved_size.height.into(),
-                    layout.sublayouts.0.resolved_size.height.into(),
-                ),
-            );
-
-            self.items
-                .0
-                .render(target, &layout.sublayouts.0, origin + offset, &env);
-
-            width += (u16::from(layout.sublayouts.0.resolved_size.width) + self.spacing) as i16;
-        }
-
-        if !self.items.1.is_empty() {
-            let offset = Point::new(
-                width,
-                self.alignment.align(
-                    layout.resolved_size.height.into(),
-                    layout.sublayouts.1.resolved_size.height.into(),
-                ),
-            );
-
-            self.items
-                .1
-                .render(target, &layout.sublayouts.1, origin + offset, &env);
-        }
-    }
-}
-
-#[cfg(feature = "embedded-graphics")]
-impl<Pixel, U, V, W> crate::render::PixelRender<Pixel> for HStack<(U, V, W)>
-where
-    U: crate::render::PixelRender<Pixel>,
-    V: crate::render::PixelRender<Pixel>,
-    W: crate::render::PixelRender<Pixel>,
-    Pixel: embedded_graphics_core::pixelcolor::PixelColor,
-{
-    fn render(
-        &self,
-        target: &mut impl DrawTarget<Color = Pixel>,
-        layout: &ResolvedLayout<Self::Sublayout>,
-        origin: Point,
-        env: &impl RenderEnvironment<Color = Pixel>,
-    ) {
-        let env = HorizontalEnvironment::from(env);
-        let mut width = 0;
-
-        if !self.items.0.is_empty() {
-            let offset = Point::new(
-                width,
-                self.alignment.align(
-                    layout.resolved_size.height.into(),
-                    layout.sublayouts.0.resolved_size.height.into(),
-                ),
-            );
-
-            self.items
-                .0
-                .render(target, &layout.sublayouts.0, origin + offset, &env);
-
-            width += (u16::from(layout.sublayouts.0.resolved_size.width) + self.spacing) as i16;
-        }
-
-        if !self.items.1.is_empty() {
-            let offset = Point::new(
-                width,
-                self.alignment.align(
-                    layout.resolved_size.height.into(),
-                    layout.sublayouts.1.resolved_size.height.into(),
-                ),
-            );
-
-            self.items
-                .1
-                .render(target, &layout.sublayouts.1, origin + offset, &env);
-
-            width += (u16::from(layout.sublayouts.1.resolved_size.width) + self.spacing) as i16;
-        }
-
-        if !self.items.2.is_empty() {
-            let offset = Point::new(
-                width,
-                self.alignment.align(
-                    layout.resolved_size.height.into(),
-                    layout.sublayouts.2.resolved_size.height.into(),
-                ),
-            );
-
-            self.items
-                .2
-                .render(target, &layout.sublayouts.2, origin + offset, &env);
-        }
-    }
-}
+impl_layout_for_hstack!((0, T0), (1, T1));
+impl_layout_for_hstack!((0, T0), (1, T1), (2, T2));
+impl_layout_for_hstack!((0, T0), (1, T1), (2, T2), (3, T3));
+impl_layout_for_hstack!((0, T0), (1, T1), (2, T2), (3, T3), (4, T4));
+impl_layout_for_hstack!((0, T0), (1, T1), (2, T2), (3, T3), (4, T4), (5, T5));
+impl_layout_for_hstack!(
+    (0, T0),
+    (1, T1),
+    (2, T2),
+    (3, T3),
+    (4, T4),
+    (5, T5),
+    (6, T6)
+);
+impl_layout_for_hstack!(
+    (0, T0),
+    (1, T1),
+    (2, T2),
+    (3, T3),
+    (4, T4),
+    (5, T5),
+    (6, T6),
+    (7, T7)
+);
+impl_layout_for_hstack!(
+    (0, T0),
+    (1, T1),
+    (2, T2),
+    (3, T3),
+    (4, T4),
+    (5, T5),
+    (6, T6),
+    (7, T7),
+    (8, T8)
+);
+impl_layout_for_hstack!(
+    (0, T0),
+    (1, T1),
+    (2, T2),
+    (3, T3),
+    (4, T4),
+    (5, T5),
+    (6, T6),
+    (7, T7),
+    (8, T8),
+    (9, T9)
+);

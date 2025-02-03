@@ -1,13 +1,18 @@
+use buoyant::render::CharacterRender;
+use buoyant::render::CharacterRenderTarget;
 use std::iter::zip;
 
 use buoyant::{
     environment::DefaultEnvironment,
-    font::{BufferCharacterFont, CharacterFont, FontLayout},
+    font::{CharacterBufferFont, FontLayout},
     layout::Layout as _,
     primitives::{Dimensions, Point, ProposedDimension, ProposedDimensions, Size},
-    render::CharacterRender,
-    render_target::{CharacterRenderTarget, FixedTextBuffer},
-    view::{HorizontalTextAlignment, LayoutExtensions as _, Text},
+    render::Renderable as _,
+    render_target::FixedTextBuffer,
+    view::{
+        make_render_tree, HorizontalTextAlignment, LayoutExtensions as _, RenderExtensions as _,
+        Text,
+    },
 };
 
 #[derive(Debug)]
@@ -25,16 +30,6 @@ impl FontLayout for ArbitraryFont {
     }
 }
 
-impl CharacterFont<char> for ArbitraryFont {
-    fn render_iter<T, I>(&self, _target: &mut T, _origin: Point, _characters: I)
-    where
-        T: buoyant::render_target::CharacterRenderTarget<Color = char>,
-        I: IntoIterator<Item = (char, char)>,
-    {
-        panic!("Not renderable");
-    }
-}
-
 #[test]
 fn test_single_character() {
     let font = ArbitraryFont {
@@ -43,8 +38,8 @@ fn test_single_character() {
     };
     let text = Text::str("A", &font);
     let offer = Size::new(100, 100);
-    let env = DefaultEnvironment::new(());
-    let layout = text.layout(offer.into(), &env);
+    let env = DefaultEnvironment::non_animated();
+    let layout = text.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(5, 10));
 }
 
@@ -56,8 +51,8 @@ fn test_single_character_constrained() {
     };
     let text = Text::str("A", &font);
     let offer = Size::new(4, 10);
-    let env = DefaultEnvironment::new(());
-    let layout = text.layout(offer.into(), &env);
+    let env = DefaultEnvironment::non_animated();
+    let layout = text.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(5, 10));
 }
 
@@ -69,8 +64,8 @@ fn test_text_layout() {
     };
     let text = Text::str("Hello, world!", &font);
     let offer = Size::new(100, 100);
-    let env = DefaultEnvironment::new(());
-    let layout = text.layout(offer.into(), &env);
+    let env = DefaultEnvironment::non_animated();
+    let layout = text.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(5 * 13, 10));
 }
 
@@ -82,8 +77,8 @@ fn test_text_layout_wraps() {
     };
     let text = Text::str("Hello, world!", &font);
     let offer = Size::new(50, 100);
-    let env = DefaultEnvironment::new(());
-    let layout = text.layout(offer.into(), &env);
+    let env = DefaultEnvironment::non_animated();
+    let layout = text.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(6 * 5, 20));
 }
 
@@ -95,8 +90,8 @@ fn test_wraps_partial_words() {
     };
     let text = Text::str("123412341234", &font);
     let offer = Size::new(20, 100);
-    let env = DefaultEnvironment::new(());
-    let layout = text.layout(offer.into(), &env);
+    let env = DefaultEnvironment::non_animated();
+    let layout = text.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(20, 30));
 }
 
@@ -108,8 +103,8 @@ fn test_newline() {
     };
     let text = Text::str("1234\n12\n\n123\n", &font);
     let offer = Size::new(25, 100);
-    let env = DefaultEnvironment::new(());
-    let layout = text.layout(offer.into(), &env);
+    let env = DefaultEnvironment::non_animated();
+    let layout = text.layout(&offer.into(), &env);
     assert_eq!(layout.resolved_size, Dimensions::new(20, 40));
 }
 
@@ -124,8 +119,8 @@ fn test_infinite_width() {
         width: ProposedDimension::Infinite,
         height: 100.into(),
     };
-    let env = DefaultEnvironment::new(());
-    let layout = text.layout(offer, &env);
+    let env = DefaultEnvironment::non_animated();
+    let layout = text.layout(&offer, &env);
     assert_eq!(layout.resolved_size, Dimensions::new(8, 1));
 }
 
@@ -140,8 +135,8 @@ fn test_compact_width() {
         width: ProposedDimension::Compact,
         height: 100.into(),
     };
-    let env = DefaultEnvironment::new(());
-    let layout = text.layout(offer, &env);
+    let env = DefaultEnvironment::non_animated();
+    let layout = text.layout(&offer, &env);
     assert_eq!(layout.resolved_size, Dimensions::new(8, 1));
 }
 
@@ -156,8 +151,8 @@ fn test_infinite_height() {
         width: 10.into(),
         height: ProposedDimension::Infinite,
     };
-    let env = DefaultEnvironment::new(());
-    let layout = text.layout(offer, &env);
+    let env = DefaultEnvironment::non_animated();
+    let layout = text.layout(&offer, &env);
     assert_eq!(layout.resolved_size, Dimensions::new(10, 1));
 }
 
@@ -172,8 +167,8 @@ fn test_compact_height() {
         width: 10.into(),
         height: ProposedDimension::Compact,
     };
-    let env = DefaultEnvironment::new(());
-    let layout = text.layout(offer, &env);
+    let env = DefaultEnvironment::non_animated();
+    let layout = text.layout(&offer, &env);
     assert_eq!(layout.resolved_size, Dimensions::new(10, 1));
 }
 
@@ -188,8 +183,8 @@ fn test_infinite_height_wrapping() {
         width: 10.into(),
         height: ProposedDimension::Infinite,
     };
-    let env = DefaultEnvironment::new(());
-    let layout = text.layout(offer, &env);
+    let env = DefaultEnvironment::non_animated();
+    let layout = text.layout(&offer, &env);
     assert_eq!(layout.resolved_size, Dimensions::new(8, 2));
 }
 
@@ -204,19 +199,17 @@ fn test_compact_height_wrapping() {
         width: 10.into(),
         height: ProposedDimension::Compact,
     };
-    let env = DefaultEnvironment::new(());
-    let layout = text.layout(offer, &env);
+    let env = DefaultEnvironment::non_animated();
+    let layout = text.layout(&offer, &env);
     assert_eq!(layout.resolved_size, Dimensions::new(8, 2));
 }
 
 #[test]
 fn test_render_wrapping_leading() {
-    let env = DefaultEnvironment::new(None);
-    let font = BufferCharacterFont {};
+    let font = CharacterBufferFont {};
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let text = Text::str("This is a lengthy text here", &font);
-    let layout = text.layout(buffer.size().into(), &env);
-    text.render(&mut buffer, &layout, Point::zero(), &env);
+    let text = Text::str("This is a lengthy text here", &font).foreground_color(' ');
+    make_render_tree(&text, buffer.size()).render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "This  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "is a  ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "length");
@@ -226,13 +219,12 @@ fn test_render_wrapping_leading() {
 
 #[test]
 fn test_render_wrapping_center_even() {
-    let env = DefaultEnvironment::new(None);
-    let font = BufferCharacterFont {};
+    let font = CharacterBufferFont {};
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let text = Text::str("This is a lengthy text here", &font)
-        .multiline_text_alignment(HorizontalTextAlignment::Center);
-    let layout = text.layout(buffer.size().into(), &env);
-    text.render(&mut buffer, &layout, Point::zero(), &env);
+        .multiline_text_alignment(HorizontalTextAlignment::Center)
+        .foreground_color(' ');
+    make_render_tree(&text, buffer.size()).render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), " This ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), " is a ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "length");
@@ -242,13 +234,12 @@ fn test_render_wrapping_center_even() {
 
 #[test]
 fn test_render_wrapping_center_odd() {
-    let env = DefaultEnvironment::new(None);
-    let font = BufferCharacterFont {};
+    let font = CharacterBufferFont {};
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let text = Text::str("This is a lengthy text 12345", &font)
-        .multiline_text_alignment(HorizontalTextAlignment::Center);
-    let layout = text.layout(buffer.size().into(), &env);
-    text.render(&mut buffer, &layout, Point::zero(), &env);
+        .multiline_text_alignment(HorizontalTextAlignment::Center)
+        .foreground_color(' ');
+    make_render_tree(&text, buffer.size()).render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), " This ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), " is a ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "length");
@@ -258,13 +249,12 @@ fn test_render_wrapping_center_odd() {
 
 #[test]
 fn test_render_wrapping_trailing() {
-    let env = DefaultEnvironment::new(None);
-    let font = BufferCharacterFont {};
+    let font = CharacterBufferFont {};
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let text = Text::str("This is a lengthy text here", &font)
-        .multiline_text_alignment(HorizontalTextAlignment::Trailing);
-    let layout = text.layout(buffer.size().into(), &env);
-    text.render(&mut buffer, &layout, Point::zero(), &env);
+        .multiline_text_alignment(HorizontalTextAlignment::Trailing)
+        .foreground_color(' ');
+    make_render_tree(&text, buffer.size()).render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "  This");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "  is a");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "length");
@@ -274,21 +264,23 @@ fn test_render_wrapping_trailing() {
 
 #[test]
 fn test_clipped_text_is_centered_correctly() {
-    let font = BufferCharacterFont {};
-    let text = Text::str(
+    let font = CharacterBufferFont {};
+    let view = Text::str(
         "Several lines\n of text\nshould be correctly spaced when cut off",
         &font,
     )
-    .multiline_text_alignment(HorizontalTextAlignment::Center);
+    .multiline_text_alignment(HorizontalTextAlignment::Center)
+    .foreground_color(' ');
 
-    let env = DefaultEnvironment::new(None);
+    let env = DefaultEnvironment::non_animated();
     let mut buffer = FixedTextBuffer::<40, 2>::default();
 
-    let layout = text.layout(buffer.size().into(), &env);
+    let layout = view.layout(&buffer.size().into(), &env);
 
     assert_eq!(layout.resolved_size, Dimensions::new(13, 2));
 
-    text.render(&mut buffer, &layout, Point::zero(), &env);
+    let tree = view.render_tree(&layout, Point::zero(), &env);
+    tree.render(&mut buffer, &' ');
 
     let lines = [
         "Several lines                           ",
@@ -301,22 +293,24 @@ fn test_clipped_text_is_centered_correctly() {
 
 #[test]
 fn test_clipped_text_trails_correctly() {
-    let font = BufferCharacterFont {};
-    let text = Text::str(
+    let font = CharacterBufferFont {};
+    let view = Text::str(
         "Several lines\n of text\nshould be correctly spaced when cut off",
         &font,
     )
     .multiline_text_alignment(HorizontalTextAlignment::Trailing)
-    .frame(None, Some(2), None, None); // constrain to 2 pts tall
+    .frame(None, Some(2), None, None) // constrain to 2 pts tall
+    .foreground_color(' ');
 
-    let env = DefaultEnvironment::new(None);
+    let env = DefaultEnvironment::non_animated();
     let mut buffer = FixedTextBuffer::<40, 3>::default();
 
-    let layout = text.layout(buffer.size().into(), &env);
+    let layout = view.layout(&buffer.size().into(), &env);
 
     assert_eq!(layout.resolved_size, Dimensions::new(13, 2));
 
-    text.render(&mut buffer, &layout, Point::zero(), &env);
+    let tree = view.render_tree(&layout, Point::zero(), &env);
+    tree.render(&mut buffer, &' ');
 
     let lines = [
         "Several lines                           ",

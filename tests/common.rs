@@ -1,16 +1,20 @@
+use std::time::Duration;
+
 use buoyant::{
-    environment::{LayoutEnvironment, RenderEnvironment},
+    environment::LayoutEnvironment,
     layout::{Alignment, LayoutDirection},
     render_target::FixedTextBuffer,
 };
 
-pub struct TestEnv<Color> {
+#[allow(dead_code)]
+pub struct TestEnv {
     pub direction: LayoutDirection,
     pub alignment: Alignment,
-    pub foreground_color: Color,
+    pub foreground_color: char,
+    pub app_time: Duration,
 }
 
-impl<Color> LayoutEnvironment for TestEnv<Color> {
+impl LayoutEnvironment for TestEnv {
     fn layout_direction(&self) -> LayoutDirection {
         self.direction
     }
@@ -18,47 +22,40 @@ impl<Color> LayoutEnvironment for TestEnv<Color> {
     fn alignment(&self) -> Alignment {
         self.alignment
     }
-}
 
-impl<Color: Copy> RenderEnvironment for TestEnv<Color> {
-    type Color = Color;
-    fn foreground_color(&self) -> Color {
-        self.foreground_color
+    fn app_time(&self) -> Duration {
+        self.app_time
     }
 }
 
-impl<C: Default> Default for TestEnv<C> {
+impl Default for TestEnv {
     fn default() -> Self {
         Self {
             direction: LayoutDirection::Horizontal,
             alignment: Alignment::default(),
-            foreground_color: C::default(),
+            foreground_color: 'x',
+            app_time: Duration::default(),
         }
     }
 }
 
-impl TestEnv<()> {
-    pub fn colorless() -> Self {
-        Self {
-            direction: LayoutDirection::Horizontal,
-            alignment: Alignment::default(),
-            foreground_color: (),
-        }
-    }
-}
-
-impl<C> TestEnv<C> {
+#[allow(dead_code)]
+impl TestEnv {
+    #[must_use]
     pub fn with_direction(mut self, direction: LayoutDirection) -> Self {
         self.direction = direction;
         self
     }
 
+    #[must_use]
     pub fn with_alignment(mut self, alignment: Alignment) -> Self {
         self.alignment = alignment;
         self
     }
 }
 
+#[allow(dead_code)]
+#[must_use]
 pub fn collect_text<const W: usize, const H: usize>(buffer: &FixedTextBuffer<W, H>) -> String {
     buffer
         .text

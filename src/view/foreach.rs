@@ -1,10 +1,10 @@
 use core::cmp::max;
 
 use crate::{
-    environment::{LayoutEnvironment, RenderEnvironment},
+    environment::LayoutEnvironment,
     layout::{HorizontalAlignment, Layout, LayoutDirection, ResolvedLayout},
     primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions},
-    render::CharacterRender,
+    render::Renderable,
 };
 
 struct ForEachEnvironment<'a, T> {
@@ -19,14 +19,9 @@ impl<T: LayoutEnvironment> LayoutEnvironment for ForEachEnvironment<'_, T> {
     fn layout_direction(&self) -> LayoutDirection {
         LayoutDirection::Vertical
     }
-}
 
-impl<Color: Copy, T: RenderEnvironment<Color = Color>> RenderEnvironment
-    for ForEachEnvironment<'_, T>
-{
-    type Color = Color;
-    fn foreground_color(&self) -> Color {
-        self.inner_environment.foreground_color()
+    fn app_time(&self) -> core::time::Duration {
+        self.inner_environment.app_time()
     }
 }
 
@@ -62,11 +57,13 @@ where
         }
     }
 
+    #[must_use]
     pub fn with_alignment(mut self, alignment: HorizontalAlignment) -> Self {
         self.alignment = alignment;
         self
     }
 
+    #[must_use]
     pub fn with_spacing(mut self, spacing: u16) -> Self {
         self.spacing = spacing;
         self
@@ -85,7 +82,7 @@ where
     // should be assumed that this is cheap
     fn layout(
         &self,
-        offer: ProposedDimensions,
+        offer: &ProposedDimensions,
         env: &impl LayoutEnvironment,
     ) -> ResolvedLayout<Self::Sublayout> {
         let env = &ForEachEnvironment::from(env);
@@ -108,17 +105,60 @@ where
         }
 
         let layout_fn = |index: usize, offer: ProposedDimensions| {
-            let layout = (self.build_view)(&items[index]).layout(offer, env);
+            let layout = (self.build_view)(&items[index]).layout(&offer, env);
             let size = layout.resolved_size;
             sublayouts[index] = layout;
             size
         };
 
-        let size = layout_n(&mut subview_stages, offer, self.spacing, layout_fn);
+        let size = layout_n(&mut subview_stages, *offer, self.spacing, layout_fn);
         ResolvedLayout {
             sublayouts,
             resolved_size: size,
         }
+    }
+}
+
+impl<const N: usize, I: IntoIterator + Copy, V: Renderable<C>, C, F> Renderable<C>
+    for ForEach<N, I, V, F>
+where
+    V: Layout,
+    F: Fn(&I::Item) -> V,
+{
+    type Renderables = heapless::Vec<V::Renderables, N>;
+
+    fn render_tree(
+        &self,
+        layout: &ResolvedLayout<Self::Sublayout>,
+        origin: Point,
+        env: &impl LayoutEnvironment,
+    ) -> Self::Renderables {
+        let env = &ForEachEnvironment::from(env);
+
+        let mut accumulated_height = 0;
+        let mut renderables = heapless::Vec::new();
+
+        for (item_layout, item) in layout.sublayouts.iter().zip(self.iter.into_iter()) {
+            let aligned_origin = origin
+                + Point::new(
+                    self.alignment.align(
+                        layout.resolved_size.width.into(),
+                        item_layout.resolved_size.width.into(),
+                    ),
+                    accumulated_height,
+                );
+            let view = (self.build_view)(&item);
+            // TODO: If we include an ID here, rows can be animated and transitioned
+            let item = renderables.push(view.render_tree(item_layout, aligned_origin, env));
+            assert!(item.is_ok());
+
+            if !view.is_empty() {
+                let item_height: i16 = item_layout.resolved_size.height.into();
+                accumulated_height += item_height;
+            }
+        }
+
+        renderables
     }
 }
 
@@ -156,22 +196,23 @@ fn layout_n<const N: usize>(
     // Flexibility is defined as the difference between the responses to 0 and infinite height offers
     let mut flexibilities: [Dimension; N] = [0.into(); N];
     let mut num_empty_views = 0;
+    let min_proposal = ProposedDimensions {
+        width: offer.width,
+        height: ProposedDimension::Exact(0),
+    };
+
+    let max_proposal = ProposedDimensions {
+        width: offer.width,
+        height: ProposedDimension::Infinite,
+    };
+
     for index in 0..subviews.len() {
-        let min_proposal = ProposedDimensions {
-            width: offer.width,
-            height: ProposedDimension::Exact(0),
-        };
         let minimum_dimension = layout_fn(index, min_proposal);
         // skip any further work for empty views
         if subviews[index].1 {
             num_empty_views += 1;
             continue;
         }
-
-        let max_proposal = ProposedDimensions {
-            width: offer.width,
-            height: ProposedDimension::Infinite,
-        };
         let maximum_dimension = layout_fn(index, max_proposal);
         flexibilities[index] = maximum_dimension.height - minimum_dimension.height;
     }
@@ -205,7 +246,7 @@ fn layout_n<const N: usize>(
                     subviews_indecies[slice_start + slice_len] = i;
                     slice_len += 1;
                 }
-                _ => {}
+                core::cmp::Ordering::Greater => {}
             }
         }
         last_priority_group = Some(max);
@@ -238,84 +279,5 @@ fn layout_n<const N: usize>(
     Dimensions {
         width: max_width,
         height: (height.saturating_sub(remaining_height)).into(),
-    }
-}
-
-impl<const N: usize, Pixel: Copy, I: IntoIterator + Copy, V, F> CharacterRender<Pixel>
-    for ForEach<N, I, V, F>
-where
-    V: CharacterRender<Pixel>,
-    F: Fn(&I::Item) -> V,
-{
-    fn render(
-        &self,
-        target: &mut impl crate::render_target::CharacterRenderTarget<Color = Pixel>,
-        layout: &ResolvedLayout<Self::Sublayout>,
-        origin: crate::primitives::Point,
-        env: &impl RenderEnvironment<Color = Pixel>,
-    ) {
-        let env = &ForEachEnvironment::from(env);
-
-        let mut height = 0;
-
-        for (item_layout, item) in layout.sublayouts.iter().zip(self.iter.into_iter()) {
-            // TODO: defaulting to center alignment
-            let aligned_origin = origin
-                + Point::new(
-                    self.alignment.align(
-                        layout.resolved_size.width.into(),
-                        item_layout.resolved_size.width.into(),
-                    ),
-                    height,
-                );
-            let view = (self.build_view)(&item);
-            view.render(target, item_layout, aligned_origin, env);
-
-            let item_height: i16 = item_layout.resolved_size.height.into();
-            height += item_height;
-        }
-    }
-}
-
-// -- Embedded Render
-
-#[cfg(feature = "embedded-graphics")]
-use embedded_graphics::draw_target::DrawTarget;
-
-#[cfg(feature = "embedded-graphics")]
-impl<const N: usize, Pixel: Copy, I: IntoIterator + Copy, V, F> crate::render::PixelRender<Pixel>
-    for ForEach<N, I, V, F>
-where
-    V: crate::render::PixelRender<Pixel>,
-    F: Fn(&I::Item) -> V,
-    Pixel: embedded_graphics_core::pixelcolor::PixelColor,
-{
-    fn render(
-        &self,
-        target: &mut impl DrawTarget<Color = Pixel>,
-        layout: &ResolvedLayout<Self::Sublayout>,
-        origin: Point,
-        env: &impl RenderEnvironment<Color = Pixel>,
-    ) {
-        let env = &ForEachEnvironment::from(env);
-
-        let mut height: i16 = 0;
-
-        for (item_layout, item) in layout.sublayouts.iter().zip(self.iter.into_iter()) {
-            // TODO: defaulting to center alignment
-            let aligned_origin = origin
-                + Point::new(
-                    self.alignment.align(
-                        layout.resolved_size.width.into(),
-                        item_layout.resolved_size.width.into(),
-                    ),
-                    height,
-                );
-            let view = (self.build_view)(&item);
-            view.render(target, item_layout, aligned_origin, env);
-
-            let item_height: i16 = item_layout.resolved_size.height.into();
-            height += item_height;
-        }
     }
 }

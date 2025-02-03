@@ -1,9 +1,8 @@
 use crate::{
-    environment::{LayoutEnvironment, RenderEnvironment},
+    environment::LayoutEnvironment,
     layout::{Layout, ResolvedLayout},
     primitives::{Point, ProposedDimensions},
-    render::CharacterRender,
-    render_target::CharacterRenderTarget,
+    render::Renderable,
 };
 
 /// A view that adds padding around a child view.
@@ -31,44 +30,22 @@ impl<V: Layout> Layout for Priority<V> {
 
     fn layout(
         &self,
-        offer: ProposedDimensions,
+        offer: &ProposedDimensions,
         env: &impl LayoutEnvironment,
     ) -> ResolvedLayout<Self::Sublayout> {
         self.child.layout(offer, env)
     }
 }
 
-impl<Pixel: Copy, View: Layout> CharacterRender<Pixel> for Priority<View>
-where
-    View: CharacterRender<Pixel>,
-{
-    fn render(
+impl<T: Renderable<C>, C> Renderable<C> for Priority<T> {
+    type Renderables = T::Renderables;
+
+    fn render_tree(
         &self,
-        target: &mut impl CharacterRenderTarget<Color = Pixel>,
         layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
-        env: &impl RenderEnvironment<Color = Pixel>,
-    ) {
-        self.child.render(target, layout, origin, env);
-    }
-}
-
-#[cfg(feature = "embedded-graphics")]
-use embedded_graphics::draw_target::DrawTarget;
-
-#[cfg(feature = "embedded-graphics")]
-impl<Pixel, View: Layout> crate::render::PixelRender<Pixel> for Priority<View>
-where
-    View: crate::render::PixelRender<Pixel>,
-    Pixel: embedded_graphics_core::pixelcolor::PixelColor,
-{
-    fn render(
-        &self,
-        target: &mut impl DrawTarget<Color = Pixel>,
-        layout: &ResolvedLayout<Self::Sublayout>,
-        origin: Point,
-        env: &impl RenderEnvironment<Color = Pixel>,
-    ) {
-        self.child.render(target, layout, origin, env);
+        env: &impl LayoutEnvironment,
+    ) -> Self::Renderables {
+        self.child.render_tree(layout, origin, env)
     }
 }

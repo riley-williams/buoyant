@@ -18,7 +18,7 @@ impl<C: Interpolate + Copy> FillStyle for HorizontalGradient<C> {
     type Color = C;
 
     fn shade_pixel(&self, x: u16, _: u16, in_bounds: crate::primitives::Size) -> C {
-        let fraction = in_bounds.width.saturating_sub(x) as f32 / in_bounds.width as f32;
+        let fraction = f32::from(in_bounds.width.saturating_sub(x)) / f32::from(in_bounds.width);
         C::interpolate(self.end, self.start, (fraction * 255.0) as u8)
     }
 

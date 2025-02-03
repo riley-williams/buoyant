@@ -1,11 +1,11 @@
 use core::marker::PhantomData;
 
-use wrap::WhitespaceWrap;
+pub use wrap::WhitespaceWrap;
 
 mod character;
 mod wrap;
 
-// W is hardcoded to WhitespaceWrap, leaving generic for future fix
+// W is hardcoded elsewhere to WhitespaceWrap, leaving generic for future fix
 
 pub struct Text<'a, T, F, W = WhitespaceWrap<'a, F>> {
     pub(crate) text: T,
@@ -14,7 +14,7 @@ pub struct Text<'a, T, F, W = WhitespaceWrap<'a, F>> {
     pub(crate) _wrap: PhantomData<W>,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum HorizontalTextAlignment {
     #[default]
     Leading,
@@ -23,7 +23,7 @@ pub enum HorizontalTextAlignment {
 }
 
 impl HorizontalTextAlignment {
-    pub(crate) fn align(&self, available: i16, content: i16) -> i16 {
+    pub(crate) fn align(self, available: i16, content: i16) -> i16 {
         match self {
             Self::Leading => 0,
             Self::Center => (available - content) / 2,

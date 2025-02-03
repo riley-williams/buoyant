@@ -1,16 +1,18 @@
 use crate::{
-    environment::{LayoutEnvironment, RenderEnvironment},
-    font::{CharacterFont, FontLayout},
+    environment::LayoutEnvironment,
+    font::FontLayout,
     layout::{Layout, ResolvedLayout},
     primitives::{Point, ProposedDimension, ProposedDimensions, Size},
-    render::CharacterRender,
-    render_target::CharacterRenderTarget,
+    render::{
+        Renderable, {OwnedText, StaticText},
+    },
 };
 use core::marker::PhantomData;
 
 use super::{wrap::WhitespaceWrap, HorizontalTextAlignment, Text};
 
 impl<'a, F> Text<'a, &'a str, F> {
+    #[must_use]
     pub fn str(text: &'a str, font: &'a F) -> Self {
         Text {
             text,
@@ -22,6 +24,7 @@ impl<'a, F> Text<'a, &'a str, F> {
 }
 
 impl<'a, const N: usize, F> Text<'a, heapless::String<N>, F> {
+    #[must_use]
     pub fn heapless(text: heapless::String<N>, font: &'a F) -> Self {
         Text {
             text,
@@ -33,8 +36,9 @@ impl<'a, const N: usize, F> Text<'a, heapless::String<N>, F> {
 }
 
 #[cfg(feature = "std")]
-impl<'a, F> Text<'a, String, F> {
-    pub fn string(text: String, font: &'a F) -> Self {
+impl<'a, F> Text<'a, std::string::String, F> {
+    #[must_use]
+    pub fn string(text: std::string::String, font: &'a F) -> Self {
         Text {
             text,
             font,
@@ -63,34 +67,33 @@ impl<const N: usize> Slice for heapless::String<N> {
 }
 
 #[cfg(feature = "std")]
-impl Slice for String {
+impl Slice for std::string::String {
     #[inline]
     fn as_slice(&self) -> &str {
         self.as_str()
     }
 }
 
-impl<'a, T, F> Text<'a, T, F> {
+impl<T, F> Text<'_, T, F> {
+    #[must_use]
     pub fn multiline_text_alignment(self, alignment: HorizontalTextAlignment) -> Self {
         Text { alignment, ..self }
     }
 }
 
-impl<'a, T: PartialEq, F> PartialEq for Text<'a, T, F> {
+impl<T: PartialEq, F> PartialEq for Text<'_, T, F> {
     fn eq(&self, other: &Self) -> bool {
         self.text == other.text
     }
 }
 
-// TODO: consolidate the layout implementations...this is getting ridiculous
-
-impl<'a, T: Slice, F: FontLayout> Layout for Text<'a, T, F> {
+impl<'a, F: FontLayout> Layout for Text<'a, &'a str, F> {
     // this could be used to store the precalculated line breaks
     type Sublayout = ();
 
     fn layout(
         &self,
-        offer: ProposedDimensions,
+        offer: &ProposedDimensions,
         _env: &impl LayoutEnvironment,
     ) -> ResolvedLayout<Self::Sublayout> {
         let line_height = self.font.line_height();
@@ -111,96 +114,67 @@ impl<'a, T: Slice, F: FontLayout> Layout for Text<'a, T, F> {
     }
 }
 
-impl<'a, T: Slice, F: CharacterFont<Color>, Color: Copy> CharacterRender<Color> for Text<'a, T, F> {
-    fn render(
+impl<'a, C, F: FontLayout> Renderable<C> for Text<'a, &'a str, F> {
+    type Renderables = StaticText<'a, F>;
+
+    fn render_tree(
         &self,
-        target: &mut impl CharacterRenderTarget<Color = Color>,
-        layout: &ResolvedLayout<()>,
+        layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
-        env: &impl RenderEnvironment<Color = Color>,
-    ) {
-        if layout.resolved_size.area() == 0 {
-            return;
-        }
-
-        let line_height = self.font.line_height() as i16;
-
-        let mut height = 0;
-        let wrap = WhitespaceWrap::new(
-            self.text.as_slice(),
-            ProposedDimension::Exact(layout.resolved_size.width.into()),
-            self.font,
-        );
-        for line in wrap {
-            let color = env.foreground_color();
-            let width = self.font.str_width(line);
-
-            let x = self
-                .alignment
-                .align(layout.resolved_size.width.into(), width as i16);
-            self.font.render_iter_solid(
-                target,
-                Point::new(origin.x + x, origin.y + height),
-                color,
-                line.chars(),
-            );
-
-            height += line_height;
-            if height >= layout.resolved_size.height.into() {
-                break;
-            }
+        _env: &impl LayoutEnvironment,
+    ) -> Self::Renderables {
+        StaticText {
+            text: self.text,
+            font: self.font,
+            origin,
+            size: layout.resolved_size.into(),
+            alignment: self.alignment,
         }
     }
 }
 
-#[cfg(feature = "embedded-graphics")]
-use embedded_graphics::draw_target::DrawTarget;
+impl<const N: usize, F: FontLayout> Layout for Text<'_, heapless::String<N>, F> {
+    // this could be used to store the precalculated line breaks
+    type Sublayout = ();
 
-#[cfg(feature = "embedded-graphics")]
-impl<
-        'a,
-        T: Slice,
-        F: crate::font::PixelFont<Color>,
-        Color: embedded_graphics_core::pixelcolor::PixelColor,
-    > crate::render::PixelRender<Color> for Text<'a, T, F>
-{
-    fn render(
+    fn layout(
         &self,
-        target: &mut impl DrawTarget<Color = Color>,
-        layout: &ResolvedLayout<()>,
-        origin: Point,
-        env: &impl RenderEnvironment<Color = Color>,
-    ) {
-        if layout.resolved_size.area() == 0 {
-            return;
-        }
-
-        let line_height = self.font.line_height() as i16;
-
-        let mut height = 0;
-        let wrap = WhitespaceWrap::new(
-            self.text.as_slice(),
-            ProposedDimension::Exact(layout.resolved_size.width.into()),
-            self.font,
-        );
+        offer: &ProposedDimensions,
+        _env: &impl LayoutEnvironment,
+    ) -> ResolvedLayout<Self::Sublayout> {
+        let line_height = self.font.line_height();
+        let wrap = WhitespaceWrap::new(self.text.as_slice(), offer.width, self.font);
+        let mut size = Size::zero();
         for line in wrap {
-            let color = env.foreground_color();
-            let width = self.font.str_width(line);
-
-            let x = self
-                .alignment
-                .align(layout.resolved_size.width.into(), width as i16);
-            self.font.render_iter(
-                target,
-                Point::new(origin.x + x, origin.y + height),
-                color,
-                line.chars(),
-            );
-
-            height += line_height;
-            if height >= layout.resolved_size.height.into() {
+            size.width = core::cmp::max(size.width, self.font.str_width(line));
+            size.height += line_height;
+            if ProposedDimension::Exact(size.height) >= offer.height {
                 break;
             }
+        }
+
+        ResolvedLayout {
+            sublayouts: (),
+            resolved_size: size.into(),
+        }
+    }
+}
+
+impl<'a, const N: usize, C, F: FontLayout> Renderable<C> for Text<'a, heapless::String<N>, F> {
+    type Renderables = OwnedText<'a, N, F>;
+
+    fn render_tree(
+        &self,
+        layout: &ResolvedLayout<Self::Sublayout>,
+        origin: Point,
+        _env: &impl LayoutEnvironment,
+    ) -> Self::Renderables {
+        OwnedText {
+            text: self.text.clone(),
+            font: self.font,
+            origin,
+            size: layout.resolved_size.into(),
+            alignment: self.alignment,
         }
     }
 }

@@ -1,14 +1,14 @@
+use buoyant::render::CharacterRender;
+use buoyant::render::CharacterRenderTarget;
+use buoyant::view::RenderExtensions as _;
 use buoyant::{
-    environment::DefaultEnvironment,
-    font::BufferCharacterFont,
-    layout::{HorizontalAlignment, Layout as _, VerticalAlignment},
-    primitives::Point,
-    render::CharacterRender,
-    render_target::{CharacterRenderTarget, FixedTextBuffer},
-    view::{ForEach, HStack, Spacer, Text},
+    font::CharacterBufferFont,
+    layout::{HorizontalAlignment, VerticalAlignment},
+    render_target::FixedTextBuffer,
+    view::{make_render_tree, ForEach, HStack, Spacer, Text},
 };
 
-static FONT: BufferCharacterFont = BufferCharacterFont {};
+static FONT: CharacterBufferFont = CharacterBufferFont {};
 
 #[derive(Debug)]
 struct User {
@@ -48,11 +48,11 @@ fn foreach_with_inner_wrapping_hstack() {
             Text::str(&user.age, &FONT),
         ))
         .with_alignment(VerticalAlignment::Bottom)
+        .foreground_color(' ')
     });
-    let env = DefaultEnvironment::new(None);
     let mut buffer = FixedTextBuffer::<10, 5>::default();
-    let layout = view.layout(buffer.size().into(), &env);
-    view.render(&mut buffer, &layout, Point::zero(), &env);
+    let tree = make_render_tree(&view, buffer.size());
+    tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "Alice   99");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "Bob      2");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "Person    ");
@@ -90,11 +90,11 @@ fn foreach_leading_aligned() {
             .with_alignment(VerticalAlignment::Bottom)
             .with_spacing(1)
     })
-    .with_alignment(HorizontalAlignment::Leading);
-    let env = DefaultEnvironment::new(None);
+    .with_alignment(HorizontalAlignment::Leading)
+    .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<10, 5>::default();
-    let layout = view.layout(buffer.size().into(), &env);
-    view.render(&mut buffer, &layout, Point::zero(), &env);
+    let tree = make_render_tree(&view, buffer.size());
+    tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "Alice 99  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "Bob 2     ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "Person    ");
@@ -132,11 +132,11 @@ fn foreach_trailing_aligned() {
             .with_alignment(VerticalAlignment::Bottom)
             .with_spacing(1)
     })
-    .with_alignment(HorizontalAlignment::Trailing);
-    let env = DefaultEnvironment::new(None);
+    .with_alignment(HorizontalAlignment::Trailing)
+    .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<10, 5>::default();
-    let layout = view.layout(buffer.size().into(), &env);
-    view.render(&mut buffer, &layout, Point::zero(), &env);
+    let tree = make_render_tree(&view, buffer.size());
+    tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), " Alice 99 ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "    Bob 2 ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "Person    ");

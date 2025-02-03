@@ -33,6 +33,7 @@ impl<T: embedded_graphics_core::pixelcolor::PixelColor> FillStyle for T {
 }
 
 impl<T: Copy> StrokeStyle<T> {
+    #[must_use]
     pub fn new(color: T, width: u16) -> Self {
         Self { color, width }
     }
@@ -55,11 +56,13 @@ impl<C: embedded_graphics_core::pixelcolor::PixelColor, T: FillStyle<Color = C>>
         }
     }
 
+    #[must_use]
     pub fn with_fill(mut self, fill: T) -> Self {
         self.fill_style = Some(fill);
         self
     }
 
+    #[must_use]
     pub fn with_stroke(mut self, stroke: C, width: u16) -> Self {
         self.stroke_style = Some(StrokeStyle::new(stroke, width));
         self

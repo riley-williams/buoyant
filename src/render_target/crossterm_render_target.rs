@@ -2,15 +2,13 @@ use crossterm::{
     cursor, execute,
     style::{self, Stylize},
     terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
-    ExecutableCommand, QueueableCommand,
+    ExecutableCommand as _, QueueableCommand,
 };
 
 #[cfg(feature = "std")]
 use std::io::{stdout, Stdout, Write};
 
-use crate::primitives::Size;
-
-use super::CharacterRenderTarget;
+use crate::{primitives::Size, render::CharacterRenderTarget};
 
 pub struct CrosstermRenderTarget {
     stdout: Stdout,
@@ -27,6 +25,13 @@ impl CrosstermRenderTarget {
 
     pub fn flush(&mut self) {
         self.stdout.flush().unwrap();
+    }
+
+    pub fn clear(&mut self) {
+        _ = self
+            .stdout
+            .execute(terminal::Clear(terminal::ClearType::All))
+            .unwrap();
     }
 }
 
@@ -52,20 +57,32 @@ impl CharacterRenderTarget for CrosstermRenderTarget {
             .unwrap_or_default()
     }
 
-    fn clear(&mut self, _: crossterm::style::Colors) {
-        _ = self
-            .stdout
-            .execute(terminal::Clear(terminal::ClearType::All))
+    fn draw_color(&mut self, point: crate::primitives::Point, color: &Self::Color) {
+        self.draw_character(point, ' ', color);
+    }
+
+    fn draw_string(&mut self, point: crate::primitives::Point, string: &str, color: &Self::Color) {
+        let mut styled_string = string.stylize();
+        if let Some(foreground) = color.foreground {
+            styled_string = styled_string.with(foreground);
+        }
+        if let Some(background) = color.background {
+            styled_string = styled_string.on(background);
+        }
+        self.stdout
+            .queue(cursor::MoveTo(point.x as u16, point.y as u16))
+            .unwrap()
+            .queue(style::PrintStyledContent(styled_string))
             .unwrap();
     }
 
-    fn draw(
+    fn draw_character(
         &mut self,
         point: crate::primitives::Point,
-        item: char,
-        color: crossterm::style::Colors,
+        character: char,
+        color: &Self::Color,
     ) {
-        let mut styled_char = item.stylize();
+        let mut styled_char = character.stylize();
         if let Some(foreground) = color.foreground {
             styled_char = styled_char.with(foreground);
         }

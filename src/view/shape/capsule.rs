@@ -6,18 +6,9 @@ use crate::{
 };
 
 #[derive(Debug, Copy, Clone, PartialEq, Default)]
-pub struct RoundedRectangle {
-    corner_radius: u16,
-}
+pub struct Capsule;
 
-impl RoundedRectangle {
-    #[must_use]
-    pub fn new(corner_radius: u16) -> Self {
-        Self { corner_radius }
-    }
-}
-
-impl Layout for RoundedRectangle {
+impl Layout for Capsule {
     type Sublayout = ();
 
     fn layout(
@@ -32,8 +23,8 @@ impl Layout for RoundedRectangle {
     }
 }
 
-impl<C> Renderable<C> for RoundedRectangle {
-    type Renderables = crate::render::RoundedRect;
+impl<C> Renderable<C> for Capsule {
+    type Renderables = crate::render::Capsule;
 
     fn render_tree(
         &self,
@@ -41,10 +32,6 @@ impl<C> Renderable<C> for RoundedRectangle {
         origin: Point,
         _env: &impl LayoutEnvironment,
     ) -> Self::Renderables {
-        crate::render::RoundedRect {
-            origin,
-            size: layout.resolved_size.into(),
-            corner_radius: self.corner_radius,
-        }
+        crate::render::Capsule::new(origin, layout.resolved_size.into())
     }
 }

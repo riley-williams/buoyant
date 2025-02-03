@@ -1,17 +1,26 @@
 use crate::{
+    environment::LayoutEnvironment,
     layout::{Layout, ResolvedLayout},
     primitives::{Dimensions, Point, ProposedDimensions},
+    render::Renderable,
 };
 
 #[derive(Debug, Copy, Clone, PartialEq, Default)]
 pub struct Circle;
+
+impl Circle {
+    #[must_use]
+    pub fn new() -> Self {
+        Self
+    }
+}
 
 impl Layout for Circle {
     type Sublayout = ();
 
     fn layout(
         &self,
-        offer: ProposedDimensions,
+        offer: &ProposedDimensions,
         _: &impl crate::environment::LayoutEnvironment,
     ) -> ResolvedLayout<Self::Sublayout> {
         let minimum_dimension = offer.width.min(offer.height).resolve_most_flexible(0, 10);
@@ -25,26 +34,18 @@ impl Layout for Circle {
     }
 }
 
-#[cfg(feature = "embedded-graphics")]
-use embedded_graphics::{draw_target::DrawTarget, primitives::StyledDrawable};
+impl<C> Renderable<C> for Circle {
+    type Renderables = crate::render::Circle;
 
-#[cfg(feature = "embedded-graphics")]
-impl<P: embedded_graphics_core::pixelcolor::PixelColor> crate::render::PixelRender<P> for Circle {
-    fn render(
+    fn render_tree(
         &self,
-        target: &mut impl DrawTarget<Color = P>,
         layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
-        env: &impl crate::environment::RenderEnvironment<Color = P>,
-    ) {
-        let color = env.foreground_color();
-        let style = embedded_graphics::primitives::PrimitiveStyleBuilder::new()
-            .fill_color(color)
-            .build();
-        _ = embedded_graphics::primitives::Circle::new(
-            origin.into(),
-            layout.resolved_size.width.into(),
-        )
-        .draw_styled(&style, target);
+        _env: &impl LayoutEnvironment,
+    ) -> Self::Renderables {
+        crate::render::Circle {
+            origin,
+            diameter: layout.resolved_size.width.into(),
+        }
     }
 }

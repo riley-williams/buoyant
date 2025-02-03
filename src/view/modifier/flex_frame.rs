@@ -1,9 +1,8 @@
 use crate::{
-    environment::{LayoutEnvironment, RenderEnvironment},
+    environment::LayoutEnvironment,
     layout::{HorizontalAlignment, Layout, ResolvedLayout, VerticalAlignment},
     primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions},
-    render::CharacterRender,
-    render_target::CharacterRenderTarget,
+    render::Renderable,
 };
 
 pub struct FlexFrame<T> {
@@ -94,14 +93,14 @@ impl<V: Layout> Layout for FlexFrame<V> {
 
     fn layout(
         &self,
-        offer: ProposedDimensions,
+        offer: &ProposedDimensions,
         env: &impl LayoutEnvironment,
     ) -> ResolvedLayout<Self::Sublayout> {
         let sublayout_width_offer = match offer.width {
             ProposedDimension::Exact(d) => ProposedDimension::Exact(clamp_optional(
                 d,
                 self.min_width,
-                self.max_width.map(|d| d.into()),
+                self.max_width.map(Into::into),
             )),
             ProposedDimension::Compact => match self.ideal_width {
                 Some(ideal_width) => ProposedDimension::Exact(
@@ -120,7 +119,7 @@ impl<V: Layout> Layout for FlexFrame<V> {
             ProposedDimension::Exact(d) => ProposedDimension::Exact(clamp_optional(
                 d,
                 self.min_height,
-                self.max_height.map(|d| d.into()),
+                self.max_height.map(Into::into),
             )),
             ProposedDimension::Compact => match self.ideal_height {
                 Some(ideal_height) => ProposedDimension::Exact(
@@ -141,7 +140,7 @@ impl<V: Layout> Layout for FlexFrame<V> {
             height: sublayout_height_offer,
         };
 
-        let sublayout = self.child.layout(sublayout_offer, env);
+        let sublayout = self.child.layout(&sublayout_offer, env);
 
         // restrict self size to min/max regardless of what the sublayout returns
         let sublayout_width = sublayout.resolved_size.width;
@@ -151,13 +150,13 @@ impl<V: Layout> Layout for FlexFrame<V> {
             .max_width
             .unwrap_or(sublayout_width)
             .min(greatest_possible(sublayout_width_offer, sublayout_width))
-            .max(self.min_width.map_or(sublayout_width, |f| f.into()));
+            .max(self.min_width.map_or(sublayout_width, Into::into));
 
         let h = self
             .max_height
             .unwrap_or(sublayout_height)
             .min(greatest_possible(sublayout_height_offer, sublayout_height))
-            .max(self.min_height.map_or(sublayout_height, |f| f.into()));
+            .max(self.min_height.map_or(sublayout_height, Into::into));
 
         let resolved_size = Dimensions {
             width: w,
@@ -179,17 +178,15 @@ fn greatest_possible(proposal: ProposedDimension, ideal: Dimension) -> Dimension
     }
 }
 
-impl<Pixel: Copy, View: Layout> CharacterRender<Pixel> for FlexFrame<View>
-where
-    View: CharacterRender<Pixel>,
-{
-    fn render(
+impl<T: Renderable<C>, C> Renderable<C> for FlexFrame<T> {
+    type Renderables = T::Renderables;
+
+    fn render_tree(
         &self,
-        target: &mut impl CharacterRenderTarget<Color = Pixel>,
         layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
-        env: &impl RenderEnvironment<Color = Pixel>,
-    ) {
+        env: &impl LayoutEnvironment,
+    ) -> Self::Renderables {
         let new_origin = origin
             + Point::new(
                 self.horizontal_alignment.align(
@@ -202,40 +199,6 @@ where
                 ),
             );
 
-        self.child
-            .render(target, &layout.sublayouts, new_origin, env);
-    }
-}
-
-#[cfg(feature = "embedded-graphics")]
-use embedded_graphics::draw_target::DrawTarget;
-
-#[cfg(feature = "embedded-graphics")]
-impl<Pixel, View: Layout> crate::render::PixelRender<Pixel> for FlexFrame<View>
-where
-    View: crate::render::PixelRender<Pixel>,
-    Pixel: embedded_graphics_core::pixelcolor::PixelColor,
-{
-    fn render(
-        &self,
-        target: &mut impl DrawTarget<Color = Pixel>,
-        layout: &ResolvedLayout<Self::Sublayout>,
-        origin: Point,
-        env: &impl RenderEnvironment<Color = Pixel>,
-    ) {
-        let new_origin = origin
-            + Point::new(
-                self.horizontal_alignment.align(
-                    layout.resolved_size.width.into(),
-                    layout.sublayouts.resolved_size.width.into(),
-                ),
-                self.vertical_alignment.align(
-                    layout.resolved_size.height.into(),
-                    layout.sublayouts.resolved_size.height.into(),
-                ),
-            );
-
-        self.child
-            .render(target, &layout.sublayouts, new_origin, env);
+        self.child.render_tree(&layout.sublayouts, new_origin, env)
     }
 }

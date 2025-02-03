@@ -3,18 +3,22 @@ pub use dimension::*;
 
 use core::cmp::max;
 
-#[derive(Debug, PartialEq, Clone, Copy, Default)]
+use crate::pixel::Interpolate;
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct Size {
     pub width: u16,
     pub height: u16,
 }
 
 impl Size {
+    #[must_use]
     pub fn new(width: u16, height: u16) -> Self {
         Size { width, height }
     }
 
     /// Returns the smallest size that contains both sizes.
+    #[must_use]
     pub fn union(&self, rhs: Size) -> Size {
         Size {
             width: max(self.width, rhs.width),
@@ -23,6 +27,7 @@ impl Size {
     }
 
     /// Returns the overlapping area of the two sizes, which is the min of the two dimensions.
+    #[must_use]
     pub fn intersection(&self, rhs: Size) -> Size {
         Size {
             width: self.width.min(rhs.width),
@@ -30,6 +35,7 @@ impl Size {
         }
     }
 
+    #[must_use]
     pub fn zero() -> Self {
         Size {
             width: 0,
@@ -38,11 +44,13 @@ impl Size {
     }
 
     /// Returns true if the point is non-negative and within the bounds of the size.
+    #[must_use]
     pub fn contains(&self, point: Point) -> bool {
         point.x >= 0 && point.y >= 0 && point.x < self.width as i16 && point.y < self.height as i16
     }
 
     #[inline]
+    #[must_use]
     pub fn area(&self) -> u16 {
         self.width * self.height
     }
@@ -71,11 +79,11 @@ impl From<embedded_graphics_core::geometry::Size> for Size {
 #[cfg(feature = "embedded-graphics")]
 impl From<Size> for embedded_graphics_core::geometry::Size {
     fn from(value: Size) -> Self {
-        embedded_graphics_core::geometry::Size::new(value.width as u32, value.height as u32)
+        embedded_graphics_core::geometry::Size::new(u32::from(value.width), u32::from(value.height))
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct Point {
     pub x: i16,
     pub y: i16,
@@ -92,19 +100,33 @@ impl core::ops::Add for Point {
 }
 
 impl Point {
+    #[must_use]
     pub fn new(x: i16, y: i16) -> Self {
         Point { x, y }
     }
 
+    #[must_use]
     pub fn zero() -> Self {
         Point { x: 0, y: 0 }
+    }
+}
+
+impl Interpolate for Point {
+    #[must_use]
+    fn interpolate(from: Self, to: Self, amount: u8) -> Self {
+        Point {
+            x: (((i32::from(amount) * i32::from(to.x)) + (i32::from(255 - amount) * i32::from(from.x))) / 255)
+                as i16,
+            y: (((i32::from(amount) * i32::from(to.y)) + (i32::from(255 - amount) * i32::from(from.y))) / 255)
+                as i16,
+        }
     }
 }
 
 #[cfg(feature = "embedded-graphics")]
 impl From<Point> for embedded_graphics_core::geometry::Point {
     fn from(value: Point) -> Self {
-        embedded_graphics_core::geometry::Point::new(value.x as i32, value.y as i32)
+        embedded_graphics_core::geometry::Point::new(i32::from(value.x), i32::from(value.y))
     }
 }
 
@@ -125,8 +147,9 @@ pub struct Frame {
 }
 
 impl Frame {
+    #[must_use]
     pub fn new(origin: Point, size: Size) -> Self {
-        Frame { origin, size }
+        Frame { size, origin }
     }
 }
 
@@ -144,5 +167,21 @@ impl From<embedded_graphics_core::primitives::Rectangle> for Frame {
             origin: value.top_left.into(),
             size: value.size.into(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::pixel::Interpolate as _;
+
+    use super::Point;
+
+    #[test]
+    fn interpolate_point() {
+        let from = Point::new(10, 0);
+        let to = Point::new(-10, 10000);
+        assert_eq!(Point::interpolate(from, to, 0), from);
+        assert_eq!(Point::interpolate(from, to, 255), to);
+        assert_eq!(Point::interpolate(from, to, 128), Point::new(0, 5019)); // imperfect resolution
     }
 }

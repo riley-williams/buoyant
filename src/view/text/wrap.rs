@@ -41,11 +41,10 @@ impl<'a, F: FontLayout> Iterator for WhitespaceWrap<'a, F> {
                 let (result, rest) = self.overflow.split_at(split_pos);
                 self.overflow = rest;
                 return Some(result);
-            } else {
-                let result = self.overflow;
-                self.overflow = &self.overflow[0..0];
-                return Some(result);
             }
+            let result = self.overflow;
+            self.overflow = &self.overflow[0..0];
+            return Some(result);
         }
 
         // Return None if no more text
@@ -91,13 +90,12 @@ impl<'a, F: FontLayout> Iterator for WhitespaceWrap<'a, F> {
                     let (result, rest) = self.remaining.split_at(space_pos);
                     self.remaining = rest.trim_start();
                     return Some(result.trim_end());
-                } else {
-                    // Force split the word
-                    let split_pos = if pos > 0 { pos } else { 1 };
-                    let (result, rest) = self.remaining.split_at(split_pos);
-                    self.remaining = rest;
-                    return Some(result);
                 }
+                // Force split the word
+                let split_pos = if pos > 0 { pos } else { 1 };
+                let (result, rest) = self.remaining.split_at(split_pos);
+                self.remaining = rest;
+                return Some(result);
             }
         }
 
@@ -126,10 +124,11 @@ impl<'a, F: FontLayout> Iterator for WhitespaceWrap<'a, F> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{font::BufferCharacterFont, primitives::ProposedDimension};
-
+    use crate::{font::CharacterBufferFont, primitives::ProposedDimension};
+    use std::vec;
+    use std::vec::Vec;
     // a basic font for which all characters are 1 unit wide
-    static FONT: BufferCharacterFont = BufferCharacterFont;
+    static FONT: CharacterBufferFont = CharacterBufferFont;
 
     #[test]
     fn empty_text() {

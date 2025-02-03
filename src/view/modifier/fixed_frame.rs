@@ -1,9 +1,8 @@
 use crate::{
-    environment::{LayoutEnvironment, RenderEnvironment},
+    environment::LayoutEnvironment,
     layout::{HorizontalAlignment, Layout, ResolvedLayout, VerticalAlignment},
     primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions},
-    render::CharacterRender,
-    render_target::CharacterRenderTarget,
+    render::Renderable,
 };
 
 pub struct FixedFrame<T> {
@@ -46,29 +45,21 @@ impl<V: Layout> Layout for FixedFrame<V> {
 
     fn layout(
         &self,
-        offer: ProposedDimensions,
+        offer: &ProposedDimensions,
         env: &impl LayoutEnvironment,
     ) -> ResolvedLayout<Self::Sublayout> {
         let modified_offer = ProposedDimensions {
-            width: self
-                .width
-                .map(ProposedDimension::Exact)
-                .unwrap_or(offer.width),
-            height: self
-                .height
-                .map(ProposedDimension::Exact)
-                .unwrap_or(offer.height),
+            width: self.width.map_or(offer.width, ProposedDimension::Exact),
+            height: self.height.map_or(offer.height, ProposedDimension::Exact),
         };
-        let child_layout = self.child.layout(modified_offer, env);
+        let child_layout = self.child.layout(&modified_offer, env);
         let resolved_size = Dimensions {
             width: self
                 .width
-                .map(Dimension::from)
-                .unwrap_or(child_layout.resolved_size.width),
+                .map_or(child_layout.resolved_size.width, Dimension::from),
             height: self
                 .height
-                .map(Dimension::from)
-                .unwrap_or(child_layout.resolved_size.height),
+                .map_or(child_layout.resolved_size.height, Dimension::from),
         };
         ResolvedLayout {
             sublayouts: child_layout,
@@ -77,17 +68,15 @@ impl<V: Layout> Layout for FixedFrame<V> {
     }
 }
 
-impl<Pixel: Copy, View: Layout> CharacterRender<Pixel> for FixedFrame<View>
-where
-    View: CharacterRender<Pixel>,
-{
-    fn render(
+impl<T: Renderable<C>, C> Renderable<C> for FixedFrame<T> {
+    type Renderables = T::Renderables;
+
+    fn render_tree(
         &self,
-        target: &mut impl CharacterRenderTarget<Color = Pixel>,
-        layout: &ResolvedLayout<ResolvedLayout<View::Sublayout>>,
+        layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
-        env: &impl RenderEnvironment<Color = Pixel>,
-    ) {
+        env: &impl LayoutEnvironment,
+    ) -> Self::Renderables {
         let new_origin = origin
             + Point::new(
                 self.horizontal_alignment.unwrap_or_default().align(
@@ -100,40 +89,6 @@ where
                 ),
             );
 
-        self.child
-            .render(target, &layout.sublayouts, new_origin, env);
-    }
-}
-
-#[cfg(feature = "embedded-graphics")]
-use embedded_graphics::draw_target::DrawTarget;
-
-#[cfg(feature = "embedded-graphics")]
-impl<Pixel, View: Layout> crate::render::PixelRender<Pixel> for FixedFrame<View>
-where
-    View: crate::render::PixelRender<Pixel>,
-    Pixel: embedded_graphics_core::pixelcolor::PixelColor,
-{
-    fn render(
-        &self,
-        target: &mut impl DrawTarget<Color = Pixel>,
-        layout: &ResolvedLayout<ResolvedLayout<View::Sublayout>>,
-        origin: Point,
-        env: &impl RenderEnvironment<Color = Pixel>,
-    ) {
-        let new_origin = origin
-            + Point::new(
-                self.horizontal_alignment.unwrap_or_default().align(
-                    layout.resolved_size.width.into(),
-                    layout.sublayouts.resolved_size.width.into(),
-                ),
-                self.vertical_alignment.unwrap_or_default().align(
-                    layout.resolved_size.height.into(),
-                    layout.sublayouts.resolved_size.height.into(),
-                ),
-            );
-
-        self.child
-            .render(target, &layout.sublayouts, new_origin, env);
+        self.child.render_tree(&layout.sublayouts, new_origin, env)
     }
 }

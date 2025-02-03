@@ -1,9 +1,8 @@
 use crate::{
-    environment::{LayoutEnvironment, RenderEnvironment},
+    environment::LayoutEnvironment,
     layout::{Layout, ResolvedLayout},
     primitives::{Point, ProposedDimensions, Size},
-    render::CharacterRender,
-    render_target::CharacterRenderTarget,
+    render::Renderable,
 };
 
 /// A view that adds padding around a child view.
@@ -31,14 +30,14 @@ impl<V: Layout> Layout for Padding<V> {
 
     fn layout(
         &self,
-        offer: ProposedDimensions,
+        offer: &ProposedDimensions,
         env: &impl LayoutEnvironment,
     ) -> ResolvedLayout<Self::Sublayout> {
         let padded_offer = ProposedDimensions {
             width: offer.width - (2 * self.padding),
             height: offer.height - (2 * self.padding),
         };
-        let child_layout = self.child.layout(padded_offer, env);
+        let child_layout = self.child.layout(&padded_offer, env);
         let padding_size =
             child_layout.resolved_size + Size::new(2 * self.padding, 2 * self.padding);
         ResolvedLayout {
@@ -48,41 +47,19 @@ impl<V: Layout> Layout for Padding<V> {
     }
 }
 
-impl<Pixel: Copy, View: Layout> CharacterRender<Pixel> for Padding<View>
-where
-    View: CharacterRender<Pixel>,
-{
-    fn render(
+impl<T: Renderable<C>, C> Renderable<C> for Padding<T> {
+    type Renderables = T::Renderables;
+
+    fn render_tree(
         &self,
-        target: &mut impl CharacterRenderTarget<Color = Pixel>,
         layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
-        env: &impl RenderEnvironment<Color = Pixel>,
-    ) {
-        let offset_origin = origin + Point::new(self.padding as i16, self.padding as i16);
-        self.child
-            .render(target, &layout.sublayouts, offset_origin, env);
-    }
-}
-
-#[cfg(feature = "embedded-graphics")]
-use embedded_graphics::draw_target::DrawTarget;
-
-#[cfg(feature = "embedded-graphics")]
-impl<Pixel, View: Layout> crate::render::PixelRender<Pixel> for Padding<View>
-where
-    View: crate::render::PixelRender<Pixel>,
-    Pixel: embedded_graphics_core::pixelcolor::PixelColor,
-{
-    fn render(
-        &self,
-        target: &mut impl DrawTarget<Color = Pixel>,
-        layout: &ResolvedLayout<Self::Sublayout>,
-        origin: Point,
-        env: &impl RenderEnvironment<Color = Pixel>,
-    ) {
-        let offset_origin = origin + Point::new(self.padding as i16, self.padding as i16);
-        self.child
-            .render(target, &layout.sublayouts, offset_origin, env);
+        env: &impl LayoutEnvironment,
+    ) -> Self::Renderables {
+        self.child.render_tree(
+            &layout.sublayouts,
+            origin + Point::new(self.padding as i16, self.padding as i16),
+            env,
+        )
     }
 }

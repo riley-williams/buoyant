@@ -1,105 +1,47 @@
 use crate::{
-    environment::{LayoutEnvironment, RenderEnvironment},
+    environment::LayoutEnvironment,
     layout::{Layout, ResolvedLayout},
     primitives::{Point, ProposedDimensions},
-    render::CharacterRender,
-    render_target::CharacterRenderTarget,
+    render::{Renderable, ShadeSubtree},
 };
 
 /// Sets a foreground style
 #[derive(Debug, PartialEq)]
-pub struct ForegroundStyle<V, Style> {
-    style: Style,
+pub struct ForegroundStyle<V, S> {
     inner: V,
+    style: S,
 }
 
-impl<V, Color: Copy> ForegroundStyle<V, Color> {
-    pub fn new(style: Color, inner: V) -> Self {
-        Self { style, inner }
+impl<V, S> ForegroundStyle<V, S> {
+    pub fn new(style: S, inner: V) -> Self {
+        Self { inner, style }
     }
 }
 
-impl<Inner: Layout, Color: Copy> Layout for ForegroundStyle<Inner, Color> {
+impl<Inner: Layout, Color> Layout for ForegroundStyle<Inner, Color> {
     type Sublayout = Inner::Sublayout;
 
     fn layout(
         &self,
-        offer: ProposedDimensions,
+        offer: &ProposedDimensions,
         env: &impl LayoutEnvironment,
     ) -> ResolvedLayout<Self::Sublayout> {
-        let modified_env = ForegroundStyleEnv {
-            color: self.style,
-            wrapped_env: env,
-        };
-        self.inner.layout(offer, &modified_env)
+        self.inner.layout(offer, env)
     }
 }
 
-impl<Color: Copy, Inner> CharacterRender<Color> for ForegroundStyle<Inner, Color>
-where
-    Inner: CharacterRender<Color>,
-{
-    fn render(
+impl<C: Clone, V: Renderable<C>> Renderable<C> for ForegroundStyle<V, C> {
+    type Renderables = ShadeSubtree<C, V::Renderables>;
+
+    fn render_tree(
         &self,
-        target: &mut impl CharacterRenderTarget<Color = Color>,
-        layout: &ResolvedLayout<Inner::Sublayout>,
+        layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
-        env: &impl RenderEnvironment<Color = Color>,
-    ) {
-        let modified_env = ForegroundStyleEnv {
-            color: self.style,
-            wrapped_env: env,
-        };
-
-        self.inner.render(target, layout, origin, &modified_env);
-    }
-}
-
-#[cfg(feature = "embedded-graphics")]
-use embedded_graphics::draw_target::DrawTarget;
-
-#[cfg(feature = "embedded-graphics")]
-impl<Color, Inner> crate::render::PixelRender<Color> for ForegroundStyle<Inner, Color>
-where
-    Inner: crate::render::PixelRender<Color>,
-    Color: embedded_graphics_core::pixelcolor::PixelColor,
-{
-    fn render(
-        &self,
-        target: &mut impl DrawTarget<Color = Color>,
-        layout: &ResolvedLayout<Inner::Sublayout>,
-        origin: Point,
-        env: &impl RenderEnvironment<Color = Color>,
-    ) {
-        let modified_env = ForegroundStyleEnv {
-            color: self.style,
-            wrapped_env: env,
-        };
-
-        self.inner.render(target, layout, origin, &modified_env);
-    }
-}
-
-struct ForegroundStyleEnv<'a, Env, Style> {
-    color: Style,
-    wrapped_env: &'a Env,
-}
-
-impl<E: LayoutEnvironment, C: Copy> LayoutEnvironment for ForegroundStyleEnv<'_, E, C> {
-    fn layout_direction(&self) -> crate::layout::LayoutDirection {
-        self.wrapped_env.layout_direction()
-    }
-
-    fn alignment(&self) -> crate::layout::Alignment {
-        self.wrapped_env.alignment()
-    }
-}
-
-impl<E: RenderEnvironment<Color = Color>, Color: Copy> RenderEnvironment
-    for ForegroundStyleEnv<'_, E, Color>
-{
-    type Color = Color;
-    fn foreground_color(&self) -> Color {
-        self.color
+        env: &impl LayoutEnvironment,
+    ) -> Self::Renderables {
+        ShadeSubtree::new(
+            self.style.clone(),
+            self.inner.render_tree(layout, origin, env),
+        )
     }
 }
