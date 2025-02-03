@@ -79,7 +79,7 @@ impl From<embedded_graphics_core::geometry::Size> for Size {
 #[cfg(feature = "embedded-graphics")]
 impl From<Size> for embedded_graphics_core::geometry::Size {
     fn from(value: Size) -> Self {
-        embedded_graphics_core::geometry::Size::new(value.width as u32, value.height as u32)
+        embedded_graphics_core::geometry::Size::new(u32::from(value.width), u32::from(value.height))
     }
 }
 
@@ -115,9 +115,9 @@ impl Interpolate for Point {
     #[must_use]
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
         Point {
-            x: (((amount as i32 * to.x as i32) + ((255 - amount) as i32 * from.x as i32)) / 255)
+            x: (((i32::from(amount) * i32::from(to.x)) + (i32::from(255 - amount) * i32::from(from.x))) / 255)
                 as i16,
-            y: (((amount as i32 * to.y as i32) + ((255 - amount) as i32 * from.y as i32)) / 255)
+            y: (((i32::from(amount) * i32::from(to.y)) + (i32::from(255 - amount) * i32::from(from.y))) / 255)
                 as i16,
         }
     }
@@ -126,7 +126,7 @@ impl Interpolate for Point {
 #[cfg(feature = "embedded-graphics")]
 impl From<Point> for embedded_graphics_core::geometry::Point {
     fn from(value: Point) -> Self {
-        embedded_graphics_core::geometry::Point::new(value.x as i32, value.y as i32)
+        embedded_graphics_core::geometry::Point::new(i32::from(value.x), i32::from(value.y))
     }
 }
 

@@ -5,10 +5,10 @@ use crate::{
 
 #[derive(Clone, Copy, Debug, PartialEq, Default)]
 pub enum LayoutDirection {
-    /// Content is laid out horizontally, from left to right. Typically in a HStack
+    /// Content is laid out horizontally, from left to right. Typically in a `HStack`
     #[default]
     Horizontal,
-    /// Content is laid out vertically, from top to bottom. Typically in a VStack
+    /// Content is laid out vertically, from top to bottom. Typically in a `VStack`
     Vertical,
 }
 

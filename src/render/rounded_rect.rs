@@ -18,7 +18,7 @@ mod embedded_graphics_impl {
     use crate::render::EmbeddedGraphicsRender;
     use crate::{pixel::Interpolate, render::AnimationDomain};
 
-    use super::*;
+    use super::{Point, RoundedRect, Size};
 
     impl<C: PixelColor> EmbeddedGraphicsRender<C> for RoundedRect {
         fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &C) {
@@ -28,7 +28,7 @@ mod embedded_graphics_impl {
                     size: self.size.into(),
                 },
                 embedded_graphics::primitives::CornerRadii::new(
-                    (self.corner_radius as u32, self.corner_radius as u32).into(),
+                    (u32::from(self.corner_radius), u32::from(self.corner_radius)).into(),
                 ),
             )
             .draw_styled(&PrimitiveStyle::with_fill(*style), render_target);

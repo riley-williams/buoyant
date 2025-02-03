@@ -15,9 +15,9 @@ impl<const W: usize, const H: usize> FixedTextBuffer<W, H> {
 
 impl<const W: usize, const H: usize> Display for FixedTextBuffer<W, H> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        for line in self.text.iter() {
-            for c in line.iter() {
-                write!(f, "{}", c)?;
+        for line in &self.text {
+            for c in line {
+                write!(f, "{c}")?;
             }
             writeln!(f)?;
         }

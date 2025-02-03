@@ -5,7 +5,6 @@ use buoyant::render::Renderable;
 use buoyant::view::{make_render_tree, LayoutExtensions, RenderExtensions};
 use buoyant::{
     layout::VerticalAlignment,
-    primitives::Size,
     render_target::CrosstermRenderTarget,
     view::{
         shape::Rectangle, Divider, HStack, HorizontalTextAlignment, Spacer, Text, VStack, ZStack,
@@ -83,7 +82,7 @@ fn main() {
     target.enter_fullscreen();
     target.clear();
     let size = target.size();
-    println!("Size {:?}", size);
+    println!("Size {size:?}");
 
     let view = view();
 

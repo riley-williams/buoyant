@@ -9,7 +9,7 @@ pub struct ProposedDimensions {
 }
 
 impl ProposedDimensions {
-    pub fn resolve_most_flexible(self, minimum: u16, ideal: u16) -> Dimensions {
+    #[must_use] pub fn resolve_most_flexible(self, minimum: u16, ideal: u16) -> Dimensions {
         Dimensions {
             width: self.width.resolve_most_flexible(minimum, ideal),
             height: self.height.resolve_most_flexible(minimum, ideal),
@@ -48,7 +48,7 @@ impl From<embedded_graphics_core::geometry::Size> for ProposedDimensions {
 impl ProposedDimension {
     /// Returns the most flexible dimension within the proposal
     /// Magic size of 10 points is applied to views that have no implicit size
-    pub fn resolve_most_flexible(self, minimum: u16, ideal: u16) -> Dimension {
+    #[must_use] pub fn resolve_most_flexible(self, minimum: u16, ideal: u16) -> Dimension {
         match self {
             ProposedDimension::Compact => Dimension(ideal),
             ProposedDimension::Exact(d) => Dimension(d.max(minimum)),
@@ -112,17 +112,17 @@ impl core::ops::Div<u16> for ProposedDimension {
 }
 
 /// The dimension of a single axis
-/// u16::MAX is treated as infinity, and this type mostly exists to prevent accidental panics from
+/// `u16::MAX` is treated as infinity, and this type mostly exists to prevent accidental panics from
 /// operations overflowing
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Dimension(pub u16);
 
 impl Dimension {
-    pub const fn infinite() -> Self {
+    #[must_use] pub const fn infinite() -> Self {
         Self(u16::MAX)
     }
 
-    pub const fn is_infinite(self) -> bool {
+    #[must_use] pub const fn is_infinite(self) -> bool {
         self.0 == u16::MAX
     }
 }
@@ -141,19 +141,19 @@ impl From<Dimension> for i16 {
 
 impl From<Dimension> for u32 {
     fn from(value: Dimension) -> Self {
-        value.0 as u32
+        u32::from(value.0)
     }
 }
 
 impl From<Dimension> for i32 {
     fn from(value: Dimension) -> Self {
-        value.0 as i32
+        i32::from(value.0)
     }
 }
 
 impl From<Dimension> for f32 {
     fn from(value: Dimension) -> Self {
-        value.0 as f32
+        f32::from(value.0)
     }
 }
 
@@ -256,35 +256,35 @@ pub struct Dimensions {
 }
 
 impl Dimensions {
-    pub fn new(width: u16, height: u16) -> Self {
+    #[must_use] pub fn new(width: u16, height: u16) -> Self {
         Self {
             width: Dimension(width),
             height: Dimension(height),
         }
     }
 
-    pub fn zero() -> Self {
+    #[must_use] pub fn zero() -> Self {
         Self {
             width: Dimension(0),
             height: Dimension(0),
         }
     }
 
-    pub fn union(self, other: Self) -> Self {
+    #[must_use] pub fn union(self, other: Self) -> Self {
         Self {
             width: self.width.max(other.width),
             height: self.height.max(other.height),
         }
     }
 
-    pub fn intersection(self, other: Self) -> Self {
+    #[must_use] pub fn intersection(self, other: Self) -> Self {
         Self {
             width: self.width.min(other.width),
             height: self.height.min(other.height),
         }
     }
 
-    pub fn intersecting_proposal(self, offer: &ProposedDimensions) -> Self {
+    #[must_use] pub fn intersecting_proposal(self, offer: &ProposedDimensions) -> Self {
         Self {
             width: match offer.width {
                 ProposedDimension::Compact => self.width,
@@ -299,7 +299,7 @@ impl Dimensions {
         }
     }
 
-    pub fn area(self) -> u16 {
+    #[must_use] pub fn area(self) -> u16 {
         (self.width * self.height).0
     }
 }
@@ -377,7 +377,7 @@ impl Interpolate for Dimensions {
 impl Interpolate for Dimension {
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
         Dimension(
-            (((amount as u32 * to.0 as u32) + ((255 - amount) as u32 * from.0 as u32)) / 255)
+            (((u32::from(amount) * u32::from(to.0)) + (u32::from(255 - amount) * u32::from(from.0))) / 255)
                 as u16,
         )
     }
@@ -386,7 +386,7 @@ impl Interpolate for Dimension {
 #[cfg(feature = "embedded-graphics")]
 impl From<Dimensions> for embedded_graphics_core::geometry::Size {
     fn from(value: Dimensions) -> Self {
-        embedded_graphics_core::geometry::Size::new(value.width.0 as u32, value.height.0 as u32)
+        embedded_graphics_core::geometry::Size::new(u32::from(value.width.0), u32::from(value.height.0))
     }
 }
 

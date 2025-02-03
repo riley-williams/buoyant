@@ -282,7 +282,7 @@ fn partial_animation_join() {
         &AnimationDomain::new(255, Duration::from_millis(1000)),
     );
 
-    // The joined view should render to the correct partial animamion state
+    // The joined view should render to the correct partial animation state
     source_tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "          X");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "     Y     ");
@@ -411,8 +411,6 @@ fn jump_toggle_animation() {
     let layout = view.layout(&buffer.size().into(), &env);
     let mut source_tree = view.render_tree(&layout, Point::default(), &env);
 
-    // change both x and y
-    // don't update the env app time, so both frames are generated at the same time
     view = toggle_move(true, HorizontalAlignment::Trailing);
     let layout = view.layout(&buffer.size().into(), &env);
     let mut target_tree = view.render_tree(&layout, Point::default(), &env);
@@ -443,14 +441,12 @@ fn jump_toggle_animation() {
     assert_eq!(buffer.text[2].iter().collect::<String>(), "           ");
     buffer.clear();
 
-    // Join the views at 1s of animation
     source_tree = CharacterRender::join(
         source_tree,
         target_tree,
         &AnimationDomain::top_level(Duration::from_millis(500)),
     );
 
-    // The joined view should render to the complete animamion state
     source_tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      __#__");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "        xxx");
@@ -496,6 +492,7 @@ fn toggle_stack(is_on: bool) -> impl Renderable<char, Renderables: CharacterRend
         toggle_switch(is_on, "xxx"),
     ))
     .with_alignment(HorizontalAlignment::Trailing)
+    // this animation should do nothing, because the text is transitioned, not moved
     .animated(Animation::Linear(Duration::from_millis(2000)), is_on)
     .flex_frame()
     .with_infinite_max_width()
@@ -514,7 +511,6 @@ fn nested_toggle_animation() {
     let layout = view.layout(&buffer.size().into(), &env);
     let mut source_tree = view.render_tree(&layout, Point::default(), &env);
 
-    // change both x and y
     // don't update the env app time, so both frames are generated at the same time
     view = toggle_stack(true);
     let layout = view.layout(&buffer.size().into(), &env);
@@ -528,12 +524,13 @@ fn nested_toggle_animation() {
         &' ',
         &AnimationDomain::top_level(Duration::from_millis(0)),
     );
+    // subtext should jump
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      #____");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "     1#____"); // toggle 1 subtext is
                                                                           // overwritten by toggle 2
     assert_eq!(buffer.text[2].iter().collect::<String>(), "        123");
     assert_eq!(buffer.text[3].iter().collect::<String>(), "           ");
-    assert_eq!(buffer.text[4].iter().collect::<String>(), "        xxx"); // ???
+    assert_eq!(buffer.text[4].iter().collect::<String>(), "        xxx");
     buffer.clear();
 
     // first real interpolated frame, at .5s
@@ -558,7 +555,7 @@ fn nested_toggle_animation() {
         &AnimationDomain::top_level(Duration::from_millis(500)),
     );
 
-    // The joined view should render to the partial animamion state
+    // The joined view should render to the partial animation state
     source_tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      __#__");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "     123456");

@@ -16,7 +16,7 @@ pub struct StaticText<'a, F> {
 
 #[cfg(feature = "embedded-graphics")]
 mod embedded_graphics_impl {
-    use super::*;
+    use super::{AnimationDomain, CharacterRenderTarget, FontLayout, Interpolate, Point, StaticText, WhitespaceWrap};
 
     use embedded_graphics_core::Drawable;
 
