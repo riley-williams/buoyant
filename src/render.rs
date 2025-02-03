@@ -130,6 +130,14 @@ impl AnimationDomain {
         Self { factor, app_time }
     }
 
+    /// Use this to create a new top-level animation domain when rendering
+    #[must_use]
+    pub fn top_level(app_time: Duration) -> Self {
+        Self {
+            factor: 255,
+            app_time,
+        }
+    }
     #[must_use]
     pub fn is_complete(&self) -> bool {
         self.factor == 255
