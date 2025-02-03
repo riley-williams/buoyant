@@ -16,7 +16,7 @@ impl<C, T> ShadeSubtree<C, T> {
 mod embedded_graphics_impl {
     use crate::{pixel::Interpolate, render::EmbeddedGraphicsRender};
 
-    use super::{AnimationDomain, CharacterRender, ShadeSubtree};
+    use super::{AnimationDomain, ShadeSubtree};
     use embedded_graphics::prelude::PixelColor;
     use embedded_graphics_core::draw_target::DrawTarget;
 

@@ -378,7 +378,7 @@ fn toggle_switch(
                 Some(VerticalAlignment::Center),
             ),
         ))
-        .horizontal_alignment(alignment)
+        .with_horizontal_alignment(alignment)
         .animated(Animation::Linear(Duration::from_secs(1)), is_on),
         ConditionalView::new(
             is_on,

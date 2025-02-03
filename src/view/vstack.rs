@@ -150,7 +150,7 @@ fn layout_n<const N: usize>(
                     subviews_indecies[slice_start + slice_len] = i;
                     slice_len += 1;
                 }
-                _ => {}
+                core::cmp::Ordering::Greater => {}
             }
         }
         last_priority_group = Some(max);

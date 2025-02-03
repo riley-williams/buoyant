@@ -34,6 +34,7 @@ mod embedded_graphics_impl {
             .draw_styled(&PrimitiveStyle::with_fill(*style), render_target);
         }
 
+        #[allow(clippy::many_single_char_names)]
         fn join(source: Self, target: Self, config: &AnimationDomain) -> Self {
             let x = i16::interpolate(source.origin.x, target.origin.x, config.factor);
             let y = i16::interpolate(source.origin.y, target.origin.y, config.factor);

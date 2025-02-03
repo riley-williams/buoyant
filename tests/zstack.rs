@@ -64,7 +64,7 @@ fn test_render_two_top_center_alignment() {
         Text::str("a a a\nb b b\nc c c", &font),
         Text::str("xxx", &font),
     ))
-    .vertical_alignment(VerticalAlignment::Top)
+    .with_vertical_alignment(VerticalAlignment::Top)
     .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&stack, buffer.size());
@@ -83,8 +83,8 @@ fn test_render_two_top_leading_alignment() {
         Text::str("a a a\nb b b\nc c c", &font),
         Text::str("xxx", &font),
     ))
-    .vertical_alignment(VerticalAlignment::Top)
-    .horizontal_alignment(HorizontalAlignment::Leading)
+    .with_vertical_alignment(VerticalAlignment::Top)
+    .with_horizontal_alignment(HorizontalAlignment::Leading)
     .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&stack, buffer.size());
@@ -103,8 +103,8 @@ fn test_render_two_top_trailing_alignment() {
         Text::str("a a a\nb b b\nc c c", &font),
         Text::str("xxx", &font),
     ))
-    .vertical_alignment(VerticalAlignment::Top)
-    .horizontal_alignment(HorizontalAlignment::Trailing)
+    .with_vertical_alignment(VerticalAlignment::Top)
+    .with_horizontal_alignment(HorizontalAlignment::Trailing)
     .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&stack, buffer.size());
@@ -123,7 +123,7 @@ fn test_render_two_center_leading_alignment() {
         Text::str("a a a\nb b b\nc c c", &font),
         Text::str("xxx", &font),
     ))
-    .horizontal_alignment(HorizontalAlignment::Leading)
+    .with_horizontal_alignment(HorizontalAlignment::Leading)
     .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&stack, buffer.size());
@@ -142,7 +142,7 @@ fn test_render_two_center_trailing_alignment() {
         Text::str("a a a\nb b b\nc c c", &font),
         Text::str("xxx", &font),
     ))
-    .horizontal_alignment(HorizontalAlignment::Trailing)
+    .with_horizontal_alignment(HorizontalAlignment::Trailing)
     .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&stack, buffer.size());
@@ -161,8 +161,8 @@ fn test_render_two_bottom_leading_alignment() {
         Text::str("a a a\nb b b\nc c c", &font),
         Text::str("xxx", &font),
     ))
-    .vertical_alignment(VerticalAlignment::Bottom)
-    .horizontal_alignment(HorizontalAlignment::Leading)
+    .with_vertical_alignment(VerticalAlignment::Bottom)
+    .with_horizontal_alignment(HorizontalAlignment::Leading)
     .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&stack, buffer.size());
@@ -181,7 +181,7 @@ fn test_render_two_bottom_center_alignment() {
         Text::str("a a a\nb b b\nc c c", &font),
         Text::str("xxx", &font),
     ))
-    .vertical_alignment(VerticalAlignment::Bottom)
+    .with_vertical_alignment(VerticalAlignment::Bottom)
     .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&stack, buffer.size());
@@ -200,8 +200,8 @@ fn test_render_two_bottom_trailing_alignment() {
         Text::str("a a a\nb b b\nc c c", &font),
         Text::str("xxx", &font),
     ))
-    .vertical_alignment(VerticalAlignment::Bottom)
-    .horizontal_alignment(HorizontalAlignment::Trailing)
+    .with_vertical_alignment(VerticalAlignment::Bottom)
+    .with_horizontal_alignment(HorizontalAlignment::Trailing)
     .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&stack, buffer.size());

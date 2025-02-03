@@ -19,7 +19,7 @@ pub enum Subtree<T, F> {
 mod embedded_graphics_impl {
     use crate::render::EmbeddedGraphicsRender;
 
-    use super::{CharacterRender, CharacterRenderTarget, ConditionalTree, Subtree};
+    use super::{ConditionalTree, Subtree};
     use embedded_graphics::prelude::PixelColor;
     use embedded_graphics_core::draw_target::DrawTarget;
 

@@ -21,14 +21,16 @@ impl<T> PartialEq for ZStack<T> {
 }
 
 impl<T> ZStack<T> {
-    pub fn horizontal_alignment(self, alignment: HorizontalAlignment) -> Self {
+    #[must_use]
+    pub fn with_horizontal_alignment(self, alignment: HorizontalAlignment) -> Self {
         Self {
             horizontal_alignment: alignment,
             ..self
         }
     }
 
-    pub fn vertical_alignment(self, alignment: VerticalAlignment) -> Self {
+    #[must_use]
+    pub fn with_vertical_alignment(self, alignment: VerticalAlignment) -> Self {
         Self {
             vertical_alignment: alignment,
             ..self

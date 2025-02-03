@@ -34,3 +34,7 @@ unsafe_code = "forbid"
 
 [lints.clippy]
 pedantic = "warn"
+
+# TODO: Disabled for now.
+cast_possible_wrap = { level = "allow", priority = 1 }
+cast_possible_truncation = { level = "allow", priority = 1 }

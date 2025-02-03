@@ -92,6 +92,7 @@ fn main() {
 
     loop {
         // `read()` blocks until an `Event` is available
+        #[allow(clippy::match_same_arms)]
         match read().unwrap() {
             Event::FocusGained => (),
             Event::FocusLost => (),

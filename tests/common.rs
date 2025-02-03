@@ -6,6 +6,7 @@ use buoyant::{
     render_target::FixedTextBuffer,
 };
 
+#[allow(dead_code)]
 pub struct TestEnv {
     pub direction: LayoutDirection,
     pub alignment: Alignment,
@@ -38,6 +39,7 @@ impl Default for TestEnv {
     }
 }
 
+#[allow(dead_code)]
 impl TestEnv {
     #[must_use]
     pub fn with_direction(mut self, direction: LayoutDirection) -> Self {
@@ -52,6 +54,7 @@ impl TestEnv {
     }
 }
 
+#[allow(dead_code)]
 #[must_use]
 pub fn collect_text<const W: usize, const H: usize>(buffer: &FixedTextBuffer<W, H>) -> String {
     buffer
