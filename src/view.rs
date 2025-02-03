@@ -76,23 +76,7 @@ pub trait RenderExtensions<C>: Sized {
 impl<T: crate::layout::Layout> LayoutExtensions for T {}
 impl<T: Renderable<C>, C> RenderExtensions<C> for T {}
 
-#[cfg(feature = "embedded-graphics")]
-use embedded_graphics::prelude::PixelColor;
-
-// TODO: this should be a fn on the trait, not a global fn
-#[cfg(feature = "embedded-graphics")]
-pub fn make_eg_render_tree<C: PixelColor, V: Renderable<C>>(
-    view: &V,
-    size: Size,
-) -> impl crate::render::EmbeddedGraphicsRender<C>
-where
-    V::Renderables: crate::render::EmbeddedGraphicsRender<C>,
-{
-    let env = DefaultEnvironment::default();
-    let layout = view.layout(&size.into(), &env);
-    view.render_tree(&layout, Point::default(), &env)
-}
-
+// TODO: Remove this
 pub fn make_render_tree<C, V>(view: &V, size: Size) -> V::Renderables
 where
     V: Renderable<C>,
