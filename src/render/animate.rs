@@ -110,10 +110,7 @@ impl<C, T: CharacterRender<C>, U: PartialEq + Clone> CharacterRender<C> for Anim
             // animation has already completed or there was zero duration
             is_partial = false;
             new_duration = Duration::from_secs(0);
-            subdomain = AnimationDomain {
-                factor: 255,
-                app_time: domain.app_time,
-            };
+            subdomain = domain.clone();
         } else {
             is_partial = true;
             new_duration = end_time.saturating_sub(domain.app_time);
@@ -230,10 +227,7 @@ mod embedded_graphics_impl {
                 // animation has already completed or there was zero duration
                 is_partial = false;
                 new_duration = Duration::from_secs(0);
-                subdomain = AnimationDomain {
-                    factor: 255,
-                    app_time: domain.app_time,
-                };
+                subdomain = domain.clone();
             } else {
                 is_partial = true;
                 new_duration = end_time.saturating_sub(domain.app_time);
