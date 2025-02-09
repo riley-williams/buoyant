@@ -611,7 +611,7 @@ fn nested_toggle_animation() {
         &target_tree,
         &' ',
         Point::zero(),
-        &AnimationDomain::top_level(Duration::from_millis(1000)),
+        &AnimationDomain::top_level(Duration::from_millis(2000)),
     );
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ____#");

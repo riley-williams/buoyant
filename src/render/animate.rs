@@ -64,10 +64,8 @@ impl<C, T: CharacterRender<C>, U: PartialEq + Clone> CharacterRender<C> for Anim
 
         let subdomain = if end_time == Duration::from_secs(0) || domain.app_time >= end_time {
             // animation has already completed or there was zero duration
-            AnimationDomain {
-                factor: 255,
-                app_time: domain.app_time,
-            }
+            // use the parent domain to animate subtree
+            domain
         } else {
             // compute factor
             let diff = end_time.saturating_sub(domain.app_time);
@@ -76,7 +74,7 @@ impl<C, T: CharacterRender<C>, U: PartialEq + Clone> CharacterRender<C> for Anim
                     .checked_div(duration.as_millis())
                     .unwrap_or(0),
             ) as u8;
-            AnimationDomain {
+            &AnimationDomain {
                 factor,
                 app_time: domain.app_time,
             }
@@ -88,7 +86,7 @@ impl<C, T: CharacterRender<C>, U: PartialEq + Clone> CharacterRender<C> for Anim
             &target.subtree,
             style,
             offset,
-            &subdomain,
+            subdomain,
         );
     }
 
@@ -186,10 +184,8 @@ mod embedded_graphics_impl {
 
             let subdomain = if end_time == Duration::from_secs(0) || domain.app_time >= end_time {
                 // animation has already completed or there was zero duration
-                AnimationDomain {
-                    factor: 255,
-                    app_time: domain.app_time,
-                }
+                // use the parent domain to animate subtree
+                domain
             } else {
                 // compute factor
                 let diff = end_time.saturating_sub(domain.app_time);
@@ -198,7 +194,7 @@ mod embedded_graphics_impl {
                         .checked_div(duration.as_millis())
                         .unwrap_or(0),
                 ) as u8;
-                AnimationDomain {
+                &AnimationDomain {
                     factor,
                     app_time: domain.app_time,
                 }
@@ -210,7 +206,7 @@ mod embedded_graphics_impl {
                 &target.subtree,
                 style,
                 offset,
-                &subdomain,
+                subdomain,
             );
         }
 
