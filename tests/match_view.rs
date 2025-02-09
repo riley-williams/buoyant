@@ -132,7 +132,7 @@ fn test_match_view_borrow() {
 
 /// This could possibly be avoided by making an attempt at producing a new layout
 /// when we go to render the view
-#[should_panic(expected = "internal error: entered unreachable code")]
+#[should_panic(expected = "An outdated layout was used")]
 #[test]
 fn test_match_view_two_variants_invalid_layout() {
     let font = CharacterBufferFont;
