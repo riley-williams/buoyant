@@ -6,6 +6,8 @@ use crate::{
     },
 };
 
+use super::EmptyView;
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct ConditionalView<U, V> {
     pub condition: bool,
@@ -19,6 +21,16 @@ impl<U, V> ConditionalView<U, V> {
             condition,
             true_view,
             false_view,
+        }
+    }
+}
+
+impl<U> ConditionalView<U, EmptyView> {
+    pub fn if_view(condition: bool, true_view: U) -> Self {
+        Self {
+            condition,
+            true_view,
+            false_view: EmptyView,
         }
     }
 }
