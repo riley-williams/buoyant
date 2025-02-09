@@ -3,6 +3,7 @@ mod divider;
 mod empty_view;
 mod foreach;
 mod hstack;
+pub mod match_view;
 mod modifier;
 pub mod shape;
 mod spacer;

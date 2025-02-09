@@ -380,7 +380,7 @@ fn toggle_switch(
         ))
         .with_horizontal_alignment(alignment)
         .animated(Animation::Linear(Duration::from_secs(1)), is_on),
-        ConditionalView::new(
+        ConditionalView::if_else(
             is_on,
             Text::str(subtext, &FONT).multiline_text_alignment(HorizontalTextAlignment::Trailing),
             EmptyView,
