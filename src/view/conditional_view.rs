@@ -14,7 +14,7 @@ pub struct ConditionalView<U, V> {
 }
 
 impl<U, V> ConditionalView<U, V> {
-    pub fn new(condition: bool, true_view: U, false_view: V) -> Self {
+    pub fn if_else(condition: bool, true_view: U, false_view: V) -> Self {
         Self {
             condition,
             true_view,

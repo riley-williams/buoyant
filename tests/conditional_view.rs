@@ -13,7 +13,7 @@ mod common;
 fn test_conditional_view_layout() {
     let font = CharacterBufferFont;
     let make_view = |condition| {
-        ConditionalView::new(
+        ConditionalView::if_else(
             condition,
             Text::str("true\n!!!", &font),
             Text::str("f", &font).foreground_color(' '),
