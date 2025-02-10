@@ -393,10 +393,9 @@ fn toggle_switch(
         ))
         .with_horizontal_alignment(alignment)
         .animated(Animation::Linear(Duration::from_secs(1)), is_on),
-        ConditionalView::if_else(
+        ConditionalView::if_view(
             is_on,
             Text::str(subtext, &FONT).multiline_text_alignment(HorizontalTextAlignment::Trailing),
-            EmptyView,
         ),
     ))
     .with_alignment(HorizontalAlignment::Trailing)
@@ -503,14 +502,20 @@ fn jump_toggle_animation() {
     assert_eq!(buffer.text[2].iter().collect::<String>(), "           ");
 }
 
-fn toggle_stack(is_on: bool) -> impl Renderable<char, Renderables: CharacterRender<char>> {
+fn toggle_stack(
+    is_on_a: bool,
+    is_on_b: bool,
+) -> impl Renderable<char, Renderables: CharacterRender<char>> {
     VStack::new((
-        toggle_switch(is_on, "123456\n123"),
-        toggle_switch(is_on, "xxx"),
+        toggle_switch(is_on_a, "123456\n123"),
+        toggle_switch(is_on_b, "xxx"),
     ))
     .with_alignment(HorizontalAlignment::Trailing)
     // this animation should do nothing, because the text is transitioned, not moved
-    .animated(Animation::Linear(Duration::from_millis(2000)), is_on)
+    .animated(
+        Animation::Linear(Duration::from_millis(2000)),
+        is_on_a ^ is_on_b,
+    )
     .flex_frame()
     .with_infinite_max_width()
     .with_infinite_max_height()
@@ -518,18 +523,20 @@ fn toggle_stack(is_on: bool) -> impl Renderable<char, Renderables: CharacterRend
     .with_horizontal_alignment(HorizontalAlignment::Trailing)
 }
 
+/// Despite the outer 2s animation which is activated, the toggles
+/// should complete animation in 1s
 #[test]
-fn nested_toggle_animation() {
+fn nested_toggle_animation_animates_inner() {
     let mut buffer = FixedTextBuffer::<11, 5>::default();
 
-    let mut view = toggle_stack(false);
+    let mut view = toggle_stack(false, false);
 
     let mut env = DefaultEnvironment::new(Duration::from_millis(0));
     let layout = view.layout(&buffer.size().into(), &env);
     let mut source_tree = view.render_tree(&layout, Point::default(), &env);
 
     // don't update the env app time, so both frames are generated at the same time
-    view = toggle_stack(true);
+    view = toggle_stack(true, true);
     let layout = view.layout(&buffer.size().into(), &env);
     let mut target_tree = view.render_tree(&layout, Point::default(), &env);
 
@@ -543,9 +550,8 @@ fn nested_toggle_animation() {
         &AnimationDomain::top_level(Duration::from_millis(0)),
     );
     // subtext should jump
-    assert_eq!(buffer.text[0].iter().collect::<String>(), "      #____");
-    assert_eq!(buffer.text[1].iter().collect::<String>(), "     1#____"); // toggle 1 subtext is
-                                                                          // overwritten by toggle 2
+    assert_eq!(buffer.text[0].iter().collect::<String>(), "      #____"); // toggle 1 subtext is
+    assert_eq!(buffer.text[1].iter().collect::<String>(), "     1#____"); // overwritten by toggle 2
     assert_eq!(buffer.text[2].iter().collect::<String>(), "        123");
     assert_eq!(buffer.text[3].iter().collect::<String>(), "           ");
     assert_eq!(buffer.text[4].iter().collect::<String>(), "        xxx");
@@ -584,7 +590,7 @@ fn nested_toggle_animation() {
     buffer.clear();
 
     env.app_time = Duration::from_millis(500);
-    view = toggle_stack(true);
+    view = toggle_stack(true, true);
     let layout = view.layout(&buffer.size().into(), &env);
     target_tree = view.render_tree(&layout, Point::default(), &env);
 
@@ -612,6 +618,82 @@ fn nested_toggle_animation() {
         &' ',
         Point::zero(),
         &AnimationDomain::top_level(Duration::from_millis(2000)),
+    );
+
+    assert_eq!(buffer.text[0].iter().collect::<String>(), "      ____#");
+    assert_eq!(buffer.text[1].iter().collect::<String>(), "     123456");
+    assert_eq!(buffer.text[2].iter().collect::<String>(), "        123");
+    assert_eq!(buffer.text[3].iter().collect::<String>(), "      ____#");
+    assert_eq!(buffer.text[4].iter().collect::<String>(), "        xxx");
+}
+
+/// Despite the outer 2s animation which is activated, the toggles
+/// should complete animation in 1s
+#[test]
+fn inner_partial_animation() {
+    let mut buffer = FixedTextBuffer::<11, 5>::default();
+
+    let mut view = toggle_stack(false, false);
+
+    let mut env = DefaultEnvironment::new(Duration::from_millis(0));
+    let layout = view.layout(&buffer.size().into(), &env);
+    let mut source_tree = view.render_tree(&layout, Point::default(), &env);
+
+    // don't update the env app time, so both frames are generated at the same time
+    view = toggle_stack(true, false);
+    let layout = view.layout(&buffer.size().into(), &env);
+    let mut target_tree = view.render_tree(&layout, Point::default(), &env);
+
+    // initial render sets target animation times
+    CharacterRender::render_animated(
+        &mut buffer,
+        &source_tree,
+        &target_tree,
+        &' ',
+        &AnimationDomain::top_level(Duration::from_millis(0)),
+    );
+    // subtext should jump
+    assert_eq!(buffer.text[0].iter().collect::<String>(), "      #____"); // toggle 1 subtext is
+    assert_eq!(buffer.text[1].iter().collect::<String>(), "     1#____"); // overwritten by toggle 2
+    assert_eq!(buffer.text[2].iter().collect::<String>(), "        123");
+    assert_eq!(buffer.text[3].iter().collect::<String>(), "           ");
+    assert_eq!(buffer.text[4].iter().collect::<String>(), "           ");
+    buffer.clear();
+
+    // Join the views at 1s of animation
+    source_tree = CharacterRender::join(
+        source_tree,
+        target_tree,
+        &AnimationDomain::top_level(Duration::from_millis(500)),
+    );
+
+    env.app_time = Duration::from_millis(500);
+    view = toggle_stack(true, true);
+    let layout = view.layout(&buffer.size().into(), &env);
+    target_tree = view.render_tree(&layout, Point::default(), &env);
+
+    CharacterRender::render_animated(
+        &mut buffer,
+        &source_tree,
+        &target_tree,
+        &' ',
+        &AnimationDomain::top_level(Duration::from_millis(1000)),
+    );
+    // again, should be the same view
+    assert_eq!(buffer.text[0].iter().collect::<String>(), "      ____#");
+    assert_eq!(buffer.text[1].iter().collect::<String>(), "     123456");
+    assert_eq!(buffer.text[2].iter().collect::<String>(), "      __#__");
+    assert_eq!(buffer.text[3].iter().collect::<String>(), "           ");
+    assert_eq!(buffer.text[4].iter().collect::<String>(), "        xxx");
+
+    buffer.clear();
+
+    CharacterRender::render_animated(
+        &mut buffer,
+        &source_tree,
+        &target_tree,
+        &' ',
+        &AnimationDomain::top_level(Duration::from_millis(1500)),
     );
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ____#");
