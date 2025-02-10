@@ -32,6 +32,7 @@ impl<T, U: PartialEq + Clone> Animate<T, U> {
         }
     }
 }
+
 impl<C, T: CharacterRender<C>, U: PartialEq + Clone> CharacterRender<C> for Animate<T, U> {
     fn render(
         &self,
@@ -226,26 +227,37 @@ mod embedded_graphics_impl {
         }
 
         fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
+            let should_animate;
             let (end_time, duration) = if source.value != target.value {
                 let duration = target.animation.duration();
+                should_animate = true;
                 (target.frame_time + duration, duration)
             } else if source.is_partial {
                 // continue source animation
                 let duration = source.animation.duration();
+                should_animate = true;
                 (source.frame_time + duration, duration)
             } else {
                 // no animation
+                should_animate = false;
                 (domain.app_time, Duration::from_secs(0))
             };
 
             let new_duration;
             let is_partial;
             let subdomain;
-            if duration == Duration::from_secs(0) || domain.app_time >= end_time {
-                // animation has already completed or there was zero duration
+            if !should_animate {
                 is_partial = false;
                 new_duration = Duration::from_secs(0);
                 subdomain = domain.clone();
+            } else if duration == Duration::from_secs(0) || domain.app_time >= end_time {
+                // animation has already completed or there was zero duration
+                is_partial = false;
+                new_duration = Duration::from_secs(0);
+                subdomain = AnimationDomain {
+                    factor: 255,
+                    app_time: domain.app_time,
+                };
             } else {
                 is_partial = true;
                 new_duration = end_time.saturating_sub(domain.app_time);
