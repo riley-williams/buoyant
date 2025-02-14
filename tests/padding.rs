@@ -1,5 +1,6 @@
 use std::iter::zip;
 
+use buoyant::primitives::Point;
 use buoyant::render::CharacterRender;
 use buoyant::render::CharacterRenderTarget;
 use buoyant::{
@@ -32,7 +33,7 @@ fn test_clipped_text_trails_correctly() {
 
     let tree = make_render_tree(&view, buffer.size());
 
-    tree.render(&mut buffer, &' ');
+    tree.render(&mut buffer, &' ', Point::zero());
 
     let lines = [
         "                              ",

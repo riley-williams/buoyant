@@ -25,7 +25,7 @@ fn test_match_view_two_variants() {
     let layout = view.layout(&buffer.size().into(), &env);
     assert_eq!(layout.resolved_size, Size::new(4, 2).into());
     let tree = view.render_tree(&layout, Point::zero(), &env);
-    tree.render(&mut buffer, &' ');
+    tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "zero ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "!!!  ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "     ");
@@ -36,7 +36,7 @@ fn test_match_view_two_variants() {
     let layout = view.layout(&buffer.size().into(), &env);
     assert_eq!(layout.resolved_size, Size::new(5, 1).into());
     let tree = view.render_tree(&layout, Point::zero(), &env);
-    tree.render(&mut buffer, &' ');
+    tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "other");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "     ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "     ");
@@ -67,7 +67,7 @@ fn test_match_view_three_variants() {
     let layout = view.layout(&buffer.size().into(), &env);
     assert_eq!(layout.resolved_size, Size::new(3, 1).into());
     let tree = view.render_tree(&layout, Point::zero(), &env);
-    tree.render(&mut buffer, &' ');
+    tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "AAA  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "     ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "     ");
@@ -76,7 +76,7 @@ fn test_match_view_three_variants() {
     let layout = view.layout(&buffer.size().into(), &env);
     assert_eq!(layout.resolved_size, Size::new(3, 1).into());
     let tree = view.render_tree(&layout, Point::zero(), &env);
-    tree.render(&mut buffer, &' ');
+    tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "BBB  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "     ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "     ");
@@ -87,7 +87,7 @@ fn test_match_view_three_variants() {
     let layout = view.layout(&buffer.size().into(), &env);
     assert_eq!(layout.resolved_size, Size::new(3, 1).into());
     let tree = view.render_tree(&layout, Point::zero(), &env);
-    tree.render(&mut buffer, &' ');
+    tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "CCC  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "     ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "     ");
@@ -124,7 +124,7 @@ fn test_match_view_borrow() {
     let layout = view.layout(&buffer.size().into(), &env);
     assert_eq!(layout.resolved_size, Size::new(3, 1).into());
     let tree = view.render_tree(&layout, Point::zero(), &env);
-    tree.render(&mut buffer, &' ');
+    tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "BBB  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "     ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "     ");
@@ -150,7 +150,7 @@ fn test_match_view_two_variants_invalid_layout() {
 
     let view = make_view(1);
     let tree = view.render_tree(&layout, Point::zero(), &env);
-    tree.render(&mut buffer, &' ');
+    tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "other");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "     ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "     ");

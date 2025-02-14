@@ -1,3 +1,4 @@
+use buoyant::primitives::Point;
 use buoyant::render::CharacterRender;
 use buoyant::render::CharacterRenderTarget;
 use buoyant::view::RenderExtensions as _;
@@ -52,7 +53,7 @@ fn foreach_with_inner_wrapping_hstack() {
     });
     let mut buffer = FixedTextBuffer::<10, 5>::default();
     let tree = make_render_tree(&view, buffer.size());
-    tree.render(&mut buffer, &' ');
+    tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "Alice   99");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "Bob      2");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "Person    ");
@@ -94,7 +95,7 @@ fn foreach_leading_aligned() {
     .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<10, 5>::default();
     let tree = make_render_tree(&view, buffer.size());
-    tree.render(&mut buffer, &' ');
+    tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "Alice 99  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "Bob 2     ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "Person    ");
@@ -136,7 +137,7 @@ fn foreach_trailing_aligned() {
     .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<10, 5>::default();
     let tree = make_render_tree(&view, buffer.size());
-    tree.render(&mut buffer, &' ');
+    tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), " Alice 99 ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "    Bob 2 ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "Person    ");

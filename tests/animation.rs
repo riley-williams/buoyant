@@ -47,6 +47,7 @@ fn sanity_animation_wipe() {
             &source_tree,
             &target_tree,
             &' ',
+            Point::zero(),
             &AnimationDomain::new(255, Duration::from_millis(i * 10)),
         );
     }
@@ -71,6 +72,7 @@ fn sanity_animation_wipe_leading_half() {
             &source_tree,
             &target_tree,
             &' ',
+            Point::zero(),
             &AnimationDomain::new(255, Duration::from_millis(i * 10)),
         );
     }
@@ -96,6 +98,7 @@ fn sanity_animation_wipe_trailing_half() {
         &source_tree,
         &target_tree,
         &' ',
+        Point::zero(),
         &AnimationDomain::new(255, Duration::from_millis(0)),
     );
     assert_eq!(buffer.text[0].iter().collect::<String>(), "X         ");
@@ -107,6 +110,7 @@ fn sanity_animation_wipe_trailing_half() {
             &source_tree,
             &target_tree,
             &' ',
+            Point::zero(),
             &AnimationDomain::new(255, Duration::from_millis(i * 10)),
         );
     }
@@ -141,6 +145,7 @@ fn animation_only_occurs_on_animated_subtrees() {
         &source_tree,
         &target_tree,
         &' ',
+        Point::zero(),
         &AnimationDomain::new(255, Duration::from_millis(0)),
     );
     assert_eq!(buffer.text[0].iter().collect::<String>(), "X         ");
@@ -157,6 +162,7 @@ fn animation_only_occurs_on_animated_subtrees() {
             &source_tree,
             &target_tree,
             &' ',
+            Point::zero(),
             &AnimationDomain::new(255, Duration::from_millis(i * 10)),
         );
     }
@@ -197,6 +203,7 @@ fn no_animation_when_value_doesnt_change() {
         &source_tree,
         &target_tree,
         &' ',
+        Point::zero(),
         &AnimationDomain::new(255, Duration::from_millis(0)),
     );
     assert_eq!(buffer.text[0].iter().collect::<String>(), "X         ");
@@ -209,6 +216,7 @@ fn no_animation_when_value_doesnt_change() {
             &source_tree,
             &target_tree,
             &' ',
+            Point::zero(),
             &AnimationDomain::new(255, Duration::from_millis(i * 10)),
         );
     }
@@ -255,6 +263,7 @@ fn partial_animation_join() {
         &source_tree,
         &target_tree,
         &' ',
+        Point::zero(),
         &AnimationDomain::new(255, Duration::from_millis(0)),
     );
     assert_eq!(buffer.text[0].iter().collect::<String>(), "X          ");
@@ -268,6 +277,7 @@ fn partial_animation_join() {
         &source_tree,
         &target_tree,
         &' ',
+        Point::zero(),
         &AnimationDomain::new(255, Duration::from_millis(500)),
     );
     assert_eq!(buffer.text[0].iter().collect::<String>(), "     X     ");
@@ -283,7 +293,7 @@ fn partial_animation_join() {
     );
 
     // The joined view should render to the correct partial animation state
-    source_tree.render(&mut buffer, &' ');
+    source_tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "          X");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "     Y     ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "     Z     ");
@@ -306,6 +316,7 @@ fn partial_animation_join() {
         &source_tree,
         &target_tree,
         &' ',
+        Point::zero(),
         &AnimationDomain::new(255, Duration::from_millis(1000)),
     );
 
@@ -321,6 +332,7 @@ fn partial_animation_join() {
         &source_tree,
         &target_tree,
         &' ',
+        Point::zero(),
         &AnimationDomain::new(255, Duration::from_millis(2000)),
     );
 
@@ -334,6 +346,7 @@ fn partial_animation_join() {
         &source_tree,
         &target_tree,
         &' ',
+        Point::zero(),
         &AnimationDomain::new(255, Duration::from_millis(3000)),
     );
 
@@ -421,6 +434,7 @@ fn jump_toggle_animation() {
         &source_tree,
         &target_tree,
         &' ',
+        Point::zero(),
         &AnimationDomain::top_level(Duration::from_millis(0)),
     );
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      #____");
@@ -434,6 +448,7 @@ fn jump_toggle_animation() {
         &source_tree,
         &target_tree,
         &' ',
+        Point::zero(),
         &AnimationDomain::top_level(Duration::from_millis(500)),
     );
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      __#__");
@@ -447,7 +462,7 @@ fn jump_toggle_animation() {
         &AnimationDomain::top_level(Duration::from_millis(500)),
     );
 
-    source_tree.render(&mut buffer, &' ');
+    source_tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      __#__");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "        xxx");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "           ");
@@ -463,6 +478,7 @@ fn jump_toggle_animation() {
         &source_tree,
         &target_tree,
         &' ',
+        Point::zero(),
         &AnimationDomain::top_level(Duration::from_millis(500)),
     );
 
@@ -477,6 +493,7 @@ fn jump_toggle_animation() {
         &source_tree,
         &target_tree,
         &' ',
+        Point::zero(),
         &AnimationDomain::top_level(Duration::from_millis(1000)),
     );
 
@@ -522,6 +539,7 @@ fn nested_toggle_animation() {
         &source_tree,
         &target_tree,
         &' ',
+        Point::zero(),
         &AnimationDomain::top_level(Duration::from_millis(0)),
     );
     // subtext should jump
@@ -539,6 +557,7 @@ fn nested_toggle_animation() {
         &source_tree,
         &target_tree,
         &' ',
+        Point::zero(),
         &AnimationDomain::top_level(Duration::from_millis(500)),
     );
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      __#__");
@@ -556,7 +575,7 @@ fn nested_toggle_animation() {
     );
 
     // The joined view should render to the partial animation state
-    source_tree.render(&mut buffer, &' ');
+    source_tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      __#__");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "     123456");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "      __#__");
@@ -574,6 +593,7 @@ fn nested_toggle_animation() {
         &source_tree,
         &target_tree,
         &' ',
+        Point::zero(),
         &AnimationDomain::top_level(Duration::from_millis(500)),
     );
     // again, should be the same view
@@ -590,6 +610,7 @@ fn nested_toggle_animation() {
         &source_tree,
         &target_tree,
         &' ',
+        Point::zero(),
         &AnimationDomain::top_level(Duration::from_millis(1000)),
     );
 

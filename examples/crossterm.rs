@@ -1,4 +1,5 @@
 use buoyant::font::CharacterBufferFont;
+use buoyant::primitives::Point;
 use buoyant::render::CharacterRender;
 use buoyant::render::CharacterRenderTarget;
 use buoyant::render::Renderable;
@@ -127,6 +128,7 @@ fn render_view(
             }),
             background: None,
         },
+        Point::zero(),
     );
     target.flush();
 }

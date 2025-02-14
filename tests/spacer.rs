@@ -1,6 +1,8 @@
 use buoyant::font::CharacterBufferFont;
 use buoyant::layout::{Layout, LayoutDirection};
-use buoyant::primitives::{Dimension, Dimensions, ProposedDimension, ProposedDimensions, Size};
+use buoyant::primitives::{
+    Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions, Size,
+};
 use buoyant::render::CharacterRender;
 use buoyant::render::CharacterRenderTarget;
 use buoyant::render_target::FixedTextBuffer;
@@ -122,7 +124,7 @@ fn test_render_fills_hstack() {
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<9, 1>::default();
     let tree = make_render_tree(&hstack, buffer.size());
-    tree.render(&mut buffer, &' ');
+    tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "       67");
 }
 
@@ -134,6 +136,6 @@ fn test_render_fills_vstack() {
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<1, 9>::default();
     let tree = make_render_tree(&vstack, buffer.size());
-    tree.render(&mut buffer, &' ');
+    tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(collect_text(&buffer), "       67");
 }

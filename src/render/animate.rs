@@ -1,6 +1,7 @@
 use core::time::Duration;
 
 use crate::{
+    primitives::Point,
     render::{AnimationDomain, CharacterRender},
     Animation,
 };
@@ -36,8 +37,9 @@ impl<C, T: CharacterRender<C>, U: PartialEq + Clone> CharacterRender<C> for Anim
         &self,
         render_target: &mut impl crate::render::CharacterRenderTarget<Color = C>,
         style: &C,
+        offset: Point,
     ) {
-        self.subtree.render(render_target, style);
+        self.subtree.render(render_target, style, offset);
     }
 
     fn render_animated(
@@ -45,6 +47,7 @@ impl<C, T: CharacterRender<C>, U: PartialEq + Clone> CharacterRender<C> for Anim
         source: &Self,
         target: &Self,
         style: &C,
+        offset: Point,
         domain: &AnimationDomain,
     ) {
         let (end_time, duration) = if source.value != target.value {
@@ -84,6 +87,7 @@ impl<C, T: CharacterRender<C>, U: PartialEq + Clone> CharacterRender<C> for Anim
             &source.subtree,
             &target.subtree,
             style,
+            offset,
             &subdomain,
         );
     }
@@ -143,7 +147,10 @@ impl<C, T: CharacterRender<C>, U: PartialEq + Clone> CharacterRender<C> for Anim
 mod embedded_graphics_impl {
     use core::time::Duration;
 
-    use crate::render::{AnimationDomain, EmbeddedGraphicsRender};
+    use crate::{
+        primitives::Point,
+        render::{AnimationDomain, EmbeddedGraphicsRender},
+    };
 
     use embedded_graphics::prelude::PixelColor;
     use embedded_graphics_core::draw_target::DrawTarget;
@@ -153,8 +160,8 @@ mod embedded_graphics_impl {
     impl<C: PixelColor, T: EmbeddedGraphicsRender<C>, U: PartialEq + Clone>
         EmbeddedGraphicsRender<C> for Animate<T, U>
     {
-        fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &C) {
-            self.subtree.render(render_target, style);
+        fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &C, offset: Point) {
+            self.subtree.render(render_target, style, offset);
         }
 
         fn render_animated(
@@ -162,6 +169,7 @@ mod embedded_graphics_impl {
             source: &Self,
             target: &Self,
             style: &C,
+            offset: Point,
             domain: &AnimationDomain,
         ) {
             let (end_time, duration) = if source.value != target.value {
@@ -201,6 +209,7 @@ mod embedded_graphics_impl {
                 &source.subtree,
                 &target.subtree,
                 style,
+                offset,
                 &subdomain,
             );
         }

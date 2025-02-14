@@ -209,7 +209,7 @@ fn test_render_wrapping_leading() {
     let font = CharacterBufferFont {};
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let text = Text::str("This is a lengthy text here", &font).foreground_color(' ');
-    make_render_tree(&text, buffer.size()).render(&mut buffer, &' ');
+    make_render_tree(&text, buffer.size()).render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "This  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "is a  ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "length");
@@ -224,7 +224,7 @@ fn test_render_wrapping_center_even() {
     let text = Text::str("This is a lengthy text here", &font)
         .multiline_text_alignment(HorizontalTextAlignment::Center)
         .foreground_color(' ');
-    make_render_tree(&text, buffer.size()).render(&mut buffer, &' ');
+    make_render_tree(&text, buffer.size()).render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), " This ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), " is a ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "length");
@@ -239,7 +239,7 @@ fn test_render_wrapping_center_odd() {
     let text = Text::str("This is a lengthy text 12345", &font)
         .multiline_text_alignment(HorizontalTextAlignment::Center)
         .foreground_color(' ');
-    make_render_tree(&text, buffer.size()).render(&mut buffer, &' ');
+    make_render_tree(&text, buffer.size()).render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), " This ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), " is a ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "length");
@@ -254,7 +254,7 @@ fn test_render_wrapping_trailing() {
     let text = Text::str("This is a lengthy text here", &font)
         .multiline_text_alignment(HorizontalTextAlignment::Trailing)
         .foreground_color(' ');
-    make_render_tree(&text, buffer.size()).render(&mut buffer, &' ');
+    make_render_tree(&text, buffer.size()).render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "  This");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "  is a");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "length");
@@ -280,7 +280,7 @@ fn test_clipped_text_is_centered_correctly() {
     assert_eq!(layout.resolved_size, Dimensions::new(13, 2));
 
     let tree = view.render_tree(&layout, Point::zero(), &env);
-    tree.render(&mut buffer, &' ');
+    tree.render(&mut buffer, &' ', Point::zero());
 
     let lines = [
         "Several lines                           ",
@@ -310,7 +310,7 @@ fn test_clipped_text_trails_correctly() {
     assert_eq!(layout.resolved_size, Dimensions::new(13, 2));
 
     let tree = view.render_tree(&layout, Point::zero(), &env);
-    tree.render(&mut buffer, &' ');
+    tree.render(&mut buffer, &' ', Point::zero());
 
     let lines = [
         "Several lines                           ",

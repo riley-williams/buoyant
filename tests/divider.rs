@@ -32,7 +32,7 @@ fn test_horizontal_render() {
     let env = TestEnv::default().with_direction(LayoutDirection::Horizontal);
     let layout = divider.layout(&buffer.size().into(), &env);
     let tree = divider.render_tree(&layout, Point::new(0, 0), &env);
-    tree.render(&mut buffer, &' ');
+    tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0][0], '|');
     assert_eq!(buffer.text[4][0], '|');
     assert_eq!(buffer.text[0][1], ' ');
@@ -45,7 +45,7 @@ fn test_vertical_render() {
     let env = TestEnv::default().with_direction(LayoutDirection::Vertical);
     let layout = divider.layout(&buffer.size().into(), &env);
     let tree = divider.render_tree(&layout, Point::new(0, 0), &env);
-    tree.render(&mut buffer, &' ');
+    tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0][0], '-');
     assert_eq!(buffer.text[0][4], '-');
     assert_eq!(buffer.text[1][0], ' ');

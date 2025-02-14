@@ -1,7 +1,9 @@
 use super::{CharacterRender, CharacterRenderTarget};
+use crate::primitives::Point;
 
 #[cfg(feature = "embedded-graphics")]
 mod embedded_graphics_impl {
+    use crate::primitives::Point;
     use crate::render::AnimationDomain;
     use crate::render::EmbeddedGraphicsRender;
     use embedded_graphics_core::draw_target::DrawTarget;
@@ -14,9 +16,10 @@ mod embedded_graphics_impl {
                 &self,
                 target: &mut impl DrawTarget<Color = Color>,
                 style: &Color,
+                offset: Point
             ) {
                 $(
-                    self.$n.render(target, style);
+                    self.$n.render(target, style, offset);
                 )+
             }
 
@@ -25,7 +28,8 @@ mod embedded_graphics_impl {
                 source: &Self,
                 target: &Self,
                 style: &Color,
-                config: &AnimationDomain,
+                offset: Point,
+                domain: &AnimationDomain,
             ) {
                 $(
                     $type::render_animated(
@@ -33,15 +37,24 @@ mod embedded_graphics_impl {
                         &source.$n,
                         &target.$n,
                         style,
-                        config,
+                        offset,
+                        domain,
                     );
                 )+
             }
 
-            fn join(source: Self, target: Self, config: &AnimationDomain) -> Self {
+            fn join(
+                source: Self,
+                target: Self,
+                domain: &AnimationDomain
+            ) -> Self {
                 (
                     $(
-                        $type::join(source.$n, target.$n, config),
+                        $type::join(
+                            source.$n,
+                            target.$n,
+                            domain
+                        ),
                     )+
                 )
             }
@@ -101,9 +114,14 @@ mod embedded_graphics_impl {
     impl<Color: PixelColor, T: EmbeddedGraphicsRender<Color>, const N: usize>
         EmbeddedGraphicsRender<Color> for heapless::Vec<T, N>
     {
-        fn render(&self, render_target: &mut impl DrawTarget<Color = Color>, style: &Color) {
+        fn render(
+            &self,
+            render_target: &mut impl DrawTarget<Color = Color>,
+            style: &Color,
+            offset: Point,
+        ) {
             self.iter()
-                .for_each(|item| item.render(render_target, style));
+                .for_each(|item| item.render(render_target, style, offset));
         }
 
         fn render_animated(
@@ -111,21 +129,22 @@ mod embedded_graphics_impl {
             source: &Self,
             target: &Self,
             style: &Color,
-            config: &AnimationDomain,
+            offset: Point,
+            domain: &AnimationDomain,
         ) {
             source
                 .iter()
                 .zip(target.iter())
                 .for_each(|(source, target)| {
-                    T::render_animated(render_target, source, target, style, config);
+                    T::render_animated(render_target, source, target, style, offset, domain);
                 });
         }
 
-        fn join(source: Self, target: Self, config: &AnimationDomain) -> Self {
+        fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
             source
                 .into_iter()
                 .zip(target)
-                .map(|(source, target)| T::join(source, target, config))
+                .map(|(source, target)| T::join(source, target, domain))
                 .collect()
         }
     }
@@ -139,9 +158,10 @@ macro_rules! impl_char_render_for_collections {
                 &self,
                 target: &mut impl CharacterRenderTarget<Color = Color>,
                 style: &Color,
+                offset: Point
             ) {
                 $(
-                    self.$n.render(target, style);
+                    self.$n.render(target, style, offset);
                 )+
             }
 
@@ -150,6 +170,7 @@ macro_rules! impl_char_render_for_collections {
                 source: &Self,
                 target: &Self,
                 style: &Color,
+                offset: Point,
                 config: &super::AnimationDomain,
             ) {
                 $(
@@ -158,15 +179,24 @@ macro_rules! impl_char_render_for_collections {
                         &source.$n,
                         &target.$n,
                         style,
+                        offset,
                         config,
                     );
                 )+
             }
 
-            fn join(source: Self, target: Self, config: &super::AnimationDomain) -> Self {
+            fn join(
+                source: Self,
+                target: Self,
+                domain: &super::AnimationDomain
+            ) -> Self {
                 (
                     $(
-                        $type::join(source.$n, target.$n, config),
+                        $type::join(
+                            source.$n,
+                            target.$n,
+                            domain
+                        ),
                     )+
                 )
             }
@@ -226,9 +256,14 @@ impl_char_render_for_collections!(
 impl<Color, T: CharacterRender<Color>, const N: usize> CharacterRender<Color>
     for heapless::Vec<T, N>
 {
-    fn render(&self, render_target: &mut impl CharacterRenderTarget<Color = Color>, style: &Color) {
+    fn render(
+        &self,
+        render_target: &mut impl CharacterRenderTarget<Color = Color>,
+        style: &Color,
+        offset: Point,
+    ) {
         self.iter()
-            .for_each(|item| item.render(render_target, style));
+            .for_each(|item| item.render(render_target, style, offset));
     }
 
     fn render_animated(
@@ -236,21 +271,22 @@ impl<Color, T: CharacterRender<Color>, const N: usize> CharacterRender<Color>
         source: &Self,
         target: &Self,
         style: &Color,
+        offset: Point,
         config: &super::AnimationDomain,
     ) {
         source
             .iter()
             .zip(target.iter())
             .for_each(|(source, target)| {
-                T::render_animated(render_target, source, target, style, config);
+                T::render_animated(render_target, source, target, style, offset, config);
             });
     }
 
-    fn join(source: Self, target: Self, config: &super::AnimationDomain) -> Self {
+    fn join(source: Self, target: Self, domain: &super::AnimationDomain) -> Self {
         source
             .into_iter()
             .zip(target)
-            .map(|(source, target)| T::join(source, target, config))
+            .map(|(source, target)| T::join(source, target, domain))
             .collect()
     }
 }

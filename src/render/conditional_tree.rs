@@ -1,5 +1,5 @@
 use crate::{
-    primitives::Size,
+    primitives::{Point, Size},
     render::{CharacterRender, CharacterRenderTarget},
 };
 
@@ -17,6 +17,7 @@ pub enum Subtree<T, F> {
 
 #[cfg(feature = "embedded-graphics")]
 mod embedded_graphics_impl {
+    use crate::primitives::Point;
     use crate::render::EmbeddedGraphicsRender;
 
     use super::{ConditionalTree, Subtree};
@@ -26,21 +27,21 @@ mod embedded_graphics_impl {
     impl<C: PixelColor, T: EmbeddedGraphicsRender<C>, F: EmbeddedGraphicsRender<C>>
         EmbeddedGraphicsRender<C> for ConditionalTree<T, F>
     {
-        fn render(&self, target: &mut impl DrawTarget<Color = C>, style: &C) {
+        fn render(&self, target: &mut impl DrawTarget<Color = C>, style: &C, offset: Point) {
             match &self.subtree {
-                Subtree::True(true_tree) => true_tree.render(target, style),
-                Subtree::False(false_tree) => false_tree.render(target, style),
+                Subtree::True(true_tree) => true_tree.render(target, style, offset),
+                Subtree::False(false_tree) => false_tree.render(target, style, offset),
             }
         }
 
-        fn join(source: Self, target: Self, config: &crate::render::AnimationDomain) -> Self {
+        fn join(source: Self, target: Self, domain: &crate::render::AnimationDomain) -> Self {
             match (source.subtree, target.subtree) {
                 (Subtree::True(source_tree), Subtree::True(target_tree)) => Self {
-                    subtree: Subtree::True(T::join(source_tree, target_tree, config)),
+                    subtree: Subtree::True(T::join(source_tree, target_tree, domain)),
                     size: target.size,
                 },
                 (Subtree::False(source_tree), Subtree::False(target_tree)) => Self {
-                    subtree: Subtree::False(F::join(source_tree, target_tree, config)),
+                    subtree: Subtree::False(F::join(source_tree, target_tree, domain)),
                     size: target.size,
                 },
                 (_, target_tree) => Self {
@@ -53,21 +54,34 @@ mod embedded_graphics_impl {
 }
 
 impl<C, T: CharacterRender<C>, F: CharacterRender<C>> CharacterRender<C> for ConditionalTree<T, F> {
-    fn render(&self, target: &mut impl CharacterRenderTarget<Color = C>, style: &C) {
+    fn render(&self, target: &mut impl CharacterRenderTarget<Color = C>, style: &C, offset: Point) {
         match &self.subtree {
-            Subtree::True(true_tree) => true_tree.render(target, style),
-            Subtree::False(false_tree) => false_tree.render(target, style),
+            Subtree::True(true_tree) => true_tree.render(target, style, offset),
+            Subtree::False(false_tree) => false_tree.render(target, style, offset),
         }
     }
 
-    fn join(source: Self, target: Self, config: &crate::render::AnimationDomain) -> Self {
+    fn render_animated(
+        render_target: &mut impl CharacterRenderTarget<Color = C>,
+        source: &Self,
+        target: &Self,
+        style: &C,
+        offset: Point,
+
+        config: &crate::render::AnimationDomain,
+    ) {
+        let intermediate = Self::join(source.clone(), target.clone(), config);
+        intermediate.render(render_target, style, offset);
+    }
+
+    fn join(source: Self, target: Self, domain: &crate::render::AnimationDomain) -> Self {
         match (source.subtree, target.subtree) {
-            (Subtree::True(source_tree), Subtree::True(target_tree)) => Self {
-                subtree: Subtree::True(T::join(source_tree, target_tree, config)),
+            (Subtree::True(s), Subtree::True(t)) => Self {
+                subtree: Subtree::True(T::join(s, t, domain)),
                 size: target.size,
             },
-            (Subtree::False(source_tree), Subtree::False(target_tree)) => Self {
-                subtree: Subtree::False(F::join(source_tree, target_tree, config)),
+            (Subtree::False(s), Subtree::False(t)) => Self {
+                subtree: Subtree::False(F::join(s, t, domain)),
                 size: target.size,
             },
             (_, target_tree) => Self {

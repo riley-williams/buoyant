@@ -11,6 +11,7 @@ mod capsule;
 mod circle;
 pub mod collections;
 mod conditional_tree;
+mod offset;
 mod one_of;
 mod owned_text;
 mod rect;
@@ -22,6 +23,7 @@ pub use animate::Animate;
 pub use capsule::Capsule;
 pub use circle::Circle;
 pub use conditional_tree::{ConditionalTree, Subtree};
+pub use offset::Offset;
 pub use one_of::{OneOf2, OneOf3};
 pub use owned_text::OwnedText;
 pub use rect::Rect;
@@ -62,7 +64,12 @@ use embedded_graphics_core::draw_target::DrawTarget;
 #[cfg(feature = "embedded-graphics")]
 pub trait EmbeddedGraphicsRender<Color: PixelColor>: Sized + Clone {
     /// Render the view to the screen
-    fn render(&self, render_target: &mut impl DrawTarget<Color = Color>, style: &Color);
+    fn render(
+        &self,
+        render_target: &mut impl DrawTarget<Color = Color>,
+        style: &Color,
+        offset: Point,
+    );
 
     /// Render view and all subviews, animating from a source view to a target view
     fn render_animated(
@@ -70,21 +77,21 @@ pub trait EmbeddedGraphicsRender<Color: PixelColor>: Sized + Clone {
         source: &Self,
         target: &Self,
         style: &Color,
-        config: &AnimationDomain,
+        offset: Point,
+        domain: &AnimationDomain,
     ) {
-        let intermediate = Self::join(source.clone(), target.clone(), config);
-        // TODO: interpolate styles
-        intermediate.render(render_target, style);
+        let intermediate = Self::join(source.clone(), target.clone(), domain);
+        intermediate.render(render_target, style, offset);
     }
 
     /// Produces a new tree by consuming and interpolating between two partially animated trees
-    fn join(source: Self, target: Self, config: &AnimationDomain) -> Self;
+    fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self;
 }
 
 #[cfg(feature = "embedded-graphics")]
 impl<C: PixelColor> EmbeddedGraphicsRender<C> for () {
     /// Render the view to the screen
-    fn render(&self, _render_target: &mut impl DrawTarget<Color = C>, _style: &C) {}
+    fn render(&self, _render_target: &mut impl DrawTarget<Color = C>, _style: &C, _offset: Point) {}
 
     /// Render view and all subviews, animating from a source view to a target view
     fn render_animated(
@@ -92,17 +99,24 @@ impl<C: PixelColor> EmbeddedGraphicsRender<C> for () {
         _source: &Self,
         _target: &Self,
         _style: &C,
-        _config: &AnimationDomain,
+        _offset: Point,
+        _domain: &AnimationDomain,
     ) {
     }
 
     /// Produces a new tree by consuming and interpolating between two partially animated trees
-    fn join(_source: Self, _target: Self, _config: &AnimationDomain) -> Self {}
+    fn join(_source: Self, _target: Self, _domain: &AnimationDomain) -> Self {}
 }
 
 impl<C> CharacterRender<C> for () {
     /// Render the view to the screen
-    fn render(&self, _render_target: &mut impl CharacterRenderTarget<Color = C>, _style: &C) {}
+    fn render(
+        &self,
+        _render_target: &mut impl CharacterRenderTarget<Color = C>,
+        _style: &C,
+        _offset: Point,
+    ) {
+    }
 
     /// Render view and all subviews, animating from a source view to a target view
     fn render_animated(
@@ -110,12 +124,13 @@ impl<C> CharacterRender<C> for () {
         _source: &Self,
         _target: &Self,
         _style: &C,
-        _config: &AnimationDomain,
+        _offset: Point,
+        _domain: &AnimationDomain,
     ) {
     }
 
     /// Produces a new tree by consuming and interpolating between two partially animated trees
-    fn join(_source: Self, _target: Self, _config: &AnimationDomain) -> Self {}
+    fn join(_source: Self, _target: Self, _domain: &AnimationDomain) -> Self {}
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -162,7 +177,12 @@ pub trait CharacterRenderTarget {
 /// A view that can be rendered to an `embedded_graphics` target
 pub trait CharacterRender<Color>: Sized + Clone {
     /// Render the view to the screen
-    fn render(&self, render_target: &mut impl CharacterRenderTarget<Color = Color>, style: &Color);
+    fn render(
+        &self,
+        render_target: &mut impl CharacterRenderTarget<Color = Color>,
+        style: &Color,
+        offset: Point,
+    );
 
     /// Render view and all subviews, animating from a source view to a target view
     fn render_animated(
@@ -170,11 +190,11 @@ pub trait CharacterRender<Color>: Sized + Clone {
         source: &Self,
         target: &Self,
         style: &Color,
+        offset: Point,
         domain: &AnimationDomain,
     ) {
         let intermediate = Self::join(source.clone(), target.clone(), domain);
-        // TODO: interpolate styles
-        intermediate.render(render_target, style);
+        intermediate.render(render_target, style, offset);
     }
 
     /// Produces a new tree by consuming and interpolating between two partially animated trees
