@@ -26,11 +26,12 @@ mod embedded_graphics_impl {
     use embedded_graphics_core::draw_target::DrawTarget;
 
     impl<C: PixelColor, const N: usize> EmbeddedGraphicsRender<C> for OwnedText<'_, N, MonoFont<'_>> {
-        fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &C) {
+        fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &C, offset: Point) {
             if self.size.area() == 0 {
                 return;
             }
 
+            let origin = self.origin + offset;
             let line_height = self.font.line_height() as i16;
 
             let baseline = self.font.baseline() as i16;
@@ -44,7 +45,7 @@ mod embedded_graphics_impl {
 
                 let x = self.alignment.align(self.size.width as i16, width as i16);
                 // embedded_graphics draws text at the baseline
-                let txt_start = self.origin + Point::new(x, height + baseline);
+                let txt_start = origin + Point::new(x, height + baseline);
                 _ = embedded_graphics::text::Text::new(line, txt_start.into(), style)
                     .draw(render_target);
 

@@ -1,3 +1,4 @@
+use buoyant::primitives::Point;
 use buoyant::render::{CharacterRender as _, CharacterRenderTarget};
 use buoyant::{
     environment::DefaultEnvironment,
@@ -60,7 +61,7 @@ fn main() {
         for height in 1..100 {
             size = Size::new(width, height);
             let tree = make_render_tree(&stack, size);
-            tree.render(&mut target, &' ');
+            tree.render(&mut target, &' ', Point::zero());
         }
     }
 }

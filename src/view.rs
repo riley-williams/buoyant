@@ -22,7 +22,9 @@ pub use text::{HorizontalTextAlignment, Text};
 pub use vstack::VStack;
 pub use zstack::ZStack;
 
-use modifier::{Animated, FixedFrame, FlexFrame, ForegroundStyle, Padding, Priority};
+use modifier::{
+    Animated, FixedFrame, FlexFrame, ForegroundStyle, GeometryGroup, Padding, Priority,
+};
 
 use crate::{
     environment::DefaultEnvironment,
@@ -62,6 +64,10 @@ pub trait LayoutExtensions: Sized {
 
     fn animated<T: PartialEq + Clone>(self, animation: Animation, value: T) -> Animated<Self, T> {
         Animated::new(self, animation, value)
+    }
+
+    fn geometry_group(self) -> GeometryGroup<Self> {
+        GeometryGroup::new(self)
     }
 }
 

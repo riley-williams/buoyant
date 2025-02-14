@@ -21,10 +21,11 @@ mod embedded_graphics_impl {
     use super::{Point, RoundedRect, Size};
 
     impl<C: PixelColor> EmbeddedGraphicsRender<C> for RoundedRect {
-        fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &C) {
+        fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &C, offset: Point) {
+            let top_left = (self.origin + offset).into();
             _ = embedded_graphics::primitives::RoundedRectangle::new(
                 embedded_graphics::primitives::Rectangle {
-                    top_left: self.origin.into(),
+                    top_left,
                     size: self.size.into(),
                 },
                 embedded_graphics::primitives::CornerRadii::new(
