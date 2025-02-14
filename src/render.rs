@@ -55,10 +55,6 @@ impl<C, T: NullRender + Layout> Renderable<C> for T {
     }
 }
 
-pub struct CoordinateTransform {
-    pub offset: Point,
-}
-
 #[cfg(feature = "embedded-graphics")]
 use embedded_graphics::prelude::PixelColor;
 #[cfg(feature = "embedded-graphics")]
