@@ -81,7 +81,6 @@ pub trait EmbeddedGraphicsRender<Color: PixelColor>: Sized + Clone {
         domain: &AnimationDomain,
     ) {
         let intermediate = Self::join(source.clone(), target.clone(), domain);
-        // TODO: interpolate styles
         intermediate.render(render_target, style, offset);
     }
 
@@ -195,7 +194,6 @@ pub trait CharacterRender<Color>: Sized + Clone {
         domain: &AnimationDomain,
     ) {
         let intermediate = Self::join(source.clone(), target.clone(), domain);
-        // TODO: interpolate styles
         intermediate.render(render_target, style, offset);
     }
 
