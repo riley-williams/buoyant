@@ -87,7 +87,7 @@ mod embedded_graphics_render {
             }
         }
 
-        fn join(source: Self, target: Self, _domain: &crate::render::AnimationDomain) -> Self {
+        fn join(_source: Self, target: Self, _domain: &crate::render::AnimationDomain) -> Self {
             // jump to target
             target
         }
@@ -108,7 +108,7 @@ mod embedded_graphics_render {
             }
         }
 
-        fn join(source: Self, target: Self, _domain: &crate::render::AnimationDomain) -> Self {
+        fn join(_source: Self, target: Self, _domain: &crate::render::AnimationDomain) -> Self {
             // jump to target
             target
         }

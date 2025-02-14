@@ -1,5 +1,4 @@
 use crate::{
-    pixel::Interpolate as _,
     primitives::{Point, Size},
     render::{CharacterRender, CharacterRenderTarget},
 };
