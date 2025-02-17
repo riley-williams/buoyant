@@ -1,7 +1,7 @@
 use crate::{
     environment::LayoutEnvironment,
     layout::{HorizontalAlignment, Layout, ResolvedLayout, VerticalAlignment},
-    primitives::{Point, ProposedDimensions},
+    primitives::{Point, ProposedDimension, ProposedDimensions},
     render::Renderable,
 };
 
@@ -60,9 +60,25 @@ macro_rules! impl_layout_for_zstack {
                 env: &impl LayoutEnvironment,
             ) -> ResolvedLayout<Self::Sublayout> {
                 $(
-                    let [<layout$n>] = self.items.$n.layout(offer, env);
+                    let mut [<layout$n>] = self.items.$n.layout(offer, env);
                 )+
-                let size = layout0.resolved_size $(.union([<layout$n>].resolved_size))+;
+                let mut size = layout0.resolved_size $(.union([<layout$n>].resolved_size))+;
+
+                if matches!(offer.width, ProposedDimension::Compact) || matches!(offer.height, ProposedDimension::Compact) {
+                    // FIXME: The `.into()` here is almost certainly wrong.
+                    // While it would be unusual for a view to respond requesting infinite
+                    // width or height in response to a conmpact request, this does not
+                    // effectively handle it. This also increases the likelyhood of overflow
+                    // due to the way Dimension is implemented
+                    let offer = ProposedDimensions {
+                        width: ProposedDimension::Exact(size.width.into()),
+                        height: ProposedDimension::Exact(size.height.into()),
+                    };
+                    $(
+                        [<layout$n>] = self.items.$n.layout(&offer, env);
+                    )+
+                    size = layout0.resolved_size $(.union([<layout$n>].resolved_size))+;
+                }
 
                 ResolvedLayout {
                     sublayouts: ($(

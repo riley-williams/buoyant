@@ -5,8 +5,8 @@ use crate::{
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ShadeSubtree<C, T> {
-    style: C,
-    subtree: T,
+    pub style: C,
+    pub subtree: T,
 }
 
 impl<C, T> ShadeSubtree<C, T> {

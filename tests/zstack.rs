@@ -5,6 +5,8 @@ use buoyant::primitives::{Dimensions, Point, Size};
 use buoyant::render::CharacterRender;
 use buoyant::render::CharacterRenderTarget;
 use buoyant::render_target::FixedTextBuffer;
+use buoyant::view::padding::Edges;
+use buoyant::view::shape::Rectangle;
 use buoyant::view::{
     make_render_tree, Divider, LayoutExtensions, RenderExtensions as _, Spacer, Text, ZStack,
 };
@@ -20,7 +22,7 @@ fn test_layout_fills_two() {
 
 #[test]
 fn test_oversized_layout_2() {
-    let stack = ZStack::new((Divider::default().padding(2), Spacer::default()));
+    let stack = ZStack::new((Divider::default().padding(Edges::All, 2), Spacer::default()));
     let offer = Size::new(0, 10);
     let env = DefaultEnvironment::non_animated();
     let layout = stack.layout(&offer.into(), &env);
@@ -211,4 +213,52 @@ fn test_render_two_bottom_trailing_alignment() {
     assert_eq!(buffer.text[2].iter().collect::<String>(), "c xxx ");
     assert_eq!(buffer.text[3].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[4].iter().collect::<String>(), "      ");
+}
+
+/// When proposing compact width or height, the ``ZStack`` should first resolve child
+/// dimensions with the original offer and then offer the union of the resolved
+/// child sizes again.
+#[test]
+fn compact_proposal_offers_max_child_dimension() {
+    let font = CharacterBufferFont {};
+    let stack = ZStack::new((
+        Rectangle.foreground_color('x'),
+        Text::str("|||", &font).frame().with_height(15),
+        Text::str("_\n_\n_", &font).frame().with_width(15),
+    ))
+    .fixed_size(true, true);
+    // This needs to be bigger than the magic number (10)
+    let mut buffer = FixedTextBuffer::<15, 15>::default();
+    let tree = make_render_tree(&stack, buffer.size());
+    tree.render(&mut buffer, &' ', Point::zero());
+    assert_eq!(buffer.text[0].iter().collect::<String>(), "xxxxxxxxxxxxxxx");
+    assert_eq!(buffer.text[1].iter().collect::<String>(), "xxxxxxxxxxxxxxx");
+    assert_eq!(buffer.text[2].iter().collect::<String>(), "xxxxxxxxxxxxxxx");
+    assert_eq!(buffer.text[3].iter().collect::<String>(), "xxxxxxxxxxxxxxx");
+    assert_eq!(buffer.text[4].iter().collect::<String>(), "xxxxxxxxxxxxxxx");
+    assert_eq!(buffer.text[5].iter().collect::<String>(), "xxxxxxxxxxxxxxx");
+    assert_eq!(buffer.text[6].iter().collect::<String>(), "xxxxxxx_xxxxxxx");
+    assert_eq!(buffer.text[7].iter().collect::<String>(), "xxxxxx|_|xxxxxx");
+    assert_eq!(buffer.text[8].iter().collect::<String>(), "xxxxxxx_xxxxxxx");
+    assert_eq!(buffer.text[9].iter().collect::<String>(), "xxxxxxxxxxxxxxx");
+    assert_eq!(
+        buffer.text[10].iter().collect::<String>(),
+        "xxxxxxxxxxxxxxx"
+    );
+    assert_eq!(
+        buffer.text[11].iter().collect::<String>(),
+        "xxxxxxxxxxxxxxx"
+    );
+    assert_eq!(
+        buffer.text[12].iter().collect::<String>(),
+        "xxxxxxxxxxxxxxx"
+    );
+    assert_eq!(
+        buffer.text[13].iter().collect::<String>(),
+        "xxxxxxxxxxxxxxx"
+    );
+    assert_eq!(
+        buffer.text[14].iter().collect::<String>(),
+        "xxxxxxxxxxxxxxx"
+    );
 }

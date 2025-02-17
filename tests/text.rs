@@ -299,7 +299,8 @@ fn test_clipped_text_trails_correctly() {
         &font,
     )
     .multiline_text_alignment(HorizontalTextAlignment::Trailing)
-    .frame(None, Some(2), None, None) // constrain to 2 pts tall
+    .frame()
+    .with_height(2) // constrain to 2 pts tall
     .foreground_color(' ');
 
     let env = DefaultEnvironment::non_animated();

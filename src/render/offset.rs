@@ -6,8 +6,8 @@ use super::{AnimationDomain, CharacterRender, CharacterRenderTarget};
 /// The offset is animated, resulting in all children moving in unison.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Offset<T> {
-    offset: Point,
-    subtree: T,
+    pub offset: Point,
+    pub subtree: T,
 }
 
 impl<T> Offset<T> {
@@ -16,6 +16,7 @@ impl<T> Offset<T> {
         Self { offset, subtree }
     }
 }
+
 impl<T: CharacterRender<C>, C> CharacterRender<C> for Offset<T> {
     fn render(
         &self,
