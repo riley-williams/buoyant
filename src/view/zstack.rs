@@ -7,6 +7,23 @@ use crate::{
 
 use paste::paste;
 
+/// A stack of heterogeneous views that arranges its views from back to front.
+/// The parent size is first offered to each subview. If any offered dimension is
+/// ``ProposedDimension::Compact``, ``ZStack`` will offer a new frame that is the
+/// union of all the resolved frame sizes from the previous pass.
+///
+/// ```rust
+/// /// A fish at the bottom right corner of an 'o'cean
+/// let font = CharacterBufferFont {};
+/// let stack = ZStack::new((
+///         Rectangle.frame(),
+///         Text::str("><>", &font),
+///     ))
+///     .with_vertical_alignment(VerticalAlignment::Bottom)
+///     .with_horizontal_alignment(HorizontalAlignment::Trailing)
+///     .foreground_color('o');
+/// ```
+#[derive(Debug, Clone)]
 pub struct ZStack<T> {
     items: T,
     horizontal_alignment: HorizontalAlignment,
@@ -67,8 +84,8 @@ macro_rules! impl_layout_for_zstack {
                 if matches!(offer.width, ProposedDimension::Compact) || matches!(offer.height, ProposedDimension::Compact) {
                     // FIXME: The `.into()` here is almost certainly wrong.
                     // While it would be unusual for a view to respond requesting infinite
-                    // width or height in response to a conmpact request, this does not
-                    // effectively handle it. This also increases the likelyhood of overflow
+                    // width or height in response to a compact request, this does not
+                    // effectively handle it. This also increases the liklihood of overflow
                     // due to the way Dimension is implemented
                     let offer = ProposedDimensions {
                         width: ProposedDimension::Exact(size.width.into()),

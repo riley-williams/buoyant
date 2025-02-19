@@ -1,5 +1,6 @@
 #![no_std]
 #![feature(type_alias_impl_trait)]
+#![warn(missing_debug_implementations)]
 
 #[cfg(any(test, feature = "std"))]
 extern crate std;
@@ -11,6 +12,7 @@ pub mod pixel;
 pub mod primitives;
 pub mod render;
 pub mod render_target;
+#[warn(missing_docs, rustdoc::missing_doc_code_examples)]
 pub mod view;
 
 #[non_exhaustive]
