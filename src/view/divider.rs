@@ -5,6 +5,7 @@ use crate::{
     render::Renderable,
 };
 
+#[derive(Debug, Clone)]
 pub struct Divider {
     pub weight: u16,
 }

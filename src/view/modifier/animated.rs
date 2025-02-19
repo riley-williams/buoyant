@@ -4,6 +4,7 @@ use crate::{
     Animation,
 };
 
+#[derive(Debug, Clone)]
 pub struct Animated<View, Value> {
     view: View,
     animation: Animation,

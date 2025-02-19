@@ -6,7 +6,7 @@ use crate::{
 };
 
 /// Sets a foreground style
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ForegroundStyle<V, S> {
     inner: V,
     style: S,

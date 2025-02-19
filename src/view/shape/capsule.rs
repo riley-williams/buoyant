@@ -5,6 +5,7 @@ use crate::{
     render::Renderable,
 };
 
+/// A capsule primitive, oriented horizontally
 #[derive(Debug, Copy, Clone, PartialEq, Default)]
 pub struct Capsule;
 

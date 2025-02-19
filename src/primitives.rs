@@ -1,9 +1,9 @@
 mod dimension;
 pub use dimension::*;
+mod interpolate;
+pub use interpolate::Interpolate;
 
 use core::cmp::max;
-
-use crate::pixel::Interpolate;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct Size {
@@ -115,10 +115,12 @@ impl Interpolate for Point {
     #[must_use]
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
         Point {
-            x: (((i32::from(amount) * i32::from(to.x)) + (i32::from(255 - amount) * i32::from(from.x))) / 255)
-                as i16,
-            y: (((i32::from(amount) * i32::from(to.y)) + (i32::from(255 - amount) * i32::from(from.y))) / 255)
-                as i16,
+            x: (((i32::from(amount) * i32::from(to.x))
+                + (i32::from(255 - amount) * i32::from(from.x)))
+                / 255) as i16,
+            y: (((i32::from(amount) * i32::from(to.y))
+                + (i32::from(255 - amount) * i32::from(from.y)))
+                / 255) as i16,
         }
     }
 }
@@ -172,7 +174,7 @@ impl From<embedded_graphics_core::primitives::Rectangle> for Frame {
 
 #[cfg(test)]
 mod tests {
-    use crate::pixel::Interpolate as _;
+    use crate::primitives::Interpolate as _;
 
     use super::Point;
 

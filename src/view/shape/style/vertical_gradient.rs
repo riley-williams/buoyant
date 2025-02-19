@@ -1,4 +1,4 @@
-use crate::pixel::Interpolate;
+use crate::primitives::Interpolate;
 
 use super::FillStyle;
 

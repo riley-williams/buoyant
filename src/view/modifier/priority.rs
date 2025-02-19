@@ -8,6 +8,7 @@ use crate::{
 /// A view that adds padding around a child view.
 /// When the space offered to the padding is less than 2* the padding, the padding will
 /// not be truncated and will return a size larger than the offer.
+#[derive(Debug, Clone)]
 pub struct Priority<T> {
     priority: u16,
     child: T,

@@ -17,7 +17,7 @@ impl<C, T> ShadeSubtree<C, T> {
 
 #[cfg(feature = "embedded-graphics")]
 mod embedded_graphics_impl {
-    use crate::{pixel::Interpolate, primitives::Point, render::EmbeddedGraphicsRender};
+    use crate::{primitives::Interpolate, primitives::Point, render::EmbeddedGraphicsRender};
 
     use super::{AnimationDomain, ShadeSubtree};
     use embedded_graphics::prelude::PixelColor;

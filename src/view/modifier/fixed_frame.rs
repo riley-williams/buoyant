@@ -5,6 +5,7 @@ use crate::{
     render::Renderable,
 };
 
+#[derive(Debug, Clone)]
 pub struct FixedFrame<T> {
     width: Option<u16>,
     height: Option<u16>,
