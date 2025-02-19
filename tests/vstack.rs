@@ -5,6 +5,7 @@ use buoyant::primitives::{Dimensions, Point, ProposedDimension, ProposedDimensio
 use buoyant::render::CharacterRender;
 use buoyant::render::CharacterRenderTarget;
 use buoyant::render_target::FixedTextBuffer;
+use buoyant::view::padding::Edges;
 use buoyant::view::{make_render_tree, RenderExtensions as _};
 use buoyant::view::{
     shape::Rectangle, Divider, EmptyView, HStack, HorizontalTextAlignment, LayoutExtensions,
@@ -26,7 +27,7 @@ fn test_greedy_layout_2() {
 /// The Stack should never exceed the offer size.
 #[test]
 fn test_oversized_layout_2() {
-    let vstack = VStack::new((Divider::default().padding(2), Spacer::default()));
+    let vstack = VStack::new((Divider::default().padding(Edges::All, 2), Spacer::default()));
     let offer = Size::new(0, 10);
     let env = DefaultEnvironment::non_animated();
     let layout = vstack.layout(&offer.into(), &env);
@@ -37,7 +38,7 @@ fn test_oversized_layout_2() {
 fn test_oversized_layout_3() {
     let vstack = VStack::new((
         Divider::default(),
-        Divider::default().padding(2),
+        Divider::default().padding(Edges::All, 2),
         Spacer::default(),
     ));
     let offer = Size::new(0, 10);
@@ -49,9 +50,9 @@ fn test_oversized_layout_3() {
 #[test]
 fn infinite_height_offer_results_in_sum_of_subview_heights() {
     let vstack = VStack::new((
-        Rectangle.frame(Some(3), Some(8), None, None),
-        Rectangle.frame(Some(1), Some(40), None, None),
-        Rectangle.frame(Some(8), Some(200), None, None),
+        Rectangle.frame().with_width(3).with_height(8),
+        Rectangle.frame().with_width(1).with_height(40),
+        Rectangle.frame().with_width(8).with_height(200),
     ))
     .with_spacing(1);
     let offer = ProposedDimensions {
@@ -66,9 +67,9 @@ fn infinite_height_offer_results_in_sum_of_subview_heights() {
 #[test]
 fn compact_height_offer_results_in_sum_of_subview_heights() {
     let vstack = VStack::new((
-        Rectangle.frame(Some(3), Some(8), None, None),
-        Rectangle.frame(Some(1), Some(40), None, None),
-        Rectangle.frame(Some(8), Some(200), None, None),
+        Rectangle.frame().with_width(3).with_height(8),
+        Rectangle.frame().with_width(1).with_height(40),
+        Rectangle.frame().with_width(8).with_height(200),
     ))
     .with_spacing(1);
     let offer = ProposedDimensions {
@@ -83,9 +84,9 @@ fn compact_height_offer_results_in_sum_of_subview_heights() {
 #[test]
 fn infinite_height_offer_results_in_sum_of_subview_heights_minus_empties() {
     let vstack = VStack::new((
-        Rectangle.frame(Some(3), Some(8), None, None),
+        Rectangle.frame().with_width(3).with_height(8),
         EmptyView,
-        Rectangle.frame(Some(8), Some(200), None, None),
+        Rectangle.frame().with_width(8).with_height(200),
     ))
     .with_spacing(1);
     let offer = ProposedDimensions {
@@ -100,9 +101,9 @@ fn infinite_height_offer_results_in_sum_of_subview_heights_minus_empties() {
 #[test]
 fn compact_height_offer_results_in_sum_of_subview_heights_minus_empties() {
     let vstack = VStack::new((
-        Rectangle.frame(Some(3), Some(8), None, None),
+        Rectangle.frame().with_width(3).with_height(8),
         EmptyView,
-        Rectangle.frame(Some(8), Some(200), None, None),
+        Rectangle.frame().with_width(8).with_height(200),
     ))
     .with_spacing(1);
     let offer = ProposedDimensions {
@@ -422,7 +423,7 @@ fn test_flexible_layout_fills_frame_10k() {
             &font,
         )
             .multiline_text_alignment(HorizontalTextAlignment::Center)
-            .padding(2),
+            .padding(Edges::All, 2),
         Divider::default(),
         )),
     ));

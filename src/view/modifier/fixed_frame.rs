@@ -14,19 +14,41 @@ pub struct FixedFrame<T> {
 }
 
 impl<T> FixedFrame<T> {
-    pub fn new(
-        child: T,
-        width: Option<u16>,
-        height: Option<u16>,
-        horizontal_alignment: Option<HorizontalAlignment>,
-        vertical_alignment: Option<VerticalAlignment>,
-    ) -> Self {
+    pub fn new(child: T) -> Self {
         Self {
-            width,
-            height,
-            horizontal_alignment,
-            vertical_alignment,
+            width: None,
+            height: None,
+            horizontal_alignment: None,
+            vertical_alignment: None,
             child,
+        }
+    }
+
+    pub fn with_width(self, width: u16) -> Self {
+        Self {
+            width: Some(width),
+            ..self
+        }
+    }
+
+    pub fn with_height(self, height: u16) -> Self {
+        Self {
+            height: Some(height),
+            ..self
+        }
+    }
+
+    pub fn with_horizontal_alignment(self, alignment: HorizontalAlignment) -> Self {
+        Self {
+            horizontal_alignment: Some(alignment),
+            ..self
+        }
+    }
+
+    pub fn with_vertical_alignment(self, alignment: VerticalAlignment) -> Self {
+        Self {
+            vertical_alignment: Some(alignment),
+            ..self
         }
     }
 }

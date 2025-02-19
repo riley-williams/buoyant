@@ -2,8 +2,8 @@ use crate::primitives::{Point, Size};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Capsule {
-    origin: Point,
-    size: Size,
+    pub origin: Point,
+    pub size: Size,
 }
 
 impl Capsule {

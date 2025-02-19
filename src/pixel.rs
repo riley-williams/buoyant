@@ -1,31 +1,3 @@
-use crate::primitives::Point;
-
-pub struct Pixel<C> {
-    pub point: Point,
-    pub color: C,
-}
-
-#[cfg(feature = "embedded-graphics")]
-impl<T: embedded_graphics_core::pixelcolor::PixelColor> From<Pixel<T>>
-    for embedded_graphics_core::Pixel<T>
-{
-    fn from(value: Pixel<T>) -> Self {
-        embedded_graphics_core::Pixel(value.point.into(), value.color)
-    }
-}
-
-#[cfg(feature = "embedded-graphics")]
-impl<T: embedded_graphics_core::pixelcolor::PixelColor> From<embedded_graphics_core::Pixel<T>>
-    for Pixel<T>
-{
-    fn from(value: embedded_graphics_core::Pixel<T>) -> Self {
-        Pixel {
-            point: value.0.into(),
-            color: value.1,
-        }
-    }
-}
-
 pub trait Interpolate: Copy + PartialEq {
     /// Interpolate between two colors
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
@@ -39,13 +11,15 @@ pub trait Interpolate: Copy + PartialEq {
 
 impl Interpolate for u16 {
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
-        (((u32::from(amount) * u32::from(to)) + (u32::from(255 - amount) * u32::from(from))) / 255) as u16
+        (((u32::from(amount) * u32::from(to)) + (u32::from(255 - amount) * u32::from(from))) / 255)
+            as u16
     }
 }
 
 impl Interpolate for i16 {
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
-        (((i32::from(amount) * i32::from(to)) + (i32::from(255 - amount) * i32::from(from))) / 255) as i16
+        (((i32::from(amount) * i32::from(to)) + (i32::from(255 - amount) * i32::from(from))) / 255)
+            as i16
     }
 }
 
@@ -112,7 +86,7 @@ fn interpolate_crossterm_colors(
 mod embedded_graphics_impl {
 
     use super::Interpolate;
-    use embedded_graphics::primitives::PrimitiveStyle;
+    use embedded_graphics::{pixelcolor::Rgb888, primitives::PrimitiveStyle};
     use embedded_graphics_core::pixelcolor::{Rgb565, RgbColor};
 
     impl Interpolate for embedded_graphics_core::pixelcolor::BinaryColor {}
@@ -131,10 +105,26 @@ mod embedded_graphics_impl {
         }
     }
 
+    impl Interpolate for embedded_graphics_core::pixelcolor::Rgb888 {
+        fn interpolate(from: Self, to: Self, amount: u8) -> Self {
+            if amount == 255 {
+                return to;
+            }
+            let t_fixed = i16::from(amount);
+
+            let r = interpolate_channel(from.r(), to.r(), t_fixed);
+            let g = interpolate_channel(from.g(), to.g(), t_fixed);
+            let b = interpolate_channel(from.b(), to.b(), t_fixed);
+            Rgb888::new(r, g, b)
+        }
+    }
+
     #[inline]
     /// Interpolate between two colors, using a u16 between 0 and 256
     fn interpolate_channel(a: u8, b: u8, t: i16) -> u8 {
-        (i16::from(a) + ((i16::from(b).wrapping_sub(i16::from(a))).wrapping_mul(t) as u16 >> 8) as i16) as u8
+        (i16::from(a)
+            + ((i16::from(b).wrapping_sub(i16::from(a))).wrapping_mul(t) as u16 >> 8) as i16)
+            as u8
     }
 
     impl<C: embedded_graphics::prelude::PixelColor + Interpolate> Interpolate for PrimitiveStyle<C> {

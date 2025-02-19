@@ -1,5 +1,6 @@
 use buoyant::primitives::Point;
 use buoyant::render::{CharacterRender as _, CharacterRenderTarget};
+use buoyant::view::padding::Edges;
 use buoyant::{
     environment::DefaultEnvironment,
     font::CharacterBufferFont,
@@ -46,7 +47,7 @@ fn main() {
              &font,
          )
              .multiline_text_alignment(HorizontalTextAlignment::Center)
-             .padding(2),
+             .padding(Edges::All, 2),
          Divider::default().foreground_color('-'),
          )),
      ));

@@ -378,18 +378,16 @@ fn toggle_switch(
 
     VStack::new((
         ZStack::new((
-            Rectangle.foreground_color('_').frame(
-                Some(5),
-                Some(1),
-                Some(HorizontalAlignment::Center),
-                Some(VerticalAlignment::Center),
-            ),
-            Rectangle.foreground_color('#').frame(
-                Some(1),
-                Some(1),
-                Some(HorizontalAlignment::Center),
-                Some(VerticalAlignment::Center),
-            ),
+            Rectangle
+                .foreground_color('_')
+                .frame()
+                .with_width(5)
+                .with_height(1),
+            Rectangle
+                .foreground_color('#')
+                .frame()
+                .with_width(1)
+                .with_height(1),
         ))
         .with_horizontal_alignment(alignment)
         .animated(Animation::Linear(Duration::from_secs(1)), is_on),

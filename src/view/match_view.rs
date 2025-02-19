@@ -37,6 +37,32 @@ impl<V0, V1, V2> MatchView<Branch3<V0, V1, V2>> {
     }
 }
 
+/// A view that can conditionally render one of N heterogeneous subtrees based on the enum variant.
+/// Enum associated values can be unwrapped in the match arms.
+///
+/// ```
+/// use buoyant::match_view;
+/// use buoyant::font::CharacterBufferFont;
+/// use buoyant::view::{shape::Rectangle, Text};
+///
+/// #[derive(Clone)]
+/// enum State {
+///     Message(&'static str),
+///     Error,
+///     Redacted,
+/// }
+///
+/// let font = CharacterBufferFont;
+///
+/// let view = |state| {
+///     match_view!(state => {
+///         State::Message(msg) => Text::str(msg, &font),
+///         State::Error => Text::str("Uh oh", &font),
+///         State::Redacted => Rectangle,
+///     })
+/// };
+///
+/// ```
 #[macro_export]
 macro_rules! match_view {
     (
