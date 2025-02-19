@@ -4,6 +4,7 @@ use crate::{
     render::{Offset, Renderable},
 };
 
+#[derive(Debug, Clone)]
 pub struct GeometryGroup<View> {
     view: View,
 }

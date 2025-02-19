@@ -16,7 +16,7 @@ mod embedded_graphics_impl {
     use embedded_graphics_core::draw_target::DrawTarget;
 
     use crate::render::EmbeddedGraphicsRender;
-    use crate::{pixel::Interpolate, render::AnimationDomain};
+    use crate::{primitives::Interpolate, render::AnimationDomain};
 
     use super::{Point, RoundedRect, Size};
 

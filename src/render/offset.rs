@@ -1,4 +1,4 @@
-use crate::{pixel::Interpolate as _, primitives::Point};
+use crate::{primitives::Interpolate as _, primitives::Point};
 
 use super::{AnimationDomain, CharacterRender, CharacterRenderTarget};
 
@@ -58,7 +58,7 @@ mod embedded_graphics_impl {
     use embedded_graphics::prelude::PixelColor;
     use embedded_graphics_core::draw_target::DrawTarget;
 
-    use crate::pixel::Interpolate;
+    use crate::primitives::Interpolate;
     use crate::primitives::Point;
     use crate::render::{AnimationDomain, EmbeddedGraphicsRender};
 

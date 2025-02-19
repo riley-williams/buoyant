@@ -1,4 +1,4 @@
-use crate::pixel::Interpolate;
+use crate::primitives::Interpolate;
 
 use super::Size;
 
@@ -404,7 +404,7 @@ impl From<Dimensions> for embedded_graphics_core::geometry::Size {
 
 #[cfg(test)]
 mod tests {
-    use crate::pixel::Interpolate as _;
+    use crate::primitives::Interpolate as _;
 
     use super::ProposedDimension;
 

@@ -1,3 +1,5 @@
+//! View types used for building interfaces
+
 mod conditional_view;
 mod divider;
 mod empty_view;

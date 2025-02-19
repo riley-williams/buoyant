@@ -16,7 +16,7 @@ impl Capsule {
 #[cfg(feature = "embedded-graphics")]
 mod embedded_graphics_impl {
     use crate::{
-        pixel::Interpolate,
+        primitives::Interpolate,
         primitives::{Point, Size},
     };
     use embedded_graphics::{
