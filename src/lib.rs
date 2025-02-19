@@ -11,7 +11,7 @@ pub mod layout;
 pub mod primitives;
 pub mod render;
 pub mod render_target;
-#[warn(missing_docs, rustdoc::missing_doc_code_examples)]
+#[warn(missing_docs)]
 pub mod view;
 
 #[non_exhaustive]

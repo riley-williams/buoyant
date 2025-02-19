@@ -7,6 +7,7 @@ use crate::{
     render::Renderable,
 };
 
+#[derive(Debug, Clone)]
 struct ForEachEnvironment<'a, T> {
     inner_environment: &'a T,
 }
@@ -33,6 +34,7 @@ impl<'a, T: LayoutEnvironment> From<&'a T> for ForEachEnvironment<'a, T> {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct ForEach<const N: usize, I: IntoIterator, V, F>
 where
     F: Fn(&I::Item) -> V,

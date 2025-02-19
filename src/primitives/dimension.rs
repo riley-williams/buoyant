@@ -334,27 +334,6 @@ impl core::ops::Add<Size> for Dimensions {
     }
 }
 
-pub struct HorizontalSpacing(pub u16);
-pub struct VerticalSpacing(pub u16);
-
-impl core::ops::Add<HorizontalSpacing> for Dimensions {
-    type Output = Dimensions;
-
-    fn add(mut self, rhs: HorizontalSpacing) -> Self::Output {
-        self.width += rhs.0;
-        self
-    }
-}
-
-impl core::ops::Add<VerticalSpacing> for Dimensions {
-    type Output = Dimensions;
-
-    fn add(mut self, rhs: VerticalSpacing) -> Self::Output {
-        self.height += rhs.0;
-        self
-    }
-}
-
 impl From<Size> for Dimensions {
     fn from(value: Size) -> Self {
         Self {

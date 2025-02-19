@@ -13,10 +13,14 @@ use paste::paste;
 /// union of all the resolved frame sizes from the previous pass.
 ///
 /// ```rust
+/// use buoyant::font::CharacterBufferFont;
+/// use buoyant::layout::{HorizontalAlignment, VerticalAlignment};
+/// use buoyant::view::{ZStack, shape::Rectangle, Text, RenderExtensions as _};
+///
 /// /// A fish at the bottom right corner of an 'o'cean
 /// let font = CharacterBufferFont {};
 /// let stack = ZStack::new((
-///         Rectangle.frame(),
+///         Rectangle,
 ///         Text::str("><>", &font),
 ///     ))
 ///     .with_vertical_alignment(VerticalAlignment::Bottom)
