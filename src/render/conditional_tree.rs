@@ -4,6 +4,7 @@ use crate::{
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct ConditionalTree<T, F> {
     pub subtree: Subtree<T, F>,
     pub size: Size,

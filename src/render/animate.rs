@@ -7,6 +7,7 @@ use crate::{
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct Animate<T, U> {
     pub subtree: T,
     /// Length of the animation
