@@ -1,17 +1,9 @@
 # Buoyant
 
-<!--toc:start-->
-- [Buoyant](#buoyant)
-  - [Available render targets](#available-render-targets)
-  - [Feature progress](#feature-progress)
-    - [Layout and Rendering](#layout-and-rendering)
-    - [Interactivity](#interactivity)
-  - [Who should use this?](#who-should-use-this)
-  - [License](#license)
-  - [Contribution](#contribution)
-<!--toc:end-->
+[![Crates.io](https://img.shields.io/crates/v/buoyant.svg)](https://crates.io/crates/buoyant)
+[![Documentation](https://docs.rs/buoyant/badge.svg)](https://docs.rs/buoyant/)
 
-This is a library for writing and rendering SwiftUI-like views in Rust,
+Buoyant is a library for writing and rendering SwiftUI-like views in Rust,
 primarily intended for use on `no_std` memory-constrained embedded systems.
 Floating point math is aggressively avoided.
 
