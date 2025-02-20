@@ -4,6 +4,7 @@
 [![Documentation](https://docs.rs/buoyant/badge.svg)](https://docs.rs/buoyant/)
 
 ![Partially working espresso machine UI](docs/images/coffeee-example.gif)
+
 Buoyant is a library for writing and rendering SwiftUI-like views in Rust,
 primarily intended for use on `no_std` memory-constrained embedded systems.
 
