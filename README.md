@@ -3,8 +3,10 @@
 [![Crates.io](https://img.shields.io/crates/v/buoyant.svg)](https://crates.io/crates/buoyant)
 [![Documentation](https://docs.rs/buoyant/badge.svg)](https://docs.rs/buoyant/)
 
+![Partially working espresso machine UI](docs/images/coffeee-example.gif)
 Buoyant is a library for writing and rendering SwiftUI-like views in Rust,
 primarily intended for use on `no_std` memory-constrained embedded systems.
+
 Floating point math is aggressively avoided.
 
 Nightly is required.
@@ -37,13 +39,12 @@ fn toggle_button(is_on: bool) -> impl Renderable<Rgb565, Renderables: EmbeddedGr
         Circle.foreground_color(Rgb565::WHITE).padding(2),
     ))
     .with_horizontal_alignment(alignment)
-    .frame().with_width(50).with_height(25)
+    .frame()
+    .with_width(50)
+    .with_height(25)
     .animated(Animation::Linear(Duration::from_millis(200)), is_on)
 }
 ```
-
-As state management isn't yet implemented, this isn't really a useful component yet.
-Maybe I should have picked a different example....
 
 ## Feature progress
 
