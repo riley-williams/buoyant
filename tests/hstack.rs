@@ -7,6 +7,7 @@ use buoyant::primitives::{Dimensions, Point, ProposedDimension, ProposedDimensio
 use buoyant::render::CharacterRenderTarget;
 use buoyant::render::{CharacterRender, Renderable};
 use buoyant::render_target::FixedTextBuffer;
+use buoyant::view::padding::Edges;
 use buoyant::view::{make_render_tree, RenderExtensions as _};
 use buoyant::view::{shape::Rectangle, Divider, EmptyView, HStack, LayoutExtensions, Spacer, Text};
 
@@ -21,7 +22,7 @@ fn test_greedy_layout_2() {
 
 #[test]
 fn test_oversized_layout_2() {
-    let vstack = HStack::new((Divider::default().padding(2), Spacer::default()));
+    let vstack = HStack::new((Divider::default().padding(Edges::All, 2), Spacer::default()));
     let offer = Size::new(10, 0);
     let env = DefaultEnvironment::non_animated();
     let layout = vstack.layout(&offer.into(), &env);
@@ -32,7 +33,7 @@ fn test_oversized_layout_2() {
 fn test_oversized_layout_3() {
     let vstack = HStack::new((
         Divider::default(),
-        Divider::default().padding(2),
+        Divider::default().padding(Edges::All, 2),
         Spacer::default(),
     ));
     let offer = Size::new(10, 0);
@@ -410,9 +411,9 @@ fn empty_view_does_not_create_extra_spacing() {
 #[test]
 fn infinite_width_offer_results_in_sum_of_subview_widths() {
     let hstack = HStack::new((
-        Rectangle.frame(Some(8), Some(3), None, None),
-        Rectangle.frame(Some(40), Some(1), None, None),
-        Rectangle.frame(Some(200), Some(8), None, None),
+        Rectangle.frame().with_width(8).with_height(3),
+        Rectangle.frame().with_width(40).with_height(1),
+        Rectangle.frame().with_width(200).with_height(8),
     ))
     .with_spacing(1);
     let offer = ProposedDimensions {
@@ -427,9 +428,9 @@ fn infinite_width_offer_results_in_sum_of_subview_widths() {
 #[test]
 fn compact_width_offer_results_in_sum_of_subview_widths() {
     let hstack = HStack::new((
-        Rectangle.frame(Some(8), Some(3), None, None),
-        Rectangle.frame(Some(40), Some(1), None, None),
-        Rectangle.frame(Some(200), Some(8), None, None),
+        Rectangle.frame().with_width(8).with_height(3),
+        Rectangle.frame().with_width(40).with_height(1),
+        Rectangle.frame().with_width(200).with_height(8),
     ))
     .with_spacing(1);
     let offer = ProposedDimensions {
@@ -444,9 +445,9 @@ fn compact_width_offer_results_in_sum_of_subview_widths() {
 #[test]
 fn infinite_width_offer_results_in_sum_of_subview_widths_minus_empties() {
     let hstack = HStack::new((
-        Rectangle.frame(Some(8), Some(3), None, None),
+        Rectangle.frame().with_width(8).with_height(3),
         EmptyView,
-        Rectangle.frame(Some(200), Some(8), None, None),
+        Rectangle.frame().with_width(200).with_height(8),
     ))
     .with_spacing(1);
     let offer = ProposedDimensions {
@@ -461,9 +462,9 @@ fn infinite_width_offer_results_in_sum_of_subview_widths_minus_empties() {
 #[test]
 fn compact_width_offer_results_in_sum_of_subview_widths_minus_empties() {
     let hstack = HStack::new((
-        Rectangle.frame(Some(8), Some(3), None, None),
+        Rectangle.frame().with_width(8).with_height(3),
         EmptyView,
-        Rectangle.frame(Some(200), Some(8), None, None),
+        Rectangle.frame().with_width(200).with_height(8),
     ))
     .with_spacing(1);
     let offer = ProposedDimensions {

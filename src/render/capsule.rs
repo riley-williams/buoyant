@@ -2,8 +2,8 @@ use crate::primitives::{Point, Size};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Capsule {
-    origin: Point,
-    size: Size,
+    pub origin: Point,
+    pub size: Size,
 }
 
 impl Capsule {
@@ -16,7 +16,7 @@ impl Capsule {
 #[cfg(feature = "embedded-graphics")]
 mod embedded_graphics_impl {
     use crate::{
-        pixel::Interpolate,
+        primitives::Interpolate,
         primitives::{Point, Size},
     };
     use embedded_graphics::{

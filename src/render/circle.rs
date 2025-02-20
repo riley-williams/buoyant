@@ -9,7 +9,7 @@ pub struct Circle {
 
 #[cfg(feature = "embedded-graphics")]
 mod embedded_graphics_impl {
-    use crate::pixel::Interpolate;
+    use crate::primitives::Interpolate;
     use crate::primitives::Point;
     use crate::render::{AnimationDomain, EmbeddedGraphicsRender};
 

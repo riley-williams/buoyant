@@ -1,4 +1,4 @@
-use crate::{pixel::Interpolate as _, primitives::Point};
+use crate::{primitives::Interpolate as _, primitives::Point};
 
 use super::{AnimationDomain, CharacterRender, CharacterRenderTarget};
 
@@ -6,8 +6,8 @@ use super::{AnimationDomain, CharacterRender, CharacterRenderTarget};
 /// The offset is animated, resulting in all children moving in unison.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Offset<T> {
-    offset: Point,
-    subtree: T,
+    pub offset: Point,
+    pub subtree: T,
 }
 
 impl<T> Offset<T> {
@@ -16,6 +16,7 @@ impl<T> Offset<T> {
         Self { offset, subtree }
     }
 }
+
 impl<T: CharacterRender<C>, C> CharacterRender<C> for Offset<T> {
     fn render(
         &self,
@@ -57,7 +58,7 @@ mod embedded_graphics_impl {
     use embedded_graphics::prelude::PixelColor;
     use embedded_graphics_core::draw_target::DrawTarget;
 
-    use crate::pixel::Interpolate;
+    use crate::primitives::Interpolate;
     use crate::primitives::Point;
     use crate::render::{AnimationDomain, EmbeddedGraphicsRender};
 

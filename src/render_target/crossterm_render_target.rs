@@ -10,6 +10,7 @@ use std::io::{stdout, Stdout, Write};
 
 use crate::{primitives::Size, render::CharacterRenderTarget};
 
+#[derive(Debug)]
 pub struct CrosstermRenderTarget {
     stdout: Stdout,
 }

@@ -1,6 +1,6 @@
 use crate::{
     font::{CharacterBufferFont, FontLayout},
-    pixel::Interpolate,
+    primitives::Interpolate,
     primitives::{Point, Size},
     render::{AnimationDomain, CharacterRender, CharacterRenderTarget},
     view::{HorizontalTextAlignment, WhitespaceWrap},

@@ -1,5 +1,6 @@
 use crate::{font::FontLayout, primitives::ProposedDimension};
 
+#[derive(Debug, Clone)]
 pub struct WhitespaceWrap<'a, F> {
     remaining: &'a str,
     overflow: &'a str,

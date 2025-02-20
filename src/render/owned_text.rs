@@ -16,7 +16,7 @@ mod embedded_graphics_impl {
     use super::{OwnedText, Point};
     use crate::font::FontLayout as _;
     use crate::render::{AnimationDomain, EmbeddedGraphicsRender};
-    use crate::{pixel::Interpolate, view::WhitespaceWrap};
+    use crate::{primitives::Interpolate, view::WhitespaceWrap};
     use embedded_graphics_core::Drawable;
 
     use embedded_graphics::{

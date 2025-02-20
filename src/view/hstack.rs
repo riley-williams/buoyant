@@ -8,6 +8,7 @@ use crate::{
     render::Renderable,
 };
 
+#[derive(Debug, Clone)]
 pub struct HStack<T> {
     items: T,
     alignment: VerticalAlignment,

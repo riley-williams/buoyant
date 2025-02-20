@@ -1,19 +1,16 @@
 # Buoyant
 
-<!--toc:start-->
-- [Buoyant](#buoyant)
-  - [Available render targets](#available-render-targets)
-  - [Feature progress](#feature-progress)
-    - [Layout and Rendering](#layout-and-rendering)
-    - [Interactivity](#interactivity)
-  - [Who should use this?](#who-should-use-this)
-  - [License](#license)
-  - [Contribution](#contribution)
-<!--toc:end-->
+[![Crates.io](https://img.shields.io/crates/v/buoyant.svg)](https://crates.io/crates/buoyant)
+[![Documentation](https://docs.rs/buoyant/badge.svg)](https://docs.rs/buoyant/)
 
-This is a library for writing and rendering SwiftUI-like views in Rust,
+![Partially working espresso machine UI](docs/images/coffeee-example.gif)
+
+Buoyant is a library for writing and rendering SwiftUI-like views in Rust,
 primarily intended for use on `no_std` memory-constrained embedded systems.
+
 Floating point math is aggressively avoided.
+
+Nightly is required.
 
 ## Available render targets
 
@@ -29,8 +26,6 @@ Here's what an Apple-like toggle button component would look like,
 implemented with Buoyant:
 
 ```rust
-// Omitting the large number of imports...
-
 fn toggle_button(is_on: bool) -> impl Renderable<Rgb565, Renderables: EmbeddedGraphicsRender<Rgb565>> {
     let alignment = if is_on {
         HorizontalAlignment::Trailing
@@ -45,13 +40,12 @@ fn toggle_button(is_on: bool) -> impl Renderable<Rgb565, Renderables: EmbeddedGr
         Circle.foreground_color(Rgb565::WHITE).padding(2),
     ))
     .with_horizontal_alignment(alignment)
-    .frame(Some(50), Some(25), None, None)
+    .frame()
+    .with_width(50)
+    .with_height(25)
     .animated(Animation::Linear(Duration::from_millis(200)), is_on)
 }
 ```
-
-As state management isn't yet implemented, this isn't really a useful component yet.
-Maybe I should have picked a different example....
 
 ## Feature progress
 

@@ -8,16 +8,16 @@ use crate::{
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Animate<T, U> {
-    subtree: T,
+    pub subtree: T,
     /// Length of the animation
-    animation: Animation,
+    pub animation: Animation,
     /// The time at which this frame was generated
-    frame_time: Duration,
-    value: U,
+    pub frame_time: Duration,
+    pub value: U,
     /// This is true if the animation is the result of a partially-completed join operation.
     /// If this is true, the source animation / duration will be used
     /// if the values are equal to avoid animations cancelling.
-    is_partial: bool,
+    pub is_partial: bool,
 }
 
 impl<T, U: PartialEq + Clone> Animate<T, U> {

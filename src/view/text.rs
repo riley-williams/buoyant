@@ -7,6 +7,7 @@ mod wrap;
 
 // W is hardcoded elsewhere to WhitespaceWrap, leaving generic for future fix
 
+#[derive(Debug, Clone)]
 pub struct Text<'a, T, F, W = WhitespaceWrap<'a, F>> {
     pub(crate) text: T,
     pub(crate) font: &'a F,

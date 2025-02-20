@@ -5,6 +5,7 @@ use crate::{
     render::Renderable,
 };
 
+#[derive(Debug, Clone)]
 pub struct FlexFrame<T> {
     child: T,
     min_width: Option<u16>,

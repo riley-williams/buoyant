@@ -3,6 +3,7 @@ use buoyant::primitives::Point;
 use buoyant::render::CharacterRender;
 use buoyant::render::CharacterRenderTarget;
 use buoyant::render::Renderable;
+use buoyant::view::padding::Edges;
 use buoyant::view::{make_render_tree, LayoutExtensions, RenderExtensions};
 use buoyant::{
     layout::VerticalAlignment,
@@ -54,7 +55,7 @@ fn view() -> impl Renderable<Colors, Renderables: CharacterRender<Colors>> {
                     "This is in a fixed size box",
                     &FONT,
                 )
-                    .frame(Some(10), Some(10), None, None),
+                    .frame().with_width(10).with_height(10),
             )),
             Text::str(
                 "This is several lines of text.\nEach line is centered in the available space.\n The rectangle fills all the remaining verical space and aligns the content within it.\n2 points of padding are around this text",
@@ -67,7 +68,7 @@ fn view() -> impl Renderable<Colors, Renderables: CharacterRender<Colors>> {
                         background: None
                     }
                 )
-                .padding(2),
+                .padding(Edges::All, 2),
             Divider::default()
                 .foreground_color(Colors {
                     foreground: Some(crossterm::style::Color::DarkYellow),

@@ -56,9 +56,10 @@ fn test_match_view_three_variants() {
     let make_view = |state| {
         match_view!(state => {
             State::A => Text::str("AAA", &font),
-            State::B(msg) => Text::str(msg, &font).foreground_color(' '),
+            State::B(msg) => Text::str(msg, &font),
             State::C => Text::str("CCC", &font),
         })
+        .foreground_color(' ')
     };
     let mut buffer = FixedTextBuffer::<5, 5>::default();
     let env = DefaultEnvironment::default();

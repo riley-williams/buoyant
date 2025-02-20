@@ -5,8 +5,8 @@ use crate::{
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ShadeSubtree<C, T> {
-    style: C,
-    subtree: T,
+    pub style: C,
+    pub subtree: T,
 }
 
 impl<C, T> ShadeSubtree<C, T> {
@@ -17,7 +17,7 @@ impl<C, T> ShadeSubtree<C, T> {
 
 #[cfg(feature = "embedded-graphics")]
 mod embedded_graphics_impl {
-    use crate::{pixel::Interpolate, primitives::Point, render::EmbeddedGraphicsRender};
+    use crate::{primitives::Interpolate, primitives::Point, render::EmbeddedGraphicsRender};
 
     use super::{AnimationDomain, ShadeSubtree};
     use embedded_graphics::prelude::PixelColor;

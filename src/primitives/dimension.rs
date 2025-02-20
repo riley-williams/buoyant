@@ -1,4 +1,4 @@
-use crate::pixel::Interpolate;
+use crate::primitives::Interpolate;
 
 use super::Size;
 
@@ -334,27 +334,6 @@ impl core::ops::Add<Size> for Dimensions {
     }
 }
 
-pub struct HorizontalSpacing(pub u16);
-pub struct VerticalSpacing(pub u16);
-
-impl core::ops::Add<HorizontalSpacing> for Dimensions {
-    type Output = Dimensions;
-
-    fn add(mut self, rhs: HorizontalSpacing) -> Self::Output {
-        self.width += rhs.0;
-        self
-    }
-}
-
-impl core::ops::Add<VerticalSpacing> for Dimensions {
-    type Output = Dimensions;
-
-    fn add(mut self, rhs: VerticalSpacing) -> Self::Output {
-        self.height += rhs.0;
-        self
-    }
-}
-
 impl From<Size> for Dimensions {
     fn from(value: Size) -> Self {
         Self {
@@ -404,7 +383,7 @@ impl From<Dimensions> for embedded_graphics_core::geometry::Size {
 
 #[cfg(test)]
 mod tests {
-    use crate::pixel::Interpolate as _;
+    use crate::primitives::Interpolate as _;
 
     use super::ProposedDimension;
 
