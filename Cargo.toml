@@ -1,10 +1,10 @@
 [package]
 name = "buoyant"
-version = "0.3.0-alpha.3"
+version = "0.3.0"
 authors = ["Riley Williams"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
-description = "A library for building and rendering declarative SwiftUI-like UIs in Rust"
+description = "SwiftUI-like UIs in Rust for embedded devices"
 readme = "README.md"
 repository = "https://github.com/riley-williams/buoyant"
 keywords = ["ui", "graphics"]

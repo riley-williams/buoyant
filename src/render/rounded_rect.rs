@@ -1,6 +1,7 @@
 use crate::primitives::{Point, Size};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct RoundedRect {
     pub origin: Point,
     pub size: Size,
