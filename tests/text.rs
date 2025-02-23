@@ -36,7 +36,7 @@ fn test_single_character() {
         line_height: 10,
         character_width: 5,
     };
-    let text = Text::str("A", &font);
+    let text = Text::new("A", &font);
     let offer = Size::new(100, 100);
     let env = DefaultEnvironment::non_animated();
     let layout = text.layout(&offer.into(), &env);
@@ -49,7 +49,7 @@ fn test_single_character_constrained() {
         line_height: 10,
         character_width: 5,
     };
-    let text = Text::str("A", &font);
+    let text = Text::new("A", &font);
     let offer = Size::new(4, 10);
     let env = DefaultEnvironment::non_animated();
     let layout = text.layout(&offer.into(), &env);
@@ -62,7 +62,7 @@ fn test_text_layout() {
         line_height: 10,
         character_width: 5,
     };
-    let text = Text::str("Hello, world!", &font);
+    let text = Text::new("Hello, world!", &font);
     let offer = Size::new(100, 100);
     let env = DefaultEnvironment::non_animated();
     let layout = text.layout(&offer.into(), &env);
@@ -75,7 +75,7 @@ fn test_text_layout_wraps() {
         line_height: 10,
         character_width: 5,
     };
-    let text = Text::str("Hello, world!", &font);
+    let text = Text::new("Hello, world!", &font);
     let offer = Size::new(50, 100);
     let env = DefaultEnvironment::non_animated();
     let layout = text.layout(&offer.into(), &env);
@@ -88,7 +88,7 @@ fn test_wraps_partial_words() {
         line_height: 10,
         character_width: 5,
     };
-    let text = Text::str("123412341234", &font);
+    let text = Text::new("123412341234", &font);
     let offer = Size::new(20, 100);
     let env = DefaultEnvironment::non_animated();
     let layout = text.layout(&offer.into(), &env);
@@ -101,7 +101,7 @@ fn test_newline() {
         line_height: 10,
         character_width: 5,
     };
-    let text = Text::str("1234\n12\n\n123\n", &font);
+    let text = Text::new("1234\n12\n\n123\n", &font);
     let offer = Size::new(25, 100);
     let env = DefaultEnvironment::non_animated();
     let layout = text.layout(&offer.into(), &env);
@@ -114,7 +114,7 @@ fn test_infinite_width() {
         line_height: 1,
         character_width: 1,
     };
-    let text = Text::str("abc defg", &font);
+    let text = Text::new("abc defg", &font);
     let offer = ProposedDimensions {
         width: ProposedDimension::Infinite,
         height: 100.into(),
@@ -130,7 +130,7 @@ fn test_compact_width() {
         line_height: 1,
         character_width: 1,
     };
-    let text = Text::str("abc defg", &font);
+    let text = Text::new("abc defg", &font);
     let offer = ProposedDimensions {
         width: ProposedDimension::Compact,
         height: 100.into(),
@@ -146,7 +146,7 @@ fn test_infinite_height() {
         line_height: 1,
         character_width: 1,
     };
-    let text = Text::str("abc defg h", &font);
+    let text = Text::new("abc defg h", &font);
     let offer = ProposedDimensions {
         width: 10.into(),
         height: ProposedDimension::Infinite,
@@ -162,7 +162,7 @@ fn test_compact_height() {
         line_height: 1,
         character_width: 1,
     };
-    let text = Text::str("abc defg h", &font);
+    let text = Text::new("abc defg h", &font);
     let offer = ProposedDimensions {
         width: 10.into(),
         height: ProposedDimension::Compact,
@@ -178,7 +178,7 @@ fn test_infinite_height_wrapping() {
         line_height: 1,
         character_width: 1,
     };
-    let text = Text::str("abc defg hij", &font);
+    let text = Text::new("abc defg hij", &font);
     let offer = ProposedDimensions {
         width: 10.into(),
         height: ProposedDimension::Infinite,
@@ -194,7 +194,7 @@ fn test_compact_height_wrapping() {
         line_height: 1,
         character_width: 1,
     };
-    let text = Text::str("abc defg hij", &font);
+    let text = Text::new("abc defg hij", &font);
     let offer = ProposedDimensions {
         width: 10.into(),
         height: ProposedDimension::Compact,
@@ -208,7 +208,7 @@ fn test_compact_height_wrapping() {
 fn test_render_wrapping_leading() {
     let font = CharacterBufferFont {};
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let text = Text::str("This is a lengthy text here", &font).foreground_color(' ');
+    let text = Text::new("This is a lengthy text here", &font).foreground_color(' ');
     make_render_tree(&text, buffer.size()).render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "This  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "is a  ");
@@ -221,7 +221,7 @@ fn test_render_wrapping_leading() {
 fn test_render_wrapping_center_even() {
     let font = CharacterBufferFont {};
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let text = Text::str("This is a lengthy text here", &font)
+    let text = Text::new("This is a lengthy text here", &font)
         .multiline_text_alignment(HorizontalTextAlignment::Center)
         .foreground_color(' ');
     make_render_tree(&text, buffer.size()).render(&mut buffer, &' ', Point::zero());
@@ -236,7 +236,7 @@ fn test_render_wrapping_center_even() {
 fn test_render_wrapping_center_odd() {
     let font = CharacterBufferFont {};
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let text = Text::str("This is a lengthy text 12345", &font)
+    let text = Text::new("This is a lengthy text 12345", &font)
         .multiline_text_alignment(HorizontalTextAlignment::Center)
         .foreground_color(' ');
     make_render_tree(&text, buffer.size()).render(&mut buffer, &' ', Point::zero());
@@ -251,7 +251,7 @@ fn test_render_wrapping_center_odd() {
 fn test_render_wrapping_trailing() {
     let font = CharacterBufferFont {};
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let text = Text::str("This is a lengthy text here", &font)
+    let text = Text::new("This is a lengthy text here", &font)
         .multiline_text_alignment(HorizontalTextAlignment::Trailing)
         .foreground_color(' ');
     make_render_tree(&text, buffer.size()).render(&mut buffer, &' ', Point::zero());
@@ -265,7 +265,7 @@ fn test_render_wrapping_trailing() {
 #[test]
 fn test_clipped_text_is_centered_correctly() {
     let font = CharacterBufferFont {};
-    let view = Text::str(
+    let view = Text::new(
         "Several lines\n of text\nshould be correctly spaced when cut off",
         &font,
     )
@@ -294,7 +294,7 @@ fn test_clipped_text_is_centered_correctly() {
 #[test]
 fn test_clipped_text_trails_correctly() {
     let font = CharacterBufferFont {};
-    let view = Text::str(
+    let view = Text::new(
         "Several lines\n of text\nshould be correctly spaced when cut off",
         &font,
     )

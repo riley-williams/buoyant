@@ -21,7 +21,7 @@ use paste::paste;
 /// let font = CharacterBufferFont {};
 /// let stack = ZStack::new((
 ///         Rectangle,
-///         Text::str("><>", &font),
+///         Text::new("><>", &font),
 ///     ))
 ///     .with_vertical_alignment(VerticalAlignment::Bottom)
 ///     .with_horizontal_alignment(HorizontalAlignment::Trailing)

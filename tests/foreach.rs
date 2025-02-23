@@ -44,9 +44,9 @@ fn foreach_with_inner_wrapping_hstack() {
 
     let view = ForEach::<10, _, _, _>::new(&users, |user| {
         HStack::new((
-            Text::str(&user.name, &FONT),
+            Text::new(&user.name, &FONT),
             Spacer::default(),
-            Text::str(&user.age, &FONT),
+            Text::new(&user.age, &FONT),
         ))
         .with_alignment(VerticalAlignment::Bottom)
         .foreground_color(' ')
@@ -87,7 +87,7 @@ fn foreach_leading_aligned() {
         .unwrap();
 
     let view = ForEach::<10, _, _, _>::new(&users, |user| {
-        HStack::new((Text::str(&user.name, &FONT), Text::str(&user.age, &FONT)))
+        HStack::new((Text::new(&user.name, &FONT), Text::new(&user.age, &FONT)))
             .with_alignment(VerticalAlignment::Bottom)
             .with_spacing(1)
     })
@@ -129,7 +129,7 @@ fn foreach_trailing_aligned() {
         .unwrap();
 
     let view = ForEach::<10, _, _, _>::new(&users, |user| {
-        HStack::new((Text::str(&user.name, &FONT), Text::str(&user.age, &FONT)))
+        HStack::new((Text::new(&user.name, &FONT), Text::new(&user.age, &FONT)))
             .with_alignment(VerticalAlignment::Bottom)
             .with_spacing(1)
     })

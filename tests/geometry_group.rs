@@ -10,9 +10,9 @@ use buoyant::{
 fn test_geometry_group_retains_text_offset() {
     let font = CharacterBufferFont {};
     let content = VStack::new((
-        Text::str("aa aa", &font).foreground_color(' '),
-        Text::str("bb", &font).geometry_group(),
-        Text::str("ccc", &font),
+        Text::new("aa aa", &font).foreground_color(' '),
+        Text::new("bb", &font).geometry_group(),
+        Text::new("ccc", &font),
     ));
     let mut buffer = FixedTextBuffer::<6, 4>::default();
     let tree = make_render_tree(&content, buffer.size());

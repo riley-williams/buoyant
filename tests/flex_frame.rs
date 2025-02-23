@@ -14,7 +14,7 @@ use buoyant::{
 #[test]
 fn test_min() {
     let font = CharacterBufferFont {};
-    let content = Text::str("123456", &font)
+    let content = Text::new("123456", &font)
         .flex_frame()
         .with_min_width(2)
         .with_min_height(2);
@@ -49,7 +49,7 @@ fn test_min() {
 #[test]
 fn test_max() {
     let font = CharacterBufferFont {};
-    let content = Text::str("123456", &font)
+    let content = Text::new("123456", &font)
         .flex_frame()
         .with_max_width(2)
         .with_max_height(2);
@@ -84,7 +84,7 @@ fn test_max() {
 #[test]
 fn test_min_max() {
     let font = CharacterBufferFont {};
-    let content = Text::str("xxx|xxx|xxx|xxx|abcdefg", &font)
+    let content = Text::new("xxx|xxx|xxx|xxx|abcdefg", &font)
         .flex_frame()
         .with_min_width(2)
         .with_max_width(4)
@@ -138,7 +138,7 @@ fn test_min_max() {
 #[test]
 fn test_render_min_flex_frame_top_leading_alignment() {
     let font = CharacterBufferFont {};
-    let content = Text::str("aa\nbb\ncc", &font)
+    let content = Text::new("aa\nbb\ncc", &font)
         .flex_frame()
         .with_min_width(6)
         .with_min_height(5)
@@ -158,7 +158,7 @@ fn test_render_min_flex_frame_top_leading_alignment() {
 #[test]
 fn test_render_min_flex_frame_top_center_alignment() {
     let font = CharacterBufferFont {};
-    let content = Text::str("aa\nbb\ncc", &font)
+    let content = Text::new("aa\nbb\ncc", &font)
         .flex_frame()
         .with_min_width(6)
         .with_min_height(5)
@@ -177,7 +177,7 @@ fn test_render_min_flex_frame_top_center_alignment() {
 #[test]
 fn test_render_min_flex_frame_top_trailing_alignment() {
     let font = CharacterBufferFont {};
-    let content = Text::str("aa\nbb\ncc", &font)
+    let content = Text::new("aa\nbb\ncc", &font)
         .flex_frame()
         .with_min_width(6)
         .with_min_height(5)
@@ -197,7 +197,7 @@ fn test_render_min_flex_frame_top_trailing_alignment() {
 #[test]
 fn test_render_min_flex_frame_center_leading_alignment() {
     let font = CharacterBufferFont {};
-    let content = Text::str("aa\nbb\ncc", &font)
+    let content = Text::new("aa\nbb\ncc", &font)
         .flex_frame()
         .with_min_width(6)
         .with_min_height(5)
@@ -216,7 +216,7 @@ fn test_render_min_flex_frame_center_leading_alignment() {
 #[test]
 fn test_render_min_flex_frame_center_center_alignment() {
     let font = CharacterBufferFont {};
-    let content = Text::str("aa\nbb\ncc", &font)
+    let content = Text::new("aa\nbb\ncc", &font)
         .flex_frame()
         .with_min_width(6)
         .with_min_height(5)
@@ -234,7 +234,7 @@ fn test_render_min_flex_frame_center_center_alignment() {
 #[test]
 fn test_render_min_flex_frame_center_trailing_alignment() {
     let font = CharacterBufferFont {};
-    let content = Text::str("aa\nbb\ncc", &font)
+    let content = Text::new("aa\nbb\ncc", &font)
         .flex_frame()
         .with_min_width(6)
         .with_min_height(5)
@@ -253,7 +253,7 @@ fn test_render_min_flex_frame_center_trailing_alignment() {
 #[test]
 fn test_render_min_flex_frame_bottom_leading_alignment() {
     let font = CharacterBufferFont {};
-    let content = Text::str("aa\nbb\ncc", &font)
+    let content = Text::new("aa\nbb\ncc", &font)
         .flex_frame()
         .with_min_width(6)
         .with_min_height(5)
@@ -273,7 +273,7 @@ fn test_render_min_flex_frame_bottom_leading_alignment() {
 #[test]
 fn test_render_min_flex_frame_bottom_center_alignment() {
     let font = CharacterBufferFont {};
-    let content = Text::str("aa\nbb\ncc", &font)
+    let content = Text::new("aa\nbb\ncc", &font)
         .flex_frame()
         .with_min_width(6)
         .with_min_height(5)
@@ -292,7 +292,7 @@ fn test_render_min_flex_frame_bottom_center_alignment() {
 #[test]
 fn test_render_min_flex_frame_bottom_trailing_alignment() {
     let font = CharacterBufferFont {};
-    let content = Text::str("aa\nbb\ncc", &font)
+    let content = Text::new("aa\nbb\ncc", &font)
         .flex_frame()
         .with_min_width(6)
         .with_min_height(5)
@@ -312,7 +312,7 @@ fn test_render_min_flex_frame_bottom_trailing_alignment() {
 #[test]
 fn test_render_infinite_width_height_fills_space() {
     let font = CharacterBufferFont {};
-    let content = Text::str("aa\nbb\ncc", &font)
+    let content = Text::new("aa\nbb\ncc", &font)
         .flex_frame()
         .with_infinite_max_width()
         .with_infinite_max_height()
@@ -332,7 +332,7 @@ fn test_render_infinite_width_height_fills_space() {
 #[test]
 fn test_render_oversize_mix() {
     let font = CharacterBufferFont {};
-    let content = Text::str("aa\nbb\ncc", &font)
+    let content = Text::new("aa\nbb\ncc", &font)
         .flex_frame()
         .with_min_width(8)
         .with_max_width(u16::MAX)

@@ -37,9 +37,9 @@ fn main() {
 
 fn hello_view() -> impl Renderable<Rgb888, Renderables: EmbeddedGraphicsRender<Rgb888>> {
     HStack::new((
-        Text::str("Hello", &FONT_10X20).foreground_color(Rgb888::GREEN),
+        Text::new("Hello", &FONT_10X20).foreground_color(Rgb888::GREEN),
         Spacer::default(),
-        Text::str("World", &FONT_10X20).foreground_color(Rgb888::YELLOW),
+        Text::new("World", &FONT_10X20).foreground_color(Rgb888::YELLOW),
     ))
     .padding(Edges::All, 20)
 }

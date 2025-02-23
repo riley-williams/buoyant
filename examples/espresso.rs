@@ -191,7 +191,7 @@ impl App {
                     Self::brew_tab(state)
                 },
                 Tab::Clean => {
-                    Text::str("Clean", &font::BODY).foreground_color(color::Space::CSS_ORANGE_RED)
+                    Text::new("Clean", &font::BODY).foreground_color(color::Space::CSS_ORANGE_RED)
                     .padding(Edges::All, spacing::SECTION_MARGIN)
                 },
                 Tab::Settings => {
@@ -235,7 +235,7 @@ impl App {
                 ),
                 VStack::new((
                     Circle.frame().with_width(15),
-                    Text::str(name, &font::CAPTION_BOLD),
+                    Text::new(name, &font::CAPTION_BOLD),
                 ))
                 .with_spacing(spacing::ELEMENT)
                 .padding(Edges::All, spacing::ELEMENT),
@@ -252,8 +252,8 @@ impl App {
     ) -> impl buoyant::render::Renderable<color::Space, Renderables: EmbeddedGraphicsRender<color::Space>>
     {
         VStack::new((
-            Text::str("Good morning", &font::BODY),
-            Text::str(
+            Text::new("Good morning", &font::BODY),
+            Text::new(
                 "Use the arrow keys to navigate to the settings tab",
                 &font::CAPTION_BOLD,
             )
@@ -310,13 +310,13 @@ fn toggle_text<'a>(
 ) -> impl Renderable<color::Space, Renderables: EmbeddedGraphicsRender<color::Space>> + use<'a> {
     VStack::new((
         HStack::new((
-            Text::str(label, &font::BODY).foreground_color(color::Space::WHITE),
+            Text::new(label, &font::BODY).foreground_color(color::Space::WHITE),
             toggle_button(is_on),
         ))
         .with_spacing(spacing::ELEMENT),
         ConditionalView::if_view(
             is_on || !hides_description,
-            Text::str(description, &font::CAPTION)
+            Text::new(description, &font::CAPTION)
                 .multiline_text_alignment(HorizontalTextAlignment::Trailing)
                 .foreground_color(color::Space::WHITE),
         ),
