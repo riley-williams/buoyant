@@ -10,7 +10,7 @@ pub struct GeometryGroup<View> {
 }
 
 impl<View> GeometryGroup<View> {
-    pub fn new(view: View) -> Self {
+    pub const fn new(view: View) -> Self {
         Self { view }
     }
 }

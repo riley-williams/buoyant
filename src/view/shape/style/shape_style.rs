@@ -34,7 +34,7 @@ impl<T: embedded_graphics_core::pixelcolor::PixelColor> FillStyle for T {
 
 impl<T: Copy> StrokeStyle<T> {
     #[must_use]
-    pub fn new(color: T, width: u16) -> Self {
+    pub const fn new(color: T, width: u16) -> Self {
         Self { color, width }
     }
 }
@@ -42,14 +42,14 @@ impl<T: Copy> StrokeStyle<T> {
 // TODO: Come back and clean this up to not only be implemented for embedded-graphics
 #[cfg(feature = "embedded-graphics")]
 impl<C: embedded_graphics_core::pixelcolor::PixelColor, T: FillStyle<Color = C>> ShapeStyle<C, T> {
-    pub fn fill(color: T) -> Self {
+    pub const fn fill(color: T) -> Self {
         Self {
             fill_style: Some(color),
             stroke_style: None,
         }
     }
 
-    pub fn stroke(color: C, width: u16) -> Self {
+    pub const fn stroke(color: C, width: u16) -> Self {
         Self {
             fill_style: None,
             stroke_style: Some(StrokeStyle::new(color, width)),
@@ -63,7 +63,7 @@ impl<C: embedded_graphics_core::pixelcolor::PixelColor, T: FillStyle<Color = C>>
     }
 
     #[must_use]
-    pub fn with_stroke(mut self, stroke: C, width: u16) -> Self {
+    pub const fn with_stroke(mut self, stroke: C, width: u16) -> Self {
         self.stroke_style = Some(StrokeStyle::new(stroke, width));
         self
     }

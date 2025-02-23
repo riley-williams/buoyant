@@ -1,6 +1,7 @@
 #![no_std]
 #![feature(type_alias_impl_trait)]
 #![warn(missing_debug_implementations)]
+#![deny(clippy::missing_const_for_fn)]
 
 #[cfg(any(test, feature = "std"))]
 extern crate std;
@@ -21,13 +22,13 @@ pub enum Animation {
 }
 
 impl Animation {
-    fn duration(&self) -> core::time::Duration {
+    const fn duration(&self) -> core::time::Duration {
         match self {
             Animation::Linear(duration) => *duration,
         }
     }
 
-    fn with_duration(self, duration: core::time::Duration) -> Self {
+    const fn with_duration(self, duration: core::time::Duration) -> Self {
         match self {
             Animation::Linear(_) => Animation::Linear(duration),
         }

@@ -9,7 +9,7 @@ pub struct HorizontalGradient<Color> {
 }
 
 impl<Color: Interpolate> HorizontalGradient<Color> {
-    pub fn new(start: Color, end: Color) -> Self {
+    pub const fn new(start: Color, end: Color) -> Self {
         Self { start, end }
     }
 }

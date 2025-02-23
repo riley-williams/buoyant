@@ -15,7 +15,7 @@ pub struct Priority<T> {
 }
 
 impl<T> Priority<T> {
-    pub fn new(priority: u16, child: T) -> Self {
+    pub const fn new(priority: u16, child: T) -> Self {
         Self { priority, child }
     }
 }

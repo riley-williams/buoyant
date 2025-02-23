@@ -12,7 +12,7 @@ pub struct Offset<T> {
 
 impl<T> Offset<T> {
     /// Create a new offset render tree item
-    pub fn new(offset: Point, subtree: T) -> Self {
+    pub const fn new(offset: Point, subtree: T) -> Self {
         Self { offset, subtree }
     }
 }

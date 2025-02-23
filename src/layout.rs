@@ -31,7 +31,7 @@ pub enum HorizontalAlignment {
 
 impl HorizontalAlignment {
     #[must_use]
-    pub fn align(&self, available: i16, content: i16) -> i16 {
+    pub const fn align(&self, available: i16, content: i16) -> i16 {
         match self {
             HorizontalAlignment::Leading => 0,
             HorizontalAlignment::Center => (available - content) / 2,
@@ -54,7 +54,7 @@ pub enum VerticalAlignment {
 
 impl VerticalAlignment {
     #[must_use]
-    pub fn align(&self, available: i16, content: i16) -> i16 {
+    pub const fn align(&self, available: i16, content: i16) -> i16 {
         match self {
             VerticalAlignment::Top => 0,
             VerticalAlignment::Center => (available - content) / 2,
@@ -77,7 +77,7 @@ pub enum Axis {
 
 impl Axis {
     #[must_use]
-    pub fn into_min_proposal(self) -> ProposedDimensions {
+    pub const fn into_min_proposal(self) -> ProposedDimensions {
         match self {
             Axis::FixedWidth(w) => ProposedDimensions {
                 width: ProposedDimension::Exact(w),
@@ -91,7 +91,7 @@ impl Axis {
     }
 
     #[must_use]
-    pub fn into_max_proposal(self) -> ProposedDimensions {
+    pub const fn into_max_proposal(self) -> ProposedDimensions {
         match self {
             Axis::FixedWidth(w) => ProposedDimensions {
                 width: ProposedDimension::Exact(w),

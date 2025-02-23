@@ -10,7 +10,7 @@ pub struct ShadeSubtree<C, T> {
 }
 
 impl<C, T> ShadeSubtree<C, T> {
-    pub fn new(style: C, subtree: T) -> Self {
+    pub const fn new(style: C, subtree: T) -> Self {
         Self { style, subtree }
     }
 }

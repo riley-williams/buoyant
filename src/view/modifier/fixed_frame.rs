@@ -15,7 +15,7 @@ pub struct FixedFrame<T> {
 }
 
 impl<T> FixedFrame<T> {
-    pub fn new(child: T) -> Self {
+    pub const fn new(child: T) -> Self {
         Self {
             width: None,
             height: None,
