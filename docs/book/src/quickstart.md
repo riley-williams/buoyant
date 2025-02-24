@@ -18,11 +18,18 @@ embedded-graphics-simulator = "0.7.0"
 
 ## Hello World
 
-This is the complete example.
+Running this example will result in the words "Hello" (green) and "World" (yellow)
+separated by as much space as possible, with 20 pixels of padding around the edges.
 
-```rust
+![hello-world](assets/hello-world.png)
+
+Here is the full example, which will be picked apart in the following sections:
+
+```rust,no_run
 // main.rs
-
+# extern crate buoyant;
+# extern crate embedded_graphics;
+# extern crate embedded_graphics_simulator;
 use buoyant::{
     environment::DefaultEnvironment,
     layout::Layout,
@@ -63,20 +70,27 @@ fn hello_view() -> impl Renderable<Rgb888, Renderables: EmbeddedGraphicsRender<R
 }
 ```
 
-Running it will result in the words "Hello" (green) and "World" (yellow) separated by
-as much space as possible, with 20 pixels of padding from the edges of the window.
-
-![hello-world](assets/hello-world.png)
-
 ## Simulator Boilerplate
 
-To set up, a window and a display framebuffer are created. `display` conforms to `embedded_graphics::DrawTarget`,
+A window and a display framebuffer are created. `display` conforms to `embedded_graphics::DrawTarget`,
 and is what you'll render content into.
 
 The framebuffer is cleared to the background color, content is rendered, and finally the framebuffer
 is displayed.
 
-```rust
+```rust,no_run
+# extern crate buoyant;
+# extern crate embedded_graphics;
+# extern crate embedded_graphics_simulator;
+# use buoyant::{
+#     environment::DefaultEnvironment,
+#     layout::Layout,
+#     render::{EmbeddedGraphicsRender, Renderable},
+#     view::{padding::Edges, HStack, LayoutExtensions as _, RenderExtensions, Spacer, Text},
+# };
+# use embedded_graphics::{mono_font::ascii::FONT_10X20, pixelcolor::Rgb888, prelude::*};
+# use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
+#
 const BACKGROUND_COLOR: Rgb888 = Rgb888::BLACK;
 const DEFAULT_COLOR: Rgb888 = Rgb888::WHITE;
 
@@ -95,6 +109,9 @@ fn main() {
 ## Environment
 
 ```rust
+# extern crate buoyant;
+# use buoyant::environment::DefaultEnvironment;
+#
 let environment = DefaultEnvironment::default();
 let origin = buoyant::primitives::Point::zero();
 ```
@@ -108,6 +125,17 @@ If this view involved animation, the environment would be used to inject the tim
 ## View Body
 
 ```rust
+# extern crate buoyant;
+# extern crate embedded_graphics;
+# extern crate embedded_graphics_simulator;
+# use buoyant::{
+#     environment::DefaultEnvironment,
+#     layout::Layout,
+#     render::{EmbeddedGraphicsRender, Renderable},
+#     view::{padding::Edges, HStack, LayoutExtensions as _, RenderExtensions, Spacer, Text},
+# };
+# use embedded_graphics::{mono_font::ascii::FONT_10X20, pixelcolor::Rgb888, prelude::*};
+#
 fn hello_view() -> impl Renderable<Rgb888, Renderables: EmbeddedGraphicsRender<Rgb888>> {
     HStack::new((
         Text::str("Hello", &FONT_10X20).foreground_color(Rgb888::GREEN),
@@ -136,8 +164,48 @@ screen / color space easy, with e.g. `type color_space = Rgb888`.
 
 ## Layout
 
-```rust
+```rust,no_run
+# extern crate buoyant;
+# extern crate embedded_graphics;
+# extern crate embedded_graphics_simulator;
+# use buoyant::{
+#     environment::DefaultEnvironment,
+#     layout::Layout,
+#     render::{EmbeddedGraphicsRender, Renderable},
+#     view::{padding::Edges, HStack, LayoutExtensions as _, RenderExtensions, Spacer, Text},
+# };
+# use embedded_graphics::{mono_font::ascii::FONT_10X20, pixelcolor::Rgb888, prelude::*};
+# use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
+# 
+# const BACKGROUND_COLOR: Rgb888 = Rgb888::BLACK;
+# const DEFAULT_COLOR: Rgb888 = Rgb888::WHITE;
+# 
+# fn main() {
+#     let mut window = Window::new("Hello World", &OutputSettings::default());
+#     let mut display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(480, 320));
+# 
+#     display.clear(BACKGROUND_COLOR).unwrap();
+# 
+#     let environment = DefaultEnvironment::default();
+#     let origin = buoyant::primitives::Point::zero();
+# 
+#     let view = hello_view();
 let layout = view.layout(&display.size().into(), &environment);
+#     let render_tree = view.render_tree(&layout, origin, &environment);
+# 
+#     render_tree.render(&mut display, &DEFAULT_COLOR, origin);
+# 
+#     window.show_static(&display);
+# }
+# 
+# fn hello_view() -> impl Renderable<Rgb888, Renderables: EmbeddedGraphicsRender<Rgb888>> {
+#     HStack::new((
+#         Text::str("Hello", &FONT_10X20).foreground_color(Rgb888::GREEN),
+#         Spacer::default(),
+#         Text::str("World", &FONT_10X20).foreground_color(Rgb888::YELLOW),
+#     ))
+#     .padding(Edges::All, 20)
+# }
 ```
 
 The layout call resolves the sizes of all the views. It is a bug to try to reuse the layout
@@ -145,8 +213,48 @@ after mutating the view, and Buoyant may panic if you do so.
 
 ## Render Trees
 
-```rust
+```rust,no_run
+# extern crate buoyant;
+# extern crate embedded_graphics;
+# extern crate embedded_graphics_simulator;
+# use buoyant::{
+#     environment::DefaultEnvironment,
+#     layout::Layout,
+#     render::{EmbeddedGraphicsRender, Renderable},
+#     view::{padding::Edges, HStack, LayoutExtensions as _, RenderExtensions, Spacer, Text},
+# };
+# use embedded_graphics::{mono_font::ascii::FONT_10X20, pixelcolor::Rgb888, prelude::*};
+# use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
+# 
+# const BACKGROUND_COLOR: Rgb888 = Rgb888::BLACK;
+# const DEFAULT_COLOR: Rgb888 = Rgb888::WHITE;
+# 
+# fn main() {
+#     let mut window = Window::new("Hello World", &OutputSettings::default());
+#     let mut display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(480, 320));
+# 
+#     display.clear(BACKGROUND_COLOR).unwrap();
+# 
+#     let environment = DefaultEnvironment::default();
+#     let origin = buoyant::primitives::Point::zero();
+# 
+#     let view = hello_view();
+#     let layout = view.layout(&display.size().into(), &environment);
 let render_tree = view.render_tree(&layout, origin, &environment);
+# 
+#     render_tree.render(&mut display, &DEFAULT_COLOR, origin);
+# 
+#     window.show_static(&display);
+# }
+# 
+# fn hello_view() -> impl Renderable<Rgb888, Renderables: EmbeddedGraphicsRender<Rgb888>> {
+#     HStack::new((
+#         Text::str("Hello", &FONT_10X20).foreground_color(Rgb888::GREEN),
+#         Spacer::default(),
+#         Text::str("World", &FONT_10X20).foreground_color(Rgb888::YELLOW),
+#     ))
+#     .padding(Edges::All, 20)
+# }
 ```
 
 The render tree is a minimal snapshot of the view. It holds a copy of the resolved positions,
@@ -159,8 +267,48 @@ with next to no effort.
 
 ## Rendering
 
-```rust
+```rust,no_run
+# extern crate buoyant;
+# extern crate embedded_graphics;
+# extern crate embedded_graphics_simulator;
+# use buoyant::{
+#     environment::DefaultEnvironment,
+#     layout::Layout,
+#     render::{EmbeddedGraphicsRender, Renderable},
+#     view::{padding::Edges, HStack, LayoutExtensions as _, RenderExtensions, Spacer, Text},
+# };
+# use embedded_graphics::{mono_font::ascii::FONT_10X20, pixelcolor::Rgb888, prelude::*};
+# use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
+# 
+# const BACKGROUND_COLOR: Rgb888 = Rgb888::BLACK;
+# const DEFAULT_COLOR: Rgb888 = Rgb888::WHITE;
+# 
+# fn main() {
+#     let mut window = Window::new("Hello World", &OutputSettings::default());
+#     let mut display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(480, 320));
+# 
+#     display.clear(BACKGROUND_COLOR).unwrap();
+# 
+#     let environment = DefaultEnvironment::default();
+#     let origin = buoyant::primitives::Point::zero();
+# 
+#     let view = hello_view();
+#     let layout = view.layout(&display.size().into(), &environment);
+#     let render_tree = view.render_tree(&layout, origin, &environment);
+# 
 render_tree.render(&mut display, &DEFAULT_COLOR, origin);
+# 
+#     window.show_static(&display);
+# }
+# 
+# fn hello_view() -> impl Renderable<Rgb888, Renderables: EmbeddedGraphicsRender<Rgb888>> {
+#     HStack::new((
+#         Text::str("Hello", &FONT_10X20).foreground_color(Rgb888::GREEN),
+#         Spacer::default(),
+#         Text::str("World", &FONT_10X20).foreground_color(Rgb888::YELLOW),
+#     ))
+#     .padding(Edges::All, 20)
+# }
 ```
 
 Here, the snapshot is finally rendered to the display buffer. A default color, similar to SwiftUI's
