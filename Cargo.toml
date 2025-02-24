@@ -27,7 +27,9 @@ heapless = "^0.8"
 paste = "1.0.15"
 
 [dev-dependencies]
-embedded-graphics-simulator = "0.7.0"
+embedded-graphics-simulator = { version = "0.7.0", default-features = false, features = [
+  "with-sdl",
+] }
 sdl2 = "0.37.0"
 
 [profile.release]
