@@ -68,3 +68,12 @@ jobs:
         run: cargo check --no-default-features --features "embedded-graphics"
       - name: Check all features
         run: cargo check --all-features
+
+  lint-markdown:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DavidAnson/markdownlint-cli2-action@v19.1.0
+        with:
+          globs: "**/*.md"

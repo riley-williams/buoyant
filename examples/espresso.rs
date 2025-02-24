@@ -64,7 +64,7 @@ mod color {
     pub const FOREGROUND_SECONDARY: Space = Space::CSS_LIGHT_SLATE_GRAY;
 }
 
-fn main() -> Result<(), core::convert::Infallible> {
+fn main() {
     let mut display: SimulatorDisplay<color::Space> = SimulatorDisplay::new(Size::new(480, 320));
     let mut window = Window::new("Coffeeeee", &OutputSettings::default());
     let app_start = Instant::now();
@@ -115,8 +115,6 @@ fn main() -> Result<(), core::convert::Infallible> {
             }
         }
     }
-
-    Ok(())
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Default)]

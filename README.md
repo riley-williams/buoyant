@@ -2,7 +2,7 @@
 
 [![Crates.io](https://img.shields.io/crates/v/buoyant.svg)](https://crates.io/crates/buoyant)
 [![Documentation](https://docs.rs/buoyant/badge.svg)](https://docs.rs/buoyant/)
-[![nightly](https://img.shields.io/badge/status-nightly-important)]()
+[![nightly](https://img.shields.io/badge/status-nightly-important)](https://rust-lang.github.io/rustup/concepts/channels.html)
 
 ![Partially working espresso machine UI](docs/images/coffeee-example.gif)
 
