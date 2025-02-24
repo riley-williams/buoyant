@@ -4,6 +4,7 @@
 //! The settings can be toggled using the `b`, `w`, and `o` keys.
 //!
 //! To run this example using the embedded_graphics simulator, you must have the `sdl2` package installed.
+//! See [SDL2](https://github.com/Rust-SDL2/rust-sdl2) for installation instructions.
 
 use std::time::{Duration, Instant};
 
