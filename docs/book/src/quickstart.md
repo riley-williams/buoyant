@@ -63,12 +63,6 @@ fn hello_view() -> impl Renderable<Rgb888, Renderables: EmbeddedGraphicsRender<R
 }
 ```
 
-To run:
-
-```bash
-cargo +nightly run
-```
-
 Running it will result in the words "Hello" (green) and "World" (yellow) separated by
 as much space as possible, with 20 pixels of padding from the edges of the window.
 
