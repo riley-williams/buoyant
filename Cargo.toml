@@ -1,6 +1,6 @@
 [package]
 name = "buoyant"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["Riley Williams"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
@@ -25,6 +25,12 @@ embedded-graphics-core = { version = "^0.4", optional = true }
 embedded-graphics = { version = "^0.8", optional = true }
 heapless = "^0.8"
 paste = "1.0.15"
+
+[dev-dependencies]
+embedded-graphics-simulator = { version = "0.7.0", default-features = false, features = [
+  "with-sdl",
+] }
+sdl2 = "0.37.0"
 
 [profile.release]
 debug = true
