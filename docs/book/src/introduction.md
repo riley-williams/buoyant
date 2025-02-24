@@ -9,16 +9,19 @@ with SwiftUI, you should feel right at home with Buoyant. If you aren't, don't w
 
 ## Why create this?
 
-The vast majority of my frontend experience is with SwiftUI, and I just wanted something
-like that for embedded Rust.
+The vast majority of my frontend experience is with SwiftUI, and I just want to use it
+for embedded. Despite what Apple would like you to think, Swift isn't all that great for
+embedded, so here we are doing it in Rust.
 
-The well known `std` Rust UI crates rely heavily on dynamic allocation making them unsuitable
-for porting to embedded. On the embedded side, at least as of the time of writing, there are
-no other good solutions for creating UIs with embedded Rust. You're essentially stuck manually
-placing elements with ``embedded_graphics``, which is both incredibly tedious and not at all
-scalable. If you want animation, you're in for a world of pain.
+The well known `std` Rust UI crates rely heavily on dynamic allocation, making them unsuitable
+for porting to embedded.
+
+On the embedded side, at least as of the time of writing, there weren't any other solutions
+I found very satisfying. I'm not really interested in buying into the Slint ecosystem,
+and aside from that, you'd essentially be stuck manually placing elements with
+``embedded-graphics``. Not fun at all.
 
 This is my attempt to fill that need, and at least so far, it's been far more successful than
-I imagined. While Buoyant is still very young and I'm still learning a lot about Rust, it's
-already capable of building fairly complex UIs in a scalable declarative way. Animations are
-incredibly easy to add, and it's possible to actually feel productive.
+I imagined. While Buoyant is still very young and I still feel new to Rust, Buoyant is
+already capable of building fairly complex UIs in SwiftUI's declarative style. Animations are
+not only possible, but quite easy to add.

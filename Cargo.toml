@@ -30,7 +30,6 @@ paste = "1.0.15"
 embedded-graphics-simulator = { version = "0.7.0", default-features = false, features = [
   "with-sdl",
 ] }
-sdl2 = "0.37.0"
 
 [profile.release]
 debug = true
