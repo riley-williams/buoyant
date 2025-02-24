@@ -9,9 +9,7 @@
 Buoyant is a library for writing and rendering SwiftUI-like views in Rust,
 primarily intended for use on `no_std` memory-constrained embedded systems.
 
-Floating point math is aggressively avoided.
-
-Nightly is required.
+Get started with the [Book](https://riley-williams.github.io/buoyant/).
 
 ## Available render targets
 
@@ -21,10 +19,9 @@ Nightly is required.
 - `CrossTerm`: Renders colored character-pixels to a terminal using
   the `crossterm` crate.
 
-## A Quick Example
+## Building views with Buoyant
 
-Here's what an Apple-like toggle button component would look like,
-implemented with Buoyant:
+Here's what an animated toggle button component would look like, implemented with Buoyant:
 
 ```rust
 fn toggle_button(is_on: bool) -> impl Renderable<Rgb565, Renderables: EmbeddedGraphicsRender<Rgb565>> {
