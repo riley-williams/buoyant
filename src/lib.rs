@@ -1,5 +1,4 @@
 #![no_std]
-#![feature(type_alias_impl_trait)]
 #![warn(missing_debug_implementations)]
 #![deny(clippy::missing_const_for_fn)]
 
