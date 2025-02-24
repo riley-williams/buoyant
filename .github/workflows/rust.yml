@@ -77,3 +77,23 @@ jobs:
       - uses: DavidAnson/markdownlint-cli2-action@v19.1.0
         with:
           globs: "**/*.md"
+
+  test-book:
+    name: Test Book
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Install latest mdbook
+        run: |
+          tag=$(curl 'https://api.github.com/repos/rust-lang/mdbook/releases/latest' | jq -r '.tag_name')
+          url="https://github.com/rust-lang/mdbook/releases/download/${tag}/mdbook-${tag}-x86_64-unknown-linux-gnu.tar.gz"
+          mkdir bin
+          curl -sSL $url | tar -xz --directory=bin
+          echo "$(pwd)/bin" >> $GITHUB_PATH
+      - name: Install SDL2
+        run: sudo apt-get install libsdl2-dev
+      - name: Run book tests
+        run: |
+          # Create build deps for mdbook to reference
+          cargo build --examples --all-features
+          mdbook test -L target/debug/deps docs/book
