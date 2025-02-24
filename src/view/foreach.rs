@@ -60,13 +60,13 @@ where
     }
 
     #[must_use]
-    pub fn with_alignment(mut self, alignment: HorizontalAlignment) -> Self {
+    pub const fn with_alignment(mut self, alignment: HorizontalAlignment) -> Self {
         self.alignment = alignment;
         self
     }
 
     #[must_use]
-    pub fn with_spacing(mut self, spacing: u16) -> Self {
+    pub const fn with_spacing(mut self, spacing: u16) -> Self {
         self.spacing = spacing;
         self
     }

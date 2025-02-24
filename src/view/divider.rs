@@ -12,7 +12,7 @@ pub struct Divider {
 
 impl Divider {
     #[must_use]
-    pub fn new(weight: u16) -> Self {
+    pub const fn new(weight: u16) -> Self {
         Self { weight }
     }
 }

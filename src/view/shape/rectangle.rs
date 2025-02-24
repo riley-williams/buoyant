@@ -15,7 +15,7 @@ impl Rectangle {
     /// Adds a corner radius to all corners. The radius will be capped to half the shorter
     /// dimension
     #[must_use]
-    pub fn corner_radius(self, radius: u16) -> RoundedRectangle {
+    pub const fn corner_radius(self, radius: u16) -> RoundedRectangle {
         RoundedRectangle::new(radius)
     }
 }

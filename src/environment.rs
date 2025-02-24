@@ -17,7 +17,7 @@ pub struct DefaultEnvironment {
 
 impl DefaultEnvironment {
     #[must_use]
-    pub fn new(app_time: Duration) -> Self {
+    pub const fn new(app_time: Duration) -> Self {
         DefaultEnvironment { app_time }
     }
 

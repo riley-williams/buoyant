@@ -9,7 +9,7 @@ pub struct FixedTextBuffer<const W: usize, const H: usize> {
 }
 
 impl<const W: usize, const H: usize> FixedTextBuffer<W, H> {
-    pub fn clear(&mut self) {
+    pub const fn clear(&mut self) {
         self.text = [[' '; W]; H];
     }
 }

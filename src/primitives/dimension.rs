@@ -261,7 +261,7 @@ pub struct Dimensions {
 
 impl Dimensions {
     #[must_use]
-    pub fn new(width: u16, height: u16) -> Self {
+    pub const fn new(width: u16, height: u16) -> Self {
         Self {
             width: Dimension(width),
             height: Dimension(height),
@@ -269,7 +269,7 @@ impl Dimensions {
     }
 
     #[must_use]
-    pub fn zero() -> Self {
+    pub const fn zero() -> Self {
         Self {
             width: Dimension(0),
             height: Dimension(0),

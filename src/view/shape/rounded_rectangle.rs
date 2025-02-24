@@ -12,7 +12,7 @@ pub struct RoundedRectangle {
 
 impl RoundedRectangle {
     #[must_use]
-    pub fn new(corner_radius: u16) -> Self {
+    pub const fn new(corner_radius: u16) -> Self {
         Self { corner_radius }
     }
 }

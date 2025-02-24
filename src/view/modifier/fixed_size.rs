@@ -15,7 +15,7 @@ pub struct FixedSize<T> {
 }
 
 impl<T> FixedSize<T> {
-    pub fn new(horizontal: bool, vertical: bool, child: T) -> Self {
+    pub const fn new(horizontal: bool, vertical: bool, child: T) -> Self {
         Self {
             horizontal,
             vertical,

@@ -23,7 +23,7 @@ pub struct Animate<T, U> {
 
 impl<T, U: PartialEq + Clone> Animate<T, U> {
     #[must_use]
-    pub fn new(subtree: T, animation: Animation, frame_time: Duration, value: U) -> Self {
+    pub const fn new(subtree: T, animation: Animation, frame_time: Duration, value: U) -> Self {
         Self {
             subtree,
             animation,

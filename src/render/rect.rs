@@ -10,7 +10,7 @@ pub struct Rect {
 
 impl Rect {
     #[must_use]
-    pub fn new(origin: Point, size: Size) -> Self {
+    pub const fn new(origin: Point, size: Size) -> Self {
         Self { origin, size }
     }
 }

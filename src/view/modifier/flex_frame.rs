@@ -33,12 +33,12 @@ impl<T> FlexFrame<T> {
         }
     }
 
-    pub fn with_min_width(mut self, min_width: u16) -> Self {
+    pub const fn with_min_width(mut self, min_width: u16) -> Self {
         self.min_width = Some(min_width);
         self
     }
 
-    pub fn with_ideal_width(mut self, ideal_width: u16) -> Self {
+    pub const fn with_ideal_width(mut self, ideal_width: u16) -> Self {
         self.ideal_width = Some(ideal_width);
         self
     }
@@ -48,17 +48,17 @@ impl<T> FlexFrame<T> {
         self
     }
 
-    pub fn with_infinite_max_width(mut self) -> Self {
+    pub const fn with_infinite_max_width(mut self) -> Self {
         self.max_width = Some(Dimension::infinite());
         self
     }
 
-    pub fn with_min_height(mut self, min_height: u16) -> Self {
+    pub const fn with_min_height(mut self, min_height: u16) -> Self {
         self.min_height = Some(min_height);
         self
     }
 
-    pub fn with_ideal_height(mut self, ideal_height: u16) -> Self {
+    pub const fn with_ideal_height(mut self, ideal_height: u16) -> Self {
         self.ideal_height = Some(ideal_height);
         self
     }
@@ -68,17 +68,17 @@ impl<T> FlexFrame<T> {
         self
     }
 
-    pub fn with_infinite_max_height(mut self) -> Self {
+    pub const fn with_infinite_max_height(mut self) -> Self {
         self.max_height = Some(Dimension::infinite());
         self
     }
 
-    pub fn with_horizontal_alignment(mut self, alignment: HorizontalAlignment) -> Self {
+    pub const fn with_horizontal_alignment(mut self, alignment: HorizontalAlignment) -> Self {
         self.horizontal_alignment = alignment;
         self
     }
 
-    pub fn with_vertical_alignment(mut self, alignment: VerticalAlignment) -> Self {
+    pub const fn with_vertical_alignment(mut self, alignment: VerticalAlignment) -> Self {
         self.vertical_alignment = alignment;
         self
     }

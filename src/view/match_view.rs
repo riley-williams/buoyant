@@ -26,13 +26,13 @@ pub enum Branch3<V0, V1, V2> {
 
 // This is only called by the macro
 impl<V0, V1> MatchView<Branch2<V0, V1>> {
-    pub fn new(branch: Branch2<V0, V1>) -> Self {
+    pub const fn new(branch: Branch2<V0, V1>) -> Self {
         Self { branch }
     }
 }
 
 impl<V0, V1, V2> MatchView<Branch3<V0, V1, V2>> {
-    pub fn new(branch: Branch3<V0, V1, V2>) -> Self {
+    pub const fn new(branch: Branch3<V0, V1, V2>) -> Self {
         Self { branch }
     }
 }

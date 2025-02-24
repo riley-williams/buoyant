@@ -13,7 +13,7 @@ pub struct ForegroundStyle<V, S> {
 }
 
 impl<V, S> ForegroundStyle<V, S> {
-    pub fn new(style: S, inner: V) -> Self {
+    pub const fn new(style: S, inner: V) -> Self {
         Self { inner, style }
     }
 }

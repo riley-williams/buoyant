@@ -24,7 +24,7 @@ pub enum HorizontalTextAlignment {
 }
 
 impl HorizontalTextAlignment {
-    pub(crate) fn align(self, available: i16, content: i16) -> i16 {
+    pub(crate) const fn align(self, available: i16, content: i16) -> i16 {
         match self {
             Self::Leading => 0,
             Self::Center => (available - content) / 2,

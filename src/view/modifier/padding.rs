@@ -27,7 +27,7 @@ pub struct Padding<T> {
 }
 
 impl<T> Padding<T> {
-    pub fn new(edges: Edges, padding: u16, child: T) -> Self {
+    pub const fn new(edges: Edges, padding: u16, child: T) -> Self {
         Self {
             edges,
             padding,
