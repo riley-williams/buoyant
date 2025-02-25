@@ -5,7 +5,7 @@ use crate::{
     render::{AnimationDomain, CharacterRender, CharacterRenderTarget},
     view::{HorizontalTextAlignment, WhitespaceWrap},
 };
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct StaticText<'a, F> {
     pub origin: Point,
     pub size: Size,

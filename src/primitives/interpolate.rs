@@ -12,21 +12,21 @@ pub trait Interpolate: Copy + PartialEq {
 impl Interpolate for u16 {
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
         (((u32::from(amount) * u32::from(to)) + (u32::from(255 - amount) * u32::from(from))) / 255)
-            as u16
+            as Self
     }
 }
 
 impl Interpolate for i16 {
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
         (((i32::from(amount) * i32::from(to)) + (i32::from(255 - amount) * i32::from(from))) / 255)
-            as i16
+            as Self
     }
 }
 
 // TODO: This isn't correct...close enough for now
 impl Interpolate for u32 {
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
-        ((u32::from(amount) * to) + (u32::from(255 - amount) * from)) / 255
+        ((Self::from(amount) * to) + (Self::from(255 - amount) * from)) / 255
     }
 }
 
@@ -36,7 +36,7 @@ impl Interpolate for crossterm::style::Colors {
         let foreground = interpolate_crossterm_colors(from.foreground, to.foreground, amount);
         let background = interpolate_crossterm_colors(from.background, to.background, amount);
 
-        crossterm::style::Colors {
+        Self {
             foreground,
             background,
         }
@@ -86,8 +86,8 @@ fn interpolate_crossterm_colors(
 mod embedded_graphics_impl {
 
     use super::Interpolate;
-    use embedded_graphics::{pixelcolor::Rgb888, primitives::PrimitiveStyle};
-    use embedded_graphics_core::pixelcolor::{Rgb565, RgbColor};
+    use embedded_graphics::primitives::PrimitiveStyle;
+    use embedded_graphics_core::pixelcolor::RgbColor;
 
     impl Interpolate for embedded_graphics_core::pixelcolor::BinaryColor {}
 
@@ -101,7 +101,7 @@ mod embedded_graphics_impl {
             let r = interpolate_channel(from.r(), to.r(), t_fixed);
             let g = interpolate_channel(from.g(), to.g(), t_fixed);
             let b = interpolate_channel(from.b(), to.b(), t_fixed);
-            Rgb565::new(r, g, b)
+            Self::new(r, g, b)
         }
     }
 
@@ -115,7 +115,7 @@ mod embedded_graphics_impl {
             let r = interpolate_channel(from.r(), to.r(), t_fixed);
             let g = interpolate_channel(from.g(), to.g(), t_fixed);
             let b = interpolate_channel(from.b(), to.b(), t_fixed);
-            Rgb888::new(r, g, b)
+            Self::new(r, g, b)
         }
     }
 

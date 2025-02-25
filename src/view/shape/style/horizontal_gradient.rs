@@ -2,7 +2,7 @@ use crate::primitives::Interpolate;
 
 use super::FillStyle;
 
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub struct HorizontalGradient<Color> {
     start: Color,
     end: Color,

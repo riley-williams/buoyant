@@ -2,7 +2,7 @@ use crate::{
     primitives::{Point, Size},
     view::HorizontalTextAlignment,
 };
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct OwnedText<'a, const N: usize, F> {
     pub origin: Point,
     pub size: Size,

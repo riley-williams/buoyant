@@ -6,7 +6,7 @@ use crate::{
 };
 
 /// A circle primitive
-#[derive(Debug, Copy, Clone, PartialEq, Default)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Default)]
 pub struct Circle;
 
 impl Circle {

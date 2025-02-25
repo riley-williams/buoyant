@@ -14,7 +14,7 @@ exclude = [".github"]
 maintenance = { status = "experimental" }
 
 [features]
-default = ["embedded-graphics"]
+default = ["embedded-graphics", "crossterm"]
 std = []
 embedded-graphics = ["dep:embedded-graphics", "dep:embedded-graphics-core"]
 crossterm = ["dep:crossterm", "std"]

@@ -31,7 +31,7 @@ mod embedded_graphics_impl {
             let x = i16::interpolate(source.origin.x, target.origin.x, domain.factor);
             let y = i16::interpolate(source.origin.y, target.origin.y, domain.factor);
             let diameter = u16::interpolate(source.diameter, target.diameter, domain.factor);
-            Circle {
+            Self {
                 origin: Point::new(x, y),
                 diameter,
             }

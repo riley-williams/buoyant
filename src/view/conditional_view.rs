@@ -8,7 +8,7 @@ use crate::{
 
 use super::EmptyView;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ConditionalView<U, V> {
     pub condition: bool,
     pub true_view: U,
@@ -35,7 +35,7 @@ impl<U> ConditionalView<U, EmptyView> {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Conditional<U, V> {
     True(U),
     False(V),

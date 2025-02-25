@@ -52,7 +52,7 @@ mod embedded_graphics_impl {
             let y = i16::interpolate(source.origin.y, target.origin.y, domain.factor);
             let w = u16::interpolate(source.size.width, target.size.width, domain.factor);
             let h = u16::interpolate(source.size.height, target.size.height, domain.factor);
-            Capsule::new(Point::new(x, y), Size::new(w, h))
+            Self::new(Point::new(x, y), Size::new(w, h))
         }
     }
 }

@@ -8,6 +8,7 @@ use crate::{
 use paste::paste;
 
 /// A stack of heterogeneous views that arranges its views from back to front.
+///
 /// The parent size is first offered to each subview. If any offered dimension is
 /// ``ProposedDimension::Compact``, ``ZStack`` will offer a new frame that is the
 /// union of all the resolved frame sizes from the previous pass.
@@ -61,7 +62,7 @@ impl<T> ZStack<T> {
 
 impl<T> ZStack<T> {
     pub fn new(items: T) -> Self {
-        ZStack {
+        Self {
             items,
             horizontal_alignment: HorizontalAlignment::default(),
             vertical_alignment: VerticalAlignment::default(),

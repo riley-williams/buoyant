@@ -8,7 +8,7 @@ use crate::{
 use super::RoundedRectangle;
 
 /// A rectangle
-#[derive(Debug, Copy, Clone, PartialEq, Default)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Default)]
 pub struct Rectangle;
 
 impl Rectangle {

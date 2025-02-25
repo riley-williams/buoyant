@@ -59,7 +59,7 @@ impl<T> PartialEq for HStack<T> {
 
 impl<T> HStack<T> {
     pub fn new(items: T) -> Self {
-        HStack {
+        Self {
             items,
             alignment: VerticalAlignment::default(),
             spacing: 0,

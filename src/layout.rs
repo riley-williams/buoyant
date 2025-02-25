@@ -3,7 +3,7 @@ use crate::{
     primitives::{Dimensions, ProposedDimension, ProposedDimensions},
 };
 
-#[derive(Clone, Copy, Debug, PartialEq, Default)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub enum LayoutDirection {
     /// Content is laid out horizontally, from left to right. Typically in a `HStack`
     #[default]
@@ -12,13 +12,13 @@ pub enum LayoutDirection {
     Vertical,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Default)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub struct Alignment {
     pub horizontal: HorizontalAlignment,
     pub vertical: VerticalAlignment,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Default)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub enum HorizontalAlignment {
     /// Align the content to the start of the layout direction
     Leading,
@@ -33,14 +33,14 @@ impl HorizontalAlignment {
     #[must_use]
     pub const fn align(&self, available: i16, content: i16) -> i16 {
         match self {
-            HorizontalAlignment::Leading => 0,
-            HorizontalAlignment::Center => (available - content) / 2,
-            HorizontalAlignment::Trailing => available - content,
+            Self::Leading => 0,
+            Self::Center => (available - content) / 2,
+            Self::Trailing => available - content,
         }
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Default)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 /// Strategy to align the heights of items that do not fill the available frame height
 pub enum VerticalAlignment {
     /// Align the content to the start of the layout direction
@@ -56,14 +56,14 @@ impl VerticalAlignment {
     #[must_use]
     pub const fn align(&self, available: i16, content: i16) -> i16 {
         match self {
-            VerticalAlignment::Top => 0,
-            VerticalAlignment::Center => (available - content) / 2,
-            VerticalAlignment::Bottom => available - content,
+            Self::Top => 0,
+            Self::Center => (available - content) / 2,
+            Self::Bottom => available - content,
         }
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ResolvedLayout<C: Clone + PartialEq> {
     pub sublayouts: C,
     pub resolved_size: Dimensions,
@@ -79,11 +79,11 @@ impl Axis {
     #[must_use]
     pub const fn into_min_proposal(self) -> ProposedDimensions {
         match self {
-            Axis::FixedWidth(w) => ProposedDimensions {
+            Self::FixedWidth(w) => ProposedDimensions {
                 width: ProposedDimension::Exact(w),
                 height: ProposedDimension::Exact(0),
             },
-            Axis::FixedHeight(h) => ProposedDimensions {
+            Self::FixedHeight(h) => ProposedDimensions {
                 width: ProposedDimension::Exact(0),
                 height: ProposedDimension::Exact(h),
             },
@@ -93,11 +93,11 @@ impl Axis {
     #[must_use]
     pub const fn into_max_proposal(self) -> ProposedDimensions {
         match self {
-            Axis::FixedWidth(w) => ProposedDimensions {
+            Self::FixedWidth(w) => ProposedDimensions {
                 width: ProposedDimension::Exact(w),
                 height: ProposedDimension::Infinite,
             },
-            Axis::FixedHeight(h) => ProposedDimensions {
+            Self::FixedHeight(h) => ProposedDimensions {
                 width: ProposedDimension::Infinite,
                 height: ProposedDimension::Exact(h),
             },

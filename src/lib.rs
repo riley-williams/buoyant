@@ -1,6 +1,6 @@
 #![no_std]
 #![allow(clippy::cast_sign_loss, clippy::missing_panics_doc)]
-#![deny(clippy::missing_const_for_fn)]
+#![deny(clippy::nursery)]
 #![cfg_attr(test, allow(unused))]
 
 #[cfg(any(test, feature = "std"))]
@@ -23,13 +23,13 @@ pub enum Animation {
 impl Animation {
     const fn duration(&self) -> core::time::Duration {
         match self {
-            Animation::Linear(duration) => *duration,
+            Self::Linear(duration) => *duration,
         }
     }
 
     const fn with_duration(self, duration: core::time::Duration) -> Self {
         match self {
-            Animation::Linear(_) => Animation::Linear(duration),
+            Self::Linear(_) => Self::Linear(duration),
         }
     }
 }

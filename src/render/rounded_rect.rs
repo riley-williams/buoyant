@@ -43,7 +43,7 @@ mod embedded_graphics_impl {
             let w = u16::interpolate(source.size.width, target.size.width, config.factor);
             let h = u16::interpolate(source.size.height, target.size.height, config.factor);
             let r = u16::interpolate(source.corner_radius, target.corner_radius, config.factor);
-            RoundedRect {
+            Self {
                 origin: Point::new(x, y),
                 size: Size::new(w, h),
                 corner_radius: r,

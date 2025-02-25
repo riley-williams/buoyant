@@ -133,7 +133,7 @@ impl<C> CharacterRender<C> for () {
     fn join(_source: Self, _target: Self, _domain: &AnimationDomain) -> Self {}
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AnimationDomain {
     /// The animation factor of this domain, ranging from 0 to 255
     pub factor: u8,

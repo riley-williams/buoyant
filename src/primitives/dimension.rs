@@ -29,7 +29,7 @@ pub enum ProposedDimension {
 
 impl From<Size> for ProposedDimensions {
     fn from(size: Size) -> Self {
-        ProposedDimensions {
+        Self {
             width: ProposedDimension::Exact(size.width),
             height: ProposedDimension::Exact(size.height),
         }
@@ -39,7 +39,7 @@ impl From<Size> for ProposedDimensions {
 #[cfg(feature = "embedded-graphics")]
 impl From<embedded_graphics_core::geometry::Size> for ProposedDimensions {
     fn from(size: embedded_graphics_core::geometry::Size) -> Self {
-        ProposedDimensions {
+        Self {
             width: ProposedDimension::Exact(size.width as u16),
             height: ProposedDimension::Exact(size.height as u16),
         }
@@ -52,63 +52,63 @@ impl ProposedDimension {
     #[must_use]
     pub fn resolve_most_flexible(self, minimum: u16, ideal: u16) -> Dimension {
         match self {
-            ProposedDimension::Compact => Dimension(ideal),
-            ProposedDimension::Exact(d) => Dimension(d.max(minimum)),
-            ProposedDimension::Infinite => Dimension::infinite(),
+            Self::Compact => Dimension(ideal),
+            Self::Exact(d) => Dimension(d.max(minimum)),
+            Self::Infinite => Dimension::infinite(),
         }
     }
 }
 
 impl From<u16> for ProposedDimension {
     fn from(value: u16) -> Self {
-        ProposedDimension::Exact(value)
+        Self::Exact(value)
     }
 }
 
 impl core::ops::Add<u16> for ProposedDimension {
-    type Output = ProposedDimension;
+    type Output = Self;
 
     fn add(self, rhs: u16) -> Self::Output {
         match self {
-            ProposedDimension::Compact => ProposedDimension::Compact,
-            ProposedDimension::Exact(d) => ProposedDimension::Exact(d + rhs),
-            ProposedDimension::Infinite => ProposedDimension::Infinite,
+            Self::Compact => Self::Compact,
+            Self::Exact(d) => Self::Exact(d + rhs),
+            Self::Infinite => Self::Infinite,
         }
     }
 }
 
 impl core::ops::Sub<u16> for ProposedDimension {
-    type Output = ProposedDimension;
+    type Output = Self;
 
     fn sub(self, rhs: u16) -> Self::Output {
         match self {
-            ProposedDimension::Compact => ProposedDimension::Compact,
-            ProposedDimension::Exact(d) => ProposedDimension::Exact(d.saturating_sub(rhs)),
-            ProposedDimension::Infinite => ProposedDimension::Infinite,
+            Self::Compact => Self::Compact,
+            Self::Exact(d) => Self::Exact(d.saturating_sub(rhs)),
+            Self::Infinite => Self::Infinite,
         }
     }
 }
 
 impl core::ops::Mul<u16> for ProposedDimension {
-    type Output = ProposedDimension;
+    type Output = Self;
 
     fn mul(self, rhs: u16) -> Self::Output {
         match self {
-            ProposedDimension::Compact => ProposedDimension::Compact,
-            ProposedDimension::Exact(d) => ProposedDimension::Exact(d.saturating_mul(rhs)),
-            ProposedDimension::Infinite => ProposedDimension::Infinite,
+            Self::Compact => Self::Compact,
+            Self::Exact(d) => Self::Exact(d.saturating_mul(rhs)),
+            Self::Infinite => Self::Infinite,
         }
     }
 }
 
 impl core::ops::Div<u16> for ProposedDimension {
-    type Output = ProposedDimension;
+    type Output = Self;
 
     fn div(self, rhs: u16) -> Self::Output {
         match self {
-            ProposedDimension::Compact => ProposedDimension::Compact,
-            ProposedDimension::Exact(d) => ProposedDimension::Exact(d.saturating_div(rhs)),
-            ProposedDimension::Infinite => ProposedDimension::Infinite,
+            Self::Compact => Self::Compact,
+            Self::Exact(d) => Self::Exact(d.saturating_div(rhs)),
+            Self::Infinite => Self::Infinite,
         }
     }
 }
@@ -139,25 +139,25 @@ impl From<Dimension> for u16 {
 
 impl From<Dimension> for i16 {
     fn from(value: Dimension) -> Self {
-        value.0.try_into().unwrap_or(i16::MAX)
+        value.0.try_into().unwrap_or(Self::MAX)
     }
 }
 
 impl From<Dimension> for u32 {
     fn from(value: Dimension) -> Self {
-        u32::from(value.0)
+        Self::from(value.0)
     }
 }
 
 impl From<Dimension> for i32 {
     fn from(value: Dimension) -> Self {
-        i32::from(value.0)
+        Self::from(value.0)
     }
 }
 
 impl From<Dimension> for f32 {
     fn from(value: Dimension) -> Self {
-        f32::from(value.0)
+        Self::from(value.0)
     }
 }
 
@@ -354,7 +354,7 @@ impl From<Dimensions> for Size {
 
 impl Interpolate for Dimensions {
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
-        Dimensions {
+        Self {
             width: Dimension::interpolate(from.width, to.width, amount),
             height: Dimension::interpolate(from.height, to.height, amount),
         }
@@ -363,7 +363,7 @@ impl Interpolate for Dimensions {
 
 impl Interpolate for Dimension {
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
-        Dimension(
+        Self(
             (((u32::from(amount) * u32::from(to.0))
                 + (u32::from(255 - amount) * u32::from(from.0)))
                 / 255) as u16,
@@ -374,7 +374,7 @@ impl Interpolate for Dimension {
 #[cfg(feature = "embedded-graphics")]
 impl From<Dimensions> for embedded_graphics_core::geometry::Size {
     fn from(value: Dimensions) -> Self {
-        embedded_graphics_core::geometry::Size::new(
+        Self::new(
             u32::from(value.width.0),
             u32::from(value.height.0),
         )
