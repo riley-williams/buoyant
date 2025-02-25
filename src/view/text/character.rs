@@ -3,7 +3,7 @@ use crate::{
     font::FontLayout,
     layout::{Layout, ResolvedLayout},
     primitives::{Point, ProposedDimension, ProposedDimensions, Size},
-    render::{OwnedText, Renderable},
+    render::{TextBox, Renderable},
 };
 use core::marker::PhantomData;
 
@@ -62,7 +62,7 @@ impl<T: AsRef<str>, F: FontLayout> Layout for Text<'_, T, F> {
 }
 
 impl<'a, T: AsRef<str> + Clone, C, F: FontLayout> Renderable<C> for Text<'a, T, F> {
-    type Renderables = OwnedText<'a, T, F>;
+    type Renderables = TextBox<'a, T, F>;
 
     fn render_tree(
         &self,
@@ -70,7 +70,7 @@ impl<'a, T: AsRef<str> + Clone, C, F: FontLayout> Renderable<C> for Text<'a, T, 
         origin: Point,
         _env: &impl LayoutEnvironment,
     ) -> Self::Renderables {
-        OwnedText {
+        TextBox {
             text: self.text.clone(),
             font: self.font,
             origin,
