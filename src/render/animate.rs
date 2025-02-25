@@ -33,6 +33,7 @@ impl<T, U: PartialEq + Clone> Animate<T, U> {
         }
     }
 }
+
 impl<C, T: CharacterRender<C>, U: PartialEq + Clone> CharacterRender<C> for Animate<T, U> {
     fn render(
         &self,
@@ -51,21 +52,28 @@ impl<C, T: CharacterRender<C>, U: PartialEq + Clone> CharacterRender<C> for Anim
         offset: Point,
         domain: &AnimationDomain,
     ) {
+        let should_animate;
         let (end_time, duration) = if source.value != target.value {
             let duration = target.animation.duration();
+            should_animate = true;
             (target.frame_time + duration, duration)
         } else if source.is_partial {
             // continue source animation
             let duration = source.animation.duration();
+            should_animate = true;
             (source.frame_time + duration, duration)
         } else {
             // no animation
+            should_animate = false;
             (domain.app_time, Duration::from_secs(0))
         };
 
-        let subdomain = if end_time == Duration::from_secs(0) || domain.app_time >= end_time {
+        let subdomain = if !should_animate {
+            domain
+        } else if end_time == Duration::from_secs(0) || domain.app_time >= end_time {
             // animation has already completed or there was zero duration
-            AnimationDomain {
+            // use the parent domain to animate subtree
+            &AnimationDomain {
                 factor: 255,
                 app_time: domain.app_time,
             }
@@ -77,7 +85,7 @@ impl<C, T: CharacterRender<C>, U: PartialEq + Clone> CharacterRender<C> for Anim
                     .checked_div(duration.as_millis())
                     .unwrap_or(0),
             ) as u8;
-            AnimationDomain {
+            &AnimationDomain {
                 factor,
                 app_time: domain.app_time,
             }
@@ -89,27 +97,35 @@ impl<C, T: CharacterRender<C>, U: PartialEq + Clone> CharacterRender<C> for Anim
             &target.subtree,
             style,
             offset,
-            &subdomain,
+            subdomain,
         );
     }
 
     fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
+        let should_animate;
         let (end_time, duration) = if source.value != target.value {
             let duration = target.animation.duration();
+            should_animate = true;
             (target.frame_time + duration, duration)
         } else if source.is_partial {
             // continue source animation
             let duration = source.animation.duration();
+            should_animate = true;
             (source.frame_time + duration, duration)
         } else {
             // no animation
+            should_animate = false;
             (domain.app_time, Duration::from_secs(0))
         };
 
         let new_duration;
         let is_partial;
         let subdomain;
-        if end_time == Duration::from_secs(0) || domain.app_time >= end_time {
+        if !should_animate {
+            is_partial = false;
+            new_duration = Duration::from_secs(0);
+            subdomain = domain.clone();
+        } else if duration == Duration::from_secs(0) || domain.app_time >= end_time {
             // animation has already completed or there was zero duration
             is_partial = false;
             new_duration = Duration::from_secs(0);
@@ -173,21 +189,28 @@ mod embedded_graphics_impl {
             offset: Point,
             domain: &AnimationDomain,
         ) {
+            let should_animate;
             let (end_time, duration) = if source.value != target.value {
                 let duration = target.animation.duration();
+                should_animate = true;
                 (target.frame_time + duration, duration)
             } else if source.is_partial {
                 // continue source animation
                 let duration = source.animation.duration();
+                should_animate = true;
                 (source.frame_time + duration, duration)
             } else {
                 // no animation
+                should_animate = false;
                 (domain.app_time, Duration::from_secs(0))
             };
 
-            let subdomain = if end_time == Duration::from_secs(0) || domain.app_time >= end_time {
+            let subdomain = if !should_animate {
+                domain
+            } else if end_time == Duration::from_secs(0) || domain.app_time >= end_time {
                 // animation has already completed or there was zero duration
-                AnimationDomain {
+                // use the parent domain to animate subtree
+                &AnimationDomain {
                     factor: 255,
                     app_time: domain.app_time,
                 }
@@ -199,7 +222,7 @@ mod embedded_graphics_impl {
                         .checked_div(duration.as_millis())
                         .unwrap_or(0),
                 ) as u8;
-                AnimationDomain {
+                &AnimationDomain {
                     factor,
                     app_time: domain.app_time,
                 }
@@ -211,27 +234,35 @@ mod embedded_graphics_impl {
                 &target.subtree,
                 style,
                 offset,
-                &subdomain,
+                subdomain,
             );
         }
 
         fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
+            let should_animate;
             let (end_time, duration) = if source.value != target.value {
                 let duration = target.animation.duration();
+                should_animate = true;
                 (target.frame_time + duration, duration)
             } else if source.is_partial {
                 // continue source animation
                 let duration = source.animation.duration();
+                should_animate = true;
                 (source.frame_time + duration, duration)
             } else {
                 // no animation
+                should_animate = false;
                 (domain.app_time, Duration::from_secs(0))
             };
 
             let new_duration;
             let is_partial;
             let subdomain;
-            if end_time == Duration::from_secs(0) || domain.app_time >= end_time {
+            if !should_animate {
+                is_partial = false;
+                new_duration = Duration::from_secs(0);
+                subdomain = domain.clone();
+            } else if duration == Duration::from_secs(0) || domain.app_time >= end_time {
                 // animation has already completed or there was zero duration
                 is_partial = false;
                 new_duration = Duration::from_secs(0);
