@@ -108,15 +108,14 @@ impl<C, T: CharacterRender<C>, U: PartialEq + Clone> CharacterRender<C> for Anim
 
         let new_duration;
         let is_partial;
-        let subdomain;
-        if end_time == Duration::from_secs(0) || domain.app_time >= end_time {
+        let subdomain = if end_time == Duration::from_secs(0) || domain.app_time >= end_time {
             // animation has already completed or there was zero duration
             is_partial = false;
             new_duration = Duration::from_secs(0);
-            subdomain = AnimationDomain {
+            AnimationDomain {
                 factor: 255,
                 app_time: domain.app_time,
-            };
+            }
         } else {
             is_partial = true;
             new_duration = end_time.saturating_sub(domain.app_time);
@@ -126,11 +125,11 @@ impl<C, T: CharacterRender<C>, U: PartialEq + Clone> CharacterRender<C> for Anim
                     .checked_div(duration.as_millis())
                     .unwrap_or(0),
             ) as u8;
-            subdomain = AnimationDomain {
+            AnimationDomain {
                 factor,
                 app_time: domain.app_time,
-            };
-        }
+            }
+        };
 
         Self {
             animation: target.animation.with_duration(new_duration),
@@ -230,15 +229,13 @@ mod embedded_graphics_impl {
 
             let new_duration;
             let is_partial;
-            let subdomain;
-            if end_time == Duration::from_secs(0) || domain.app_time >= end_time {
-                // animation has already completed or there was zero duration
+            let subdomain = if end_time == Duration::from_secs(0) || domain.app_time >= end_time {
                 is_partial = false;
                 new_duration = Duration::from_secs(0);
-                subdomain = AnimationDomain {
+                AnimationDomain {
                     factor: 255,
                     app_time: domain.app_time,
-                };
+                }
             } else {
                 is_partial = true;
                 new_duration = end_time.saturating_sub(domain.app_time);
@@ -248,11 +245,11 @@ mod embedded_graphics_impl {
                         .checked_div(duration.as_millis())
                         .unwrap_or(0),
                 ) as u8;
-                subdomain = AnimationDomain {
+                AnimationDomain {
                     factor,
                     app_time: domain.app_time,
-                };
-            }
+                }
+            };
 
             Self {
                 animation: target.animation.with_duration(new_duration),
