@@ -41,12 +41,14 @@ impl<'a, T: LayoutEnvironment> From<&'a T> for VerticalEnvironment<'a, T> {
 }
 
 impl<T> PartialEq for VStack<T> {
+    #[inline]
     fn eq(&self, other: &Self) -> bool {
         self.spacing == other.spacing && self.alignment == other.alignment
     }
 }
 
 impl<T> VStack<T> {
+    #[inline]
     pub fn new(items: T) -> Self {
         Self {
             items,
@@ -55,11 +57,13 @@ impl<T> VStack<T> {
         }
     }
 
+    #[inline]
     #[must_use]
     pub fn with_spacing(self, spacing: u16) -> Self {
         Self { spacing, ..self }
     }
 
+    #[inline]
     #[must_use]
     pub fn with_alignment(self, alignment: HorizontalAlignment) -> Self {
         Self { alignment, ..self }
@@ -197,6 +201,7 @@ macro_rules! impl_layout_for_vstack {
         impl<$($type: Layout),+> Layout for VStack<($($type),+)> {
             type Sublayout = ($(ResolvedLayout<$type::Sublayout>),+);
 
+            #[inline]
             fn layout(
                 &self,
                 offer: &ProposedDimensions,
@@ -235,7 +240,8 @@ macro_rules! impl_layout_for_vstack {
         impl<$($type: Renderable<C>),+, C> Renderable<C> for VStack<($($type),+)> {
             type Renderables = ($($type::Renderables),+);
 
-            #[allow(unused_assignments)]
+            #[inline]
+            #[expect(unused_assignments)]
             fn render_tree(
                 &self,
                 layout: &ResolvedLayout<Self::Sublayout>,

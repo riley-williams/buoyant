@@ -1,5 +1,6 @@
 pub trait Interpolate: Copy + PartialEq {
     /// Interpolate between two colors
+    #[inline]
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
         if amount < 127 {
             from
@@ -10,6 +11,7 @@ pub trait Interpolate: Copy + PartialEq {
 }
 
 impl Interpolate for u16 {
+    #[inline]
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
         (((u32::from(amount) * u32::from(to)) + (u32::from(255 - amount) * u32::from(from))) / 255)
             as Self
@@ -17,6 +19,7 @@ impl Interpolate for u16 {
 }
 
 impl Interpolate for i16 {
+    #[inline]
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
         (((i32::from(amount) * i32::from(to)) + (i32::from(255 - amount) * i32::from(from))) / 255)
             as Self
@@ -25,6 +28,7 @@ impl Interpolate for i16 {
 
 // TODO: This isn't correct...close enough for now
 impl Interpolate for u32 {
+    #[inline]
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
         ((Self::from(amount) * to) + (Self::from(255 - amount) * from)) / 255
     }
@@ -32,6 +36,7 @@ impl Interpolate for u32 {
 
 #[cfg(feature = "crossterm")]
 impl Interpolate for crossterm::style::Colors {
+    #[inline]
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
         let foreground = interpolate_crossterm_colors(from.foreground, to.foreground, amount);
         let background = interpolate_crossterm_colors(from.background, to.background, amount);
@@ -87,11 +92,12 @@ mod embedded_graphics_impl {
 
     use super::Interpolate;
     use embedded_graphics::primitives::PrimitiveStyle;
-    use embedded_graphics_core::pixelcolor::RgbColor;
+    use embedded_graphics_core::pixelcolor::RgbColor as _;
 
     impl Interpolate for embedded_graphics_core::pixelcolor::BinaryColor {}
 
     impl Interpolate for embedded_graphics_core::pixelcolor::Rgb565 {
+        #[inline]
         fn interpolate(from: Self, to: Self, amount: u8) -> Self {
             if amount == 255 {
                 return to;
@@ -106,6 +112,7 @@ mod embedded_graphics_impl {
     }
 
     impl Interpolate for embedded_graphics_core::pixelcolor::Rgb888 {
+        #[inline]
         fn interpolate(from: Self, to: Self, amount: u8) -> Self {
             if amount == 255 {
                 return to;
@@ -128,6 +135,7 @@ mod embedded_graphics_impl {
     }
 
     impl<C: embedded_graphics::prelude::PixelColor + Interpolate> Interpolate for PrimitiveStyle<C> {
+        #[inline]
         fn interpolate(from: Self, to: Self, amount: u8) -> Self {
             let mut style = embedded_graphics::primitives::PrimitiveStyleBuilder::new();
             style = match (from.fill_color, to.fill_color) {
@@ -149,11 +157,12 @@ mod embedded_graphics_impl {
     }
 }
 
-#[cfg(all(test, feature = "embedded-graphics"))]
+#[cfg(test)]
+#[cfg(feature = "embedded-graphics")]
 mod tests {
     use embedded_graphics_core::pixelcolor::Rgb565;
 
-    use super::Interpolate;
+    use super::Interpolate as _;
 
     #[test]
     fn interpolate_rgb() {

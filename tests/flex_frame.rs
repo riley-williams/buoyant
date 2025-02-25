@@ -1,3 +1,4 @@
+#![cfg(test)]
 use buoyant::primitives::Point;
 use buoyant::render::CharacterRender as _;
 use buoyant::render::CharacterRenderTarget as _;

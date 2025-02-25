@@ -16,8 +16,8 @@ mod embedded_graphics_impl {
     use super::{OwnedText, Point};
     use crate::font::FontLayout as _;
     use crate::render::{AnimationDomain, EmbeddedGraphicsRender};
-    use crate::{primitives::Interpolate, view::WhitespaceWrap};
-    use embedded_graphics_core::Drawable;
+    use crate::{primitives::Interpolate as _, view::WhitespaceWrap};
+    use embedded_graphics_core::Drawable as _;
 
     use embedded_graphics::{
         mono_font::{MonoFont, MonoTextStyle},
@@ -26,7 +26,8 @@ mod embedded_graphics_impl {
     use embedded_graphics_core::draw_target::DrawTarget;
 
     impl<C: PixelColor, const N: usize> EmbeddedGraphicsRender<C> for OwnedText<'_, N, MonoFont<'_>> {
-        fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &C, offset: Point) {
+    #[inline]
+    fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &C, offset: Point) {
             if self.size.area() == 0 {
                 return;
             }
@@ -56,7 +57,8 @@ mod embedded_graphics_impl {
             }
         }
 
-        fn join(source: Self, mut target: Self, config: &AnimationDomain) -> Self {
+    #[inline]
+    fn join(source: Self, mut target: Self, config: &AnimationDomain) -> Self {
             let x = i16::interpolate(source.origin.x, target.origin.x, config.factor);
             let y = i16::interpolate(source.origin.y, target.origin.y, config.factor);
             target.origin = Point::new(x, y);

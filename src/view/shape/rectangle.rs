@@ -14,6 +14,7 @@ pub struct Rectangle;
 impl Rectangle {
     /// Adds a corner radius to all corners. The radius will be capped to half the shorter
     /// dimension
+    #[inline]
     #[must_use]
     pub const fn corner_radius(self, radius: u16) -> RoundedRectangle {
         RoundedRectangle::new(radius)
@@ -23,6 +24,7 @@ impl Rectangle {
 impl Layout for Rectangle {
     type Sublayout = ();
 
+    #[inline]
     fn layout(
         &self,
         offer: &ProposedDimensions,
@@ -38,6 +40,7 @@ impl Layout for Rectangle {
 impl<C> Renderable<C> for Rectangle {
     type Renderables = crate::render::Rect;
 
+    #[inline]
     fn render_tree(
         &self,
         layout: &ResolvedLayout<Self::Sublayout>,

@@ -9,10 +9,12 @@ pub trait FontLayout {
     fn character_width(&self, character: char) -> u16;
 
     /// The distance from the top of the character to the baseline
+    #[inline]
     fn baseline(&self) -> u16 {
         self.line_height()
     }
 
+    #[inline]
     fn str_width(&self, text: &str) -> u16 {
         text.chars().map(|c| self.character_width(c)).sum()
     }

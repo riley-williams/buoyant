@@ -16,9 +16,11 @@ pub struct StaticText<'a, F> {
 
 #[cfg(feature = "embedded-graphics")]
 mod embedded_graphics_impl {
-    use super::{AnimationDomain, FontLayout, Interpolate, Point, StaticText, WhitespaceWrap};
+    use super::{
+        AnimationDomain, FontLayout as _, Interpolate as _, Point, StaticText, WhitespaceWrap,
+    };
 
-    use embedded_graphics_core::Drawable;
+    use embedded_graphics_core::Drawable as _;
 
     use embedded_graphics::{
         mono_font::{MonoFont, MonoTextStyle},
@@ -29,6 +31,7 @@ mod embedded_graphics_impl {
     use crate::render::EmbeddedGraphicsRender;
 
     impl<C: PixelColor> EmbeddedGraphicsRender<C> for StaticText<'_, MonoFont<'_>> {
+        #[inline]
         fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &C, offset: Point) {
             if self.size.area() == 0 {
                 return;
@@ -58,6 +61,7 @@ mod embedded_graphics_impl {
             }
         }
 
+        #[inline]
         fn join(source: Self, mut target: Self, config: &AnimationDomain) -> Self {
             let x = i16::interpolate(source.origin.x, target.origin.x, config.factor);
             let y = i16::interpolate(source.origin.y, target.origin.y, config.factor);
@@ -68,6 +72,7 @@ mod embedded_graphics_impl {
 }
 
 impl<C> CharacterRender<C> for StaticText<'_, CharacterBufferFont> {
+    #[inline]
     fn render(
         &self,
         render_target: &mut impl CharacterRenderTarget<Color = C>,
@@ -98,6 +103,7 @@ impl<C> CharacterRender<C> for StaticText<'_, CharacterBufferFont> {
         }
     }
 
+    #[inline]
     fn join(source: Self, mut target: Self, domain: &AnimationDomain) -> Self {
         let x = i16::interpolate(source.origin.x, target.origin.x, domain.factor);
         let y = i16::interpolate(source.origin.y, target.origin.y, domain.factor);

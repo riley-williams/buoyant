@@ -9,12 +9,14 @@ pub struct FixedTextBuffer<const W: usize, const H: usize> {
 }
 
 impl<const W: usize, const H: usize> FixedTextBuffer<W, H> {
+    #[inline]
     pub const fn clear(&mut self) {
         self.text = [[' '; W]; H];
     }
 }
 
 impl<const W: usize, const H: usize> Display for FixedTextBuffer<W, H> {
+    #[inline]
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         for line in &self.text {
             for c in line {
@@ -27,6 +29,7 @@ impl<const W: usize, const H: usize> Display for FixedTextBuffer<W, H> {
 }
 
 impl<const W: usize, const H: usize> Default for FixedTextBuffer<W, H> {
+    #[inline]
     fn default() -> Self {
         Self {
             text: [[' '; W]; H],
@@ -37,6 +40,7 @@ impl<const W: usize, const H: usize> Default for FixedTextBuffer<W, H> {
 impl<const W: usize, const H: usize> CharacterRenderTarget for FixedTextBuffer<W, H> {
     type Color = char;
 
+    #[inline]
     fn draw_character(
         &mut self,
         point: crate::primitives::Point,
@@ -48,12 +52,14 @@ impl<const W: usize, const H: usize> CharacterRenderTarget for FixedTextBuffer<W
         }
     }
 
+    #[inline]
     fn draw_color(&mut self, point: crate::primitives::Point, color: &Self::Color) {
         if point.x < W as i16 && point.y < H as i16 && point.x >= 0 && point.y >= 0 {
             self.text[point.y as usize][point.x as usize] = *color;
         }
     }
 
+    #[inline]
     fn size(&self) -> Size {
         Size::new(W as u16, H as u16)
     }

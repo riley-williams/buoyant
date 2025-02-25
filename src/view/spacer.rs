@@ -13,6 +13,7 @@ pub struct Spacer {
 impl Layout for Spacer {
     type Sublayout = ();
 
+    #[inline]
     fn layout(
         &self,
         offer: &ProposedDimensions,
@@ -34,6 +35,7 @@ impl Layout for Spacer {
         }
     }
 
+    #[inline]
     fn priority(&self) -> i8 {
         // This view should take all the remaining space after other siblings have been laid out
         i8::MIN

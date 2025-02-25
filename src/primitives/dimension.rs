@@ -9,6 +9,7 @@ pub struct ProposedDimensions {
 }
 
 impl ProposedDimensions {
+    #[inline]
     #[must_use]
     pub fn resolve_most_flexible(self, minimum: u16, ideal: u16) -> Dimensions {
         Dimensions {
@@ -28,6 +29,7 @@ pub enum ProposedDimension {
 }
 
 impl From<Size> for ProposedDimensions {
+    #[inline]
     fn from(size: Size) -> Self {
         Self {
             width: ProposedDimension::Exact(size.width),
@@ -38,6 +40,7 @@ impl From<Size> for ProposedDimensions {
 
 #[cfg(feature = "embedded-graphics")]
 impl From<embedded_graphics_core::geometry::Size> for ProposedDimensions {
+    #[inline]
     fn from(size: embedded_graphics_core::geometry::Size) -> Self {
         Self {
             width: ProposedDimension::Exact(size.width as u16),
@@ -49,6 +52,7 @@ impl From<embedded_graphics_core::geometry::Size> for ProposedDimensions {
 impl ProposedDimension {
     /// Returns the most flexible dimension within the proposal
     /// Magic size of 10 points is applied to views that have no implicit size
+    #[inline]
     #[must_use]
     pub fn resolve_most_flexible(self, minimum: u16, ideal: u16) -> Dimension {
         match self {
@@ -60,6 +64,7 @@ impl ProposedDimension {
 }
 
 impl From<u16> for ProposedDimension {
+    #[inline]
     fn from(value: u16) -> Self {
         Self::Exact(value)
     }
@@ -68,6 +73,7 @@ impl From<u16> for ProposedDimension {
 impl core::ops::Add<u16> for ProposedDimension {
     type Output = Self;
 
+    #[inline]
     fn add(self, rhs: u16) -> Self::Output {
         match self {
             Self::Compact => Self::Compact,
@@ -80,6 +86,7 @@ impl core::ops::Add<u16> for ProposedDimension {
 impl core::ops::Sub<u16> for ProposedDimension {
     type Output = Self;
 
+    #[inline]
     fn sub(self, rhs: u16) -> Self::Output {
         match self {
             Self::Compact => Self::Compact,
@@ -92,6 +99,7 @@ impl core::ops::Sub<u16> for ProposedDimension {
 impl core::ops::Mul<u16> for ProposedDimension {
     type Output = Self;
 
+    #[inline]
     fn mul(self, rhs: u16) -> Self::Output {
         match self {
             Self::Compact => Self::Compact,
@@ -104,6 +112,7 @@ impl core::ops::Mul<u16> for ProposedDimension {
 impl core::ops::Div<u16> for ProposedDimension {
     type Output = Self;
 
+    #[inline]
     fn div(self, rhs: u16) -> Self::Output {
         match self {
             Self::Compact => Self::Compact,
@@ -120,11 +129,13 @@ impl core::ops::Div<u16> for ProposedDimension {
 pub struct Dimension(pub u16);
 
 impl Dimension {
+    #[inline]
     #[must_use]
     pub const fn infinite() -> Self {
         Self(u16::MAX)
     }
 
+    #[inline]
     #[must_use]
     pub const fn is_infinite(self) -> bool {
         self.0 == u16::MAX
@@ -132,36 +143,42 @@ impl Dimension {
 }
 
 impl From<Dimension> for u16 {
+    #[inline]
     fn from(value: Dimension) -> Self {
         value.0
     }
 }
 
 impl From<Dimension> for i16 {
+    #[inline]
     fn from(value: Dimension) -> Self {
         value.0.try_into().unwrap_or(Self::MAX)
     }
 }
 
 impl From<Dimension> for u32 {
+    #[inline]
     fn from(value: Dimension) -> Self {
         Self::from(value.0)
     }
 }
 
 impl From<Dimension> for i32 {
+    #[inline]
     fn from(value: Dimension) -> Self {
         Self::from(value.0)
     }
 }
 
 impl From<Dimension> for f32 {
+    #[inline]
     fn from(value: Dimension) -> Self {
         Self::from(value.0)
     }
 }
 
 impl From<u16> for Dimension {
+    #[inline]
     fn from(value: u16) -> Self {
         Self(value)
     }
@@ -170,6 +187,7 @@ impl From<u16> for Dimension {
 impl core::ops::Add for Dimension {
     type Output = Self;
 
+    #[inline]
     fn add(self, rhs: Self) -> Self::Output {
         Self(self.0.saturating_add(rhs.0))
     }
@@ -178,6 +196,7 @@ impl core::ops::Add for Dimension {
 impl core::ops::Sub for Dimension {
     type Output = Self;
 
+    #[inline]
     fn sub(self, rhs: Self) -> Self::Output {
         Self(self.0.saturating_sub(rhs.0))
     }
@@ -185,6 +204,7 @@ impl core::ops::Sub for Dimension {
 
 impl core::ops::Mul for Dimension {
     type Output = Self;
+    #[inline]
     fn mul(self, rhs: Self) -> Self::Output {
         Self(self.0.saturating_mul(rhs.0))
     }
@@ -193,18 +213,21 @@ impl core::ops::Mul for Dimension {
 impl core::ops::Div for Dimension {
     type Output = Self;
 
+    #[inline]
     fn div(self, rhs: Self) -> Self::Output {
         Self(self.0.saturating_div(rhs.0))
     }
 }
 
 impl core::ops::AddAssign for Dimension {
+    #[inline]
     fn add_assign(&mut self, rhs: Self) {
         *self = *self + rhs;
     }
 }
 
 impl core::ops::SubAssign for Dimension {
+    #[inline]
     fn sub_assign(&mut self, rhs: Self) {
         *self = *self - rhs;
     }
@@ -213,6 +236,7 @@ impl core::ops::SubAssign for Dimension {
 impl core::ops::Add<u16> for Dimension {
     type Output = Self;
 
+    #[inline]
     fn add(self, rhs: u16) -> Self::Output {
         Self(self.0.saturating_add(rhs))
     }
@@ -221,6 +245,7 @@ impl core::ops::Add<u16> for Dimension {
 impl core::ops::Sub<u16> for Dimension {
     type Output = Self;
 
+    #[inline]
     fn sub(self, rhs: u16) -> Self::Output {
         Self(self.0.saturating_sub(rhs))
     }
@@ -228,6 +253,7 @@ impl core::ops::Sub<u16> for Dimension {
 
 impl core::ops::Mul<u16> for Dimension {
     type Output = Self;
+    #[inline]
     fn mul(self, rhs: u16) -> Self::Output {
         Self(self.0.saturating_mul(rhs))
     }
@@ -236,18 +262,21 @@ impl core::ops::Mul<u16> for Dimension {
 impl core::ops::Div<u16> for Dimension {
     type Output = Self;
 
+    #[inline]
     fn div(self, rhs: u16) -> Self::Output {
         Self(self.0.saturating_div(rhs))
     }
 }
 
 impl core::ops::AddAssign<u16> for Dimension {
+    #[inline]
     fn add_assign(&mut self, rhs: u16) {
         *self = *self + rhs;
     }
 }
 
 impl core::ops::SubAssign<u16> for Dimension {
+    #[inline]
     fn sub_assign(&mut self, rhs: u16) {
         *self = *self - rhs;
     }
@@ -260,6 +289,7 @@ pub struct Dimensions {
 }
 
 impl Dimensions {
+    #[inline]
     #[must_use]
     pub const fn new(width: u16, height: u16) -> Self {
         Self {
@@ -268,6 +298,7 @@ impl Dimensions {
         }
     }
 
+    #[inline]
     #[must_use]
     pub const fn zero() -> Self {
         Self {
@@ -276,6 +307,7 @@ impl Dimensions {
         }
     }
 
+    #[inline]
     #[must_use]
     pub fn union(self, other: Self) -> Self {
         Self {
@@ -284,6 +316,7 @@ impl Dimensions {
         }
     }
 
+    #[inline]
     #[must_use]
     pub fn intersection(self, other: Self) -> Self {
         Self {
@@ -292,6 +325,7 @@ impl Dimensions {
         }
     }
 
+    #[inline]
     #[must_use]
     pub fn intersecting_proposal(self, offer: &ProposedDimensions) -> Self {
         Self {
@@ -306,6 +340,7 @@ impl Dimensions {
         }
     }
 
+    #[inline]
     #[must_use]
     pub fn area(self) -> u16 {
         (self.width * self.height).0
@@ -315,6 +350,7 @@ impl Dimensions {
 impl core::ops::Add for Dimensions {
     type Output = Self;
 
+    #[inline]
     fn add(self, rhs: Self) -> Self::Output {
         Self {
             width: self.width + rhs.width,
@@ -326,6 +362,7 @@ impl core::ops::Add for Dimensions {
 impl core::ops::Add<Size> for Dimensions {
     type Output = Self;
 
+    #[inline]
     fn add(self, rhs: Size) -> Self::Output {
         Self {
             width: self.width + rhs.width,
@@ -335,6 +372,7 @@ impl core::ops::Add<Size> for Dimensions {
 }
 
 impl From<Size> for Dimensions {
+    #[inline]
     fn from(value: Size) -> Self {
         Self {
             width: Dimension(value.width),
@@ -344,6 +382,7 @@ impl From<Size> for Dimensions {
 }
 
 impl From<Dimensions> for Size {
+    #[inline]
     fn from(value: Dimensions) -> Self {
         Self {
             width: value.width.into(),
@@ -353,6 +392,7 @@ impl From<Dimensions> for Size {
 }
 
 impl Interpolate for Dimensions {
+    #[inline]
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
         Self {
             width: Dimension::interpolate(from.width, to.width, amount),
@@ -362,6 +402,7 @@ impl Interpolate for Dimensions {
 }
 
 impl Interpolate for Dimension {
+    #[inline]
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
         Self(
             (((u32::from(amount) * u32::from(to.0))
@@ -373,11 +414,9 @@ impl Interpolate for Dimension {
 
 #[cfg(feature = "embedded-graphics")]
 impl From<Dimensions> for embedded_graphics_core::geometry::Size {
+    #[inline]
     fn from(value: Dimensions) -> Self {
-        Self::new(
-            u32::from(value.width.0),
-            u32::from(value.height.0),
-        )
+        Self::new(u32::from(value.width.0), u32::from(value.height.0))
     }
 }
 

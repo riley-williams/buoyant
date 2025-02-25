@@ -12,6 +12,7 @@ pub struct Capsule;
 impl Layout for Capsule {
     type Sublayout = ();
 
+    #[inline]
     fn layout(
         &self,
         offer: &ProposedDimensions,
@@ -27,6 +28,7 @@ impl Layout for Capsule {
 impl<C> Renderable<C> for Capsule {
     type Renderables = crate::render::Capsule;
 
+    #[inline]
     fn render_tree(
         &self,
         layout: &ResolvedLayout<Self::Sublayout>,

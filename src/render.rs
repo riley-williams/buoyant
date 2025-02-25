@@ -46,6 +46,7 @@ pub trait NullRender {}
 impl<C, T: NullRender + Layout> Renderable<C> for T {
     type Renderables = ();
 
+    #[inline]
     fn render_tree(
         &self,
         _layout: &ResolvedLayout<Self::Sublayout>,
@@ -72,6 +73,7 @@ pub trait EmbeddedGraphicsRender<Color: PixelColor>: Sized + Clone {
     );
 
     /// Render view and all subviews, animating from a source view to a target view
+    #[inline]
     fn render_animated(
         render_target: &mut impl DrawTarget<Color = Color>,
         source: &Self,
@@ -91,9 +93,11 @@ pub trait EmbeddedGraphicsRender<Color: PixelColor>: Sized + Clone {
 #[cfg(feature = "embedded-graphics")]
 impl<C: PixelColor> EmbeddedGraphicsRender<C> for () {
     /// Render the view to the screen
+    #[inline]
     fn render(&self, _render_target: &mut impl DrawTarget<Color = C>, _style: &C, _offset: Point) {}
 
     /// Render view and all subviews, animating from a source view to a target view
+    #[inline]
     fn render_animated(
         _render_target: &mut impl DrawTarget<Color = C>,
         _source: &Self,
@@ -105,11 +109,13 @@ impl<C: PixelColor> EmbeddedGraphicsRender<C> for () {
     }
 
     /// Produces a new tree by consuming and interpolating between two partially animated trees
+    #[inline]
     fn join(_source: Self, _target: Self, _domain: &AnimationDomain) -> Self {}
 }
 
 impl<C> CharacterRender<C> for () {
     /// Render the view to the screen
+    #[inline]
     fn render(
         &self,
         _render_target: &mut impl CharacterRenderTarget<Color = C>,
@@ -119,6 +125,7 @@ impl<C> CharacterRender<C> for () {
     }
 
     /// Render view and all subviews, animating from a source view to a target view
+    #[inline]
     fn render_animated(
         _render_target: &mut impl CharacterRenderTarget<Color = C>,
         _source: &Self,
@@ -130,6 +137,7 @@ impl<C> CharacterRender<C> for () {
     }
 
     /// Produces a new tree by consuming and interpolating between two partially animated trees
+    #[inline]
     fn join(_source: Self, _target: Self, _domain: &AnimationDomain) -> Self {}
 }
 
@@ -142,12 +150,14 @@ pub struct AnimationDomain {
 }
 
 impl AnimationDomain {
+    #[inline]
     #[must_use]
     pub const fn new(factor: u8, app_time: Duration) -> Self {
         Self { factor, app_time }
     }
 
     /// Use this to create a new top-level animation domain when rendering
+    #[inline]
     #[must_use]
     pub const fn top_level(app_time: Duration) -> Self {
         Self {
@@ -155,6 +165,7 @@ impl AnimationDomain {
             app_time,
         }
     }
+    #[inline]
     #[must_use]
     pub const fn is_complete(&self) -> bool {
         self.factor == 255
@@ -164,6 +175,7 @@ impl AnimationDomain {
 pub trait CharacterRenderTarget {
     type Color;
     fn draw_character(&mut self, point: Point, character: char, color: &Self::Color);
+    #[inline]
     fn draw_string(&mut self, point: Point, string: &str, color: &Self::Color) {
         string.chars().enumerate().for_each(|(i, c)| {
             self.draw_character(point + Point::new(i as i16, 0), c, color);
@@ -185,6 +197,7 @@ pub trait CharacterRender<Color>: Sized + Clone {
     );
 
     /// Render view and all subviews, animating from a source view to a target view
+    #[inline]
     fn render_animated(
         render_target: &mut impl CharacterRenderTarget<Color = Color>,
         source: &Self,

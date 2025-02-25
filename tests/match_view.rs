@@ -1,27 +1,29 @@
+#![cfg(test)]
 use buoyant::environment::DefaultEnvironment;
 use buoyant::font::CharacterBufferFont;
-use buoyant::layout::Layout;
+use buoyant::layout::Layout as _;
 use buoyant::match_view;
 use buoyant::primitives::{Point, Size};
 use buoyant::render::CharacterRender;
-use buoyant::render::{CharacterRenderTarget, Renderable};
+use buoyant::render::{CharacterRenderTarget as _, Renderable};
 use buoyant::render_target::FixedTextBuffer;
 use buoyant::view::{RenderExtensions as _, Text};
-use std::string::String;
+extern crate alloc;
+use alloc::string::String;
 
 #[test]
 fn test_match_view_two_variants() {
     let font = CharacterBufferFont;
     let make_view = |state| {
         match_view!(state => {
-            0 => Text::str("zero\n!!!", &font),
+            0i32 => Text::str("zero\n!!!", &font),
             _ => Text::str("other", &font).foreground_color(' '),
         })
     };
     let mut buffer = FixedTextBuffer::<5, 5>::default();
     let env = DefaultEnvironment::default();
 
-    let view = make_view(0);
+    let view = make_view(0i32);
     let layout = view.layout(&buffer.size().into(), &env);
     assert_eq!(layout.resolved_size, Size::new(4, 2).into());
     let tree = view.render_tree(&layout, Point::zero(), &env);
@@ -32,7 +34,7 @@ fn test_match_view_two_variants() {
 
     buffer.clear();
 
-    let view = make_view(1);
+    let view = make_view(1i32);
     let layout = view.layout(&buffer.size().into(), &env);
     assert_eq!(layout.resolved_size, Size::new(5, 1).into());
     let tree = view.render_tree(&layout, Point::zero(), &env);
@@ -96,7 +98,7 @@ fn test_match_view_three_variants() {
 
 #[test]
 fn test_match_view_borrow() {
-    #[allow(unused)]
+    #[expect(unused)]
     #[derive(Clone)]
     enum State {
         A,
@@ -120,7 +122,7 @@ fn test_match_view_borrow() {
     let mut buffer = FixedTextBuffer::<5, 5>::default();
     let env = DefaultEnvironment::default();
 
-    let state = State::B("BBB".to_string());
+    let state = State::B("BBB".to_owned());
     let view = borrow_view(&state, &font);
     let layout = view.layout(&buffer.size().into(), &env);
     assert_eq!(layout.resolved_size, Size::new(3, 1).into());
@@ -139,17 +141,17 @@ fn test_match_view_two_variants_invalid_layout() {
     let font = CharacterBufferFont;
     let make_view = |state| {
         match_view!(state => {
-            0 => Text::str("zero\n!!!", &font),
+            0i32 => Text::str("zero\n!!!", &font),
             _ => Text::str("other", &font).foreground_color(' '),
         })
     };
     let mut buffer = FixedTextBuffer::<5, 5>::default();
     let env = DefaultEnvironment::default();
 
-    let view = make_view(0);
+    let view = make_view(0i32);
     let layout = view.layout(&buffer.size().into(), &env);
 
-    let view = make_view(1);
+    let view = make_view(1i32);
     let tree = view.render_tree(&layout, Point::zero(), &env);
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "other");

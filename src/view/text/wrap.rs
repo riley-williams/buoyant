@@ -125,9 +125,10 @@ impl<'a, F: FontLayout> Iterator for WhitespaceWrap<'a, F> {
 
 #[cfg(test)]
 mod tests {
+    extern crate alloc;
     use crate::{font::CharacterBufferFont, primitives::ProposedDimension};
-    use std::vec;
-    use std::vec::Vec;
+    use alloc::vec;
+    use alloc::vec::Vec;
     // a basic font for which all characters are 1 unit wide
     static FONT: CharacterBufferFont = CharacterBufferFont;
 

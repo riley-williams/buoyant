@@ -36,6 +36,7 @@ pub struct ZStack<T> {
 }
 
 impl<T> PartialEq for ZStack<T> {
+    #[inline]
     fn eq(&self, other: &Self) -> bool {
         self.horizontal_alignment == other.horizontal_alignment
             && self.vertical_alignment == other.vertical_alignment
@@ -43,6 +44,7 @@ impl<T> PartialEq for ZStack<T> {
 }
 
 impl<T> ZStack<T> {
+    #[inline]
     #[must_use]
     pub fn with_horizontal_alignment(self, alignment: HorizontalAlignment) -> Self {
         Self {
@@ -51,6 +53,7 @@ impl<T> ZStack<T> {
         }
     }
 
+    #[inline]
     #[must_use]
     pub fn with_vertical_alignment(self, alignment: VerticalAlignment) -> Self {
         Self {
@@ -61,6 +64,7 @@ impl<T> ZStack<T> {
 }
 
 impl<T> ZStack<T> {
+    #[inline]
     pub fn new(items: T) -> Self {
         Self {
             items,
@@ -76,6 +80,7 @@ macro_rules! impl_layout_for_zstack {
         impl<$($type: Layout),+> Layout for ZStack<($($type),+)> {
             type Sublayout = ($(ResolvedLayout<$type::Sublayout>),+);
 
+            #[inline]
             fn layout(
                 &self,
                 offer: &ProposedDimensions,
@@ -114,6 +119,7 @@ macro_rules! impl_layout_for_zstack {
         impl<$($type: Renderable<C>),+, C> Renderable<C> for ZStack<($($type),+)> {
             type Renderables = ($($type::Renderables),+);
 
+            #[inline]
             fn render_tree(
                 &self,
                 layout: &ResolvedLayout<Self::Sublayout>,

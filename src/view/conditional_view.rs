@@ -16,6 +16,7 @@ pub struct ConditionalView<U, V> {
 }
 
 impl<U, V> ConditionalView<U, V> {
+    #[inline]
     pub const fn if_else(condition: bool, true_view: U, false_view: V) -> Self {
         Self {
             condition,
@@ -26,6 +27,7 @@ impl<U, V> ConditionalView<U, V> {
 }
 
 impl<U> ConditionalView<U, EmptyView> {
+    #[inline]
     pub const fn if_view(condition: bool, true_view: U) -> Self {
         Self {
             condition,
@@ -44,6 +46,7 @@ pub enum Conditional<U, V> {
 impl<U: Layout, V: Layout> Layout for ConditionalView<U, V> {
     type Sublayout = Conditional<ResolvedLayout<U::Sublayout>, ResolvedLayout<V::Sublayout>>;
 
+    #[inline]
     fn layout(
         &self,
         offer: &ProposedDimensions,
@@ -66,6 +69,7 @@ impl<U: Layout, V: Layout> Layout for ConditionalView<U, V> {
         }
     }
 
+    #[inline]
     fn priority(&self) -> i8 {
         if self.condition {
             self.true_view.priority()
@@ -74,6 +78,7 @@ impl<U: Layout, V: Layout> Layout for ConditionalView<U, V> {
         }
     }
 
+    #[inline]
     fn is_empty(&self) -> bool {
         if self.condition {
             self.true_view.is_empty()
@@ -86,6 +91,7 @@ impl<U: Layout, V: Layout> Layout for ConditionalView<U, V> {
 impl<U: Renderable<C>, V: Renderable<C>, C> Renderable<C> for ConditionalView<U, V> {
     type Renderables = ConditionalTree<U::Renderables, V::Renderables>;
 
+    #[inline]
     fn render_tree(
         &self,
         layout: &ResolvedLayout<Self::Sublayout>,

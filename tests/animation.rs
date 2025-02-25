@@ -1,3 +1,4 @@
+#![cfg(test)]
 use core::time::Duration;
 
 use buoyant::{

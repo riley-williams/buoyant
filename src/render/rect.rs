@@ -1,4 +1,4 @@
-use crate::primitives::Interpolate;
+use crate::primitives::Interpolate as _;
 use crate::primitives::{Point, Size};
 use crate::render::{AnimationDomain, CharacterRender, CharacterRenderTarget};
 
@@ -9,6 +9,7 @@ pub struct Rect {
 }
 
 impl Rect {
+    #[inline]
     #[must_use]
     pub const fn new(origin: Point, size: Size) -> Self {
         Self { origin, size }
@@ -16,6 +17,7 @@ impl Rect {
 }
 
 impl<C> CharacterRender<C> for Rect {
+    #[inline]
     fn render(
         &self,
         render_target: &mut impl CharacterRenderTarget<Color = C>,
@@ -30,6 +32,7 @@ impl<C> CharacterRender<C> for Rect {
         }
     }
 
+    #[inline]
     fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
         let x = i16::interpolate(source.origin.x, target.origin.x, domain.factor);
         let y = i16::interpolate(source.origin.y, target.origin.y, domain.factor);
@@ -45,13 +48,14 @@ mod embedded_graphics_impl {
     use embedded_graphics::primitives::{PrimitiveStyle, StyledDrawable as _};
     use embedded_graphics_core::draw_target::DrawTarget;
 
-    use crate::primitives::Interpolate;
+    use crate::primitives::Interpolate as _;
     use crate::primitives::{Point, Size};
     use crate::render::{AnimationDomain, EmbeddedGraphicsRender};
 
     use super::Rect;
     // TODO: not really ideal...reimplement later
     impl<C: PixelColor> EmbeddedGraphicsRender<C> for Rect {
+        #[inline]
         fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &C, offset: Point) {
             let origin = self.origin + offset;
             let eg_rect =
@@ -59,6 +63,7 @@ mod embedded_graphics_impl {
             _ = eg_rect.draw_styled(&PrimitiveStyle::with_fill(*style), render_target);
         }
 
+        #[inline]
         fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
             let x = i16::interpolate(source.origin.x, target.origin.x, domain.factor);
             let y = i16::interpolate(source.origin.y, target.origin.y, domain.factor);

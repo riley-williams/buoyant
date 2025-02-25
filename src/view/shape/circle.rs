@@ -10,6 +10,7 @@ use crate::{
 pub struct Circle;
 
 impl Circle {
+    #[inline]
     #[must_use]
     pub const fn new() -> Self {
         Self
@@ -19,6 +20,7 @@ impl Circle {
 impl Layout for Circle {
     type Sublayout = ();
 
+    #[inline]
     fn layout(
         &self,
         offer: &ProposedDimensions,
@@ -38,6 +40,7 @@ impl Layout for Circle {
 impl<C> Renderable<C> for Circle {
     type Renderables = crate::render::Circle;
 
+    #[inline]
     fn render_tree(
         &self,
         layout: &ResolvedLayout<Self::Sublayout>,

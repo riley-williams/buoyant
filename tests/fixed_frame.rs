@@ -1,3 +1,4 @@
+#![cfg(test)]
 use buoyant::{
     font::CharacterBufferFont,
     layout::{HorizontalAlignment, Layout as _, VerticalAlignment},

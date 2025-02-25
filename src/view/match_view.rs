@@ -26,12 +26,14 @@ pub enum Branch3<V0, V1, V2> {
 
 // This is only called by the macro
 impl<V0, V1> MatchView<Branch2<V0, V1>> {
+    #[inline]
     pub const fn new(branch: Branch2<V0, V1>) -> Self {
         Self { branch }
     }
 }
 
 impl<V0, V1, V2> MatchView<Branch3<V0, V1, V2>> {
+    #[inline]
     pub const fn new(branch: Branch3<V0, V1, V2>) -> Self {
         Self { branch }
     }
@@ -99,6 +101,7 @@ macro_rules! match_view {
 impl<V0: Layout, V1: Layout> Layout for MatchView<Branch2<V0, V1>> {
     type Sublayout = Branch2<ResolvedLayout<V0::Sublayout>, ResolvedLayout<V1::Sublayout>>;
 
+    #[inline]
     fn layout(
         &self,
         offer: &ProposedDimensions,
@@ -124,6 +127,7 @@ impl<V0: Layout, V1: Layout> Layout for MatchView<Branch2<V0, V1>> {
         }
     }
 
+    #[inline]
     fn priority(&self) -> i8 {
         match &self.branch {
             Branch2::Variant0(v0) => v0.priority(),
@@ -131,6 +135,7 @@ impl<V0: Layout, V1: Layout> Layout for MatchView<Branch2<V0, V1>> {
         }
     }
 
+    #[inline]
     fn is_empty(&self) -> bool {
         match &self.branch {
             Branch2::Variant0(v0) => v0.is_empty(),
@@ -146,6 +151,7 @@ impl<V0: Layout, V1: Layout, V2: Layout> Layout for MatchView<Branch3<V0, V1, V2
         ResolvedLayout<V2::Sublayout>,
     >;
 
+    #[inline]
     fn layout(
         &self,
         offer: &ProposedDimensions,
@@ -179,6 +185,7 @@ impl<V0: Layout, V1: Layout, V2: Layout> Layout for MatchView<Branch3<V0, V1, V2
         }
     }
 
+    #[inline]
     fn priority(&self) -> i8 {
         match &self.branch {
             Branch3::Variant0(v0) => v0.priority(),
@@ -187,6 +194,7 @@ impl<V0: Layout, V1: Layout, V2: Layout> Layout for MatchView<Branch3<V0, V1, V2
         }
     }
 
+    #[inline]
     fn is_empty(&self) -> bool {
         match &self.branch {
             Branch3::Variant0(v0) => v0.is_empty(),
@@ -199,6 +207,7 @@ impl<V0: Layout, V1: Layout, V2: Layout> Layout for MatchView<Branch3<V0, V1, V2
 impl<V0: Renderable<C>, V1: Renderable<C>, C> Renderable<C> for MatchView<Branch2<V0, V1>> {
     type Renderables = OneOf2<V0::Renderables, V1::Renderables>;
 
+    #[inline]
     fn render_tree(
         &self,
         layout: &ResolvedLayout<Self::Sublayout>,
@@ -223,6 +232,7 @@ impl<V0: Renderable<C>, V1: Renderable<C>, V2: Renderable<C>, C> Renderable<C>
 {
     type Renderables = OneOf3<V0::Renderables, V1::Renderables, V2::Renderables>;
 
+    #[inline]
     fn render_tree(
         &self,
         layout: &ResolvedLayout<Self::Sublayout>,
@@ -251,12 +261,12 @@ mod tests {
 
     #[test]
     fn match_view() {
-        let view = match_view!(1 => {
-            0 => 0,
-            _ => 1,
+        let view = match_view!(1u8 => {
+            0u8 => 0u8,
+            _ => 1u8,
         });
 
-        assert_eq!(view.branch, Branch2::<_, u8>::Variant1(1));
+        assert_eq!(view.branch, Branch2::<_, u8>::Variant1(1u8));
     }
 
     #[test]
@@ -267,11 +277,11 @@ mod tests {
         }
 
         let view = match_view!(MyEnum::A => {
-            MyEnum::A => 0,
-            MyEnum::B => 1,
+            MyEnum::A => 0i32,
+            MyEnum::B => 1i32,
         });
 
-        assert_eq!(view.branch, Variant0(0));
+        assert_eq!(view.branch, Variant0(0i32));
     }
 
     #[test]
@@ -297,11 +307,11 @@ mod tests {
         }
 
         let view = match_view!(ThreeState::Second => {
-            ThreeState::First => 1,
-            ThreeState::Second => 2,
-            ThreeState::Third => 3,
+            ThreeState::First => 1i32,
+            ThreeState::Second => 2i32,
+            ThreeState::Third => 3i32,
         });
 
-        assert_eq!(view.branch, super::Branch3::Variant1(2));
+        assert_eq!(view.branch, super::Branch3::Variant1(2i32));
     }
 }

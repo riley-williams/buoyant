@@ -38,20 +38,24 @@ use crate::{
 
 pub trait LayoutExtensions: Sized {
     /// Applies padding to the specified edges
+    #[inline]
     fn padding(self, edges: padding::Edges, amount: u16) -> Padding<Self> {
         Padding::new(edges, amount, self)
     }
 
+    #[inline]
     fn frame(self) -> FixedFrame<Self> {
         FixedFrame::new(self)
     }
 
+    #[inline]
     fn flex_frame(self) -> FlexFrame<Self> {
         FlexFrame::new(self)
     }
 
     /// Proposes ``ProposedDimension::Compact``, resulting in the child view rendering at its ideal
     /// size along the specified axis.
+    #[inline]
     fn fixed_size(self, horizontal: bool, vertical: bool) -> FixedSize<Self> {
         FixedSize::new(horizontal, vertical, self)
     }
@@ -61,6 +65,7 @@ pub trait LayoutExtensions: Sized {
     /// Stacks lay out views in groups of priority, with higher priority views being laid out
     /// first. Each set of views in the stack with a given priority are laid out together, with the
     /// stack offering the remaining width divided by the number of views in the group.
+    #[inline]
     fn priority(self, priority: u16) -> Priority<Self> {
         Priority::new(priority, self)
     }
@@ -68,6 +73,7 @@ pub trait LayoutExtensions: Sized {
     /// Applies an animation to a view tree. All views in the tree will be animated according to
     /// the animation curve provided when the value changes. The elapsed duration will be reset
     /// if the value changes before the animation is complete.
+    #[inline]
     fn animated<T: PartialEq + Clone>(self, animation: Animation, value: T) -> Animated<Self, T> {
         Animated::new(self, animation, value)
     }
@@ -111,6 +117,7 @@ pub trait LayoutExtensions: Sized {
     ///     .frame().with_width(50).with_height(25)
     /// }
     /// ```
+    #[inline]
     fn geometry_group(self) -> GeometryGroup<Self> {
         GeometryGroup::new(self)
     }
@@ -118,6 +125,7 @@ pub trait LayoutExtensions: Sized {
 
 pub trait RenderExtensions<C>: Sized {
     /// Sets the foreground color
+    #[inline]
     fn foreground_color(self, color: C) -> ForegroundStyle<Self, C> {
         ForegroundStyle::new(color, self)
     }
@@ -127,6 +135,7 @@ impl<T: crate::layout::Layout> LayoutExtensions for T {}
 impl<T: Renderable<C>, C> RenderExtensions<C> for T {}
 
 // TODO: Remove this
+#[inline]
 pub fn make_render_tree<C, V>(view: &V, size: Size) -> V::Renderables
 where
     V: Renderable<C>,

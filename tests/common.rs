@@ -1,3 +1,5 @@
+#![cfg(test)]
+#![allow(dead_code)]
 use core::time::Duration;
 
 use buoyant::{
@@ -6,7 +8,6 @@ use buoyant::{
     render_target::FixedTextBuffer,
 };
 
-#[expect(dead_code)]
 pub struct TestEnv {
     pub direction: LayoutDirection,
     pub alignment: Alignment,
@@ -39,7 +40,6 @@ impl Default for TestEnv {
     }
 }
 
-#[expect(dead_code)]
 impl TestEnv {
     #[must_use]
     pub const fn with_direction(mut self, direction: LayoutDirection) -> Self {
@@ -54,7 +54,6 @@ impl TestEnv {
     }
 }
 
-#[expect(dead_code)]
 #[must_use]
 pub fn collect_text<const W: usize, const H: usize>(buffer: &FixedTextBuffer<W, H>) -> String {
     buffer

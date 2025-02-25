@@ -9,7 +9,7 @@ pub struct Circle {
 
 #[cfg(feature = "embedded-graphics")]
 mod embedded_graphics_impl {
-    use crate::primitives::Interpolate;
+    use crate::primitives::Interpolate as _;
     use crate::primitives::Point;
     use crate::render::{AnimationDomain, EmbeddedGraphicsRender};
 
@@ -21,13 +21,15 @@ mod embedded_graphics_impl {
     use embedded_graphics_core::draw_target::DrawTarget;
 
     impl<C: PixelColor> EmbeddedGraphicsRender<C> for Circle {
-        fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &C, offset: Point) {
+    #[inline]
+    fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &C, offset: Point) {
             let center = self.origin + offset;
             _ = embedded_graphics::primitives::Circle::new(center.into(), self.diameter.into())
                 .draw_styled(&PrimitiveStyle::with_fill(*style), render_target);
         }
 
-        fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
+    #[inline]
+    fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
             let x = i16::interpolate(source.origin.x, target.origin.x, domain.factor);
             let y = i16::interpolate(source.origin.y, target.origin.y, domain.factor);
             let diameter = u16::interpolate(source.diameter, target.diameter, domain.factor);

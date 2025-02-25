@@ -1,3 +1,4 @@
+#![cfg(test)]
 use buoyant::layout::{Layout as _, LayoutDirection};
 use buoyant::primitives::{Point, Size};
 use buoyant::render::{CharacterRender as _, CharacterRenderTarget as _, Renderable as _};

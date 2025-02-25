@@ -6,18 +6,19 @@
 //! To run this example using the `embedded_graphics` simulator, you must have the `sdl2` package installed.
 //! See [SDL2](https://github.com/Rust-SDL2/rust-sdl2) for installation instructions.
 
-use std::time::{Duration, Instant};
+use core::time::Duration;
+use std::time::Instant;
 
 use buoyant::{
     environment::DefaultEnvironment,
-    layout::{HorizontalAlignment, Layout},
+    layout::{HorizontalAlignment, Layout as _},
     match_view,
     primitives::ProposedDimensions,
     render::{AnimationDomain, EmbeddedGraphicsRender, Renderable},
     view::{
         padding::Edges,
         shape::{Circle, Rectangle},
-        ConditionalView, HStack, HorizontalTextAlignment, LayoutExtensions as _, RenderExtensions,
+        ConditionalView, HStack, HorizontalTextAlignment, LayoutExtensions as _, RenderExtensions as _,
         Text, VStack, ZStack,
     },
 };
@@ -96,6 +97,7 @@ fn main() {
         window.update(&display);
 
         for event in window.events() {
+            #[allow(clippy::wildcard_enum_match_arm)]
             match event {
                 SimulatorEvent::Quit => break 'running,
                 SimulatorEvent::KeyDown { keycode, .. } => match keycode {

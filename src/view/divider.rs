@@ -11,6 +11,7 @@ pub struct Divider {
 }
 
 impl Divider {
+    #[inline]
     #[must_use]
     pub const fn new(weight: u16) -> Self {
         Self { weight }
@@ -18,12 +19,14 @@ impl Divider {
 }
 
 impl Default for Divider {
+    #[inline]
     fn default() -> Self {
         Self::new(1)
     }
 }
 
 impl PartialEq for Divider {
+    #[inline]
     fn eq(&self, other: &Self) -> bool {
         self.weight == other.weight
     }
@@ -32,6 +35,7 @@ impl PartialEq for Divider {
 impl Layout for Divider {
     type Sublayout = ();
 
+    #[inline]
     fn layout(
         &self,
         offer: &ProposedDimensions,
@@ -53,6 +57,7 @@ impl Layout for Divider {
         }
     }
 
+    #[inline]
     fn priority(&self) -> i8 {
         i8::MAX
     }
@@ -61,6 +66,7 @@ impl Layout for Divider {
 impl<C> Renderable<C> for Divider {
     type Renderables = crate::render::Rect;
 
+    #[inline]
     fn render_tree(
         &self,
         layout: &ResolvedLayout<Self::Sublayout>,

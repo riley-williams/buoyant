@@ -10,6 +10,7 @@ pub struct ShadeSubtree<C, T> {
 }
 
 impl<C, T> ShadeSubtree<C, T> {
+    #[inline]
     pub const fn new(style: C, subtree: T) -> Self {
         Self { style, subtree }
     }
@@ -26,10 +27,12 @@ mod embedded_graphics_impl {
     impl<C: PixelColor + Interpolate, T: EmbeddedGraphicsRender<C>> EmbeddedGraphicsRender<C>
         for ShadeSubtree<C, T>
     {
+        #[inline]
         fn render(&self, render_target: &mut impl DrawTarget<Color = C>, _: &C, offset: Point) {
             self.subtree.render(render_target, &self.style, offset);
         }
 
+        #[inline]
         fn render_animated(
             render_target: &mut impl DrawTarget<Color = C>,
             source: &Self,
@@ -49,6 +52,7 @@ mod embedded_graphics_impl {
             );
         }
 
+        #[inline]
         fn join(source: Self, target: Self, config: &AnimationDomain) -> Self {
             Self {
                 style: Interpolate::interpolate(source.style, target.style, config.factor),
@@ -59,6 +63,7 @@ mod embedded_graphics_impl {
 }
 
 impl<C: Clone, T: CharacterRender<C>> CharacterRender<C> for ShadeSubtree<C, T> {
+    #[inline]
     fn render(
         &self,
         render_target: &mut impl CharacterRenderTarget<Color = C>,
@@ -68,6 +73,7 @@ impl<C: Clone, T: CharacterRender<C>> CharacterRender<C> for ShadeSubtree<C, T> 
         self.subtree.render(render_target, &self.style, offset);
     }
 
+    #[inline]
     fn render_animated(
         render_target: &mut impl CharacterRenderTarget<Color = C>,
         source: &Self,
@@ -96,6 +102,7 @@ impl<C: Clone, T: CharacterRender<C>> CharacterRender<C> for ShadeSubtree<C, T> 
         );
     }
 
+    #[inline]
     fn join(source: Self, target: Self, config: &AnimationDomain) -> Self {
         Self {
             style: target.style,

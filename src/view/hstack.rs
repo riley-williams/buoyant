@@ -40,11 +40,13 @@ impl<'a, T: LayoutEnvironment> From<&'a T> for HorizontalEnvironment<'a, T> {
 }
 
 impl<T> HStack<T> {
+    #[inline]
     #[must_use]
     pub fn with_spacing(self, spacing: u16) -> Self {
         Self { spacing, ..self }
     }
 
+    #[inline]
     #[must_use]
     pub fn with_alignment(self, alignment: VerticalAlignment) -> Self {
         Self { alignment, ..self }
@@ -52,12 +54,14 @@ impl<T> HStack<T> {
 }
 
 impl<T> PartialEq for HStack<T> {
+    #[inline]
     fn eq(&self, other: &Self) -> bool {
         self.spacing == other.spacing && self.alignment == other.alignment
     }
 }
 
 impl<T> HStack<T> {
+    #[inline]
     pub fn new(items: T) -> Self {
         Self {
             items,
@@ -207,6 +211,7 @@ macro_rules! impl_layout_for_hstack {
         impl<$($type: Layout),+> Layout for HStack<($($type),+)> {
             type Sublayout = ($(ResolvedLayout<$type::Sublayout>),+);
 
+            #[inline]
             fn layout(
                 &self,
                 offer: &ProposedDimensions,
@@ -244,7 +249,8 @@ macro_rules! impl_layout_for_hstack {
         impl<$($type: Renderable<C>),+, C> Renderable<C> for HStack<($($type),+)> {
             type Renderables = ($($type::Renderables),+);
 
-            #[allow(unused_assignments)]
+            #[inline]
+            #[expect(unused_assignments)]
             fn render_tree(
                 &self,
                 layout: &ResolvedLayout<Self::Sublayout>,

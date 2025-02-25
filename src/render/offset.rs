@@ -12,12 +12,14 @@ pub struct Offset<T> {
 
 impl<T> Offset<T> {
     /// Create a new offset render tree item
+    #[inline]
     pub const fn new(offset: Point, subtree: T) -> Self {
         Self { offset, subtree }
     }
 }
 
 impl<T: CharacterRender<C>, C> CharacterRender<C> for Offset<T> {
+    #[inline]
     fn render(
         &self,
         render_target: &mut impl CharacterRenderTarget<Color = C>,
@@ -28,6 +30,7 @@ impl<T: CharacterRender<C>, C> CharacterRender<C> for Offset<T> {
             .render(render_target, style, self.offset + offset);
     }
 
+    #[inline]
     fn render_animated(
         render_target: &mut impl CharacterRenderTarget<Color = C>,
         source: &Self,
@@ -46,6 +49,7 @@ impl<T: CharacterRender<C>, C> CharacterRender<C> for Offset<T> {
         );
     }
 
+    #[inline]
     fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
         let subtree = T::join(source.subtree, target.subtree, domain);
         let offset = Point::interpolate(source.offset, target.offset, domain.factor);
@@ -58,18 +62,20 @@ mod embedded_graphics_impl {
     use embedded_graphics::prelude::PixelColor;
     use embedded_graphics_core::draw_target::DrawTarget;
 
-    use crate::primitives::Interpolate;
+    use crate::primitives::Interpolate as _;
     use crate::primitives::Point;
     use crate::render::{AnimationDomain, EmbeddedGraphicsRender};
 
     use super::Offset;
 
     impl<T: EmbeddedGraphicsRender<C>, C: PixelColor> EmbeddedGraphicsRender<C> for Offset<T> {
+        #[inline]
         fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &C, offset: Point) {
             self.subtree
                 .render(render_target, style, self.offset + offset);
         }
 
+        #[inline]
         fn render_animated(
             render_target: &mut impl DrawTarget<Color = C>,
             source: &Self,
@@ -88,6 +94,7 @@ mod embedded_graphics_impl {
             );
         }
 
+        #[inline]
         fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
             let subtree = T::join(source.subtree, target.subtree, domain);
             let offset = Point::interpolate(source.offset, target.offset, domain.factor);

@@ -27,6 +27,7 @@ pub struct Padding<T> {
 }
 
 impl<T> Padding<T> {
+    #[inline]
     pub const fn new(edges: Edges, padding: u16, child: T) -> Self {
         Self {
             edges,
@@ -37,6 +38,7 @@ impl<T> Padding<T> {
 }
 
 impl<T> PartialEq for Padding<T> {
+    #[inline]
     fn eq(&self, other: &Self) -> bool {
         self.padding == other.padding && self.edges == other.edges
     }
@@ -45,6 +47,7 @@ impl<T> PartialEq for Padding<T> {
 impl<V: Layout> Layout for Padding<V> {
     type Sublayout = ResolvedLayout<V::Sublayout>;
 
+    #[inline]
     fn layout(
         &self,
         offer: &ProposedDimensions,
@@ -77,6 +80,7 @@ impl<V: Layout> Layout for Padding<V> {
 impl<T: Renderable<C>, C> Renderable<C> for Padding<T> {
     type Renderables = T::Renderables;
 
+    #[inline]
     fn render_tree(
         &self,
         layout: &ResolvedLayout<Self::Sublayout>,

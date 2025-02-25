@@ -21,6 +21,7 @@ where
     V0: CharacterRender<C>,
     V1: CharacterRender<C>,
 {
+    #[inline]
     fn render(&self, target: &mut impl CharacterRenderTarget<Color = C>, color: &C, offset: Point) {
         match self {
             Self::Variant0(v0) => v0.render(target, color, offset),
@@ -28,6 +29,7 @@ where
         }
     }
 
+    #[inline]
     fn render_animated(
         render_target: &mut impl CharacterRenderTarget<Color = C>,
         source: &Self,
@@ -50,6 +52,7 @@ where
         }
     }
 
+    #[inline]
     fn join(source: Self, target: Self, domain: &crate::render::AnimationDomain) -> Self {
         match (source, target) {
             (Self::Variant0(source), Self::Variant0(target)) => {
@@ -69,6 +72,7 @@ where
     V1: CharacterRender<C>,
     V2: CharacterRender<C>,
 {
+    #[inline]
     fn render(&self, target: &mut impl CharacterRenderTarget<Color = C>, color: &C, offset: Point) {
         match self {
             Self::Variant0(v0) => v0.render(target, color, offset),
@@ -77,6 +81,7 @@ where
         }
     }
 
+    #[inline]
     fn render_animated(
         render_target: &mut impl CharacterRenderTarget<Color = C>,
         source: &Self,
@@ -102,6 +107,7 @@ where
         }
     }
 
+    #[inline]
     fn join(source: Self, target: Self, domain: &crate::render::AnimationDomain) -> Self {
         match (source, target) {
             (Self::Variant0(source), Self::Variant0(target)) => {
@@ -132,6 +138,7 @@ mod embedded_graphics_render {
         V1: EmbeddedGraphicsRender<C>,
         C: PixelColor,
     {
+        #[inline]
         fn render(&self, target: &mut impl DrawTarget<Color = C>, color: &C, offset: Point) {
             match self {
                 Self::Variant0(v0) => v0.render(target, color, offset),
@@ -139,6 +146,7 @@ mod embedded_graphics_render {
             }
         }
 
+        #[inline]
         fn render_animated(
             render_target: &mut impl DrawTarget<Color = C>,
             source: &Self,
@@ -161,6 +169,7 @@ mod embedded_graphics_render {
             }
         }
 
+        #[inline]
         fn join(source: Self, target: Self, domain: &crate::render::AnimationDomain) -> Self {
             match (source, target) {
                 (Self::Variant0(source), Self::Variant0(target)) => {
@@ -181,6 +190,7 @@ mod embedded_graphics_render {
         V2: EmbeddedGraphicsRender<C>,
         C: PixelColor,
     {
+        #[inline]
         fn render(&self, target: &mut impl DrawTarget<Color = C>, color: &C, offset: Point) {
             match self {
                 Self::Variant0(v0) => v0.render(target, color, offset),
@@ -189,6 +199,7 @@ mod embedded_graphics_render {
             }
         }
 
+        #[inline]
         fn render_animated(
             render_target: &mut impl DrawTarget<Color = C>,
             source: &Self,
@@ -214,6 +225,7 @@ mod embedded_graphics_render {
             }
         }
 
+        #[inline]
         fn join(source: Self, target: Self, domain: &crate::render::AnimationDomain) -> Self {
             match (source, target) {
                 (Self::Variant0(source), Self::Variant0(target)) => {

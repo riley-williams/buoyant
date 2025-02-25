@@ -10,6 +10,7 @@ pub struct EmptyView;
 impl Layout for EmptyView {
     type Sublayout = ();
 
+    #[inline]
     fn layout(
         &self,
         _: &ProposedDimensions,
@@ -21,10 +22,12 @@ impl Layout for EmptyView {
         }
     }
 
+    #[inline]
     fn priority(&self) -> i8 {
         i8::MIN
     }
 
+    #[inline]
     fn is_empty(&self) -> bool {
         true
     }

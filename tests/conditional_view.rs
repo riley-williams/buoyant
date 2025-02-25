@@ -1,3 +1,4 @@
+#![cfg(test)]
 use buoyant::font::CharacterBufferFont;
 use buoyant::layout::Layout as _;
 use buoyant::primitives::{Point, Size};

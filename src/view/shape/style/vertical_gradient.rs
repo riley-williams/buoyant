@@ -9,6 +9,7 @@ pub struct VerticalGradient<Color: Interpolate> {
 }
 
 impl<Color: Interpolate> VerticalGradient<Color> {
+    #[inline]
     #[must_use]
     pub const fn new(start: Color, end: Color) -> Self {
         Self { start, end }
@@ -18,11 +19,13 @@ impl<Color: Interpolate> VerticalGradient<Color> {
 impl<C: Interpolate + Copy> FillStyle for VerticalGradient<C> {
     type Color = C;
 
+    #[inline]
     fn shade_pixel(&self, _: u16, y: u16, in_bounds: crate::primitives::Size) -> C {
         let fraction = f32::from(in_bounds.height.saturating_sub(y)) / f32::from(in_bounds.width);
         C::interpolate(self.end, self.start, (fraction * 255.0) as u8)
     }
 
+    #[inline]
     fn solid(&self) -> Option<Self::Color> {
         None
     }

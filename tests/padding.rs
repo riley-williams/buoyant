@@ -1,3 +1,4 @@
+#![cfg(test)]
 use core::iter::zip;
 
 use buoyant::primitives::Point;

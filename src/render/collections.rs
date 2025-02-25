@@ -12,7 +12,8 @@ mod embedded_graphics_impl {
     macro_rules! impl_render_for_collections {
     ($(($n:tt, $type:ident)),+) => {
         impl<Color: PixelColor, $($type: EmbeddedGraphicsRender<Color> ),+> EmbeddedGraphicsRender<Color> for ($($type),+) {
-            fn render(
+    #[inline]
+    fn render(
                 &self,
                 target: &mut impl DrawTarget<Color = Color>,
                 style: &Color,
@@ -23,7 +24,8 @@ mod embedded_graphics_impl {
                 )+
             }
 
-            fn render_animated(
+    #[inline]
+    fn render_animated(
                 render_target: &mut impl DrawTarget<Color = Color>,
                 source: &Self,
                 target: &Self,
@@ -43,7 +45,8 @@ mod embedded_graphics_impl {
                 )+
             }
 
-            fn join(
+    #[inline]
+    fn join(
                 source: Self,
                 target: Self,
                 domain: &AnimationDomain
@@ -114,6 +117,7 @@ mod embedded_graphics_impl {
     impl<Color: PixelColor, T: EmbeddedGraphicsRender<Color>, const N: usize>
         EmbeddedGraphicsRender<Color> for heapless::Vec<T, N>
     {
+        #[inline]
         fn render(
             &self,
             render_target: &mut impl DrawTarget<Color = Color>,
@@ -124,6 +128,7 @@ mod embedded_graphics_impl {
                 .for_each(|item| item.render(render_target, style, offset));
         }
 
+        #[inline]
         fn render_animated(
             render_target: &mut impl DrawTarget<Color = Color>,
             source: &Self,
@@ -140,6 +145,7 @@ mod embedded_graphics_impl {
                 });
         }
 
+        #[inline]
         fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
             source
                 .into_iter()
@@ -154,7 +160,8 @@ mod embedded_graphics_impl {
 macro_rules! impl_char_render_for_collections {
     ($(($n:tt, $type:ident)),+) => {
         impl<Color, $($type: CharacterRender<Color> ),+> CharacterRender<Color> for ($($type),+) {
-            fn render(
+    #[inline]
+    fn render(
                 &self,
                 target: &mut impl CharacterRenderTarget<Color = Color>,
                 style: &Color,
@@ -165,7 +172,8 @@ macro_rules! impl_char_render_for_collections {
                 )+
             }
 
-            fn render_animated(
+    #[inline]
+    fn render_animated(
                 render_target: &mut impl CharacterRenderTarget<Color = Color>,
                 source: &Self,
                 target: &Self,
@@ -185,7 +193,8 @@ macro_rules! impl_char_render_for_collections {
                 )+
             }
 
-            fn join(
+    #[inline]
+    fn join(
                 source: Self,
                 target: Self,
                 domain: &super::AnimationDomain
@@ -256,6 +265,7 @@ impl_char_render_for_collections!(
 impl<Color, T: CharacterRender<Color>, const N: usize> CharacterRender<Color>
     for heapless::Vec<T, N>
 {
+    #[inline]
     fn render(
         &self,
         render_target: &mut impl CharacterRenderTarget<Color = Color>,
@@ -266,6 +276,7 @@ impl<Color, T: CharacterRender<Color>, const N: usize> CharacterRender<Color>
             .for_each(|item| item.render(render_target, style, offset));
     }
 
+    #[inline]
     fn render_animated(
         render_target: &mut impl CharacterRenderTarget<Color = Color>,
         source: &Self,
@@ -282,6 +293,7 @@ impl<Color, T: CharacterRender<Color>, const N: usize> CharacterRender<Color>
             });
     }
 
+    #[inline]
     fn join(source: Self, target: Self, domain: &super::AnimationDomain) -> Self {
         source
             .into_iter()

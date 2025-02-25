@@ -1,3 +1,4 @@
+#![cfg(test)]
 use buoyant::{
     font::CharacterBufferFont,
     primitives::Point,

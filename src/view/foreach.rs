@@ -50,6 +50,7 @@ where
     V: Layout,
     F: Fn(&I::Item) -> V,
 {
+    #[inline]
     pub fn new(iter: I, build_view: F) -> Self {
         Self {
             iter,
@@ -59,12 +60,14 @@ where
         }
     }
 
+    #[inline]
     #[must_use]
     pub const fn with_alignment(mut self, alignment: HorizontalAlignment) -> Self {
         self.alignment = alignment;
         self
     }
 
+    #[inline]
     #[must_use]
     pub const fn with_spacing(mut self, spacing: u16) -> Self {
         self.spacing = spacing;
@@ -82,6 +85,7 @@ where
     // This layout implementation trades extra work for lower memory usage as embedded is the
     // primary target environment. Views are repeatedly created for every layout call, but it
     // should be assumed that this is cheap
+    #[inline]
     fn layout(
         &self,
         offer: &ProposedDimensions,
@@ -128,6 +132,7 @@ where
 {
     type Renderables = heapless::Vec<V::Renderables, N>;
 
+    #[inline]
     fn render_tree(
         &self,
         layout: &ResolvedLayout<Self::Sublayout>,
@@ -151,7 +156,7 @@ where
             let view = (self.build_view)(&item);
             // TODO: If we include an ID here, rows can be animated and transitioned
             let item = renderables.push(view.render_tree(item_layout, aligned_origin, env));
-            assert!(item.is_ok());
+            assert!(item.is_ok(), "");
 
             if !view.is_empty() {
                 let item_height: i16 = item_layout.resolved_size.height.into();

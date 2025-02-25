@@ -22,6 +22,7 @@ pub struct Animate<T, U> {
 }
 
 impl<T, U: PartialEq + Clone> Animate<T, U> {
+    #[inline]
     #[must_use]
     pub const fn new(subtree: T, animation: Animation, frame_time: Duration, value: U) -> Self {
         Self {
@@ -34,6 +35,7 @@ impl<T, U: PartialEq + Clone> Animate<T, U> {
     }
 }
 impl<C, T: CharacterRender<C>, U: PartialEq + Clone> CharacterRender<C> for Animate<T, U> {
+    #[inline]
     fn render(
         &self,
         render_target: &mut impl crate::render::CharacterRenderTarget<Color = C>,
@@ -43,6 +45,7 @@ impl<C, T: CharacterRender<C>, U: PartialEq + Clone> CharacterRender<C> for Anim
         self.subtree.render(render_target, style, offset);
     }
 
+    #[inline]
     fn render_animated(
         render_target: &mut impl crate::render::CharacterRenderTarget<Color = C>,
         source: &Self,
@@ -93,6 +96,7 @@ impl<C, T: CharacterRender<C>, U: PartialEq + Clone> CharacterRender<C> for Anim
         );
     }
 
+    #[inline]
     fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
         let (end_time, duration) = if source.value != target.value {
             let duration = target.animation.duration();
@@ -160,10 +164,12 @@ mod embedded_graphics_impl {
     impl<C: PixelColor, T: EmbeddedGraphicsRender<C>, U: PartialEq + Clone>
         EmbeddedGraphicsRender<C> for Animate<T, U>
     {
+        #[inline]
         fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &C, offset: Point) {
             self.subtree.render(render_target, style, offset);
         }
 
+        #[inline]
         fn render_animated(
             render_target: &mut impl DrawTarget<Color = C>,
             source: &Self,
@@ -214,6 +220,7 @@ mod embedded_graphics_impl {
             );
         }
 
+        #[inline]
         fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
             let (end_time, duration) = if source.value != target.value {
                 let duration = target.animation.duration();

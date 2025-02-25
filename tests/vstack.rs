@@ -1,3 +1,4 @@
+#![cfg(test)]
 use buoyant::environment::DefaultEnvironment;
 use buoyant::font::CharacterBufferFont;
 use buoyant::layout::{HorizontalAlignment, Layout as _, VerticalAlignment};

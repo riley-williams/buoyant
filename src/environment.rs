@@ -17,11 +17,13 @@ pub struct DefaultEnvironment {
 
 impl DefaultEnvironment {
     #[must_use]
+    #[inline]
     pub const fn new(app_time: Duration) -> Self {
         Self { app_time }
     }
 
     #[must_use]
+    #[inline]
     pub fn non_animated() -> Self {
         Self {
             app_time: Duration::default(),
@@ -30,14 +32,17 @@ impl DefaultEnvironment {
 }
 
 impl LayoutEnvironment for DefaultEnvironment {
+    #[inline]
     fn layout_direction(&self) -> LayoutDirection {
         LayoutDirection::default()
     }
 
+    #[inline]
     fn alignment(&self) -> Alignment {
         Alignment::default()
     }
 
+    #[inline]
     fn app_time(&self) -> Duration {
         self.app_time
     }

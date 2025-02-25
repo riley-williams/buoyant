@@ -1,12 +1,12 @@
 use crossterm::{
     cursor, execute,
-    style::{self, Stylize},
+    style::{self, Stylize as _},
     terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
-    ExecutableCommand as _, QueueableCommand,
+    ExecutableCommand as _, QueueableCommand as _,
 };
 
 #[cfg(feature = "std")]
-use std::io::{stdout, Stdout, Write};
+use std::io::{stdout, Stdout, Write as _};
 
 use crate::{primitives::Size, render::CharacterRenderTarget};
 
@@ -16,18 +16,22 @@ pub struct CrosstermRenderTarget {
 }
 
 impl CrosstermRenderTarget {
+    #[inline]
     pub fn enter_fullscreen(&mut self) {
         execute!(self.stdout, EnterAlternateScreen).unwrap();
     }
 
+    #[inline]
     pub fn exit_fullscreen(&mut self) {
         execute!(self.stdout, LeaveAlternateScreen).unwrap();
     }
 
+    #[inline]
     pub fn flush(&mut self) {
         self.stdout.flush().unwrap();
     }
 
+    #[inline]
     pub fn clear(&mut self) {
         _ = self
             .stdout
@@ -37,12 +41,14 @@ impl CrosstermRenderTarget {
 }
 
 impl Default for CrosstermRenderTarget {
+    #[inline]
     fn default() -> Self {
         Self { stdout: stdout() }
     }
 }
 
 impl Drop for CrosstermRenderTarget {
+    #[inline]
     fn drop(&mut self) {
         self.flush();
         execute!(self.stdout, LeaveAlternateScreen).unwrap();
@@ -52,16 +58,19 @@ impl Drop for CrosstermRenderTarget {
 impl CharacterRenderTarget for CrosstermRenderTarget {
     type Color = crossterm::style::Colors;
 
+    #[inline]
     fn size(&self) -> Size {
         crossterm::terminal::size()
             .map(|(w, h)| Size::new(w, h))
             .unwrap_or_default()
     }
 
+    #[inline]
     fn draw_color(&mut self, point: crate::primitives::Point, color: &Self::Color) {
         self.draw_character(point, ' ', color);
     }
 
+    #[inline]
     fn draw_string(&mut self, point: crate::primitives::Point, string: &str, color: &Self::Color) {
         let mut styled_string = string.stylize();
         if let Some(foreground) = color.foreground {
@@ -77,6 +86,7 @@ impl CharacterRenderTarget for CrosstermRenderTarget {
             .unwrap();
     }
 
+    #[inline]
     fn draw_character(
         &mut self,
         point: crate::primitives::Point,

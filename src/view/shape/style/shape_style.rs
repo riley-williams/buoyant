@@ -23,10 +23,12 @@ pub struct StrokeStyle<C> {
 impl<T: embedded_graphics_core::pixelcolor::PixelColor> FillStyle for T {
     type Color = T;
 
+    #[inline]
     fn shade_pixel(&self, _: u16, _: u16, _: Size) -> Self::Color {
         *self
     }
 
+    #[inline]
     fn solid(&self) -> Option<Self::Color> {
         Some(*self)
     }
@@ -42,6 +44,7 @@ impl<T: Copy> StrokeStyle<T> {
 // TODO: Come back and clean this up to not only be implemented for embedded-graphics
 #[cfg(feature = "embedded-graphics")]
 impl<C: embedded_graphics_core::pixelcolor::PixelColor, T: FillStyle<Color = C>> ShapeStyle<C, T> {
+    #[inline]
     pub const fn fill(color: T) -> Self {
         Self {
             fill_style: Some(color),
@@ -49,6 +52,7 @@ impl<C: embedded_graphics_core::pixelcolor::PixelColor, T: FillStyle<Color = C>>
         }
     }
 
+    #[inline]
     pub const fn stroke(color: C, width: u16) -> Self {
         Self {
             fill_style: None,
@@ -56,12 +60,14 @@ impl<C: embedded_graphics_core::pixelcolor::PixelColor, T: FillStyle<Color = C>>
         }
     }
 
+    #[inline]
     #[must_use]
     pub fn with_fill(mut self, fill: T) -> Self {
         self.fill_style = Some(fill);
         self
     }
 
+    #[inline]
     #[must_use]
     pub const fn with_stroke(mut self, stroke: C, width: u16) -> Self {
         self.stroke_style = Some(StrokeStyle::new(stroke, width));

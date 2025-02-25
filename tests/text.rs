@@ -1,3 +1,4 @@
+#![cfg(test)]
 use buoyant::render::CharacterRender as _;
 use buoyant::render::CharacterRenderTarget as _;
 use core::iter::zip;

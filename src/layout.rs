@@ -30,6 +30,7 @@ pub enum HorizontalAlignment {
 }
 
 impl HorizontalAlignment {
+    #[inline]
     #[must_use]
     pub const fn align(&self, available: i16, content: i16) -> i16 {
         match self {
@@ -53,6 +54,7 @@ pub enum VerticalAlignment {
 }
 
 impl VerticalAlignment {
+    #[inline]
     #[must_use]
     pub const fn align(&self, available: i16, content: i16) -> i16 {
         match self {
@@ -76,6 +78,7 @@ pub enum Axis {
 }
 
 impl Axis {
+    #[inline]
     #[must_use]
     pub const fn into_min_proposal(self) -> ProposedDimensions {
         match self {
@@ -90,6 +93,7 @@ impl Axis {
         }
     }
 
+    #[inline]
     #[must_use]
     pub const fn into_max_proposal(self) -> ProposedDimensions {
         match self {
@@ -117,11 +121,13 @@ pub trait Layout: Sized {
     ) -> ResolvedLayout<Self::Sublayout>;
 
     /// The layout priority of the view. Higher priority views are more likely to be given the size they want
+    #[inline]
     fn priority(&self) -> i8 {
         0
     }
 
     /// Returns true if the view should not included in layout. `ConditionalView` is the primary example of this
+    #[inline]
     fn is_empty(&self) -> bool {
         false
     }
