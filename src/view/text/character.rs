@@ -3,15 +3,13 @@ use crate::{
     font::FontLayout,
     layout::{Layout, ResolvedLayout},
     primitives::{Point, ProposedDimension, ProposedDimensions, Size},
-    render::{
-        Renderable, {OwnedText, StaticText},
-    },
+    render::{OwnedText, Renderable},
 };
 use core::marker::PhantomData;
 
 use super::{wrap::WhitespaceWrap, HorizontalTextAlignment, Text};
 
-impl<'a, T:AsRef<str>, F> Text<'a, T, F> {
+impl<'a, T: AsRef<str>, F> Text<'a, T, F> {
     #[must_use]
     pub fn new(text: T, font: &'a F) -> Self {
         Text {
