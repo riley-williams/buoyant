@@ -517,6 +517,7 @@ fn toggle_stack(is_on: bool) -> impl Renderable<char, Renderables: CharacterRend
 }
 
 #[test]
+#[allow(clippy::cognitive_complexity)]
 fn nested_toggle_animation() {
     let mut buffer = FixedTextBuffer::<11, 5>::default();
 

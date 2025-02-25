@@ -123,17 +123,17 @@ enum Tab {
 impl Tab {
     fn next(&mut self) {
         *self = match self {
-            Tab::Brew => Tab::Clean,
-            Tab::Clean => Tab::Settings,
-            Tab::Settings => Tab::Brew,
+            Self::Brew => Self::Clean,
+            Self::Clean => Self::Settings,
+            Self::Settings => Self::Brew,
         };
     }
 
     fn previous(&mut self) {
         *self = match self {
-            Tab::Brew => Tab::Settings,
-            Tab::Clean => Tab::Brew,
-            Tab::Settings => Tab::Clean,
+            Self::Brew => Self::Settings,
+            Self::Clean => Self::Brew,
+            Self::Settings => Self::Clean,
         };
     }
 }

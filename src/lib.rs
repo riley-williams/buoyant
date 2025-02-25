@@ -1,6 +1,4 @@
 #![no_std]
-#![allow(clippy::cast_sign_loss, clippy::missing_panics_doc)]
-#![deny(clippy::nursery)]
 #![cfg_attr(test, allow(unused))]
 
 #[cfg(any(test, feature = "std"))]

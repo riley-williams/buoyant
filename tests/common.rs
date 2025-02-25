@@ -42,13 +42,13 @@ impl Default for TestEnv {
 #[allow(dead_code)]
 impl TestEnv {
     #[must_use]
-    pub fn with_direction(mut self, direction: LayoutDirection) -> Self {
+    pub const fn with_direction(mut self, direction: LayoutDirection) -> Self {
         self.direction = direction;
         self
     }
 
     #[must_use]
-    pub fn with_alignment(mut self, alignment: Alignment) -> Self {
+    pub const fn with_alignment(mut self, alignment: Alignment) -> Self {
         self.alignment = alignment;
         self
     }

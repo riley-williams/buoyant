@@ -1,0 +1,7 @@
+[build]
+rustflags = [
+    "-Dclippy::nursery",
+
+    "-Aclippy::cast_sign_loss",
+    "-Aclippy::missing_panics_doc",
+]
