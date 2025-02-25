@@ -1,7 +1,10 @@
 [build]
 rustflags = [
     "-Dclippy::nursery",
+    "-Dclippy::pedantic",
 
     "-Aclippy::cast_sign_loss",
     "-Aclippy::missing_panics_doc",
+    "-Aclippy::cast_possible_truncation",
+    "-Aclippy::cast_possible_wrap",
 ]
