@@ -1,8 +1,6 @@
 [build]
 rustflags = [
-    "-Dclippy::nursery",
-    "-Dclippy::pedantic",
-    "-Dclippy::restriction",
+    "-Dclippy::all",
     "-Aclippy::blanket_clippy_restriction_lints",
     ## Conflicts ##
     "-Aclippy::implicit_return",
