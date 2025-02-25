@@ -43,14 +43,12 @@ impl<const W: usize, const H: usize> CharacterRenderTarget for FixedTextBuffer<W
         character: char,
         _color: &Self::Color,
     ) {
-        #[allow(clippy::cast_sign_loss)]
         if point.x < W as i16 && point.y < H as i16 && point.x >= 0 && point.y >= 0 {
             self.text[point.y as usize][point.x as usize] = character;
         }
     }
 
     fn draw_color(&mut self, point: crate::primitives::Point, color: &Self::Color) {
-        #[allow(clippy::cast_sign_loss)]
         if point.x < W as i16 && point.y < H as i16 && point.x >= 0 && point.y >= 0 {
             self.text[point.y as usize][point.x as usize] = *color;
         }

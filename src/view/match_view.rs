@@ -261,7 +261,6 @@ mod tests {
 
     #[test]
     fn match_view_enum() {
-        #[allow(unused)]
         enum MyEnum {
             A,
             B,
@@ -277,7 +276,6 @@ mod tests {
 
     #[test]
     fn match_view_variable_binding_enum() {
-        #[allow(unused)]
         enum MyEnum {
             A(u8),
             B(f32),
@@ -292,7 +290,6 @@ mod tests {
 
     #[test]
     fn match_view_three_branches() {
-        #[allow(unused)]
         enum ThreeState {
             First,
             Second,

@@ -3,7 +3,7 @@
 //! This example allows you to switch between three tabs using the left and right arrow keys.
 //! The settings can be toggled using the `b`, `w`, and `o` keys.
 //!
-//! To run this example using the embedded_graphics simulator, you must have the `sdl2` package installed.
+//! To run this example using the `embedded_graphics` simulator, you must have the `sdl2` package installed.
 //! See [SDL2](https://github.com/Rust-SDL2/rust-sdl2) for installation instructions.
 
 use std::time::{Duration, Instant};
@@ -26,10 +26,7 @@ use embedded_graphics_simulator::{
     sdl2::Keycode, OutputSettings, SimulatorDisplay, SimulatorEvent, Window,
 };
 
-#[allow(unused)]
 mod spacing {
-    /// Spacing between sections / groups
-    pub const SECTION: u16 = 24;
     /// Outer padding to the edge of the screen
     pub const SECTION_MARGIN: u16 = 16;
     /// Spacing between distinct visual components in a section / group
@@ -38,7 +35,6 @@ mod spacing {
     pub const ELEMENT: u16 = 8;
 }
 
-#[allow(unused)]
 mod font {
     /// Font for body text
     pub const BODY: embedded_graphics::mono_font::MonoFont<'_> =
@@ -51,11 +47,10 @@ mod font {
         embedded_graphics::mono_font::ascii::FONT_9X15_BOLD;
 }
 
-#[allow(unused)]
 mod color {
     use embedded_graphics::prelude::*;
 
-    /// Use this alias instead of directly referring to a specific embedded_graphics
+    /// Use this alias instead of directly referring to a specific `embedded_graphics`
     /// color type to allow portability between displays
     pub type Space = embedded_graphics::pixelcolor::Rgb888;
     pub const ACCENT: Space = Space::CSS_LIGHT_SKY_BLUE;

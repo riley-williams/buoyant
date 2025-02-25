@@ -1,6 +1,7 @@
 #![no_std]
-#![warn(missing_debug_implementations)]
+#![allow(clippy::cast_sign_loss, clippy::missing_panics_doc)]
 #![deny(clippy::missing_const_for_fn)]
+#![cfg_attr(test, allow(unused))]
 
 #[cfg(any(test, feature = "std"))]
 extern crate std;
@@ -11,7 +12,6 @@ pub mod layout;
 pub mod primitives;
 pub mod render;
 pub mod render_target;
-#[warn(missing_docs)]
 pub mod view;
 
 #[non_exhaustive]

@@ -94,20 +94,16 @@ fn main() {
 
     loop {
         // `read()` blocks until an `Event` is available
-        #[allow(clippy::match_same_arms)]
         match read().unwrap() {
-            Event::FocusGained => (),
-            Event::FocusLost => (),
             Event::Key(event) => {
                 if event.code == crossterm::event::KeyCode::Char('q') {
                     break;
                 }
             }
-            Event::Mouse(_) => (),
             Event::Resize(_, _) => {
                 render_view(&mut target, &view);
             }
-            Event::Paste(_) => (),
+            Event::Mouse(_) | Event::FocusGained | Event::FocusLost | Event::Paste(_) => (),
         }
     }
 }
