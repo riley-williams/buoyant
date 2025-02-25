@@ -2,9 +2,16 @@
 rustflags = [
     "-Dclippy::nursery",
     "-Dclippy::pedantic",
+    "-Dclippy::restriction",
+    "-Aclippy::blanket_clippy_restriction_lints",
 
     "-Aclippy::cast_sign_loss",
     "-Aclippy::missing_panics_doc",
     "-Aclippy::cast_possible_truncation",
     "-Aclippy::cast_possible_wrap",
+
+    ## Conflicts ##
+    "-Aclippy::implicit_return",
+    "-Aclippy::unseparated_literal_suffix",
+
 ]

@@ -1,14 +1,14 @@
 use buoyant::environment::DefaultEnvironment;
 use buoyant::font::CharacterBufferFont;
-use buoyant::layout::{HorizontalAlignment, Layout, VerticalAlignment};
+use buoyant::layout::{HorizontalAlignment, Layout as _, VerticalAlignment};
 use buoyant::primitives::{Dimensions, Point, Size};
-use buoyant::render::CharacterRender;
-use buoyant::render::CharacterRenderTarget;
+use buoyant::render::CharacterRender as _;
+use buoyant::render::CharacterRenderTarget as _;
 use buoyant::render_target::FixedTextBuffer;
 use buoyant::view::padding::Edges;
 use buoyant::view::shape::Rectangle;
 use buoyant::view::{
-    make_render_tree, Divider, LayoutExtensions, RenderExtensions as _, Spacer, Text, ZStack,
+    make_render_tree, Divider, LayoutExtensions as _, RenderExtensions as _, Spacer, Text, ZStack,
 };
 
 #[test]

@@ -1,10 +1,10 @@
 use buoyant::font::CharacterBufferFont;
 use buoyant::primitives::Point;
 use buoyant::render::CharacterRender;
-use buoyant::render::CharacterRenderTarget;
+use buoyant::render::CharacterRenderTarget as _;
 use buoyant::render::Renderable;
 use buoyant::view::padding::Edges;
-use buoyant::view::{make_render_tree, LayoutExtensions, RenderExtensions};
+use buoyant::view::{make_render_tree, LayoutExtensions as _, RenderExtensions as _};
 use buoyant::{
     layout::VerticalAlignment,
     render_target::CrosstermRenderTarget,
@@ -88,7 +88,7 @@ fn main() {
 
     let view = view();
 
-    println!("View size {}", std::mem::size_of_val(&view));
+    println!("View size {}", core::mem::size_of_val(&view));
 
     render_view(&mut target, &view);
 

@@ -1,10 +1,10 @@
 use buoyant::{
     font::CharacterBufferFont,
-    layout::{HorizontalAlignment, Layout, VerticalAlignment},
+    layout::{HorizontalAlignment, Layout as _, VerticalAlignment},
     primitives::{Dimensions, Point, ProposedDimension, ProposedDimensions, Size},
-    render::{CharacterRender, CharacterRenderTarget},
+    render::{CharacterRender as _, CharacterRenderTarget as _},
     render_target::FixedTextBuffer,
-    view::{make_render_tree, LayoutExtensions, RenderExtensions as _, Text},
+    view::{make_render_tree, LayoutExtensions as _, RenderExtensions as _, Text},
 };
 mod common;
 

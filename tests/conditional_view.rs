@@ -1,7 +1,7 @@
 use buoyant::font::CharacterBufferFont;
-use buoyant::layout::Layout;
+use buoyant::layout::Layout as _;
 use buoyant::primitives::{Point, Size};
-use buoyant::render::CharacterRenderTarget;
+use buoyant::render::CharacterRenderTarget as _;
 use buoyant::render::{CharacterRender as _, Renderable as _};
 use buoyant::render_target::FixedTextBuffer;
 use buoyant::view::{ConditionalView, RenderExtensions as _, Text};

@@ -1,15 +1,15 @@
-use std::iter::zip;
+use core::iter::zip;
 
 use buoyant::environment::DefaultEnvironment;
 use buoyant::font::CharacterBufferFont;
-use buoyant::layout::{Layout, VerticalAlignment};
+use buoyant::layout::{Layout as _, VerticalAlignment};
 use buoyant::primitives::{Dimensions, Point, ProposedDimension, ProposedDimensions, Size};
-use buoyant::render::CharacterRenderTarget;
+use buoyant::render::CharacterRenderTarget as _;
 use buoyant::render::{CharacterRender, Renderable};
 use buoyant::render_target::FixedTextBuffer;
 use buoyant::view::padding::Edges;
 use buoyant::view::{make_render_tree, RenderExtensions as _};
-use buoyant::view::{shape::Rectangle, Divider, EmptyView, HStack, LayoutExtensions, Spacer, Text};
+use buoyant::view::{shape::Rectangle, Divider, EmptyView, HStack, LayoutExtensions as _, Spacer, Text};
 
 #[test]
 fn test_greedy_layout_2() {

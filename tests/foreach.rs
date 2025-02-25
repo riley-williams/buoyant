@@ -1,6 +1,6 @@
 use buoyant::primitives::Point;
-use buoyant::render::CharacterRender;
-use buoyant::render::CharacterRenderTarget;
+use buoyant::render::CharacterRender as _;
+use buoyant::render::CharacterRenderTarget as _;
 use buoyant::view::RenderExtensions as _;
 use buoyant::{
     font::CharacterBufferFont,
@@ -23,22 +23,22 @@ fn foreach_with_inner_wrapping_hstack() {
 
     users
         .push(User {
-            name: "Alice".to_string(),
-            age: "99".to_string(),
+            name: "Alice".to_owned(),
+            age: "99".to_owned(),
         })
         .unwrap();
 
     users
         .push(User {
-            name: "Bob".to_string(),
-            age: "2".to_string(),
+            name: "Bob".to_owned(),
+            age: "2".to_owned(),
         })
         .unwrap();
 
     users
         .push(User {
-            name: "Person Name".to_string(),
-            age: "77".to_string(),
+            name: "Person Name".to_owned(),
+            age: "77".to_owned(),
         })
         .unwrap();
 
@@ -67,22 +67,22 @@ fn foreach_leading_aligned() {
 
     users
         .push(User {
-            name: "Alice".to_string(),
-            age: "99".to_string(),
+            name: "Alice".to_owned(),
+            age: "99".to_owned(),
         })
         .unwrap();
 
     users
         .push(User {
-            name: "Bob".to_string(),
-            age: "2".to_string(),
+            name: "Bob".to_owned(),
+            age: "2".to_owned(),
         })
         .unwrap();
 
     users
         .push(User {
-            name: "Person Name".to_string(),
-            age: "77".to_string(),
+            name: "Person Name".to_owned(),
+            age: "77".to_owned(),
         })
         .unwrap();
 
@@ -109,22 +109,22 @@ fn foreach_trailing_aligned() {
 
     users
         .push(User {
-            name: "Alice".to_string(),
-            age: "99".to_string(),
+            name: "Alice".to_owned(),
+            age: "99".to_owned(),
         })
         .unwrap();
 
     users
         .push(User {
-            name: "Bob".to_string(),
-            age: "2".to_string(),
+            name: "Bob".to_owned(),
+            age: "2".to_owned(),
         })
         .unwrap();
 
     users
         .push(User {
-            name: "Person Name".to_string(),
-            age: "77".to_string(),
+            name: "Person Name".to_owned(),
+            age: "77".to_owned(),
         })
         .unwrap();
 

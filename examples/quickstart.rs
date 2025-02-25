@@ -7,9 +7,9 @@
 
 use buoyant::{
     environment::DefaultEnvironment,
-    layout::Layout,
+    layout::Layout as _,
     render::{EmbeddedGraphicsRender, Renderable},
-    view::{padding::Edges, HStack, LayoutExtensions as _, RenderExtensions, Spacer, Text},
+    view::{padding::Edges, HStack, LayoutExtensions as _, RenderExtensions as _, Spacer, Text},
 };
 use embedded_graphics::{mono_font::ascii::FONT_10X20, pixelcolor::Rgb888, prelude::*};
 use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};

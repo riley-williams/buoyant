@@ -1,15 +1,15 @@
-use std::time::Duration;
+use core::time::Duration;
 
 use buoyant::{
     environment::DefaultEnvironment,
     font::CharacterBufferFont,
     layout::{HorizontalAlignment, Layout as _, VerticalAlignment},
     primitives::Point,
-    render::{AnimationDomain, CharacterRender, CharacterRenderTarget, Renderable},
+    render::{AnimationDomain, CharacterRender, CharacterRenderTarget as _, Renderable},
     render_target::FixedTextBuffer,
     view::{
         make_render_tree, shape::Rectangle, ConditionalView, Divider, EmptyView,
-        HorizontalTextAlignment, LayoutExtensions, RenderExtensions as _, Text, VStack, ZStack,
+        HorizontalTextAlignment, LayoutExtensions as _, RenderExtensions as _, Text, VStack, ZStack,
     },
     Animation,
 };
@@ -517,7 +517,7 @@ fn toggle_stack(is_on: bool) -> impl Renderable<char, Renderables: CharacterRend
 }
 
 #[test]
-#[allow(clippy::cognitive_complexity)]
+#[expect(clippy::cognitive_complexity)]
 fn nested_toggle_animation() {
     let mut buffer = FixedTextBuffer::<11, 5>::default();
 

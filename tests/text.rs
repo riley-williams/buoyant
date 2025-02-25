@@ -1,6 +1,6 @@
-use buoyant::render::CharacterRender;
-use buoyant::render::CharacterRenderTarget;
-use std::iter::zip;
+use buoyant::render::CharacterRender as _;
+use buoyant::render::CharacterRenderTarget as _;
+use core::iter::zip;
 
 use buoyant::{
     environment::DefaultEnvironment,

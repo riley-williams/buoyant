@@ -1,10 +1,10 @@
 use buoyant::font::CharacterBufferFont;
-use buoyant::layout::{Layout, LayoutDirection};
+use buoyant::layout::{Layout as _, LayoutDirection};
 use buoyant::primitives::{
     Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions, Size,
 };
-use buoyant::render::CharacterRender;
-use buoyant::render::CharacterRenderTarget;
+use buoyant::render::CharacterRender as _;
+use buoyant::render::CharacterRenderTarget as _;
 use buoyant::render_target::FixedTextBuffer;
 use buoyant::view::{make_render_tree, HStack, RenderExtensions as _, Spacer, Text, VStack};
 use common::{collect_text, TestEnv};

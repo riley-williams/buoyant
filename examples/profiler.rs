@@ -1,14 +1,14 @@
 use buoyant::primitives::Point;
-use buoyant::render::{CharacterRender as _, CharacterRenderTarget};
+use buoyant::render::{CharacterRender as _, CharacterRenderTarget as _};
 use buoyant::view::padding::Edges;
 use buoyant::{
     environment::DefaultEnvironment,
     font::CharacterBufferFont,
-    layout::{Layout, VerticalAlignment},
+    layout::{Layout as _, VerticalAlignment},
     primitives::Size,
     render_target::FixedTextBuffer,
     view::{
-        make_render_tree, Divider, HStack, HorizontalTextAlignment, LayoutExtensions,
+        make_render_tree, Divider, HStack, HorizontalTextAlignment, LayoutExtensions as _,
         RenderExtensions as _, Spacer, Text, VStack,
     },
 };
@@ -52,10 +52,10 @@ fn main() {
          )),
      ));
 
-    println!("View size {}", std::mem::size_of_val(&stack));
-    println!("Env size {}", std::mem::size_of_val(&env));
+    println!("View size {}", core::mem::size_of_val(&stack));
+    println!("Env size {}", core::mem::size_of_val(&env));
     let sample_layout = stack.layout(&size.into(), &env);
-    println!("Layout size {}", std::mem::size_of_val(&sample_layout));
+    println!("Layout size {}", core::mem::size_of_val(&sample_layout));
 
     target.clear();
     for width in 1..100 {

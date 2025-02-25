@@ -1,14 +1,14 @@
 use buoyant::primitives::Point;
-use buoyant::render::CharacterRender;
-use buoyant::render::CharacterRenderTarget;
-use buoyant::view::RenderExtensions;
+use buoyant::render::CharacterRender as _;
+use buoyant::render::CharacterRenderTarget as _;
+use buoyant::view::RenderExtensions as _;
 use buoyant::{
     environment::DefaultEnvironment,
     font::CharacterBufferFont,
-    layout::{HorizontalAlignment, Layout, VerticalAlignment},
+    layout::{HorizontalAlignment, Layout as _, VerticalAlignment},
     primitives::{ProposedDimension, ProposedDimensions, Size},
     render_target::FixedTextBuffer,
-    view::{make_render_tree, shape::Rectangle, LayoutExtensions, Text},
+    view::{make_render_tree, shape::Rectangle, LayoutExtensions as _, Text},
 };
 
 #[test]

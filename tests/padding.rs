@@ -1,18 +1,18 @@
-use std::iter::zip;
+use core::iter::zip;
 
 use buoyant::primitives::Point;
-use buoyant::render::CharacterRender;
-use buoyant::render::CharacterRenderTarget;
+use buoyant::render::CharacterRender as _;
+use buoyant::render::CharacterRenderTarget as _;
 use buoyant::view::padding::Edges;
 use buoyant::{
     environment::DefaultEnvironment,
     font::CharacterBufferFont,
-    layout::Layout,
+    layout::Layout as _,
     primitives::{Dimensions, Size},
     render_target::FixedTextBuffer,
     view::{
-        make_render_tree, shape::Rectangle, Divider, HorizontalTextAlignment, LayoutExtensions,
-        RenderExtensions, Spacer, Text, VStack,
+        make_render_tree, shape::Rectangle, Divider, HorizontalTextAlignment, LayoutExtensions as _,
+        RenderExtensions as _, Spacer, Text, VStack,
     },
 };
 
