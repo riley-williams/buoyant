@@ -62,9 +62,9 @@ fn main() {
 
 fn hello_view() -> impl Renderable<Rgb888, Renderables: EmbeddedGraphicsRender<Rgb888>> {
     HStack::new((
-        Text::str("Hello", &FONT_10X20).foreground_color(Rgb888::GREEN),
+        Text::new("Hello", &FONT_10X20).foreground_color(Rgb888::GREEN),
         Spacer::default(),
-        Text::str("World", &FONT_10X20).foreground_color(Rgb888::YELLOW),
+        Text::new("World", &FONT_10X20).foreground_color(Rgb888::YELLOW),
     ))
     .padding(Edges::All, 20)
 }
@@ -138,9 +138,9 @@ If this view involved animation, the environment would be used to inject the tim
 #
 fn hello_view() -> impl Renderable<Rgb888, Renderables: EmbeddedGraphicsRender<Rgb888>> {
     HStack::new((
-        Text::str("Hello", &FONT_10X20).foreground_color(Rgb888::GREEN),
+        Text::new("Hello", &FONT_10X20).foreground_color(Rgb888::GREEN),
         Spacer::default(),
-        Text::str("World", &FONT_10X20).foreground_color(Rgb888::YELLOW),
+        Text::new("World", &FONT_10X20).foreground_color(Rgb888::YELLOW),
     ))
     .padding(Edges::All, 20)
 }
@@ -200,9 +200,9 @@ let layout = view.layout(&display.size().into(), &environment);
 # 
 # fn hello_view() -> impl Renderable<Rgb888, Renderables: EmbeddedGraphicsRender<Rgb888>> {
 #     HStack::new((
-#         Text::str("Hello", &FONT_10X20).foreground_color(Rgb888::GREEN),
+#         Text::new("Hello", &FONT_10X20).foreground_color(Rgb888::GREEN),
 #         Spacer::default(),
-#         Text::str("World", &FONT_10X20).foreground_color(Rgb888::YELLOW),
+#         Text::new("World", &FONT_10X20).foreground_color(Rgb888::YELLOW),
 #     ))
 #     .padding(Edges::All, 20)
 # }
@@ -249,9 +249,9 @@ let render_tree = view.render_tree(&layout, origin, &environment);
 # 
 # fn hello_view() -> impl Renderable<Rgb888, Renderables: EmbeddedGraphicsRender<Rgb888>> {
 #     HStack::new((
-#         Text::str("Hello", &FONT_10X20).foreground_color(Rgb888::GREEN),
+#         Text::new("Hello", &FONT_10X20).foreground_color(Rgb888::GREEN),
 #         Spacer::default(),
-#         Text::str("World", &FONT_10X20).foreground_color(Rgb888::YELLOW),
+#         Text::new("World", &FONT_10X20).foreground_color(Rgb888::YELLOW),
 #     ))
 #     .padding(Edges::All, 20)
 # }
@@ -303,9 +303,9 @@ render_tree.render(&mut display, &DEFAULT_COLOR, origin);
 # 
 # fn hello_view() -> impl Renderable<Rgb888, Renderables: EmbeddedGraphicsRender<Rgb888>> {
 #     HStack::new((
-#         Text::str("Hello", &FONT_10X20).foreground_color(Rgb888::GREEN),
+#         Text::new("Hello", &FONT_10X20).foreground_color(Rgb888::GREEN),
 #         Spacer::default(),
-#         Text::str("World", &FONT_10X20).foreground_color(Rgb888::YELLOW),
+#         Text::new("World", &FONT_10X20).foreground_color(Rgb888::YELLOW),
 #     ))
 #     .padding(Edges::All, 20)
 # }
