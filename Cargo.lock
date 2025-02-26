@@ -54,7 +54,6 @@ dependencies = [
  "embedded-graphics-simulator",
  "heapless",
  "paste",
- "sdl2",
 ]
 
 [[package]]
