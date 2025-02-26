@@ -119,14 +119,14 @@ mod spacing {
 fn view() -> impl Renderable<Rgb888, Renderables: EmbeddedGraphicsRender<Rgb888>> {
     VStack::new((
         VStack::new((
-            Text::str("Parents", &FONT_9X15_BOLD),
+            Text::new("Parents", &FONT_9X15_BOLD),
             contact_row(Rgb888::CSS_CORAL, "Alice", "Mother"),
             contact_row(Rgb888::CSS_DARK_ORCHID, "Bob", "Father"),
         ))
         .with_alignment(HorizontalAlignment::Leading)
         .with_spacing(spacing::COMPONENT),
         VStack::new((
-            Text::str("Siblings", &FONT_9X15_BOLD),
+            Text::new("Siblings", &FONT_9X15_BOLD),
             contact_row(Rgb888::CSS_GOLDENROD, "Clyde", "Brother"),
             contact_row(Rgb888::CSS_SKY_BLUE, "Denise", "Sister"),
         ))
@@ -147,8 +147,8 @@ fn contact_row<'a>(
     HStack::new((
         Circle.foreground_color(color).frame().with_width(40),
         VStack::new((
-            Text::str(name, &FONT_9X15),
-            Text::str(relationship, &FONT_7X13),
+            Text::new(name, &FONT_9X15),
+            Text::new(relationship, &FONT_7X13),
         ))
         .with_alignment(HorizontalAlignment::Leading)
         .with_spacing(spacing::ELEMENT)
