@@ -19,7 +19,7 @@ const FONT: CharacterBufferFont = CharacterBufferFont;
 fn x_bar(
     alignment: HorizontalAlignment,
 ) -> impl Renderable<char, Renderables: CharacterRender<char>> {
-    Text::str("X", &FONT)
+    Text::new("X", &FONT)
         .flex_frame()
         .with_infinite_max_width()
         .with_horizontal_alignment(alignment)
@@ -121,8 +121,8 @@ fn stacked_bars(
     alignment: HorizontalAlignment,
 ) -> impl Renderable<char, Renderables: CharacterRender<char>> {
     VStack::new((
-        Text::str("X", &FONT).animated(Animation::Linear(Duration::from_secs(1)), alignment),
-        Text::str("Y", &FONT),
+        Text::new("X", &FONT).animated(Animation::Linear(Duration::from_secs(1)), alignment),
+        Text::new("Y", &FONT),
         Divider::new(1), // Ensure the stack spans the offered width
     ))
     .with_alignment(alignment)
@@ -178,8 +178,8 @@ fn stacked_bars_value(
     alignment: HorizontalAlignment,
 ) -> impl Renderable<char, Renderables: CharacterRender<char>> {
     VStack::new((
-        Text::str("X", &FONT).animated(Animation::Linear(Duration::from_secs(1)), x_value),
-        Text::str("Y", &FONT).animated(Animation::Linear(Duration::from_secs(2)), y_value),
+        Text::new("X", &FONT).animated(Animation::Linear(Duration::from_secs(1)), x_value),
+        Text::new("Y", &FONT).animated(Animation::Linear(Duration::from_secs(2)), y_value),
         Divider::new(1), // Ensure the stack spans the offered width
     ))
     .with_alignment(alignment)
@@ -233,9 +233,9 @@ fn stacked_bars_3_value(
     alignment: HorizontalAlignment,
 ) -> impl Renderable<char, Renderables: CharacterRender<char>> {
     VStack::new((
-        Text::str("X", &FONT).animated(Animation::Linear(Duration::from_secs(1)), x_value),
-        Text::str("Y", &FONT).animated(Animation::Linear(Duration::from_secs(2)), y_value),
-        Text::str("Z", &FONT).animated(Animation::Linear(Duration::from_secs(2)), z_value),
+        Text::new("X", &FONT).animated(Animation::Linear(Duration::from_secs(1)), x_value),
+        Text::new("Y", &FONT).animated(Animation::Linear(Duration::from_secs(2)), y_value),
+        Text::new("Z", &FONT).animated(Animation::Linear(Duration::from_secs(2)), z_value),
         Divider::new(1), // Ensure the stack spans the offered width
     ))
     .with_alignment(alignment)
@@ -393,7 +393,7 @@ fn toggle_switch(
         .animated(Animation::Linear(Duration::from_secs(1)), is_on),
         ConditionalView::if_else(
             is_on,
-            Text::str(subtext, &FONT).multiline_text_alignment(HorizontalTextAlignment::Trailing),
+            Text::new(subtext, &FONT).multiline_text_alignment(HorizontalTextAlignment::Trailing),
             EmptyView,
         ),
     ))

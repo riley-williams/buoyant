@@ -14,8 +14,8 @@ fn test_match_view_two_variants() {
     let font = CharacterBufferFont;
     let make_view = |state| {
         match_view!(state => {
-            0 => Text::str("zero\n!!!", &font),
-            _ => Text::str("other", &font).foreground_color(' '),
+            0 => Text::new("zero\n!!!", &font),
+            _ => Text::new("other", &font).foreground_color(' '),
         })
     };
     let mut buffer = FixedTextBuffer::<5, 5>::default();
@@ -55,9 +55,9 @@ fn test_match_view_three_variants() {
 
     let make_view = |state| {
         match_view!(state => {
-            State::A => Text::str("AAA", &font),
-            State::B(msg) => Text::str(msg, &font),
-            State::C => Text::str("CCC", &font),
+            State::A => Text::new("AAA", &font),
+            State::B(msg) => Text::new(msg, &font),
+            State::C => Text::new("CCC", &font),
         })
         .foreground_color(' ')
     };
@@ -109,9 +109,9 @@ fn test_match_view_borrow() {
         font: &'a CharacterBufferFont,
     ) -> impl Renderable<char, Renderables: CharacterRender<char>> + use<'a> {
         match_view!(s => {
-            State::A => Text::str("AAA", font),
-            State::B(msg) => Text::str(msg, font),
-            State::C => Text::str("CCC", font),
+            State::A => Text::new("AAA", font),
+            State::B(msg) => Text::new(msg, font),
+            State::C => Text::new("CCC", font),
         })
     }
 
@@ -139,8 +139,8 @@ fn test_match_view_two_variants_invalid_layout() {
     let font = CharacterBufferFont;
     let make_view = |state| {
         match_view!(state => {
-            0 => Text::str("zero\n!!!", &font),
-            _ => Text::str("other", &font).foreground_color(' '),
+            0 => Text::new("zero\n!!!", &font),
+            _ => Text::new("other", &font).foreground_color(' '),
         })
     };
     let mut buffer = FixedTextBuffer::<5, 5>::default();

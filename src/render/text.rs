@@ -1,19 +1,23 @@
 use crate::{
-    primitives::{Point, Size},
-    view::HorizontalTextAlignment,
+    font::{CharacterBufferFont, FontLayout as _},
+    primitives::{Interpolate as _, Point, Size},
+    view::{HorizontalTextAlignment, WhitespaceWrap},
 };
+
+use super::{AnimationDomain, CharacterRender, CharacterRenderTarget};
+
 #[derive(Debug, Clone, PartialEq)]
-pub struct OwnedText<'a, const N: usize, F> {
+pub struct Text<'a, T: AsRef<str>, F> {
     pub origin: Point,
     pub size: Size,
     pub font: &'a F,
-    pub text: heapless::String<N>,
+    pub text: T,
     pub alignment: HorizontalTextAlignment,
 }
 
 #[cfg(feature = "embedded-graphics")]
 mod embedded_graphics_impl {
-    use super::{OwnedText, Point};
+    use super::{Point, Text};
     use crate::font::FontLayout as _;
     use crate::render::{AnimationDomain, EmbeddedGraphicsRender};
     use crate::{primitives::Interpolate, view::WhitespaceWrap};
@@ -25,7 +29,7 @@ mod embedded_graphics_impl {
     };
     use embedded_graphics_core::draw_target::DrawTarget;
 
-    impl<C: PixelColor, const N: usize> EmbeddedGraphicsRender<C> for OwnedText<'_, N, MonoFont<'_>> {
+    impl<C: PixelColor, T: AsRef<str> + Clone> EmbeddedGraphicsRender<C> for Text<'_, T, MonoFont<'_>> {
         fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &C, offset: Point) {
             if self.size.area() == 0 {
                 return;
@@ -38,7 +42,7 @@ mod embedded_graphics_impl {
             // TODO: add default?
             let style = MonoTextStyle::new(self.font, *style);
             let mut height = 0;
-            let wrap = WhitespaceWrap::new(&self.text, self.size.width, self.font);
+            let wrap = WhitespaceWrap::new(self.text.as_ref(), self.size.width, self.font);
             for line in wrap {
                 // TODO: WhitespaceWrap should also return the width of the line
                 let width = self.font.str_width(line);
@@ -62,5 +66,44 @@ mod embedded_graphics_impl {
             target.origin = Point::new(x, y);
             target
         }
+    }
+}
+
+impl<C, T: AsRef<str> + Clone> CharacterRender<C> for Text<'_, T, CharacterBufferFont> {
+    fn render(
+        &self,
+        render_target: &mut impl CharacterRenderTarget<Color = C>,
+        style: &C,
+        offset: Point,
+    ) {
+        if self.size.area() == 0 {
+            return;
+        }
+
+        let origin = self.origin + offset;
+        let line_height = self.font.line_height() as i16;
+
+        let mut height = 0;
+        let wrap = WhitespaceWrap::new(self.text.as_ref(), self.size.width, self.font);
+        for line in wrap {
+            // TODO: WhitespaceWrap should also return the width of the line
+            let width = self.font.str_width(line);
+
+            let x = self.alignment.align(self.size.width as i16, width as i16);
+            // embedded_graphics draws text at the baseline
+            let txt_start = origin + Point::new(x, height);
+            render_target.draw_string(txt_start, line, style);
+            height += line_height;
+            if height >= self.size.height as i16 {
+                break;
+            }
+        }
+    }
+
+    fn join(source: Self, mut target: Self, domain: &AnimationDomain) -> Self {
+        let x = i16::interpolate(source.origin.x, target.origin.x, domain.factor);
+        let y = i16::interpolate(source.origin.y, target.origin.y, domain.factor);
+        target.origin = Point::new(x, y);
+        target
     }
 }

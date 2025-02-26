@@ -15,8 +15,8 @@ fn test_conditional_view_layout() {
     let make_view = |condition| {
         ConditionalView::if_else(
             condition,
-            Text::str("true\n!!!", &font),
-            Text::str("f", &font).foreground_color(' '),
+            Text::new("true\n!!!", &font),
+            Text::new("f", &font).foreground_color(' '),
         )
     };
     let mut buffer = FixedTextBuffer::<5, 5>::default();
@@ -49,7 +49,7 @@ fn one_arm_if() {
     let make_view = |condition| {
         ConditionalView::if_view(
             condition,
-            Text::str("true\n!!!", &font).foreground_color(' '),
+            Text::new("true\n!!!", &font).foreground_color(' '),
         )
     };
     let mut buffer = FixedTextBuffer::<5, 5>::default();

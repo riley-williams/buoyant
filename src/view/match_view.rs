@@ -56,8 +56,8 @@ impl<V0, V1, V2> MatchView<Branch3<V0, V1, V2>> {
 ///
 /// let view = |state| {
 ///     match_view!(state => {
-///         State::Message(msg) => Text::str(msg, &font),
-///         State::Error => Text::str("Uh oh", &font),
+///         State::Message(msg) => Text::new(msg, &font),
+///         State::Error => Text::new("Uh oh", &font),
 ///         State::Redacted => Rectangle,
 ///     })
 /// };

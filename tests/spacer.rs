@@ -119,7 +119,7 @@ fn test_vertical_layout_compact_height() {
 #[test]
 fn test_render_fills_hstack() {
     let font = CharacterBufferFont {};
-    let hstack = HStack::new((Spacer::default(), Text::str("67", &font)))
+    let hstack = HStack::new((Spacer::default(), Text::new("67", &font)))
         .with_spacing(1)
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<9, 1>::default();
@@ -131,7 +131,7 @@ fn test_render_fills_hstack() {
 #[test]
 fn test_render_fills_vstack() {
     let font = CharacterBufferFont {};
-    let vstack = VStack::new((Spacer::default(), Text::str("67", &font)))
+    let vstack = VStack::new((Spacer::default(), Text::new("67", &font)))
         .with_spacing(1)
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<1, 9>::default();

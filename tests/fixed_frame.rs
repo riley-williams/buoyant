@@ -11,7 +11,7 @@ mod common;
 #[test]
 fn test_fixed_width() {
     let font = CharacterBufferFont {};
-    let content = Text::str("123456", &font).frame().with_width(2);
+    let content = Text::new("123456", &font).frame().with_width(2);
     let env = common::TestEnv::default();
 
     assert_eq!(
@@ -42,7 +42,7 @@ fn test_fixed_width() {
 #[test]
 fn test_fixed_height() {
     let font = CharacterBufferFont {};
-    let content = Text::str("123456", &font).frame().with_height(2);
+    let content = Text::new("123456", &font).frame().with_height(2);
     let env = common::TestEnv::default();
 
     assert_eq!(
@@ -70,7 +70,7 @@ fn test_fixed_height() {
 #[test]
 fn test_fixed_frame_compact_width_height() {
     let font = CharacterBufferFont {};
-    let content = Text::str("123456", &font)
+    let content = Text::new("123456", &font)
         .frame()
         .with_width(2)
         .with_height(2);
@@ -119,7 +119,7 @@ fn test_fixed_frame_compact_width_height() {
 #[test]
 fn test_fixed_frame_infinite_width_height() {
     let font = CharacterBufferFont {};
-    let content = Text::str("123456", &font)
+    let content = Text::new("123456", &font)
         .frame()
         .with_width(25)
         .with_height(25);
@@ -142,7 +142,7 @@ fn test_fixed_frame_infinite_width_height() {
 #[test]
 fn test_render_frame_top_leading_alignment() {
     let font = CharacterBufferFont {};
-    let content = Text::str("aa\nbb\ncc", &font)
+    let content = Text::new("aa\nbb\ncc", &font)
         .frame()
         .with_width(6)
         .with_height(5)
@@ -162,7 +162,7 @@ fn test_render_frame_top_leading_alignment() {
 #[test]
 fn test_render_frame_top_center_alignment() {
     let font = CharacterBufferFont {};
-    let content = Text::str("aa\nbb\ncc", &font)
+    let content = Text::new("aa\nbb\ncc", &font)
         .frame()
         .with_width(6)
         .with_height(5)
@@ -181,7 +181,7 @@ fn test_render_frame_top_center_alignment() {
 #[test]
 fn test_render_frame_top_trailing_alignment() {
     let font = CharacterBufferFont {};
-    let content = Text::str("aa\nbb\ncc", &font)
+    let content = Text::new("aa\nbb\ncc", &font)
         .frame()
         .with_width(6)
         .with_height(5)
@@ -201,7 +201,7 @@ fn test_render_frame_top_trailing_alignment() {
 #[test]
 fn test_render_frame_center_leading_alignment() {
     let font = CharacterBufferFont {};
-    let content = Text::str("aa\nbb\ncc", &font)
+    let content = Text::new("aa\nbb\ncc", &font)
         .frame()
         .with_width(6)
         .with_height(5)
@@ -220,7 +220,7 @@ fn test_render_frame_center_leading_alignment() {
 #[test]
 fn test_render_frame_center_center_alignment() {
     let font = CharacterBufferFont {};
-    let content = Text::str("aa\nbb\ncc", &font)
+    let content = Text::new("aa\nbb\ncc", &font)
         .frame()
         .with_width(6)
         .with_height(5)
@@ -238,7 +238,7 @@ fn test_render_frame_center_center_alignment() {
 #[test]
 fn test_render_frame_center_trailing_alignment() {
     let font = CharacterBufferFont {};
-    let content = Text::str("aa\nbb\ncc", &font)
+    let content = Text::new("aa\nbb\ncc", &font)
         .frame()
         .with_width(6)
         .with_height(5)
@@ -257,7 +257,7 @@ fn test_render_frame_center_trailing_alignment() {
 #[test]
 fn test_render_frame_bottom_leading_alignment() {
     let font = CharacterBufferFont {};
-    let content = Text::str("aa\nbb\ncc", &font)
+    let content = Text::new("aa\nbb\ncc", &font)
         .frame()
         .with_width(6)
         .with_height(5)
@@ -277,7 +277,7 @@ fn test_render_frame_bottom_leading_alignment() {
 #[test]
 fn test_render_frame_bottom_center_alignment() {
     let font = CharacterBufferFont {};
-    let content = Text::str("aa\nbb\ncc", &font)
+    let content = Text::new("aa\nbb\ncc", &font)
         .frame()
         .with_width(6)
         .with_height(5)
@@ -296,7 +296,7 @@ fn test_render_frame_bottom_center_alignment() {
 #[test]
 fn test_render_frame_bottom_trailing_alignment() {
     let font = CharacterBufferFont {};
-    let content = Text::str("aa\nbb\ncc", &font)
+    let content = Text::new("aa\nbb\ncc", &font)
         .frame()
         .with_width(6)
         .with_height(5)

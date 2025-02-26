@@ -20,7 +20,7 @@ const FONT: CharacterBufferFont = CharacterBufferFont;
 fn view() -> impl Renderable<Colors, Renderables: CharacterRender<Colors>> {
     VStack::new((
         HStack::new((
-            Text::str(
+            Text::new(
                 "This red text is aligned to the leading edge of its space\nThe stack however, has bottom alignment.",
                 &FONT,
             )
@@ -32,7 +32,7 @@ fn view() -> impl Renderable<Colors, Renderables: CharacterRender<Colors>> {
                     },
                 ),
             Spacer::default(),
-            Text::str(
+            Text::new(
                 "This text is aligned to the right, with trailing multi-line text alignment",
                 &FONT,
             )
@@ -51,13 +51,13 @@ fn view() -> impl Renderable<Colors, Renderables: CharacterRender<Colors>> {
                             background: Some(crossterm::style::Color::Rgb { r: 127, g: 0, b: 0 })
                         }
                     ),
-                Text::str(
+                Text::new(
                     "This is in a fixed size box",
                     &FONT,
                 )
                     .frame().with_width(10).with_height(10),
             )),
-            Text::str(
+            Text::new(
                 "This is several lines of text.\nEach line is centered in the available space.\n The rectangle fills all the remaining verical space and aligns the content within it.\n2 points of padding are around this text",
                 &FONT,
             )

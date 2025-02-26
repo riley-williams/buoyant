@@ -21,7 +21,7 @@ fn test_clipped_text_trails_correctly() {
     let font = CharacterBufferFont {};
     let view = VStack::new((
         Spacer::default(),
-        Text::str(
+        Text::new(
             "Padding respects\nparent alignment\nshouldnt affect alignment",
             &font,
         )

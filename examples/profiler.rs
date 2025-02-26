@@ -25,13 +25,13 @@ fn main() {
     let font = CharacterBufferFont {};
     let stack = VStack::new((
      HStack::new((
-         Text::str(
+         Text::new(
              "This text is centered horizontally in the middle of its space\nThe stack however, has bottom alignment.",
              &font,
                  )
                  .multiline_text_alignment(HorizontalTextAlignment::Center),
          Divider::default().foreground_color('|'),
-         Text::str(
+         Text::new(
              "This text is aligned to the right, with trailing multi-line text alignment",
              &font,
                  )
@@ -42,7 +42,7 @@ fn main() {
      Divider::default().foreground_color('-'),
      VStack::new((
          Spacer::default(),
-         Text::str(
+         Text::new(
              "This is several lines of text.\nEach line is centered in the available space.\n Spacers are used to fill all the remaining verical space and align the content within it.\n2 points of padding are around this text",
              &font,
          )
