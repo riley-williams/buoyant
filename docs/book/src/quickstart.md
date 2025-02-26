@@ -21,7 +21,7 @@ embedded-graphics-simulator = "0.7.0"
 Running this example will result in the words "Hello" (green) and "World" (yellow)
 separated by as much space as possible, with 20 pixels of padding around the edges.
 
-![hello-world](assets/hello-world.png)
+![hello-world](images/hello-world.png)
 
 Here is the full example, which will be picked apart in the following sections:
 
@@ -72,11 +72,7 @@ fn hello_view() -> impl Renderable<Rgb888, Renderables: EmbeddedGraphicsRender<R
 
 ## Simulator Boilerplate
 
-A window and a display framebuffer are created. `display` conforms to `embedded_graphics::DrawTarget`,
-and is what you'll render content into.
-
-The framebuffer is cleared to the background color, content is rendered, and finally the framebuffer
-is displayed.
+This is more or less the bare minimum to get a window up and running with the simulator.
 
 ```rust,no_run
 # extern crate buoyant;
@@ -105,6 +101,12 @@ fn main() {
     window.show_static(&display);
 }
 ```
+
+A window and a display framebuffer are created. `display` importantly conforms to
+`embedded_graphics::DrawTarget<Color = Rgb888>` and is what you'll render content into.
+
+The framebuffer is cleared to the background color, content is rendered, and finally the framebuffer
+is displayed.
 
 ## Environment
 
@@ -211,7 +213,7 @@ let layout = view.layout(&display.size().into(), &environment);
 The layout call resolves the sizes of all the views. It is a bug to try to reuse the layout
 after mutating the view, and Buoyant may panic if you do so.
 
-## Render Trees
+## Render Tree
 
 ```rust,no_run
 # extern crate buoyant;
