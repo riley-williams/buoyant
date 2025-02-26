@@ -100,6 +100,7 @@ incrementally larger values for each class of separation.
 # }
 # 
 use buoyant::layout::{HorizontalAlignment, VerticalAlignment};
+use buoyant::view::padding::Edges;
 use buoyant::view::shape::Circle;
 use buoyant::view::{HStack, Text, VStack};
 use buoyant::view::{LayoutExtensions as _, RenderExtensions as _};
@@ -108,7 +109,6 @@ use embedded_graphics::{
     pixelcolor::Rgb888,
     prelude::*,
 };
-
 
 mod spacing {
     pub const ELEMENT: u16 = 6;
@@ -120,23 +120,24 @@ fn view() -> impl Renderable<Rgb888, Renderables: EmbeddedGraphicsRender<Rgb888>
     VStack::new((
         VStack::new((
             Text::str("Parents", &FONT_9X15_BOLD),
-            contact_row(Rgb888::CSS_CORAL, "Ashley", "Mother"),
-            contact_row(Rgb888::CSS_DARK_ORCHID, "Bo", "Father"),
+            contact_row(Rgb888::CSS_CORAL, "Alice", "Mother"),
+            contact_row(Rgb888::CSS_DARK_ORCHID, "Bob", "Father"),
         ))
         .with_alignment(HorizontalAlignment::Leading)
         .with_spacing(spacing::COMPONENT),
         VStack::new((
             Text::str("Siblings", &FONT_9X15_BOLD),
-            contact_row(Rgb888::CSS_GOLDENROD, "Ryan", "Brother"),
-            contact_row(Rgb888::CSS_SKY_BLUE, "Lily", "Sister"),
+            contact_row(Rgb888::CSS_GOLDENROD, "Clyde", "Brother"),
+            contact_row(Rgb888::CSS_SKY_BLUE, "Denise", "Sister"),
         ))
         .with_alignment(HorizontalAlignment::Leading)
         .with_spacing(spacing::COMPONENT),
     ))
     .with_alignment(HorizontalAlignment::Leading)
     .with_spacing(spacing::SECTION)
+    .padding(Edges::Horizontal, spacing::COMPONENT)
+    .padding(Edges::Vertical, spacing::SECTION)
 }
-
 
 fn contact_row<'a>(
     color: Rgb888,
@@ -175,7 +176,7 @@ text that spans the entire window width. Depending on where the text wraps, you 
 sometimes see the problem.
 
 [^note]: Text rendered with `embedded-graphics` monospace fonts break the "tight frames" rule.
-If you look closely at the second (misaligned) example, you'll see that names which render
-entirely above the baseline (no g, j, p, q, or y) appear to have weird extra spacing underneath
-that doesn't match the other nearby element spacing. This is what you're trying to avoid by
-ensuring your frames are tight to the rendered content.
+If you look closely, you'll see that names which render entirely above the baseline
+(no g, j, p, q, or y) appear to have weird extra spacing underneath that doesn't match the
+other nearby element spacing. This is what you're trying to avoid by ensuring your frames
+are tight to the rendered content.
