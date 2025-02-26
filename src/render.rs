@@ -13,10 +13,10 @@ pub mod collections;
 mod conditional_tree;
 mod offset;
 mod one_of;
-mod text_box;
 mod rect;
 mod rounded_rect;
 mod shade_subtree;
+mod text;
 
 pub use animate::Animate;
 pub use capsule::Capsule;
@@ -24,10 +24,10 @@ pub use circle::Circle;
 pub use conditional_tree::{ConditionalTree, Subtree};
 pub use offset::Offset;
 pub use one_of::{OneOf2, OneOf3};
-pub use text_box::TextBox;
 pub use rect::Rect;
 pub use rounded_rect::RoundedRect;
 pub use shade_subtree::ShadeSubtree;
+pub use text::Text;
 
 pub trait Renderable<Color>: Layout {
     type Renderables;

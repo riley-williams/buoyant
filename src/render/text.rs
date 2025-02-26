@@ -5,8 +5,9 @@ use crate::{
 };
 
 use super::{AnimationDomain, CharacterRender, CharacterRenderTarget};
+
 #[derive(Debug, Clone, PartialEq)]
-pub struct TextBox<'a, T: AsRef<str>, F> {
+pub struct Text<'a, T: AsRef<str>, F> {
     pub origin: Point,
     pub size: Size,
     pub font: &'a F,
@@ -16,7 +17,7 @@ pub struct TextBox<'a, T: AsRef<str>, F> {
 
 #[cfg(feature = "embedded-graphics")]
 mod embedded_graphics_impl {
-    use super::{TextBox, Point};
+    use super::{Point, Text};
     use crate::font::FontLayout as _;
     use crate::render::{AnimationDomain, EmbeddedGraphicsRender};
     use crate::{primitives::Interpolate, view::WhitespaceWrap};
@@ -28,9 +29,7 @@ mod embedded_graphics_impl {
     };
     use embedded_graphics_core::draw_target::DrawTarget;
 
-    impl<C: PixelColor, T: AsRef<str> + Clone> EmbeddedGraphicsRender<C>
-        for TextBox<'_, T, MonoFont<'_>>
-    {
+    impl<C: PixelColor, T: AsRef<str> + Clone> EmbeddedGraphicsRender<C> for Text<'_, T, MonoFont<'_>> {
         fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &C, offset: Point) {
             if self.size.area() == 0 {
                 return;
@@ -70,7 +69,7 @@ mod embedded_graphics_impl {
     }
 }
 
-impl<C, T: AsRef<str> + Clone> CharacterRender<C> for TextBox<'_, T, CharacterBufferFont> {
+impl<C, T: AsRef<str> + Clone> CharacterRender<C> for Text<'_, T, CharacterBufferFont> {
     fn render(
         &self,
         render_target: &mut impl CharacterRenderTarget<Color = C>,
