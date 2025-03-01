@@ -1,6 +1,6 @@
 use crate::{primitives::Interpolate as _, primitives::Point};
 
-use super::{AnimationDomain, CharacterRender, CharacterRenderTarget};
+use super::{AnimatedJoin, AnimationDomain, CharacterRender, CharacterRenderTarget};
 
 /// A render tree item that offsets its children by a fixed amount.
 /// The offset is animated, resulting in all children moving in unison.
@@ -13,6 +13,14 @@ pub struct Offset<T> {
 impl<T> Offset<T> {
     /// Create a new offset render tree item
     pub const fn new(offset: Point, subtree: T) -> Self {
+        Self { offset, subtree }
+    }
+}
+
+impl<T: AnimatedJoin> AnimatedJoin for Offset<T> {
+    fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
+        let subtree = T::join(source.subtree, target.subtree, domain);
+        let offset = Point::interpolate(source.offset, target.offset, domain.factor);
         Self { offset, subtree }
     }
 }
@@ -45,12 +53,6 @@ impl<T: CharacterRender<C>, C> CharacterRender<C> for Offset<T> {
             domain,
         );
     }
-
-    fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
-        let subtree = T::join(source.subtree, target.subtree, domain);
-        let offset = Point::interpolate(source.offset, target.offset, domain.factor);
-        Self { offset, subtree }
-    }
 }
 
 #[cfg(feature = "embedded-graphics")]
@@ -60,7 +62,7 @@ mod embedded_graphics_impl {
 
     use crate::primitives::Interpolate;
     use crate::primitives::Point;
-    use crate::render::{AnimationDomain, EmbeddedGraphicsRender};
+    use crate::render::EmbeddedGraphicsRender;
 
     use super::Offset;
 
@@ -86,12 +88,6 @@ mod embedded_graphics_impl {
                 Point::interpolate(source.offset, target.offset, domain.factor) + offset,
                 domain,
             );
-        }
-
-        fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
-            let subtree = T::join(source.subtree, target.subtree, domain);
-            let offset = Point::interpolate(source.offset, target.offset, domain.factor);
-            Self { offset, subtree }
         }
     }
 }

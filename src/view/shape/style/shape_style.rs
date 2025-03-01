@@ -1,5 +1,6 @@
 use crate::primitives::Size;
 
+#[derive(Debug)]
 pub struct ShapeStyle<C, F: FillStyle<Color = C>> {
     pub fill_style: Option<F>,
     pub stroke_style: Option<StrokeStyle<C>>,
@@ -14,6 +15,7 @@ pub trait FillStyle {
     fn solid(&self) -> Option<Self::Color>;
 }
 
+#[derive(Debug)]
 pub struct StrokeStyle<C> {
     pub color: C,
     pub width: u16,

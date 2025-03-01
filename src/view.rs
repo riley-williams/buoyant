@@ -1,6 +1,5 @@
 //! View types used for building interfaces
 
-mod conditional_view;
 mod divider;
 mod empty_view;
 mod foreach;
@@ -13,7 +12,6 @@ mod text;
 mod vstack;
 mod zstack;
 
-pub use conditional_view::ConditionalView;
 pub use divider::Divider;
 pub use empty_view::EmptyView;
 pub use foreach::ForEach;

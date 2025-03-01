@@ -2,6 +2,8 @@ use crate::primitives::Interpolate;
 use crate::primitives::{Point, Size};
 use crate::render::{AnimationDomain, CharacterRender, CharacterRenderTarget};
 
+use super::AnimatedJoin;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Rect {
     pub origin: Point,
@@ -12,6 +14,14 @@ impl Rect {
     #[must_use]
     pub const fn new(origin: Point, size: Size) -> Self {
         Self { origin, size }
+    }
+}
+
+impl AnimatedJoin for Rect {
+    fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
+        let origin = Point::interpolate(source.origin, target.origin, domain.factor);
+        let size = Size::interpolate(source.size, target.size, domain.factor);
+        Rect::new(origin, size)
     }
 }
 
@@ -30,12 +40,20 @@ impl<C> CharacterRender<C> for Rect {
         }
     }
 
-    fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
-        let x = i16::interpolate(source.origin.x, target.origin.x, domain.factor);
-        let y = i16::interpolate(source.origin.y, target.origin.y, domain.factor);
-        let w = u16::interpolate(source.size.width, target.size.width, domain.factor);
-        let h = u16::interpolate(source.size.height, target.size.height, domain.factor);
-        Rect::new(Point::new(x, y), Size::new(w, h))
+    fn render_animated(
+        render_target: &mut impl CharacterRenderTarget<Color = C>,
+        source: &Self,
+        target: &Self,
+        style: &C,
+        offset: Point,
+        domain: &AnimationDomain,
+    ) {
+        // TODO: expecting these clones to be optimized away, check
+        AnimatedJoin::join(source.clone(), target.clone(), domain).render(
+            render_target,
+            style,
+            offset,
+        );
     }
 }
 
@@ -45,12 +63,11 @@ mod embedded_graphics_impl {
     use embedded_graphics::primitives::{PrimitiveStyle, StyledDrawable as _};
     use embedded_graphics_core::draw_target::DrawTarget;
 
-    use crate::primitives::Interpolate;
-    use crate::primitives::{Point, Size};
-    use crate::render::{AnimationDomain, EmbeddedGraphicsRender};
+    use crate::primitives::Point;
+    use crate::render::{AnimatedJoin, AnimationDomain, EmbeddedGraphicsRender};
 
     use super::Rect;
-    // TODO: not really ideal...reimplement later
+
     impl<C: PixelColor> EmbeddedGraphicsRender<C> for Rect {
         fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &C, offset: Point) {
             let origin = self.origin + offset;
@@ -59,12 +76,20 @@ mod embedded_graphics_impl {
             _ = eg_rect.draw_styled(&PrimitiveStyle::with_fill(*style), render_target);
         }
 
-        fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
-            let x = i16::interpolate(source.origin.x, target.origin.x, domain.factor);
-            let y = i16::interpolate(source.origin.y, target.origin.y, domain.factor);
-            let w = u16::interpolate(source.size.width, target.size.width, domain.factor);
-            let h = u16::interpolate(source.size.height, target.size.height, domain.factor);
-            Rect::new(Point::new(x, y), Size::new(w, h))
+        fn render_animated(
+            render_target: &mut impl DrawTarget<Color = C>,
+            source: &Self,
+            target: &Self,
+            style: &C,
+            offset: Point,
+            domain: &AnimationDomain,
+        ) {
+            // TODO: expecting these clones to be optimized away, check
+            AnimatedJoin::join(source.clone(), target.clone(), domain).render(
+                render_target,
+                style,
+                offset,
+            );
         }
     }
 }

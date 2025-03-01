@@ -30,6 +30,16 @@ impl Interpolate for u32 {
     }
 }
 
+impl Interpolate for char {
+    fn interpolate(from: Self, to: Self, amount: u8) -> Self {
+        if amount < 127 {
+            from
+        } else {
+            to
+        }
+    }
+}
+
 #[cfg(feature = "crossterm")]
 impl Interpolate for crossterm::style::Colors {
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {

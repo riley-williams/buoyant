@@ -1,4 +1,7 @@
-use crate::primitives::{Point, Size};
+use crate::{
+    primitives::{Interpolate, Point, Size},
+    render::{AnimatedJoin, AnimationDomain},
+};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
@@ -6,6 +9,19 @@ pub struct RoundedRect {
     pub origin: Point,
     pub size: Size,
     pub corner_radius: u16,
+}
+
+impl AnimatedJoin for RoundedRect {
+    fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
+        let origin = Point::interpolate(source.origin, target.origin, domain.factor);
+        let size = Size::interpolate(source.size, target.size, domain.factor);
+        let r = u16::interpolate(source.corner_radius, target.corner_radius, domain.factor);
+        RoundedRect {
+            origin,
+            size,
+            corner_radius: r,
+        }
+    }
 }
 
 #[cfg(feature = "embedded-graphics")]
@@ -16,10 +32,9 @@ mod embedded_graphics_impl {
     };
     use embedded_graphics_core::draw_target::DrawTarget;
 
-    use crate::render::EmbeddedGraphicsRender;
-    use crate::{primitives::Interpolate, render::AnimationDomain};
+    use crate::render::{AnimatedJoin, EmbeddedGraphicsRender};
 
-    use super::{Point, RoundedRect, Size};
+    use super::{Point, RoundedRect};
 
     impl<C: PixelColor> EmbeddedGraphicsRender<C> for RoundedRect {
         fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &C, offset: Point) {
@@ -36,18 +51,20 @@ mod embedded_graphics_impl {
             .draw_styled(&PrimitiveStyle::with_fill(*style), render_target);
         }
 
-        #[allow(clippy::many_single_char_names)]
-        fn join(source: Self, target: Self, config: &AnimationDomain) -> Self {
-            let x = i16::interpolate(source.origin.x, target.origin.x, config.factor);
-            let y = i16::interpolate(source.origin.y, target.origin.y, config.factor);
-            let w = u16::interpolate(source.size.width, target.size.width, config.factor);
-            let h = u16::interpolate(source.size.height, target.size.height, config.factor);
-            let r = u16::interpolate(source.corner_radius, target.corner_radius, config.factor);
-            RoundedRect {
-                origin: Point::new(x, y),
-                size: Size::new(w, h),
-                corner_radius: r,
-            }
+        fn render_animated(
+            render_target: &mut impl DrawTarget<Color = C>,
+            source: &Self,
+            target: &Self,
+            style: &C,
+            offset: Point,
+            domain: &crate::render::AnimationDomain,
+        ) {
+            // TODO: expecting these clones to be optimized away, check
+            AnimatedJoin::join(source.clone(), target.clone(), domain).render(
+                render_target,
+                style,
+                offset,
+            );
         }
     }
 }

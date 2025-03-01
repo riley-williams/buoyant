@@ -6,6 +6,8 @@ use crate::{
     Animation,
 };
 
+use super::AnimatedJoin;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct Animate<T, U> {
@@ -21,7 +23,7 @@ pub struct Animate<T, U> {
     pub is_partial: bool,
 }
 
-impl<T, U: PartialEq + Clone> Animate<T, U> {
+impl<T, U: PartialEq> Animate<T, U> {
     #[must_use]
     pub const fn new(subtree: T, animation: Animation, frame_time: Duration, value: U) -> Self {
         Self {
@@ -33,7 +35,58 @@ impl<T, U: PartialEq + Clone> Animate<T, U> {
         }
     }
 }
-impl<C, T: CharacterRender<C>, U: PartialEq + Clone> CharacterRender<C> for Animate<T, U> {
+
+impl<T: AnimatedJoin, U: PartialEq> AnimatedJoin for Animate<T, U> {
+    fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
+        let (end_time, duration) = if source.value != target.value {
+            let duration = target.animation.duration();
+            (target.frame_time + duration, duration)
+        } else if source.is_partial {
+            // continue source animation
+            let duration = source.animation.duration();
+            (source.frame_time + duration, duration)
+        } else {
+            // no animation
+            (domain.app_time, Duration::from_secs(0))
+        };
+
+        let new_duration;
+        let is_partial;
+        let subdomain;
+        if end_time == Duration::from_secs(0) || domain.app_time >= end_time {
+            // animation has already completed or there was zero duration
+            is_partial = false;
+            new_duration = Duration::from_secs(0);
+            subdomain = AnimationDomain {
+                factor: 255,
+                app_time: domain.app_time,
+            };
+        } else {
+            is_partial = true;
+            new_duration = end_time.saturating_sub(domain.app_time);
+            // compute factor
+            let factor = 255u128.saturating_sub(
+                (new_duration.as_millis() * 255)
+                    .checked_div(duration.as_millis())
+                    .unwrap_or(0),
+            ) as u8;
+            subdomain = AnimationDomain {
+                factor,
+                app_time: domain.app_time,
+            };
+        }
+
+        Self {
+            animation: target.animation.with_duration(new_duration),
+            subtree: T::join(source.subtree, target.subtree, &subdomain),
+            frame_time: domain.app_time,
+            value: target.value,
+            is_partial,
+        }
+    }
+}
+
+impl<C, T: CharacterRender<C>, U: PartialEq> CharacterRender<C> for Animate<T, U> {
     fn render(
         &self,
         render_target: &mut impl crate::render::CharacterRenderTarget<Color = C>,
@@ -92,54 +145,6 @@ impl<C, T: CharacterRender<C>, U: PartialEq + Clone> CharacterRender<C> for Anim
             &subdomain,
         );
     }
-
-    fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
-        let (end_time, duration) = if source.value != target.value {
-            let duration = target.animation.duration();
-            (target.frame_time + duration, duration)
-        } else if source.is_partial {
-            // continue source animation
-            let duration = source.animation.duration();
-            (source.frame_time + duration, duration)
-        } else {
-            // no animation
-            (domain.app_time, Duration::from_secs(0))
-        };
-
-        let new_duration;
-        let is_partial;
-        let subdomain;
-        if end_time == Duration::from_secs(0) || domain.app_time >= end_time {
-            // animation has already completed or there was zero duration
-            is_partial = false;
-            new_duration = Duration::from_secs(0);
-            subdomain = AnimationDomain {
-                factor: 255,
-                app_time: domain.app_time,
-            };
-        } else {
-            is_partial = true;
-            new_duration = end_time.saturating_sub(domain.app_time);
-            // compute factor
-            let factor = 255u128.saturating_sub(
-                (new_duration.as_millis() * 255)
-                    .checked_div(duration.as_millis())
-                    .unwrap_or(0),
-            ) as u8;
-            subdomain = AnimationDomain {
-                factor,
-                app_time: domain.app_time,
-            };
-        }
-
-        Self {
-            animation: target.animation.with_duration(new_duration),
-            subtree: T::join(source.subtree, target.subtree, &subdomain),
-            frame_time: domain.app_time,
-            value: target.value,
-            is_partial,
-        }
-    }
 }
 
 // TODO: This implementation should always be exactly the same as the character render implementation.
@@ -158,8 +163,8 @@ mod embedded_graphics_impl {
 
     use super::Animate;
 
-    impl<C: PixelColor, T: EmbeddedGraphicsRender<C>, U: PartialEq + Clone>
-        EmbeddedGraphicsRender<C> for Animate<T, U>
+    impl<C: PixelColor, T: EmbeddedGraphicsRender<C>, U: PartialEq> EmbeddedGraphicsRender<C>
+        for Animate<T, U>
     {
         fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &C, offset: Point) {
             self.subtree.render(render_target, style, offset);
@@ -213,54 +218,6 @@ mod embedded_graphics_impl {
                 offset,
                 &subdomain,
             );
-        }
-
-        fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
-            let (end_time, duration) = if source.value != target.value {
-                let duration = target.animation.duration();
-                (target.frame_time + duration, duration)
-            } else if source.is_partial {
-                // continue source animation
-                let duration = source.animation.duration();
-                (source.frame_time + duration, duration)
-            } else {
-                // no animation
-                (domain.app_time, Duration::from_secs(0))
-            };
-
-            let new_duration;
-            let is_partial;
-            let subdomain;
-            if end_time == Duration::from_secs(0) || domain.app_time >= end_time {
-                // animation has already completed or there was zero duration
-                is_partial = false;
-                new_duration = Duration::from_secs(0);
-                subdomain = AnimationDomain {
-                    factor: 255,
-                    app_time: domain.app_time,
-                };
-            } else {
-                is_partial = true;
-                new_duration = end_time.saturating_sub(domain.app_time);
-                // compute factor
-                let factor = 255u128.saturating_sub(
-                    (new_duration.as_millis() * 255)
-                        .checked_div(duration.as_millis())
-                        .unwrap_or(0),
-                ) as u8;
-                subdomain = AnimationDomain {
-                    factor,
-                    app_time: domain.app_time,
-                };
-            }
-
-            Self {
-                animation: target.animation.with_duration(new_duration),
-                subtree: T::join(source.subtree, target.subtree, &subdomain),
-                frame_time: domain.app_time,
-                value: target.value,
-                is_partial,
-            }
         }
     }
 }
