@@ -3,6 +3,8 @@ use crate::{
     render::{CharacterRender, CharacterRenderTarget},
 };
 
+use super::AnimatedJoin;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum OneOf2<V0, V1> {
     Variant0(V0),
@@ -14,6 +16,37 @@ pub enum OneOf3<V0, V1, V2> {
     Variant0(V0),
     Variant1(V1),
     Variant2(V2),
+}
+
+impl<V0: AnimatedJoin, V1: AnimatedJoin> AnimatedJoin for OneOf2<V0, V1> {
+    fn join(source: Self, target: Self, domain: &crate::render::AnimationDomain) -> Self {
+        match (source, target) {
+            (OneOf2::Variant0(source), OneOf2::Variant0(target)) => {
+                OneOf2::Variant0(V0::join(source, target, domain))
+            }
+            (OneOf2::Variant1(source), OneOf2::Variant1(target)) => {
+                OneOf2::Variant1(V1::join(source, target, domain))
+            }
+            (_, target) => target,
+        }
+    }
+}
+
+impl<V0: AnimatedJoin, V1: AnimatedJoin, V2: AnimatedJoin> AnimatedJoin for OneOf3<V0, V1, V2> {
+    fn join(source: Self, target: Self, domain: &crate::render::AnimationDomain) -> Self {
+        match (source, target) {
+            (OneOf3::Variant0(source), OneOf3::Variant0(target)) => {
+                OneOf3::Variant0(V0::join(source, target, domain))
+            }
+            (OneOf3::Variant1(source), OneOf3::Variant1(target)) => {
+                OneOf3::Variant1(V1::join(source, target, domain))
+            }
+            (OneOf3::Variant2(source), OneOf3::Variant2(target)) => {
+                OneOf3::Variant2(V2::join(source, target, domain))
+            }
+            (_, target) => target,
+        }
+    }
 }
 
 impl<V0, V1, C> CharacterRender<C> for OneOf2<V0, V1>
@@ -47,18 +80,6 @@ where
             (_, target) => {
                 target.render(render_target, style, offset);
             }
-        }
-    }
-
-    fn join(source: Self, target: Self, domain: &crate::render::AnimationDomain) -> Self {
-        match (source, target) {
-            (OneOf2::Variant0(source), OneOf2::Variant0(target)) => {
-                OneOf2::Variant0(V0::join(source, target, domain))
-            }
-            (OneOf2::Variant1(source), OneOf2::Variant1(target)) => {
-                OneOf2::Variant1(V1::join(source, target, domain))
-            }
-            (_, target) => target,
         }
     }
 }
@@ -99,21 +120,6 @@ where
             (_, target) => {
                 target.render(render_target, style, offset);
             }
-        }
-    }
-
-    fn join(source: Self, target: Self, domain: &crate::render::AnimationDomain) -> Self {
-        match (source, target) {
-            (OneOf3::Variant0(source), OneOf3::Variant0(target)) => {
-                OneOf3::Variant0(V0::join(source, target, domain))
-            }
-            (OneOf3::Variant1(source), OneOf3::Variant1(target)) => {
-                OneOf3::Variant1(V1::join(source, target, domain))
-            }
-            (OneOf3::Variant2(source), OneOf3::Variant2(target)) => {
-                OneOf3::Variant2(V2::join(source, target, domain))
-            }
-            (_, target) => target,
         }
     }
 }
@@ -160,18 +166,6 @@ mod embedded_graphics_render {
                 }
             }
         }
-
-        fn join(source: Self, target: Self, domain: &crate::render::AnimationDomain) -> Self {
-            match (source, target) {
-                (OneOf2::Variant0(source), OneOf2::Variant0(target)) => {
-                    OneOf2::Variant0(V0::join(source, target, domain))
-                }
-                (OneOf2::Variant1(source), OneOf2::Variant1(target)) => {
-                    OneOf2::Variant1(V1::join(source, target, domain))
-                }
-                (_, target) => target,
-            }
-        }
     }
 
     impl<V0, V1, V2, C> EmbeddedGraphicsRender<C> for OneOf3<V0, V1, V2>
@@ -211,21 +205,6 @@ mod embedded_graphics_render {
                 (_, target) => {
                     target.render(render_target, style, offset);
                 }
-            }
-        }
-
-        fn join(source: Self, target: Self, domain: &crate::render::AnimationDomain) -> Self {
-            match (source, target) {
-                (OneOf3::Variant0(source), OneOf3::Variant0(target)) => {
-                    OneOf3::Variant0(V0::join(source, target, domain))
-                }
-                (OneOf3::Variant1(source), OneOf3::Variant1(target)) => {
-                    OneOf3::Variant1(V1::join(source, target, domain))
-                }
-                (OneOf3::Variant2(source), OneOf3::Variant2(target)) => {
-                    OneOf3::Variant2(V2::join(source, target, domain))
-                }
-                (_, target) => target,
             }
         }
     }

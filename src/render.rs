@@ -10,7 +10,6 @@ mod animate;
 mod capsule;
 mod circle;
 pub mod collections;
-mod conditional_tree;
 mod empty;
 mod offset;
 mod one_of;
@@ -22,7 +21,6 @@ mod text;
 pub use animate::Animate;
 pub use capsule::Capsule;
 pub use circle::Circle;
-pub use conditional_tree::{ConditionalTree, Subtree};
 pub use offset::Offset;
 pub use one_of::{OneOf2, OneOf3};
 pub use rect::Rect;
@@ -68,6 +66,11 @@ impl<C, T: NullRender + Layout> Renderable<C> for T {
     }
 }
 
+pub trait AnimatedJoin {
+    /// Produces a new tree by consuming and interpolating between two partially animated trees
+    fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self;
+}
+
 #[cfg(feature = "embedded-graphics")]
 pub use embedded_graphics_rendering::{EmbeddedGraphicsRender, EmbeddedGraphicsView};
 
@@ -77,13 +80,13 @@ mod embedded_graphics_rendering {
     use embedded_graphics::prelude::PixelColor;
     use embedded_graphics_core::draw_target::DrawTarget;
 
-    use super::{AnimationDomain, Renderable};
+    use super::{AnimatedJoin, AnimationDomain, Renderable};
 
     /// A view that can be rendered to an `embedded_graphics` target
     ///
     /// This trait serves as a shorthand for the more verbose `Renderable<C, Renderables:
     /// EmbeddedGraphicsRender<C>>` bound
-    pub trait EmbeddedGraphicsRender<Color: PixelColor>: Sized + Clone {
+    pub trait EmbeddedGraphicsRender<Color: PixelColor>: AnimatedJoin + Sized {
         /// Render the view to the screen
         fn render(
             &self,
@@ -93,6 +96,9 @@ mod embedded_graphics_rendering {
         );
 
         /// Render view and all subviews, animating from a source view to a target view
+        ///
+        /// The implementation of this method should match the implementation of
+        /// ``AnimatedJoin::join`` to get smooth continuous animations
         fn render_animated(
             render_target: &mut impl DrawTarget<Color = Color>,
             source: &Self,
@@ -100,13 +106,7 @@ mod embedded_graphics_rendering {
             style: &Color,
             offset: Point,
             domain: &AnimationDomain,
-        ) {
-            let intermediate = Self::join(source.clone(), target.clone(), domain);
-            intermediate.render(render_target, style, offset);
-        }
-
-        /// Produces a new tree by consuming and interpolating between two partially animated trees
-        fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self;
+        );
     }
 
     /// A view that can be rendered to an ``embedded_graphics::DrawTarget``
@@ -167,7 +167,7 @@ pub trait CharacterRenderTarget {
 }
 
 /// A view that can be rendered to an `embedded_graphics` target
-pub trait CharacterRender<Color>: Sized + Clone {
+pub trait CharacterRender<Color>: AnimatedJoin + Sized {
     /// Render the view to the screen
     fn render(
         &self,
@@ -177,6 +177,9 @@ pub trait CharacterRender<Color>: Sized + Clone {
     );
 
     /// Render view and all subviews, animating from a source view to a target view
+    ///
+    /// The implementation of this method should match the implementation of
+    /// ``AnimatedJoin::join`` to get smooth continuous animations
     fn render_animated(
         render_target: &mut impl CharacterRenderTarget<Color = Color>,
         source: &Self,
@@ -184,11 +187,5 @@ pub trait CharacterRender<Color>: Sized + Clone {
         style: &Color,
         offset: Point,
         domain: &AnimationDomain,
-    ) {
-        let intermediate = Self::join(source.clone(), target.clone(), domain);
-        intermediate.render(render_target, style, offset);
-    }
-
-    /// Produces a new tree by consuming and interpolating between two partially animated trees
-    fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self;
+    );
 }

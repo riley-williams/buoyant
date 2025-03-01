@@ -1,4 +1,6 @@
-use crate::primitives::Point;
+use crate::primitives::{Interpolate, Point};
+
+use super::{AnimatedJoin, AnimationDomain};
 
 /// A circle with the origin at the top-left corner
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -7,11 +9,18 @@ pub struct Circle {
     pub diameter: u16,
 }
 
+impl AnimatedJoin for Circle {
+    fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
+        let origin = Point::interpolate(source.origin, target.origin, domain.factor);
+        let diameter = u16::interpolate(source.diameter, target.diameter, domain.factor);
+        Circle { origin, diameter }
+    }
+}
+
 #[cfg(feature = "embedded-graphics")]
 mod embedded_graphics_impl {
-    use crate::primitives::Interpolate;
     use crate::primitives::Point;
-    use crate::render::{AnimationDomain, EmbeddedGraphicsRender};
+    use crate::render::{AnimatedJoin, AnimationDomain, EmbeddedGraphicsRender};
 
     use super::Circle;
     use embedded_graphics::{
@@ -27,14 +36,20 @@ mod embedded_graphics_impl {
                 .draw_styled(&PrimitiveStyle::with_fill(*style), render_target);
         }
 
-        fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
-            let x = i16::interpolate(source.origin.x, target.origin.x, domain.factor);
-            let y = i16::interpolate(source.origin.y, target.origin.y, domain.factor);
-            let diameter = u16::interpolate(source.diameter, target.diameter, domain.factor);
-            Circle {
-                origin: Point::new(x, y),
-                diameter,
-            }
+        fn render_animated(
+            render_target: &mut impl DrawTarget<Color = C>,
+            source: &Self,
+            target: &Self,
+            style: &C,
+            offset: Point,
+            domain: &AnimationDomain,
+        ) {
+            // TODO: expecting these clones to be optimized away, check
+            AnimatedJoin::join(source.clone(), target.clone(), domain).render(
+                render_target,
+                style,
+                offset,
+            );
         }
     }
 }

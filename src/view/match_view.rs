@@ -24,17 +24,75 @@ pub enum Branch3<V0, V1, V2> {
 }
 // and so on...maybe up to N=10?
 
-// This is only called by the macro
 impl<V0, V1> MatchView<Branch2<V0, V1>> {
+    /// Use the `if_view!` or `match_view!` macros instead of manually instantiating this struct.
     pub const fn new(branch: Branch2<V0, V1>) -> Self {
         Self { branch }
     }
 }
 
 impl<V0, V1, V2> MatchView<Branch3<V0, V1, V2>> {
+    /// Use the `if_view!` or `match_view!` macros instead of manually instantiating this struct.
     pub const fn new(branch: Branch3<V0, V1, V2>) -> Self {
         Self { branch }
     }
+}
+
+/// A view that conditionally renders its arms based on a boolean expression.
+///
+/// If you need variable bindings, use the ``match_view!`` macro instead.
+///
+/// Example:
+/// ```
+/// use buoyant::if_view;
+/// use buoyant::font::CharacterBufferFont;
+/// use buoyant::view::{shape::Rectangle, Text};
+///
+/// let font = CharacterBufferFont;
+///
+/// let view = |value: u32| {
+///     if_view!((value % 2 == 0) {
+///         Text::new("Even", &font)
+///     } else {
+///         Text::new("Odd", &font)
+///     })
+/// };
+///
+/// let view = |notification_count: u32| {
+///     if_view!((notification_count > 0) {
+///         Text::new("You have mail", &font)
+///     })
+/// };
+/// ```
+#[macro_export]
+macro_rules! if_view {
+    (
+        ($value:expr) {
+            $view0:expr
+        }
+    ) => {{
+        let branch = if $value {
+            $crate::view::match_view::Branch2::Variant0($view0)
+        } else {
+            $crate::view::match_view::Branch2::Variant1($crate::view::EmptyView)
+        };
+        $crate::view::match_view::MatchView::<$crate::view::match_view::Branch2<_, _>>::new(branch)
+    }};
+
+    (
+        ($value:expr) {
+            $view0:expr
+        } else {
+            $view1:expr
+        }
+    ) => {{
+        let branch = if $value {
+            $crate::view::match_view::Branch2::Variant0($view0)
+        } else {
+            $crate::view::match_view::Branch2::Variant1($view1)
+        };
+        $crate::view::match_view::MatchView::<$crate::view::match_view::Branch2<_, _>>::new(branch)
+    }};
 }
 
 /// A view that can conditionally render one of N heterogeneous subtrees based on the enum variant.

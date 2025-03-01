@@ -3,13 +3,17 @@ use std::time::Duration;
 use buoyant::{
     environment::DefaultEnvironment,
     font::CharacterBufferFont,
+    if_view,
     layout::{HorizontalAlignment, Layout as _, VerticalAlignment},
     primitives::Point,
-    render::{AnimationDomain, CharacterRender, CharacterRenderTarget, CharacterView, Renderable},
+    render::{
+        AnimatedJoin, AnimationDomain, CharacterRender, CharacterRenderTarget, CharacterView,
+        Renderable,
+    },
     render_target::FixedTextBuffer,
     view::{
-        make_render_tree, shape::Rectangle, ConditionalView, Divider, EmptyView,
-        HorizontalTextAlignment, LayoutExtensions, RenderExtensions as _, Text, VStack, ZStack,
+        make_render_tree, shape::Rectangle, Divider, EmptyView, HorizontalTextAlignment,
+        LayoutExtensions, RenderExtensions as _, Text, VStack, ZStack,
     },
     Animation,
 };
@@ -282,7 +286,7 @@ fn partial_animation_join() {
     buffer.clear();
 
     // Join the views at 1s of animation
-    source_tree = CharacterRender::join(
+    source_tree = AnimatedJoin::join(
         source_tree,
         target_tree,
         &AnimationDomain::new(255, Duration::from_millis(1000)),
@@ -384,11 +388,11 @@ fn toggle_switch(is_on: bool, subtext: &str) -> impl CharacterView<char> + use<'
         ))
         .with_horizontal_alignment(alignment)
         .animated(Animation::Linear(Duration::from_secs(1)), is_on),
-        ConditionalView::if_else(
-            is_on,
-            Text::new(subtext, &FONT).multiline_text_alignment(HorizontalTextAlignment::Trailing),
-            EmptyView,
-        ),
+        if_view!((is_on) {
+            Text::new(subtext, &FONT).multiline_text_alignment(HorizontalTextAlignment::Trailing)
+        } else {
+            EmptyView
+        }),
     ))
     .with_alignment(HorizontalAlignment::Trailing)
 }
@@ -444,7 +448,7 @@ fn jump_toggle_animation() {
     assert_eq!(buffer.text[2].iter().collect::<String>(), "           ");
     buffer.clear();
 
-    source_tree = CharacterRender::join(
+    source_tree = AnimatedJoin::join(
         source_tree,
         target_tree,
         &AnimationDomain::top_level(Duration::from_millis(500)),
@@ -556,7 +560,7 @@ fn nested_toggle_animation() {
     buffer.clear();
 
     // Join the views at 1s of animation
-    source_tree = CharacterRender::join(
+    source_tree = AnimatedJoin::join(
         source_tree,
         target_tree,
         &AnimationDomain::top_level(Duration::from_millis(500)),

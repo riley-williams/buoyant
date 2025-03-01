@@ -10,15 +10,19 @@ use std::time::{Duration, Instant};
 
 use buoyant::{
     environment::DefaultEnvironment,
+    if_view,
     layout::{HorizontalAlignment, Layout},
     match_view,
     primitives::ProposedDimensions,
-    render::{AnimationDomain, EmbeddedGraphicsRender, EmbeddedGraphicsView, Renderable as _},
+    render::{
+        AnimatedJoin, AnimationDomain, EmbeddedGraphicsRender, EmbeddedGraphicsView,
+        Renderable as _,
+    },
     view::{
         padding::Edges,
         shape::{Circle, Rectangle},
-        ConditionalView, HStack, HorizontalTextAlignment, LayoutExtensions as _, RenderExtensions,
-        Text, VStack, ZStack,
+        HStack, HorizontalTextAlignment, LayoutExtensions as _, RenderExtensions, Text, VStack,
+        ZStack,
     },
 };
 use embedded_graphics::prelude::*;
@@ -77,7 +81,7 @@ fn main() {
     'running: loop {
         // Create a new target tree if the state changes
         if app.reset_dirty() {
-            source_tree = EmbeddedGraphicsRender::join(
+            source_tree = AnimatedJoin::join(
                 source_tree,
                 target_tree,
                 &AnimationDomain::top_level(app_start.elapsed()),
@@ -226,10 +230,9 @@ impl App {
 
         VStack::new((
             ZStack::new((
-                ConditionalView::if_view(
-                    is_selected,
-                    Rectangle.foreground_color(color::BACKGROUND_SECONDARY),
-                ),
+                if_view!((is_selected) {
+                    Rectangle.foreground_color(color::BACKGROUND_SECONDARY)
+                }),
                 VStack::new((
                     Circle.frame().with_width(15),
                     Text::new(name, &font::CAPTION_BOLD),
@@ -311,12 +314,11 @@ fn toggle_text<'a>(
             toggle_button(is_on),
         ))
         .with_spacing(spacing::ELEMENT),
-        ConditionalView::if_view(
-            is_on || !hides_description,
+        if_view!(( is_on || !hides_description) {
             Text::new(description, &font::CAPTION)
                 .multiline_text_alignment(HorizontalTextAlignment::Trailing)
-                .foreground_color(color::Space::WHITE),
-        ),
+                .foreground_color(color::Space::WHITE)
+        }),
     ))
     .with_spacing(spacing::ELEMENT)
     .with_alignment(HorizontalAlignment::Trailing)

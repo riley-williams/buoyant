@@ -1,13 +1,12 @@
 use crate::{
     font::{CharacterBufferFont, FontLayout as _},
-    primitives::{Interpolate as _, Point, Size},
+    primitives::{Interpolate, Point, Size},
+    render::{AnimatedJoin, AnimationDomain, CharacterRender, CharacterRenderTarget},
     view::{HorizontalTextAlignment, WhitespaceWrap},
 };
 
-use super::{AnimationDomain, CharacterRender, CharacterRenderTarget};
-
 #[derive(Debug, Clone, PartialEq)]
-pub struct Text<'a, T: AsRef<str>, F> {
+pub struct Text<'a, T, F> {
     pub origin: Point,
     pub size: Size,
     pub font: &'a F,
@@ -15,12 +14,21 @@ pub struct Text<'a, T: AsRef<str>, F> {
     pub alignment: HorizontalTextAlignment,
 }
 
+impl<T: AsRef<str>, F> AnimatedJoin for Text<'_, T, F> {
+    fn join(source: Self, mut target: Self, domain: &AnimationDomain) -> Self {
+        target.origin = Interpolate::interpolate(source.origin, target.origin, domain.factor);
+        target.size = Interpolate::interpolate(source.size, target.size, domain.factor);
+        target
+    }
+}
+
 #[cfg(feature = "embedded-graphics")]
 mod embedded_graphics_impl {
     use super::{Point, Text};
-    use crate::font::FontLayout as _;
-    use crate::render::{AnimationDomain, EmbeddedGraphicsRender};
-    use crate::{primitives::Interpolate, view::WhitespaceWrap};
+    use crate::primitives::Interpolate;
+    use crate::render::EmbeddedGraphicsRender;
+    use crate::view::WhitespaceWrap;
+    use crate::{font::FontLayout as _, render::AnimationDomain};
     use embedded_graphics_core::Drawable;
 
     use embedded_graphics::{
@@ -29,7 +37,7 @@ mod embedded_graphics_impl {
     };
     use embedded_graphics_core::draw_target::DrawTarget;
 
-    impl<C: PixelColor, T: AsRef<str> + Clone> EmbeddedGraphicsRender<C> for Text<'_, T, MonoFont<'_>> {
+    impl<C: PixelColor, T: AsRef<str>> EmbeddedGraphicsRender<C> for Text<'_, T, MonoFont<'_>> {
         fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &C, offset: Point) {
             if self.size.area() == 0 {
                 return;
@@ -59,17 +67,29 @@ mod embedded_graphics_impl {
                 }
             }
         }
-
-        fn join(source: Self, mut target: Self, config: &AnimationDomain) -> Self {
-            let x = i16::interpolate(source.origin.x, target.origin.x, config.factor);
-            let y = i16::interpolate(source.origin.y, target.origin.y, config.factor);
-            target.origin = Point::new(x, y);
-            target
+        fn render_animated(
+            render_target: &mut impl DrawTarget<Color = C>,
+            source: &Self,
+            target: &Self,
+            style: &C,
+            offset: Point,
+            domain: &AnimationDomain,
+        ) {
+            let origin = Interpolate::interpolate(source.origin, target.origin, domain.factor);
+            let size = Interpolate::interpolate(source.size, target.size, domain.factor);
+            Text {
+                text: target.text.as_ref(),
+                origin,
+                size,
+                font: target.font,
+                alignment: target.alignment,
+            }
+            .render(render_target, style, offset);
         }
     }
 }
 
-impl<C, T: AsRef<str> + Clone> CharacterRender<C> for Text<'_, T, CharacterBufferFont> {
+impl<C, T: AsRef<str>> CharacterRender<C> for Text<'_, T, CharacterBufferFont> {
     fn render(
         &self,
         render_target: &mut impl CharacterRenderTarget<Color = C>,
@@ -100,10 +120,23 @@ impl<C, T: AsRef<str> + Clone> CharacterRender<C> for Text<'_, T, CharacterBuffe
         }
     }
 
-    fn join(source: Self, mut target: Self, domain: &AnimationDomain) -> Self {
-        let x = i16::interpolate(source.origin.x, target.origin.x, domain.factor);
-        let y = i16::interpolate(source.origin.y, target.origin.y, domain.factor);
-        target.origin = Point::new(x, y);
-        target
+    fn render_animated(
+        render_target: &mut impl CharacterRenderTarget<Color = C>,
+        source: &Self,
+        target: &Self,
+        style: &C,
+        offset: Point,
+        domain: &AnimationDomain,
+    ) {
+        let origin = Interpolate::interpolate(source.origin, target.origin, domain.factor);
+        let size = Interpolate::interpolate(source.size, target.size, domain.factor);
+        Text {
+            text: target.text.as_ref(),
+            origin,
+            size,
+            font: target.font,
+            alignment: target.alignment,
+        }
+        .render(render_target, style, offset);
     }
 }

@@ -1,6 +1,10 @@
 use crate::primitives::Point;
 
-use super::{AnimationDomain, CharacterRender, CharacterRenderTarget};
+use super::{AnimatedJoin, AnimationDomain, CharacterRender, CharacterRenderTarget};
+
+impl AnimatedJoin for () {
+    fn join(_source: Self, _target: Self, _: &AnimationDomain) -> Self {}
+}
 
 impl<C> CharacterRender<C> for () {
     fn render(
@@ -20,8 +24,6 @@ impl<C> CharacterRender<C> for () {
         _domain: &AnimationDomain,
     ) {
     }
-
-    fn join(_source: Self, _target: Self, _domain: &AnimationDomain) -> Self {}
 }
 
 #[cfg(feature = "embedded-graphics")]
@@ -51,7 +53,5 @@ mod embedded_graphics_rendering {
             _domain: &AnimationDomain,
         ) {
         }
-
-        fn join(_source: Self, _target: Self, _domain: &AnimationDomain) -> Self {}
     }
 }

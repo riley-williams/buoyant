@@ -1,7 +1,9 @@
 use crate::{
-    primitives::Point,
+    primitives::{Interpolate, Point},
     render::{AnimationDomain, CharacterRender, CharacterRenderTarget},
 };
+
+use super::AnimatedJoin;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ShadeSubtree<C, T> {
@@ -15,9 +17,21 @@ impl<C, T> ShadeSubtree<C, T> {
     }
 }
 
+impl<C: Clone + Interpolate, T: AnimatedJoin> AnimatedJoin for ShadeSubtree<C, T> {
+    fn join(source: Self, target: Self, config: &AnimationDomain) -> Self {
+        Self {
+            style: Interpolate::interpolate(source.style, target.style, config.factor),
+            subtree: T::join(source.subtree, target.subtree, config),
+        }
+    }
+}
+
 #[cfg(feature = "embedded-graphics")]
 mod embedded_graphics_impl {
-    use crate::{primitives::Interpolate, primitives::Point, render::EmbeddedGraphicsRender};
+    use crate::{
+        primitives::{Interpolate, Point},
+        render::EmbeddedGraphicsRender,
+    };
 
     use super::{AnimationDomain, ShadeSubtree};
     use embedded_graphics::prelude::PixelColor;
@@ -36,29 +50,22 @@ mod embedded_graphics_impl {
             target: &Self,
             _: &C,
             offset: Point,
-            config: &AnimationDomain,
+            domain: &AnimationDomain,
         ) {
-            let style = Interpolate::interpolate(source.style, target.style, config.factor);
+            let style = Interpolate::interpolate(source.style, target.style, domain.factor);
             T::render_animated(
                 render_target,
                 &source.subtree,
                 &target.subtree,
                 &style,
                 offset,
-                config,
+                domain,
             );
-        }
-
-        fn join(source: Self, target: Self, config: &AnimationDomain) -> Self {
-            Self {
-                style: Interpolate::interpolate(source.style, target.style, config.factor),
-                subtree: T::join(source.subtree, target.subtree, config),
-            }
         }
     }
 }
 
-impl<C: Clone, T: CharacterRender<C>> CharacterRender<C> for ShadeSubtree<C, T> {
+impl<C: Interpolate, T: CharacterRender<C>> CharacterRender<C> for ShadeSubtree<C, T> {
     fn render(
         &self,
         render_target: &mut impl CharacterRenderTarget<Color = C>,
@@ -74,32 +81,16 @@ impl<C: Clone, T: CharacterRender<C>> CharacterRender<C> for ShadeSubtree<C, T> 
         target: &Self,
         _: &C,
         offset: Point,
-
-        config: &AnimationDomain,
+        domain: &AnimationDomain,
     ) {
-        // TODO: This should be animated, but then I'd need to update all the char types in tests
-        // let style = Interpolate::interpolate(source.style, target.style, config.factor);
-        // T::render_animated(
-        //     render_target,
-        //     &source.subtree,
-        //     &target.subtree,
-        //     &style,
-        //     config,
-        // );
+        let style = Interpolate::interpolate(source.style, target.style, domain.factor);
         T::render_animated(
             render_target,
             &source.subtree,
             &target.subtree,
-            &target.style,
+            &style,
             offset,
-            config,
+            domain,
         );
-    }
-
-    fn join(source: Self, target: Self, config: &AnimationDomain) -> Self {
-        Self {
-            style: target.style,
-            subtree: T::join(source.subtree, target.subtree, config),
-        }
     }
 }

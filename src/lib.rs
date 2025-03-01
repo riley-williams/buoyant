@@ -1,5 +1,5 @@
 #![no_std]
-#![warn(missing_debug_implementations)]
+#![deny(missing_debug_implementations)]
 #![deny(clippy::missing_const_for_fn)]
 
 #[cfg(any(test, feature = "std"))]
@@ -11,7 +11,7 @@ pub mod layout;
 pub mod primitives;
 pub mod render;
 pub mod render_target;
-#[warn(missing_docs)]
+// #[warn(missing_docs)]
 pub mod view;
 
 #[non_exhaustive]

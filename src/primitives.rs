@@ -83,6 +83,16 @@ impl From<Size> for embedded_graphics_core::geometry::Size {
     }
 }
 
+impl Interpolate for Size {
+    #[must_use]
+    fn interpolate(from: Self, to: Self, amount: u8) -> Self {
+        Size {
+            width: Interpolate::interpolate(from.width, to.width, amount),
+            height: Interpolate::interpolate(from.height, to.height, amount),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct Point {
     pub x: i16,
@@ -95,6 +105,16 @@ impl core::ops::Add for Point {
         Point {
             x: self.x + rhs.x,
             y: self.y + rhs.y,
+        }
+    }
+}
+
+impl core::ops::Sub for Point {
+    type Output = Point;
+    fn sub(self, rhs: Point) -> Point {
+        Point {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
         }
     }
 }
