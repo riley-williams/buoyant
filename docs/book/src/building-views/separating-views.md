@@ -13,7 +13,7 @@ Here, `Spacer` is used to push the two `Circle`s to either side.
 # use buoyant::{
 #     environment::DefaultEnvironment,
 #     layout::Layout,
-#     render::{EmbeddedGraphicsRender, Renderable},
+#     render::{EmbeddedGraphicsRender as _, Renderable as _},
 # };
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::*};
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
@@ -43,8 +43,9 @@ use buoyant::layout::HorizontalAlignment;
 use buoyant::view::shape::{Capsule, Circle, Rectangle};
 use buoyant::view::RenderExtensions as _;
 use buoyant::view::{HStack, Spacer, VStack};
+use buoyant::render::EmbeddedGraphicsView;
 
-fn view() -> impl Renderable<Rgb888, Renderables: EmbeddedGraphicsRender<Rgb888>> {
+fn view() -> impl EmbeddedGraphicsView<Rgb888> {
     VStack::new((
         HStack::new((
             Circle.foreground_color(Rgb888::CSS_CORAL),

@@ -13,8 +13,8 @@ Both stacks can contain a heterogeneous set of views and can be nested inside ot
 # extern crate embedded_graphics_simulator;
 # use buoyant::{
 #     environment::DefaultEnvironment,
-#     layout::Layout,
-#     render::{EmbeddedGraphicsRender, Renderable},
+#     layout::Layout as _,
+#     render::{EmbeddedGraphicsRender as _, Renderable as _},
 # };
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::*};
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
@@ -43,8 +43,9 @@ Both stacks can contain a heterogeneous set of views and can be nested inside ot
 use buoyant::view::shape::{Circle, Rectangle};
 use buoyant::view::HStack;
 use buoyant::view::RenderExtensions as _;
+use buoyant::render::EmbeddedGraphicsView;
 
-fn view() -> impl Renderable<Rgb888, Renderables: EmbeddedGraphicsRender<Rgb888>> {
+fn view() -> impl EmbeddedGraphicsView<Rgb888> {
     HStack::new((
         Circle.foreground_color(Rgb888::CSS_CORAL),
         Rectangle
@@ -71,8 +72,8 @@ it can contain a heterogeneous set of views.
 # extern crate embedded_graphics_simulator;
 # use buoyant::{
 #     environment::DefaultEnvironment,
-#     layout::Layout,
-#     render::{EmbeddedGraphicsRender, Renderable},
+#     layout::Layout as _,
+#     render::{EmbeddedGraphicsRender as _, Renderable as _},
 # };
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::*};
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
@@ -102,8 +103,9 @@ use buoyant::view::padding::Edges;
 use buoyant::view::shape::{Circle, Rectangle};
 use buoyant::view::{LayoutExtensions as _, RenderExtensions as _};
 use buoyant::view::ZStack;
+use buoyant::render::EmbeddedGraphicsView;
 
-fn view() -> impl Renderable<Rgb888, Renderables: EmbeddedGraphicsRender<Rgb888>> {
+fn view() -> impl EmbeddedGraphicsView<Rgb888> {
     ZStack::new((
         Rectangle
             .corner_radius(50)
@@ -130,8 +132,8 @@ Stacks can be nested to create complex layouts.
 # extern crate embedded_graphics_simulator;
 # use buoyant::{
 #     environment::DefaultEnvironment,
-#     layout::Layout,
-#     render::{EmbeddedGraphicsRender, Renderable},
+#     layout::Layout as _,
+#     render::{EmbeddedGraphicsRender as _, Renderable as _},
 # };
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::*};
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
@@ -161,8 +163,9 @@ use buoyant::view::padding::Edges;
 use buoyant::view::shape::{Circle, Rectangle};
 use buoyant::view::{LayoutExtensions as _, RenderExtensions as _};
 use buoyant::view::{HStack, VStack, ZStack};
+use buoyant::render::EmbeddedGraphicsView;
 
-fn view() -> impl Renderable<Rgb888, Renderables: EmbeddedGraphicsRender<Rgb888>> {
+fn view() -> impl EmbeddedGraphicsView<Rgb888> {
     HStack::new((
         VStack::new((
             Circle.foreground_color(Rgb888::CSS_GOLDENROD),
