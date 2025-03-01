@@ -5,7 +5,7 @@ use buoyant::{
     font::CharacterBufferFont,
     layout::{HorizontalAlignment, Layout as _, VerticalAlignment},
     primitives::Point,
-    render::{AnimationDomain, CharacterRender, CharacterRenderTarget, Renderable},
+    render::{AnimationDomain, CharacterRender, CharacterRenderTarget, CharacterView, Renderable},
     render_target::FixedTextBuffer,
     view::{
         make_render_tree, shape::Rectangle, ConditionalView, Divider, EmptyView,
@@ -16,9 +16,7 @@ use buoyant::{
 
 const FONT: CharacterBufferFont = CharacterBufferFont;
 
-fn x_bar(
-    alignment: HorizontalAlignment,
-) -> impl Renderable<char, Renderables: CharacterRender<char>> {
+fn x_bar(alignment: HorizontalAlignment) -> impl CharacterView<char> {
     Text::new("X", &FONT)
         .flex_frame()
         .with_infinite_max_width()
@@ -117,9 +115,7 @@ fn sanity_animation_wipe_trailing_half() {
     assert_eq!(buffer.text[0].iter().collect::<String>(), "     XXXXX");
 }
 
-fn stacked_bars(
-    alignment: HorizontalAlignment,
-) -> impl Renderable<char, Renderables: CharacterRender<char>> {
+fn stacked_bars(alignment: HorizontalAlignment) -> impl CharacterView<char> {
     VStack::new((
         Text::new("X", &FONT).animated(Animation::Linear(Duration::from_secs(1)), alignment),
         Text::new("Y", &FONT),
@@ -176,7 +172,7 @@ fn stacked_bars_value(
     x_value: u8,
     y_value: u8,
     alignment: HorizontalAlignment,
-) -> impl Renderable<char, Renderables: CharacterRender<char>> {
+) -> impl CharacterView<char> {
     VStack::new((
         Text::new("X", &FONT).animated(Animation::Linear(Duration::from_secs(1)), x_value),
         Text::new("Y", &FONT).animated(Animation::Linear(Duration::from_secs(2)), y_value),
@@ -231,7 +227,7 @@ fn stacked_bars_3_value(
     y_value: u8,
     z_value: u8,
     alignment: HorizontalAlignment,
-) -> impl Renderable<char, Renderables: CharacterRender<char>> {
+) -> impl CharacterView<char> {
     VStack::new((
         Text::new("X", &FONT).animated(Animation::Linear(Duration::from_secs(1)), x_value),
         Text::new("Y", &FONT).animated(Animation::Linear(Duration::from_secs(2)), y_value),
@@ -366,10 +362,7 @@ fn partial_animation_join() {
 /// #____
 ///
 /// Only the toggle is animated, not the text
-fn toggle_switch(
-    is_on: bool,
-    subtext: &str,
-) -> impl Renderable<char, Renderables: CharacterRender<char>> + use<'_> {
+fn toggle_switch(is_on: bool, subtext: &str) -> impl CharacterView<char> + use<'_> {
     let alignment = if is_on {
         HorizontalAlignment::Trailing
     } else {
@@ -400,10 +393,7 @@ fn toggle_switch(
     .with_alignment(HorizontalAlignment::Trailing)
 }
 
-fn toggle_move(
-    is_on: bool,
-    alignment: HorizontalAlignment,
-) -> impl Renderable<char, Renderables: CharacterRender<char>> {
+fn toggle_move(is_on: bool, alignment: HorizontalAlignment) -> impl CharacterView<char> {
     toggle_switch(is_on, "xxx")
         .flex_frame()
         .with_infinite_max_width()
@@ -501,7 +491,7 @@ fn jump_toggle_animation() {
     assert_eq!(buffer.text[2].iter().collect::<String>(), "           ");
 }
 
-fn toggle_stack(is_on: bool) -> impl Renderable<char, Renderables: CharacterRender<char>> {
+fn toggle_stack(is_on: bool) -> impl CharacterView<char> {
     VStack::new((
         toggle_switch(is_on, "123456\n123"),
         toggle_switch(is_on, "xxx"),

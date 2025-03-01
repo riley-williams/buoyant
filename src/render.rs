@@ -30,6 +30,12 @@ pub use rounded_rect::RoundedRect;
 pub use shade_subtree::ShadeSubtree;
 pub use text::Text;
 
+/// A type that can produce a render tree.
+///
+/// The ``Renderables`` associated type specifies the subtree produced.
+/// Views may have a matching renderable, like in the case of ``Rectangle``,
+/// which has a concrete size and position. Some views like the frame modifier
+/// do not produce a node at all, and instead insert their subview render tree.
 pub trait Renderable<Color>: Layout {
     type Renderables;
     fn render_tree(
@@ -47,7 +53,7 @@ pub trait Renderable<Color>: Layout {
 pub trait CharacterView<C>: Renderable<C, Renderables: CharacterRender<C>> {}
 impl<C, T: Renderable<C, Renderables: CharacterRender<C>>> CharacterView<C> for T {}
 
-/// A type that does not render, produces no side effects, and no children.
+/// A type that does not render, produces no side effects, and has no children.
 pub trait NullRender {}
 
 impl<C, T: NullRender + Layout> Renderable<C> for T {
@@ -63,7 +69,7 @@ impl<C, T: NullRender + Layout> Renderable<C> for T {
 }
 
 #[cfg(feature = "embedded-graphics")]
-pub use embedded_graphics_rendering::{EmbeddedGraphicsRender, EmbeddedView};
+pub use embedded_graphics_rendering::{EmbeddedGraphicsRender, EmbeddedGraphicsView};
 
 #[cfg(feature = "embedded-graphics")]
 mod embedded_graphics_rendering {
@@ -104,13 +110,13 @@ mod embedded_graphics_rendering {
     }
 
     /// A view that can be rendered to an ``embedded_graphics::DrawTarget``
-    pub trait EmbeddedView<C: PixelColor>:
+    pub trait EmbeddedGraphicsView<C: PixelColor>:
         Renderable<C, Renderables: EmbeddedGraphicsRender<C>>
     {
     }
 
-    impl<C: PixelColor, T: Renderable<C, Renderables: EmbeddedGraphicsRender<C>>> EmbeddedView<C>
-        for T
+    impl<C: PixelColor, T: Renderable<C, Renderables: EmbeddedGraphicsRender<C>>>
+        EmbeddedGraphicsView<C> for T
     {
     }
 }

@@ -21,9 +21,10 @@ I'll briefly indulge this misconception.
 # extern crate embedded_graphics_simulator;
 # use buoyant::{
 #     environment::DefaultEnvironment,
-#     layout::Layout,
-#     render::{EmbeddedGraphicsRender, Renderable},
+#     layout::Layout as _,
+#     render::{EmbeddedGraphicsRender as _, Renderable as _},
 # };
+#
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::*};
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
 # 
@@ -53,8 +54,9 @@ use buoyant::layout::HorizontalAlignment;
 use buoyant::view::shape::Circle;
 use buoyant::view::RenderExtensions as _;
 use buoyant::view::{HStack, Spacer, VStack};
+use buoyant::render::EmbeddedGraphicsView;
 
-fn view() -> impl Renderable<Rgb888, Renderables: EmbeddedGraphicsRender<Rgb888>> {
+fn view() -> impl EmbeddedGraphicsView<Rgb888> {
     VStack::new((
         Circle.foreground_color(Rgb888::CSS_CORAL),
         HStack::new((
@@ -107,9 +109,10 @@ circle inside the frame to achieve the same result as the previous code.
 # extern crate buoyant;
 # extern crate embedded_graphics;
 # extern crate embedded_graphics_simulator;
+#
 # use buoyant::{
 #     environment::DefaultEnvironment,
-#     layout::Layout,
+#     layout::Layout as _,
 #     render::{EmbeddedGraphicsRender, Renderable},
 # };
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::*};
@@ -139,11 +142,11 @@ circle inside the frame to achieve the same result as the previous code.
 // Preferred
 use buoyant::layout::HorizontalAlignment;
 use buoyant::view::shape::Circle;
-use buoyant::view::LayoutExtensions as _;
-use buoyant::view::RenderExtensions as _;
 use buoyant::view::VStack;
+use buoyant::view::{LayoutExtensions as _, RenderExtensions as _};
+use buoyant::render::EmbeddedGraphicsView;
 
-fn view() -> impl Renderable<Rgb888, Renderables: EmbeddedGraphicsRender<Rgb888>> {
+fn view() -> impl EmbeddedGraphicsView<Rgb888> {
     VStack::new((
         Circle.foreground_color(Rgb888::CSS_CORAL),
         Circle

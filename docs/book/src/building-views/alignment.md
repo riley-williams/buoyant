@@ -24,7 +24,7 @@ you could set ``VerticalAlignment::Top``.
 # use buoyant::{
 #     environment::DefaultEnvironment,
 #     layout::Layout,
-#     render::{EmbeddedGraphicsRender, Renderable},
+#     render::{EmbeddedGraphicsRender as _, Renderable as _},
 # };
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::*};
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
@@ -54,8 +54,9 @@ use buoyant::layout::VerticalAlignment;
 use buoyant::view::shape::{Circle, Rectangle};
 use buoyant::view::HStack;
 use buoyant::view::RenderExtensions as _;
+use buoyant::render::EmbeddedGraphicsView;
 
-fn view() -> impl Renderable<Rgb888, Renderables: EmbeddedGraphicsRender<Rgb888>> {
+fn view() -> impl EmbeddedGraphicsView<Rgb888> {
     HStack::new((
         Circle.foreground_color(Rgb888::CSS_CORAL),
         Rectangle

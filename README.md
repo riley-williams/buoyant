@@ -23,7 +23,7 @@ Get started with the [Book](https://riley-williams.github.io/buoyant/).
 Here's what an animated toggle button component would look like, implemented with Buoyant:
 
 ```rust
-fn toggle_button(is_on: bool) -> impl Renderable<Rgb565, Renderables: EmbeddedGraphicsRender<Rgb565>> {
+fn toggle_button(is_on: bool) -> impl EmbeddedGraphicsView<Rgb565> {
     let alignment = if is_on {
         HorizontalAlignment::Trailing
     } else {

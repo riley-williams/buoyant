@@ -88,11 +88,11 @@ pub trait LayoutExtensions: Sized {
     /// use buoyant::view::{shape::{Circle, Capsule}, ZStack, padding, LayoutExtensions as _, RenderExtensions as _};
     /// use buoyant::Animation;
     /// use buoyant::layout::HorizontalAlignment;
-    /// use buoyant::render::{EmbeddedGraphicsRender, Renderable};
+    /// use buoyant::render::{EmbeddedGraphicsView, Renderable};
     /// use embedded_graphics::pixelcolor::Rgb565;
     /// use embedded_graphics::prelude::*;
     ///
-    /// fn toggle_button(is_on: bool) -> impl Renderable<Rgb565, Renderables: EmbeddedGraphicsRender<Rgb565>> {
+    /// fn toggle_button(is_on: bool) -> impl EmbeddedGraphicsView<Rgb565> {
     ///     let (color, alignment) = if is_on {
     ///         (Rgb565::GREEN, HorizontalAlignment::Trailing)
     ///     } else {

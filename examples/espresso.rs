@@ -13,7 +13,7 @@ use buoyant::{
     layout::{HorizontalAlignment, Layout},
     match_view,
     primitives::ProposedDimensions,
-    render::{AnimationDomain, EmbeddedGraphicsRender, Renderable},
+    render::{AnimationDomain, EmbeddedGraphicsRender, EmbeddedGraphicsView, Renderable as _},
     view::{
         padding::Edges,
         shape::{Circle, Rectangle},
@@ -180,10 +180,7 @@ impl App {
         view.render_tree(&layout, buoyant::primitives::Point::zero(), &env)
     }
 
-    fn view(
-        state: &AppState,
-    ) -> impl buoyant::render::Renderable<color::Space, Renderables: EmbeddedGraphicsRender<color::Space>>
-    {
+    fn view(state: &AppState) -> impl EmbeddedGraphicsView<color::Space> {
         VStack::new((
             Self::tab_bar(state.tab),
             match_view!(state.tab => {
@@ -307,7 +304,7 @@ fn toggle_text<'a>(
     is_on: bool,
     description: &'a str,
     hides_description: bool,
-) -> impl Renderable<color::Space, Renderables: EmbeddedGraphicsRender<color::Space>> + use<'a> {
+) -> impl EmbeddedGraphicsView<color::Space> + use<'a> {
     VStack::new((
         HStack::new((
             Text::new(label, &font::BODY).foreground_color(color::Space::WHITE),
@@ -328,9 +325,7 @@ fn toggle_text<'a>(
     .with_horizontal_alignment(HorizontalAlignment::Trailing)
 }
 
-fn toggle_button(
-    is_on: bool,
-) -> impl Renderable<color::Space, Renderables: EmbeddedGraphicsRender<color::Space>> {
+fn toggle_button(is_on: bool) -> impl EmbeddedGraphicsView<color::Space> {
     let (color, alignment) = if is_on {
         (color::ACCENT, HorizontalAlignment::Trailing)
     } else {

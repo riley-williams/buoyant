@@ -3,7 +3,6 @@ use crate::primitives::Point;
 use super::{AnimationDomain, CharacterRender, CharacterRenderTarget};
 
 impl<C> CharacterRender<C> for () {
-    /// Render the view to the screen
     fn render(
         &self,
         _render_target: &mut impl CharacterRenderTarget<Color = C>,
@@ -12,7 +11,6 @@ impl<C> CharacterRender<C> for () {
     ) {
     }
 
-    /// Render view and all subviews, animating from a source view to a target view
     fn render_animated(
         _render_target: &mut impl CharacterRenderTarget<Color = C>,
         _source: &Self,
@@ -23,7 +21,6 @@ impl<C> CharacterRender<C> for () {
     ) {
     }
 
-    /// Produces a new tree by consuming and interpolating between two partially animated trees
     fn join(_source: Self, _target: Self, _domain: &AnimationDomain) -> Self {}
 }
 
@@ -31,10 +28,12 @@ impl<C> CharacterRender<C> for () {
 mod embedded_graphics_rendering {
     use embedded_graphics::prelude::{DrawTarget, PixelColor};
 
-    use crate::{primitives::Point, render::{AnimationDomain, EmbeddedGraphicsRender}};
+    use crate::{
+        primitives::Point,
+        render::{AnimationDomain, EmbeddedGraphicsRender},
+    };
 
     impl<C: PixelColor> EmbeddedGraphicsRender<C> for () {
-        /// Render the view to the screen
         fn render(
             &self,
             _render_target: &mut impl DrawTarget<Color = C>,
@@ -43,7 +42,6 @@ mod embedded_graphics_rendering {
         ) {
         }
 
-        /// Render view and all subviews, animating from a source view to a target view
         fn render_animated(
             _render_target: &mut impl DrawTarget<Color = C>,
             _source: &Self,
@@ -54,7 +52,6 @@ mod embedded_graphics_rendering {
         ) {
         }
 
-        /// Produces a new tree by consuming and interpolating between two partially animated trees
         fn join(_source: Self, _target: Self, _domain: &AnimationDomain) -> Self {}
     }
 }
