@@ -11,6 +11,8 @@ mod capsule;
 mod circle;
 pub mod collections;
 mod empty;
+#[cfg(feature = "embedded-graphics")]
+mod image;
 mod offset;
 mod one_of;
 mod rect;
@@ -21,6 +23,8 @@ mod text;
 pub use animate::Animate;
 pub use capsule::Capsule;
 pub use circle::Circle;
+#[cfg(feature = "embedded-graphics")]
+pub use image::Image;
 pub use offset::Offset;
 pub use one_of::{OneOf2, OneOf3};
 pub use rect::Rect;
@@ -82,10 +86,7 @@ mod embedded_graphics_rendering {
 
     use super::{AnimatedJoin, AnimationDomain, Renderable};
 
-    /// A view that can be rendered to an `embedded_graphics` target
-    ///
-    /// This trait serves as a shorthand for the more verbose `Renderable<C, Renderables:
-    /// EmbeddedGraphicsRender<C>>` bound
+    /// A view that can be rendered to an ``embedded_graphics::DrawTarget``
     pub trait EmbeddedGraphicsRender<Color: PixelColor>: AnimatedJoin + Sized {
         /// Render the view to the screen
         fn render(
@@ -109,7 +110,10 @@ mod embedded_graphics_rendering {
         );
     }
 
-    /// A view that can be rendered to an ``embedded_graphics::DrawTarget``
+    /// A view that can be rendered to an `embedded_graphics` target
+    ///
+    /// This trait serves as a shorthand for the more verbose `Renderable<C, Renderables:
+    /// EmbeddedGraphicsRender<C>>` bound
     pub trait EmbeddedGraphicsView<C: PixelColor>:
         Renderable<C, Renderables: EmbeddedGraphicsRender<C>>
     {
