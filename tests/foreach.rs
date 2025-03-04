@@ -144,3 +144,23 @@ fn foreach_trailing_aligned() {
     assert_eq!(buffer.text[3].iter().collect::<String>(), "Name   77 ");
     assert_eq!(buffer.text[4].iter().collect::<String>(), "          ");
 }
+
+#[test]
+fn foreach_spacing() {
+    let mut names = heapless::Vec::<String, 10>::new();
+    names.push("Row 1".to_string()).unwrap();
+    names.push("Row 2".to_string()).unwrap();
+    names.push("Row 3".to_string()).unwrap();
+
+    let view = ForEach::<10, _, _, _>::new(&names, |name| Text::new(*name, &FONT))
+        .with_spacing(1)
+        .foreground_color(' ');
+    let mut buffer = FixedTextBuffer::<10, 5>::default();
+    let tree = make_render_tree(&view, buffer.size());
+    tree.render(&mut buffer, &' ', Point::zero());
+    assert_eq!(buffer.text[0].iter().collect::<String>(), "Row 1     ");
+    assert_eq!(buffer.text[1].iter().collect::<String>(), "          ");
+    assert_eq!(buffer.text[2].iter().collect::<String>(), "Row 2     ");
+    assert_eq!(buffer.text[3].iter().collect::<String>(), "          ");
+    assert_eq!(buffer.text[4].iter().collect::<String>(), "Row 3     ");
+}

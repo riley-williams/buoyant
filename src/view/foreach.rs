@@ -156,7 +156,7 @@ where
 
             if !view.is_empty() {
                 let item_height: i16 = item_layout.resolved_size.height.into();
-                accumulated_height += item_height;
+                accumulated_height += item_height + self.spacing as i16;
             }
         }
 
@@ -171,13 +171,13 @@ fn layout_n<const N: usize>(
     mut layout_fn: impl FnMut(usize, ProposedDimensions) -> Dimensions,
 ) -> Dimensions {
     let ProposedDimension::Exact(height) = offer.height else {
+        // Compact or infinite offer
         let mut total_height: Dimension = 0.into();
         let mut max_width: Dimension = 0.into();
         let mut non_empty_views: u16 = 0;
         for (i, (_, is_empty)) in subviews.iter().enumerate() {
             // layout must be called at least once on every view to avoid panic unwrapping the
             // resolved layout.
-            // TODO: Allowing layouts to return a cheap "empty" layout could avoid this?
             let dimensions = layout_fn(i, offer);
             if *is_empty {
                 continue;
