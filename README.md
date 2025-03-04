@@ -62,7 +62,7 @@ fn toggle_button(is_on: bool) -> impl EmbeddedGraphicsView<Rgb565> {
 - [ ] Canvas for arbitrary path/shape/raster drawing
 - [ ] Shape stroke/fill
 - [ ] Shape styles (gradients, fragment shaders)
-- [ ] Images
+- [x] Images
 - [ ] Alpha rendering
 - [ ] Adaptive antialiasing
 

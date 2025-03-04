@@ -352,6 +352,16 @@ impl From<Dimensions> for Size {
     }
 }
 
+#[cfg(feature = "embedded-graphics")]
+impl From<embedded_graphics_core::geometry::Size> for Dimensions {
+    fn from(value: embedded_graphics_core::geometry::Size) -> Self {
+        Self {
+            width: Dimension(value.width.try_into().unwrap_or(u16::MAX - 1)),
+            height: Dimension(value.height.try_into().unwrap_or(u16::MAX - 1)),
+        }
+    }
+}
+
 impl Interpolate for Dimensions {
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
         Dimensions {

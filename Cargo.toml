@@ -1,6 +1,6 @@
 [package]
 name = "buoyant"
-version = "0.4.0-alpha.1"
+version = "0.4.0-alpha.2"
 authors = ["Riley Williams"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
