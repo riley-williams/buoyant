@@ -34,6 +34,31 @@ impl<'a, T: LayoutEnvironment> From<&'a T> for ForEachEnvironment<'a, T> {
     }
 }
 
+/// A homogeneous collection of views, arranged vertically.
+///
+/// Note: The API of `ForEach` is likely to change in the future.
+///
+/// Alignment and spacing can be configured, and have the same behavior
+/// as with `VStack`.
+///
+/// Example:
+///
+/// ```
+/// use buoyant::view::{ForEach, Text};
+/// use buoyant::layout::HorizontalAlignment;
+/// use embedded_graphics::mono_font::ascii::FONT_6X13;
+///
+/// let mut names = heapless::Vec::<String, 10>::new();
+/// names.push("Alice".to_string()).unwrap();
+/// names.push("Bob".to_string()).unwrap();
+/// names.push("Charlie".to_string()).unwrap();
+///
+/// ForEach::<10, _, _, _>::new(&names, |name| {
+///     Text::new(*name, &FONT_6X13)
+/// })
+///     .with_spacing(12)
+///     .with_alignment(HorizontalAlignment::Leading);
+/// ```
 #[derive(Debug, Clone)]
 pub struct ForEach<const N: usize, I: IntoIterator, V, F>
 where
@@ -59,12 +84,14 @@ where
         }
     }
 
+    /// Sets an alignment strategy for when child views vary in width
     #[must_use]
     pub const fn with_alignment(mut self, alignment: HorizontalAlignment) -> Self {
         self.alignment = alignment;
         self
     }
 
+    /// Inserts spacing between child views
     #[must_use]
     pub const fn with_spacing(mut self, spacing: u16) -> Self {
         self.spacing = spacing;
