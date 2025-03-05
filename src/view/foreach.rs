@@ -34,37 +34,74 @@ impl<'a, T: LayoutEnvironment> From<&'a T> for ForEachEnvironment<'a, T> {
     }
 }
 
+/// Prefer using `ForEach::new` to avoid needing to specify
+/// type parameters.
 #[derive(Debug, Clone)]
-pub struct ForEach<const N: usize, I: IntoIterator, V, F>
+pub struct ForEachView<'a, const N: usize, I, V, F>
 where
-    F: Fn(&I::Item) -> V,
+    F: Fn(&'a I) -> V,
 {
-    iter: I,
+    items: &'a [I],
     build_view: F,
     alignment: HorizontalAlignment,
     spacing: u16,
 }
 
-impl<const N: usize, I: IntoIterator + Copy, V, F> ForEach<N, I, V, F>
-where
-    V: Layout,
-    F: Fn(&I::Item) -> V,
-{
-    pub fn new(iter: I, build_view: F) -> Self {
-        Self {
-            iter,
+/// A homogeneous collection of views, arranged vertically. Up to N views
+/// will be rendered.
+///
+/// Alignment and spacing can be configured, and have the same behavior
+/// as with `VStack`.
+///
+/// Example:
+///
+/// ```
+/// use buoyant::view::{ForEach, Text};
+/// use buoyant::layout::HorizontalAlignment;
+/// use embedded_graphics::mono_font::ascii::FONT_6X13;
+///
+/// let mut names = heapless::Vec::<String, 10>::new();
+/// names.push("Alice".to_string()).unwrap();
+/// names.push("Bob".to_string()).unwrap();
+/// names.push("Charlie".to_string()).unwrap();
+///
+/// ForEach::<10>::new(&names, |name| {
+///     Text::new(name, &FONT_6X13)
+/// })
+///     .with_spacing(12)
+///     .with_alignment(HorizontalAlignment::Leading);
+/// ```
+#[expect(missing_debug_implementations)]
+pub struct ForEach<const N: usize> {}
+
+impl<const N: usize> ForEach<N> {
+    #[expect(clippy::new_ret_no_self)]
+    pub fn new<'a, I, V, F>(items: &'a [I], build_view: F) -> ForEachView<'a, N, I, V, F>
+    where
+        F: Fn(&'a I) -> V,
+    {
+        ForEachView {
+            items,
             build_view,
             alignment: HorizontalAlignment::default(),
             spacing: 0,
         }
     }
+}
 
+impl<'a, const N: usize, I, V, F> ForEachView<'a, N, I, V, F>
+where
+    V: Layout,
+    F: Fn(&'a I) -> V,
+{
+    /// Sets an alignment strategy for when child views vary in width
     #[must_use]
     pub const fn with_alignment(mut self, alignment: HorizontalAlignment) -> Self {
         self.alignment = alignment;
         self
     }
 
+    /// Inserts spacing between child views
     #[must_use]
     pub const fn with_spacing(mut self, spacing: u16) -> Self {
         self.spacing = spacing;
@@ -72,10 +109,10 @@ where
     }
 }
 
-impl<const N: usize, I: IntoIterator + Copy, V, F> Layout for ForEach<N, I, V, F>
+impl<'a, const N: usize, I, V, F> Layout for ForEachView<'a, N, I, V, F>
 where
     V: Layout,
-    F: Fn(&I::Item) -> V,
+    F: Fn(&'a I) -> V,
 {
     type Sublayout = heapless::Vec<ResolvedLayout<V::Sublayout>, N>;
 
@@ -89,25 +126,18 @@ where
     ) -> ResolvedLayout<Self::Sublayout> {
         let env = &ForEachEnvironment::from(env);
         let mut sublayouts: heapless::Vec<ResolvedLayout<V::Sublayout>, N> = heapless::Vec::new();
-
-        // TODO: consolidate array init to avoid accidentally allowing them to become different
-        // lengths
-        let mut items: heapless::Vec<I::Item, N> = heapless::Vec::new();
-        _ = self.iter.into_iter().try_for_each(|item| items.push(item));
-        // if let Err(_) = result {
-        //     // TODO: log an error, iterator was too large
-        // }
-
         let mut subview_stages: heapless::Vec<(i8, bool), N> = heapless::Vec::new();
+
         // fill sublayouts with an initial garbage layout
-        for item in &items {
+        // TODO: guess there are no empty views, often no extra work needed?
+        for item in self.items {
             let view = (self.build_view)(item);
             _ = sublayouts.push(view.layout(offer, env));
             _ = subview_stages.push((view.priority(), view.is_empty()));
         }
 
         let layout_fn = |index: usize, offer: ProposedDimensions| {
-            let layout = (self.build_view)(&items[index]).layout(&offer, env);
+            let layout = (self.build_view)(&self.items[index]).layout(&offer, env);
             let size = layout.resolved_size;
             sublayouts[index] = layout;
             size
@@ -121,11 +151,10 @@ where
     }
 }
 
-impl<const N: usize, I: IntoIterator + Copy, V: Renderable<C>, C, F> Renderable<C>
-    for ForEach<N, I, V, F>
+impl<'a, const N: usize, I, V: Renderable<C>, C, F> Renderable<C> for ForEachView<'a, N, I, V, F>
 where
     V: Layout,
-    F: Fn(&I::Item) -> V,
+    F: Fn(&'a I) -> V,
 {
     type Renderables = heapless::Vec<V::Renderables, N>;
 
@@ -140,7 +169,7 @@ where
         let mut accumulated_height = 0;
         let mut renderables = heapless::Vec::new();
 
-        for (item_layout, item) in layout.sublayouts.iter().zip(self.iter.into_iter()) {
+        for (item_layout, item) in layout.sublayouts.iter().zip(self.items) {
             let aligned_origin = origin
                 + Point::new(
                     self.alignment.align(
@@ -149,14 +178,14 @@ where
                     ),
                     accumulated_height,
                 );
-            let view = (self.build_view)(&item);
+            let view = (self.build_view)(item);
             // TODO: If we include an ID here, rows can be animated and transitioned
             let item = renderables.push(view.render_tree(item_layout, aligned_origin, env));
             assert!(item.is_ok());
 
             if !view.is_empty() {
                 let item_height: i16 = item_layout.resolved_size.height.into();
-                accumulated_height += item_height;
+                accumulated_height += item_height + self.spacing as i16;
             }
         }
 
@@ -171,13 +200,13 @@ fn layout_n<const N: usize>(
     mut layout_fn: impl FnMut(usize, ProposedDimensions) -> Dimensions,
 ) -> Dimensions {
     let ProposedDimension::Exact(height) = offer.height else {
+        // Compact or infinite offer
         let mut total_height: Dimension = 0.into();
         let mut max_width: Dimension = 0.into();
         let mut non_empty_views: u16 = 0;
         for (i, (_, is_empty)) in subviews.iter().enumerate() {
             // layout must be called at least once on every view to avoid panic unwrapping the
             // resolved layout.
-            // TODO: Allowing layouts to return a cheap "empty" layout could avoid this?
             let dimensions = layout_fn(i, offer);
             if *is_empty {
                 continue;
