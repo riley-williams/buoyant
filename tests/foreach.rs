@@ -1,12 +1,13 @@
 use buoyant::primitives::Point;
 use buoyant::render::CharacterRender;
 use buoyant::render::CharacterRenderTarget;
+use buoyant::view::ForEach;
 use buoyant::view::RenderExtensions as _;
 use buoyant::{
     font::CharacterBufferFont,
     layout::{HorizontalAlignment, VerticalAlignment},
     render_target::FixedTextBuffer,
-    view::{make_render_tree, ForEach, HStack, Spacer, Text},
+    view::{make_render_tree, HStack, Spacer, Text},
 };
 
 static FONT: CharacterBufferFont = CharacterBufferFont {};
@@ -42,7 +43,7 @@ fn foreach_with_inner_wrapping_hstack() {
         })
         .unwrap();
 
-    let view = ForEach::<10, _, _, _>::new(&users, |user| {
+    let view = ForEach::<10>::new(&users, |user: &User| {
         HStack::new((
             Text::new(&user.name, &FONT),
             Spacer::default(),
@@ -86,7 +87,7 @@ fn foreach_leading_aligned() {
         })
         .unwrap();
 
-    let view = ForEach::<10, _, _, _>::new(&users, |user| {
+    let view = ForEach::<10>::new(&users, |user| {
         HStack::new((Text::new(&user.name, &FONT), Text::new(&user.age, &FONT)))
             .with_alignment(VerticalAlignment::Bottom)
             .with_spacing(1)
@@ -128,7 +129,7 @@ fn foreach_trailing_aligned() {
         })
         .unwrap();
 
-    let view = ForEach::<10, _, _, _>::new(&users, |user| {
+    let view = ForEach::<10>::new(&users, |user| {
         HStack::new((Text::new(&user.name, &FONT), Text::new(&user.age, &FONT)))
             .with_alignment(VerticalAlignment::Bottom)
             .with_spacing(1)
@@ -147,12 +148,12 @@ fn foreach_trailing_aligned() {
 
 #[test]
 fn foreach_spacing() {
-    let mut names = heapless::Vec::<String, 10>::new();
-    names.push("Row 1".to_string()).unwrap();
-    names.push("Row 2".to_string()).unwrap();
-    names.push("Row 3".to_string()).unwrap();
+    let mut rows = heapless::Vec::<String, 10>::new();
+    rows.push("Row 1".to_string()).unwrap();
+    rows.push("Row 2".to_string()).unwrap();
+    rows.push("Row 3".to_string()).unwrap();
 
-    let view = ForEach::<10, _, _, _>::new(&names, |name| Text::new(*name, &FONT))
+    let view = ForEach::<10>::new(&rows, |name| Text::new(name, &FONT))
         .with_spacing(1)
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<10, 5>::default();
@@ -163,4 +164,19 @@ fn foreach_spacing() {
     assert_eq!(buffer.text[2].iter().collect::<String>(), "Row 2     ");
     assert_eq!(buffer.text[3].iter().collect::<String>(), "          ");
     assert_eq!(buffer.text[4].iter().collect::<String>(), "Row 3     ");
+}
+
+#[test]
+fn foreach_undersized() {
+    let items = vec!["A", "B", "C", "D"];
+
+    let view = ForEach::<2>::new(&items, |name| Text::new(name, &FONT)).foreground_color(' ');
+    let mut buffer = FixedTextBuffer::<10, 5>::default();
+    let tree = make_render_tree(&view, buffer.size());
+    tree.render(&mut buffer, &' ', Point::zero());
+    assert_eq!(buffer.text[0].iter().collect::<String>(), "A         ");
+    assert_eq!(buffer.text[1].iter().collect::<String>(), "B         ");
+    assert_eq!(buffer.text[2].iter().collect::<String>(), "          ");
+    assert_eq!(buffer.text[3].iter().collect::<String>(), "          ");
+    assert_eq!(buffer.text[4].iter().collect::<String>(), "          ");
 }
