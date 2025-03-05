@@ -9,3 +9,4 @@
   - [Separating Views](./building-views/separating-views.md)
   - [Mixed Alignment](./building-views/mixed-alignment.md)
   - [Collections](./building-views/collections.md)
+  - [Conditional Views](./building-views/conditional-views.md)
