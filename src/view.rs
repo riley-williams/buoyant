@@ -61,7 +61,7 @@ pub trait LayoutExtensions: Sized {
     /// Stacks lay out views in groups of priority, with higher priority views being laid out
     /// first. Each set of views in the stack with a given priority are laid out together, with the
     /// stack offering the remaining width divided by the number of views in the group.
-    fn priority(self, priority: u16) -> Priority<Self> {
+    fn priority(self, priority: i8) -> Priority<Self> {
         Priority::new(priority, self)
     }
 

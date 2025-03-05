@@ -6,12 +6,12 @@ use crate::{
 
 #[derive(Debug, Clone)]
 pub struct GeometryGroup<View> {
-    view: View,
+    inner: View,
 }
 
 impl<View> GeometryGroup<View> {
     pub const fn new(view: View) -> Self {
-        Self { view }
+        Self { inner: view }
     }
 }
 
@@ -24,7 +24,15 @@ impl<T: Layout> Layout for GeometryGroup<T> {
         offer: &crate::primitives::ProposedDimensions,
         env: &impl crate::environment::LayoutEnvironment,
     ) -> crate::layout::ResolvedLayout<Self::Sublayout> {
-        self.view.layout(offer, env)
+        self.inner.layout(offer, env)
+    }
+
+    fn priority(&self) -> i8 {
+        self.inner.priority()
+    }
+
+    fn is_empty(&self) -> bool {
+        self.inner.is_empty()
     }
 }
 
@@ -38,6 +46,6 @@ impl<T: Renderable<C>, C> Renderable<C> for GeometryGroup<T> {
         env: &impl crate::environment::LayoutEnvironment,
     ) -> Self::Renderables {
         // Store the offset, and render subtrees from zero
-        Offset::new(origin, self.view.render_tree(layout, Point::zero(), env))
+        Offset::new(origin, self.inner.render_tree(layout, Point::zero(), env))
     }
 }

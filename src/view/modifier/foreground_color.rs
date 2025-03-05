@@ -28,6 +28,14 @@ impl<Inner: Layout, Color> Layout for ForegroundStyle<Inner, Color> {
     ) -> ResolvedLayout<Self::Sublayout> {
         self.inner.layout(offer, env)
     }
+
+    fn priority(&self) -> i8 {
+        self.inner.priority()
+    }
+
+    fn is_empty(&self) -> bool {
+        self.inner.is_empty()
+    }
 }
 
 impl<C: Clone, V: Renderable<C>> Renderable<C> for ForegroundStyle<V, C> {

@@ -23,15 +23,15 @@ pub enum Edges {
 pub struct Padding<T> {
     edges: Edges,
     padding: u16,
-    child: T,
+    inner: T,
 }
 
 impl<T> Padding<T> {
-    pub const fn new(edges: Edges, padding: u16, child: T) -> Self {
+    pub const fn new(edges: Edges, padding: u16, inner: T) -> Self {
         Self {
             edges,
             padding,
-            child,
+            inner,
         }
     }
 }
@@ -65,12 +65,16 @@ impl<V: Layout> Layout for Padding<V> {
             width: offer.width - extra_width,
             height: offer.height - extra_height,
         };
-        let child_layout = self.child.layout(&padded_offer, env);
+        let child_layout = self.inner.layout(&padded_offer, env);
         let padding_size = child_layout.resolved_size + Size::new(extra_width, extra_height);
         ResolvedLayout {
             sublayouts: child_layout,
             resolved_size: padding_size,
         }
+    }
+
+    fn priority(&self) -> i8 {
+        self.inner.priority()
     }
 }
 
@@ -89,7 +93,7 @@ impl<T: Renderable<C>, C> Renderable<C> for Padding<T> {
             Edges::Vertical | Edges::Top => (0, self.padding),
             Edges::Bottom | Edges::Trailing => (0, 0),
         };
-        self.child.render_tree(
+        self.inner.render_tree(
             &layout.sublayouts,
             origin + Point::new(leading as i16, top as i16),
             env,
