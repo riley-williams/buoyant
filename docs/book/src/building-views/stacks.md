@@ -2,7 +2,7 @@
 
 ## Adjacent layout
 
-`HStack` and `VStack` are primary tools you can use to arrange views side-by-side in Buoyant.
+`HStack` and `VStack` are the primary tools you'll use to arrange views side-by-side in Buoyant.
 Both stacks can contain a heterogeneous set of views and can be nested inside other stacks.
 
 ![HStack](./images/hstack.png)
