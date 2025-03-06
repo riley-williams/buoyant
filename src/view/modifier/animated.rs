@@ -6,15 +6,15 @@ use crate::{
 
 #[derive(Debug, Clone)]
 pub struct Animated<View, Value> {
-    view: View,
+    inner: View,
     animation: Animation,
     value: Value,
 }
 
 impl<View, Value: PartialEq + Clone> Animated<View, Value> {
-    pub const fn new(view: View, animation: Animation, value: Value) -> Self {
+    pub const fn new(inner: View, animation: Animation, value: Value) -> Self {
         Animated {
-            view,
+            inner,
             animation,
             value,
         }
@@ -29,7 +29,15 @@ impl<T: Layout, U> Layout for Animated<T, U> {
         offer: &crate::primitives::ProposedDimensions,
         env: &impl crate::environment::LayoutEnvironment,
     ) -> crate::layout::ResolvedLayout<Self::Sublayout> {
-        self.view.layout(offer, env)
+        self.inner.layout(offer, env)
+    }
+
+    fn priority(&self) -> i8 {
+        self.inner.priority()
+    }
+
+    fn is_empty(&self) -> bool {
+        self.inner.is_empty()
     }
 }
 
@@ -43,7 +51,7 @@ impl<T: Renderable<C>, C, U: PartialEq + Clone> Renderable<C> for Animated<T, U>
         env: &impl crate::environment::LayoutEnvironment,
     ) -> Self::Renderables {
         Animate::new(
-            self.view.render_tree(layout, origin, env),
+            self.inner.render_tree(layout, origin, env),
             self.animation.clone(),
             env.app_time(),
             self.value.clone(),

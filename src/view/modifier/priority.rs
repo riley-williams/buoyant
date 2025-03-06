@@ -5,17 +5,20 @@ use crate::{
     render::Renderable,
 };
 
-/// A view that adds padding around a child view.
-/// When the space offered to the padding is less than 2* the padding, the padding will
-/// not be truncated and will return a size larger than the offer.
+/// Sets the priority of the view layout.
+///
+/// Stack subviews will be laid out in groups of equal priority, with higher priority views being
+/// laid out first. All the remaining space will be offered, meaning greedy views will leave
+/// no space at all for lower priority views. Lower priority views which have a non-zero minimum
+/// size in this scenario will cause the stack children to lay out outside the stack frame.
 #[derive(Debug, Clone)]
 pub struct Priority<T> {
-    priority: u16,
+    priority: i8,
     child: T,
 }
 
 impl<T> Priority<T> {
-    pub const fn new(priority: u16, child: T) -> Self {
+    pub const fn new(priority: i8, child: T) -> Self {
         Self { priority, child }
     }
 }
@@ -35,6 +38,14 @@ impl<V: Layout> Layout for Priority<V> {
         env: &impl LayoutEnvironment,
     ) -> ResolvedLayout<Self::Sublayout> {
         self.child.layout(offer, env)
+    }
+
+    fn priority(&self) -> i8 {
+        self.priority
+    }
+
+    fn is_empty(&self) -> bool {
+        self.child.is_empty()
     }
 }
 

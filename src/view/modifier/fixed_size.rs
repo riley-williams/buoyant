@@ -51,6 +51,14 @@ impl<V: Layout> Layout for FixedSize<V> {
 
         self.child.layout(&offer, env)
     }
+
+    fn priority(&self) -> i8 {
+        self.child.priority()
+    }
+
+    fn is_empty(&self) -> bool {
+        self.child.is_empty()
+    }
 }
 
 impl<T: Renderable<C>, C> Renderable<C> for FixedSize<T> {
