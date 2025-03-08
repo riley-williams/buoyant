@@ -1,9 +1,9 @@
 use core::time::Duration;
 
 use crate::{
+    animation::Animation,
     primitives::Point,
     render::{AnimationDomain, CharacterRender},
-    Animation,
 };
 
 use super::AnimatedJoin;
@@ -39,11 +39,11 @@ impl<T, U: PartialEq> Animate<T, U> {
 impl<T: AnimatedJoin, U: PartialEq> AnimatedJoin for Animate<T, U> {
     fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
         let (end_time, duration) = if source.value != target.value {
-            let duration = target.animation.duration();
+            let duration = target.animation.duration;
             (target.frame_time + duration, duration)
         } else if source.is_partial {
             // continue source animation
-            let duration = source.animation.duration();
+            let duration = source.animation.duration;
             (source.frame_time + duration, duration)
         } else {
             // no animation
@@ -65,11 +65,8 @@ impl<T: AnimatedJoin, U: PartialEq> AnimatedJoin for Animate<T, U> {
             is_partial = true;
             new_duration = end_time.saturating_sub(domain.app_time);
             // compute factor
-            let factor = 255u128.saturating_sub(
-                (new_duration.as_millis() * 255)
-                    .checked_div(duration.as_millis())
-                    .unwrap_or(0),
-            ) as u8;
+            let diff = duration.saturating_sub(end_time.saturating_sub(domain.app_time));
+            let factor = source.animation.curve.factor(diff, duration);
             subdomain = AnimationDomain {
                 factor,
                 app_time: domain.app_time,
@@ -105,11 +102,11 @@ impl<C, T: CharacterRender<C>, U: PartialEq> CharacterRender<C> for Animate<T, U
         domain: &AnimationDomain,
     ) {
         let (end_time, duration) = if source.value != target.value {
-            let duration = target.animation.duration();
+            let duration = target.animation.duration;
             (target.frame_time + duration, duration)
         } else if source.is_partial {
             // continue source animation
-            let duration = source.animation.duration();
+            let duration = source.animation.duration;
             (source.frame_time + duration, duration)
         } else {
             // no animation
@@ -124,12 +121,8 @@ impl<C, T: CharacterRender<C>, U: PartialEq> CharacterRender<C> for Animate<T, U
             }
         } else {
             // compute factor
-            let diff = end_time.saturating_sub(domain.app_time);
-            let factor = 255u128.saturating_sub(
-                (diff.as_millis() * 255)
-                    .checked_div(duration.as_millis())
-                    .unwrap_or(0),
-            ) as u8;
+            let diff = duration.saturating_sub(end_time.saturating_sub(domain.app_time));
+            let factor = source.animation.curve.factor(diff, duration);
             AnimationDomain {
                 factor,
                 app_time: domain.app_time,
@@ -179,11 +172,11 @@ mod embedded_graphics_impl {
             domain: &AnimationDomain,
         ) {
             let (end_time, duration) = if source.value != target.value {
-                let duration = target.animation.duration();
+                let duration = target.animation.duration;
                 (target.frame_time + duration, duration)
             } else if source.is_partial {
                 // continue source animation
-                let duration = source.animation.duration();
+                let duration = source.animation.duration;
                 (source.frame_time + duration, duration)
             } else {
                 // no animation
@@ -198,12 +191,8 @@ mod embedded_graphics_impl {
                 }
             } else {
                 // compute factor
-                let diff = end_time.saturating_sub(domain.app_time);
-                let factor = 255u128.saturating_sub(
-                    (diff.as_millis() * 255)
-                        .checked_div(duration.as_millis())
-                        .unwrap_or(0),
-                ) as u8;
+                let diff = duration.saturating_sub(end_time.saturating_sub(domain.app_time));
+                let factor = source.animation.curve.factor(diff, duration);
                 AnimationDomain {
                     factor,
                     app_time: domain.app_time,

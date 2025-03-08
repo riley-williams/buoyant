@@ -31,10 +31,10 @@ use modifier::{
 };
 
 use crate::{
+    animation::Animation,
     environment::DefaultEnvironment,
     primitives::{Point, Size},
     render::{CharacterRender, Renderable},
-    Animation,
 };
 
 pub trait LayoutExtensions: Sized {

@@ -9,6 +9,7 @@
 use std::time::{Duration, Instant};
 
 use buoyant::{
+    animation::Animation,
     environment::DefaultEnvironment,
     if_view,
     layout::{HorizontalAlignment, Layout},
@@ -212,7 +213,7 @@ impl App {
             Self::tab_item("Settings", tab == Tab::Settings),
         ))
         .fixed_size(false, true)
-        .animated(buoyant::Animation::Linear(Duration::from_millis(125)), tab)
+        .animated(Animation::linear(Duration::from_millis(125)), tab)
     }
 
     fn tab_item(
@@ -295,10 +296,7 @@ impl App {
         .with_spacing(spacing::COMPONENT)
         .with_alignment(HorizontalAlignment::Trailing)
         .padding(Edges::All, spacing::SECTION_MARGIN)
-        .animated(
-            buoyant::Animation::Linear(Duration::from_millis(200)),
-            state.clone(),
-        )
+        .animated(Animation::linear(Duration::from_millis(200)), state.clone())
     }
 }
 
@@ -339,10 +337,7 @@ fn toggle_button(is_on: bool) -> impl EmbeddedGraphicsView<color::Space> {
         buoyant::view::shape::Circle
             .foreground_color(color::Space::WHITE)
             .padding(Edges::All, 2)
-            .animated(
-                buoyant::Animation::Linear(Duration::from_millis(125)),
-                is_on,
-            ),
+            .animated(Animation::linear(Duration::from_millis(125)), is_on),
     ))
     .with_horizontal_alignment(alignment)
     .frame()

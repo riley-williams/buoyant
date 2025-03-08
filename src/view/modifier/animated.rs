@@ -1,7 +1,7 @@
 use crate::{
+    animation::Animation,
     layout::Layout,
     render::{Animate, Renderable},
-    Animation,
 };
 
 #[derive(Debug, Clone)]

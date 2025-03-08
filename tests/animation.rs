@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use buoyant::{
+    animation::Animation,
     environment::DefaultEnvironment,
     font::CharacterBufferFont,
     if_view,
@@ -15,7 +16,6 @@ use buoyant::{
         make_render_tree, shape::Rectangle, Divider, EmptyView, HorizontalTextAlignment,
         LayoutExtensions, RenderExtensions as _, Text, VStack, ZStack,
     },
-    Animation,
 };
 
 const FONT: CharacterBufferFont = CharacterBufferFont;
@@ -25,7 +25,7 @@ fn x_bar(alignment: HorizontalAlignment) -> impl CharacterView<char> {
         .flex_frame()
         .with_infinite_max_width()
         .with_horizontal_alignment(alignment)
-        .animated(Animation::Linear(Duration::from_secs(1)), alignment)
+        .animated(Animation::linear(Duration::from_secs(1)), alignment)
 }
 
 /// Repeatedly render animation of X from left to right without clearing buffer
@@ -121,7 +121,7 @@ fn sanity_animation_wipe_trailing_half() {
 
 fn stacked_bars(alignment: HorizontalAlignment) -> impl CharacterView<char> {
     VStack::new((
-        Text::new("X", &FONT).animated(Animation::Linear(Duration::from_secs(1)), alignment),
+        Text::new("X", &FONT).animated(Animation::linear(Duration::from_secs(1)), alignment),
         Text::new("Y", &FONT),
         Divider::new(1), // Ensure the stack spans the offered width
     ))
@@ -178,8 +178,8 @@ fn stacked_bars_value(
     alignment: HorizontalAlignment,
 ) -> impl CharacterView<char> {
     VStack::new((
-        Text::new("X", &FONT).animated(Animation::Linear(Duration::from_secs(1)), x_value),
-        Text::new("Y", &FONT).animated(Animation::Linear(Duration::from_secs(2)), y_value),
+        Text::new("X", &FONT).animated(Animation::linear(Duration::from_secs(1)), x_value),
+        Text::new("Y", &FONT).animated(Animation::linear(Duration::from_secs(2)), y_value),
         Divider::new(1), // Ensure the stack spans the offered width
     ))
     .with_alignment(alignment)
@@ -233,9 +233,9 @@ fn stacked_bars_3_value(
     alignment: HorizontalAlignment,
 ) -> impl CharacterView<char> {
     VStack::new((
-        Text::new("X", &FONT).animated(Animation::Linear(Duration::from_secs(1)), x_value),
-        Text::new("Y", &FONT).animated(Animation::Linear(Duration::from_secs(2)), y_value),
-        Text::new("Z", &FONT).animated(Animation::Linear(Duration::from_secs(2)), z_value),
+        Text::new("X", &FONT).animated(Animation::linear(Duration::from_secs(1)), x_value),
+        Text::new("Y", &FONT).animated(Animation::linear(Duration::from_secs(2)), y_value),
+        Text::new("Z", &FONT).animated(Animation::linear(Duration::from_secs(2)), z_value),
         Divider::new(1), // Ensure the stack spans the offered width
     ))
     .with_alignment(alignment)
@@ -278,7 +278,7 @@ fn partial_animation_join() {
         &target_tree,
         &' ',
         Point::zero(),
-        &AnimationDomain::new(255, Duration::from_millis(500)),
+        &AnimationDomain::new(255, Duration::from_millis(550)),
     );
     assert_eq!(buffer.text[0].iter().collect::<String>(), "     X     ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "  Y        ");
@@ -289,7 +289,7 @@ fn partial_animation_join() {
     source_tree = AnimatedJoin::join(
         source_tree,
         target_tree,
-        &AnimationDomain::new(255, Duration::from_millis(1000)),
+        &AnimationDomain::new(255, Duration::from_millis(1050)),
     );
 
     // The joined view should render to the correct partial animation state
@@ -301,7 +301,7 @@ fn partial_animation_join() {
 
     // Create a new view, only changing the y value
     // However, in the new target align leading
-    env.app_time = Duration::from_millis(1000);
+    env.app_time = Duration::from_millis(1050);
     view = stacked_bars_3_value(1, 2, 1, HorizontalAlignment::Leading);
     let layout = view.layout(&buffer.size().into(), &env);
     target_tree = view.render_tree(&layout, Point::default(), &env);
@@ -317,7 +317,7 @@ fn partial_animation_join() {
         &target_tree,
         &' ',
         Point::zero(),
-        &AnimationDomain::new(255, Duration::from_millis(1000)),
+        &AnimationDomain::new(255, Duration::from_millis(1050)),
     );
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "X          ");
@@ -387,7 +387,7 @@ fn toggle_switch(is_on: bool, subtext: &str) -> impl CharacterView<char> + use<'
                 .with_height(1),
         ))
         .with_horizontal_alignment(alignment)
-        .animated(Animation::Linear(Duration::from_secs(1)), is_on),
+        .animated(Animation::linear(Duration::from_secs(1)), is_on),
         if_view!((is_on) {
             Text::new(subtext, &FONT).multiline_text_alignment(HorizontalTextAlignment::Trailing)
         } else {
@@ -441,7 +441,7 @@ fn jump_toggle_animation() {
         &target_tree,
         &' ',
         Point::zero(),
-        &AnimationDomain::top_level(Duration::from_millis(500)),
+        &AnimationDomain::top_level(Duration::from_millis(550)),
     );
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      __#__");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "        xxx");
@@ -451,7 +451,7 @@ fn jump_toggle_animation() {
     source_tree = AnimatedJoin::join(
         source_tree,
         target_tree,
-        &AnimationDomain::top_level(Duration::from_millis(500)),
+        &AnimationDomain::top_level(Duration::from_millis(550)),
     );
 
     source_tree.render(&mut buffer, &' ', Point::zero());
@@ -460,7 +460,7 @@ fn jump_toggle_animation() {
     assert_eq!(buffer.text[2].iter().collect::<String>(), "           ");
     buffer.clear();
 
-    env.app_time = Duration::from_millis(500);
+    env.app_time = Duration::from_millis(550);
     view = toggle_move(true, HorizontalAlignment::Leading);
     let layout = view.layout(&buffer.size().into(), &env);
     target_tree = view.render_tree(&layout, Point::default(), &env);
@@ -471,7 +471,7 @@ fn jump_toggle_animation() {
         &target_tree,
         &' ',
         Point::zero(),
-        &AnimationDomain::top_level(Duration::from_millis(500)),
+        &AnimationDomain::top_level(Duration::from_millis(550)),
     );
 
     // Toggle should continue to animate, but the subtext jumps
@@ -502,7 +502,7 @@ fn toggle_stack(is_on: bool) -> impl CharacterView<char> {
     ))
     .with_alignment(HorizontalAlignment::Trailing)
     // this animation should do nothing, because the text is transitioned, not moved
-    .animated(Animation::Linear(Duration::from_millis(2000)), is_on)
+    .animated(Animation::linear(Duration::from_millis(2000)), is_on)
     .flex_frame()
     .with_infinite_max_width()
     .with_infinite_max_height()
@@ -550,7 +550,7 @@ fn nested_toggle_animation() {
         &target_tree,
         &' ',
         Point::zero(),
-        &AnimationDomain::top_level(Duration::from_millis(500)),
+        &AnimationDomain::top_level(Duration::from_millis(550)),
     );
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      __#__");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "     123456");
@@ -563,7 +563,7 @@ fn nested_toggle_animation() {
     source_tree = AnimatedJoin::join(
         source_tree,
         target_tree,
-        &AnimationDomain::top_level(Duration::from_millis(500)),
+        &AnimationDomain::top_level(Duration::from_millis(550)),
     );
 
     // The joined view should render to the partial animation state
@@ -575,7 +575,7 @@ fn nested_toggle_animation() {
     assert_eq!(buffer.text[4].iter().collect::<String>(), "        xxx");
     buffer.clear();
 
-    env.app_time = Duration::from_millis(500);
+    env.app_time = Duration::from_millis(550);
     view = toggle_stack(true);
     let layout = view.layout(&buffer.size().into(), &env);
     target_tree = view.render_tree(&layout, Point::default(), &env);
@@ -586,7 +586,7 @@ fn nested_toggle_animation() {
         &target_tree,
         &' ',
         Point::zero(),
-        &AnimationDomain::top_level(Duration::from_millis(500)),
+        &AnimationDomain::top_level(Duration::from_millis(550)),
     );
     // again, should be the same view
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      __#__");
