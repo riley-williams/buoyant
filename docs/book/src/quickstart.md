@@ -11,7 +11,7 @@ README to install sdl2.
 # Cargo.toml
 
 [dependencies]
-buoyant = "0.3"
+buoyant = "0.4"
 embedded-graphics = "0.8"
 embedded-graphics-simulator = "0.7.0"
 ```
