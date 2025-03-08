@@ -21,7 +21,7 @@ fn view(is_redacted: bool) -> impl EmbeddedGraphicsView<Rgb888> {
 You'll of course get an error telling you that the types returned from each branch don't
 match.
 
-Buoyant provides two macros for creating content conditionlly.
+Buoyant provides two macros for creating content conditionally.
 
 ## Conditional Views with `if_view!`
 
