@@ -1,4 +1,5 @@
 mod animated;
+mod background;
 mod fixed_frame;
 mod fixed_size;
 mod flex_frame;
@@ -8,6 +9,7 @@ pub mod padding;
 mod priority;
 
 pub(crate) use animated::Animated;
+pub(crate) use background::BackgroundView;
 pub(crate) use fixed_frame::FixedFrame;
 pub(crate) use fixed_size::FixedSize;
 pub(crate) use flex_frame::FlexFrame;

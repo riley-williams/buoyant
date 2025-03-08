@@ -26,7 +26,8 @@ pub use vstack::VStack;
 pub use zstack::ZStack;
 
 use modifier::{
-    Animated, FixedFrame, FixedSize, FlexFrame, ForegroundStyle, GeometryGroup, Padding, Priority,
+    Animated, BackgroundView, FixedFrame, FixedSize, FlexFrame, ForegroundStyle, GeometryGroup,
+    Padding, Priority,
 };
 
 use crate::{
@@ -113,6 +114,30 @@ pub trait LayoutExtensions: Sized {
     /// ```
     fn geometry_group(self) -> GeometryGroup<Self> {
         GeometryGroup::new(self)
+    }
+
+    /// A view that uses the layout of the foreground view and renders the background
+    /// behind it.
+    ///
+    /// Example:
+    ///
+    /// ```
+    /// use buoyant::view::{padding::Edges, shape::RoundedRectangle, Text, LayoutExtensions as _, RenderExtensions as _};
+    /// use buoyant::render::{EmbeddedGraphicsView};
+    /// use embedded_graphics::{prelude::*, pixelcolor::Rgb565, mono_font::ascii::FONT_9X15_BOLD};
+    ///
+    /// fn bordered_button() -> impl EmbeddedGraphicsView<Rgb565> {
+    ///     Text::new("Press me", &FONT_9X15_BOLD)
+    ///         .foreground_color(Rgb565::WHITE)
+    ///         .padding(Edges::All, 10)
+    ///         .background(|| {
+    ///             RoundedRectangle::new(10)
+    ///                 .foreground_color(Rgb565::BLUE)
+    ///         })
+    /// }
+    /// ```
+    fn background<U>(self, background: impl FnOnce() -> U) -> BackgroundView<Self, U> {
+        BackgroundView::new(self, background())
     }
 }
 
