@@ -11,6 +11,8 @@ pub struct Animation {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Curve {
     Linear,
+    /// Quadratic ease in
+    EaseIn,
 }
 
 impl Animation {
@@ -19,6 +21,14 @@ impl Animation {
         Self {
             duration,
             curve: Curve::Linear,
+        }
+    }
+
+    #[must_use]
+    pub const fn ease_in(duration: Duration) -> Self {
+        Self {
+            duration,
+            curve: Curve::EaseIn,
         }
     }
 
@@ -37,6 +47,13 @@ impl Curve {
                 .checked_div(duration.as_millis())
                 .unwrap_or(255)
                 .min(255) as u8,
+            Curve::EaseIn => {
+                let x = (time.as_millis() * 255)
+                    .checked_div(duration.as_millis())
+                    .unwrap_or(255);
+                let x_2 = (x * x) >> 8;
+                x_2.min(255) as u8
+            }
         }
     }
 }
