@@ -19,10 +19,6 @@ impl LayoutEnvironment for TestEnv {
         self.direction
     }
 
-    fn alignment(&self) -> Alignment {
-        self.alignment
-    }
-
     fn app_time(&self) -> Duration {
         self.app_time
     }

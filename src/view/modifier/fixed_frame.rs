@@ -1,6 +1,6 @@
 use crate::{
     environment::LayoutEnvironment,
-    layout::{HorizontalAlignment, Layout, ResolvedLayout, VerticalAlignment},
+    layout::{Alignment, HorizontalAlignment, Layout, ResolvedLayout, VerticalAlignment},
     primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions},
     render::Renderable,
 };
@@ -9,8 +9,8 @@ use crate::{
 pub struct FixedFrame<T> {
     width: Option<u16>,
     height: Option<u16>,
-    horizontal_alignment: Option<HorizontalAlignment>,
-    vertical_alignment: Option<VerticalAlignment>,
+    horizontal_alignment: HorizontalAlignment,
+    vertical_alignment: VerticalAlignment,
     child: T,
 }
 
@@ -19,38 +19,48 @@ impl<T> FixedFrame<T> {
         Self {
             width: None,
             height: None,
-            horizontal_alignment: None,
-            vertical_alignment: None,
+            horizontal_alignment: HorizontalAlignment::Center,
+            vertical_alignment: VerticalAlignment::Center,
             child,
         }
     }
 
-    pub fn with_width(self, width: u16) -> Self {
-        Self {
-            width: Some(width),
-            ..self
-        }
+    /// Sets the width of the frame.
+    pub const fn with_width(mut self, width: u16) -> Self {
+        self.width = Some(width);
+        self
     }
 
-    pub fn with_height(self, height: u16) -> Self {
-        Self {
-            height: Some(height),
-            ..self
-        }
+    /// Sets the height of the frame.
+    pub const fn with_height(mut self, height: u16) -> Self {
+        self.height = Some(height);
+        self
     }
 
-    pub fn with_horizontal_alignment(self, alignment: HorizontalAlignment) -> Self {
-        Self {
-            horizontal_alignment: Some(alignment),
-            ..self
-        }
+    /// Sets the size of the frame.
+    pub const fn with_size(mut self, width: u16, height: u16) -> Self {
+        self.width = Some(width);
+        self.height = Some(height);
+        self
     }
 
-    pub fn with_vertical_alignment(self, alignment: VerticalAlignment) -> Self {
-        Self {
-            vertical_alignment: Some(alignment),
-            ..self
-        }
+    /// The horizontal alignment to apply when the child view is larger or smaller than the frame.
+    pub const fn with_horizontal_alignment(mut self, alignment: HorizontalAlignment) -> Self {
+        self.horizontal_alignment = alignment;
+        self
+    }
+
+    /// The vertical alignment to apply when the child view is larger or smaller than the frame.
+    pub const fn with_vertical_alignment(mut self, alignment: VerticalAlignment) -> Self {
+        self.vertical_alignment = alignment;
+        self
+    }
+
+    /// The alignment to apply when the child view is larger or smaller than the frame.
+    pub const fn with_alignment(mut self, alignment: Alignment) -> Self {
+        self.horizontal_alignment = alignment.horizontal();
+        self.vertical_alignment = alignment.vertical();
+        self
     }
 }
 
@@ -102,11 +112,11 @@ impl<T: Renderable<C>, C> Renderable<C> for FixedFrame<T> {
     ) -> Self::Renderables {
         let new_origin = origin
             + Point::new(
-                self.horizontal_alignment.unwrap_or_default().align(
+                self.horizontal_alignment.align(
                     layout.resolved_size.width.into(),
                     layout.sublayouts.resolved_size.width.into(),
                 ),
-                self.vertical_alignment.unwrap_or_default().align(
+                self.vertical_alignment.align(
                     layout.resolved_size.height.into(),
                     layout.sublayouts.resolved_size.height.into(),
                 ),

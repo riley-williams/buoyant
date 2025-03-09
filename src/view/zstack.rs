@@ -1,6 +1,6 @@
 use crate::{
     environment::LayoutEnvironment,
-    layout::{HorizontalAlignment, Layout, ResolvedLayout, VerticalAlignment},
+    layout::{Alignment, HorizontalAlignment, Layout, ResolvedLayout, VerticalAlignment},
     primitives::{Point, ProposedDimension, ProposedDimensions},
     render::Renderable,
 };
@@ -14,7 +14,7 @@ use paste::paste;
 ///
 /// ```rust
 /// use buoyant::font::CharacterBufferFont;
-/// use buoyant::layout::{HorizontalAlignment, VerticalAlignment};
+/// use buoyant::layout::Alignment;
 /// use buoyant::view::{ZStack, shape::Rectangle, Text, RenderExtensions as _};
 ///
 /// /// A fish at the bottom right corner of an 'o'cean
@@ -23,8 +23,7 @@ use paste::paste;
 ///         Rectangle,
 ///         Text::new("><>", &font),
 ///     ))
-///     .with_vertical_alignment(VerticalAlignment::Bottom)
-///     .with_horizontal_alignment(HorizontalAlignment::Trailing)
+///     .with_alignment(Alignment::BottomTrailing)
 ///     .foreground_color('o');
 /// ```
 #[derive(Debug, Clone)]
@@ -54,6 +53,15 @@ impl<T> ZStack<T> {
     pub fn with_vertical_alignment(self, alignment: VerticalAlignment) -> Self {
         Self {
             vertical_alignment: alignment,
+            ..self
+        }
+    }
+
+    #[must_use]
+    pub fn with_alignment(self, alignment: Alignment) -> Self {
+        Self {
+            horizontal_alignment: alignment.horizontal(),
+            vertical_alignment: alignment.vertical(),
             ..self
         }
     }

@@ -341,7 +341,6 @@ fn toggle_button(is_on: bool) -> impl EmbeddedGraphicsView<color::Space> {
     ))
     .with_horizontal_alignment(alignment)
     .frame()
-    .with_width(50)
-    .with_height(25)
+    .with_size(50, 25)
     .geometry_group()
 }

@@ -38,9 +38,8 @@ fn toggle_button(is_on: bool) -> impl EmbeddedGraphicsView<Rgb565> {
     ))
     .with_horizontal_alignment(alignment)
     .frame()
-    .with_width(50)
-    .with_height(25)
-    .animated(Animation::Linear(Duration::from_millis(200)), is_on)
+    .with_size(50, 25)
+    .animated(Animation::linear(Duration::from_millis(200)), is_on)
 }
 ```
 

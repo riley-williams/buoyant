@@ -1,6 +1,6 @@
 use buoyant::environment::DefaultEnvironment;
 use buoyant::font::CharacterBufferFont;
-use buoyant::layout::{HorizontalAlignment, Layout, VerticalAlignment};
+use buoyant::layout::{Alignment, HorizontalAlignment, Layout, VerticalAlignment};
 use buoyant::primitives::{Dimensions, Point, Size};
 use buoyant::render::CharacterRender;
 use buoyant::render::CharacterRenderTarget;
@@ -85,8 +85,7 @@ fn test_render_two_top_leading_alignment() {
         Text::new("a a a\nb b b\nc c c", &font),
         Text::new("xxx", &font),
     ))
-    .with_vertical_alignment(VerticalAlignment::Top)
-    .with_horizontal_alignment(HorizontalAlignment::Leading)
+    .with_alignment(Alignment::TopLeading)
     .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&stack, buffer.size());
@@ -105,8 +104,7 @@ fn test_render_two_top_trailing_alignment() {
         Text::new("a a a\nb b b\nc c c", &font),
         Text::new("xxx", &font),
     ))
-    .with_vertical_alignment(VerticalAlignment::Top)
-    .with_horizontal_alignment(HorizontalAlignment::Trailing)
+    .with_alignment(Alignment::TopTrailing)
     .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&stack, buffer.size());
@@ -163,8 +161,7 @@ fn test_render_two_bottom_leading_alignment() {
         Text::new("a a a\nb b b\nc c c", &font),
         Text::new("xxx", &font),
     ))
-    .with_vertical_alignment(VerticalAlignment::Bottom)
-    .with_horizontal_alignment(HorizontalAlignment::Leading)
+    .with_alignment(Alignment::BottomLeading)
     .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&stack, buffer.size());
@@ -202,8 +199,7 @@ fn test_render_two_bottom_trailing_alignment() {
         Text::new("a a a\nb b b\nc c c", &font),
         Text::new("xxx", &font),
     ))
-    .with_vertical_alignment(VerticalAlignment::Bottom)
-    .with_horizontal_alignment(HorizontalAlignment::Trailing)
+    .with_alignment(Alignment::BottomTrailing)
     .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&stack, buffer.size());

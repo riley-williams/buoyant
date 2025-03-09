@@ -407,9 +407,9 @@ fn empty_view_does_not_create_extra_spacing() {
 #[test]
 fn infinite_width_offer_results_in_sum_of_subview_widths() {
     let hstack = HStack::new((
-        Rectangle.frame().with_width(8).with_height(3),
-        Rectangle.frame().with_width(40).with_height(1),
-        Rectangle.frame().with_width(200).with_height(8),
+        Rectangle.frame().with_size(8, 3),
+        Rectangle.frame().with_size(40, 1),
+        Rectangle.frame().with_size(200, 8),
     ))
     .with_spacing(1);
     let offer = ProposedDimensions {
@@ -424,9 +424,9 @@ fn infinite_width_offer_results_in_sum_of_subview_widths() {
 #[test]
 fn compact_width_offer_results_in_sum_of_subview_widths() {
     let hstack = HStack::new((
-        Rectangle.frame().with_width(8).with_height(3),
-        Rectangle.frame().with_width(40).with_height(1),
-        Rectangle.frame().with_width(200).with_height(8),
+        Rectangle.frame().with_size(8, 3),
+        Rectangle.frame().with_size(40, 1),
+        Rectangle.frame().with_size(200, 8),
     ))
     .with_spacing(1);
     let offer = ProposedDimensions {
@@ -441,9 +441,9 @@ fn compact_width_offer_results_in_sum_of_subview_widths() {
 #[test]
 fn infinite_width_offer_results_in_sum_of_subview_widths_minus_empties() {
     let hstack = HStack::new((
-        Rectangle.frame().with_width(8).with_height(3),
+        Rectangle.frame().with_size(8, 3),
         EmptyView,
-        Rectangle.frame().with_width(200).with_height(8),
+        Rectangle.frame().with_size(200, 8),
     ))
     .with_spacing(1);
     let offer = ProposedDimensions {
@@ -458,9 +458,9 @@ fn infinite_width_offer_results_in_sum_of_subview_widths_minus_empties() {
 #[test]
 fn compact_width_offer_results_in_sum_of_subview_widths_minus_empties() {
     let hstack = HStack::new((
-        Rectangle.frame().with_width(8).with_height(3),
+        Rectangle.frame().with_size(8, 3),
         EmptyView,
-        Rectangle.frame().with_width(200).with_height(8),
+        Rectangle.frame().with_size(200, 8),
     ))
     .with_spacing(1);
     let offer = ProposedDimensions {

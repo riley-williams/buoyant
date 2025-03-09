@@ -1,10 +1,9 @@
 use core::time::Duration;
 
-use crate::layout::{Alignment, LayoutDirection};
+use crate::layout::LayoutDirection;
 
 pub trait LayoutEnvironment {
     fn layout_direction(&self) -> LayoutDirection;
-    fn alignment(&self) -> Alignment;
     /// The duration since the application started.
     /// This is used to drive animations.
     fn app_time(&self) -> Duration;
@@ -32,10 +31,6 @@ impl DefaultEnvironment {
 impl LayoutEnvironment for DefaultEnvironment {
     fn layout_direction(&self) -> LayoutDirection {
         LayoutDirection::default()
-    }
-
-    fn alignment(&self) -> Alignment {
-        Alignment::default()
     }
 
     fn app_time(&self) -> Duration {

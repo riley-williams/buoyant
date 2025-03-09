@@ -1,3 +1,4 @@
+use buoyant::layout::Alignment;
 use buoyant::primitives::Point;
 use buoyant::render::CharacterRender;
 use buoyant::render::CharacterRenderTarget;
@@ -16,8 +17,7 @@ fn test_min() {
     let font = CharacterBufferFont {};
     let content = Text::new("123456", &font)
         .flex_frame()
-        .with_min_width(2)
-        .with_min_height(2);
+        .with_min_size(2, 2);
 
     let env = DefaultEnvironment::non_animated();
 
@@ -51,8 +51,7 @@ fn test_max() {
     let font = CharacterBufferFont {};
     let content = Text::new("123456", &font)
         .flex_frame()
-        .with_max_width(2)
-        .with_max_height(2);
+        .with_max_size(2, 2);
 
     let env = DefaultEnvironment::non_animated();
 
@@ -140,10 +139,8 @@ fn test_render_min_flex_frame_top_leading_alignment() {
     let font = CharacterBufferFont {};
     let content = Text::new("aa\nbb\ncc", &font)
         .flex_frame()
-        .with_min_width(6)
-        .with_min_height(5)
-        .with_horizontal_alignment(HorizontalAlignment::Leading)
-        .with_vertical_alignment(VerticalAlignment::Top)
+        .with_min_size(6, 5)
+        .with_alignment(Alignment::TopLeading)
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&content, buffer.size());
@@ -160,8 +157,7 @@ fn test_render_min_flex_frame_top_center_alignment() {
     let font = CharacterBufferFont {};
     let content = Text::new("aa\nbb\ncc", &font)
         .flex_frame()
-        .with_min_width(6)
-        .with_min_height(5)
+        .with_min_size(6, 5)
         .with_vertical_alignment(VerticalAlignment::Top)
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
@@ -179,10 +175,8 @@ fn test_render_min_flex_frame_top_trailing_alignment() {
     let font = CharacterBufferFont {};
     let content = Text::new("aa\nbb\ncc", &font)
         .flex_frame()
-        .with_min_width(6)
-        .with_min_height(5)
-        .with_horizontal_alignment(HorizontalAlignment::Trailing)
-        .with_vertical_alignment(VerticalAlignment::Top)
+        .with_min_size(6, 5)
+        .with_alignment(Alignment::TopTrailing)
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&content, buffer.size());
@@ -199,8 +193,7 @@ fn test_render_min_flex_frame_center_leading_alignment() {
     let font = CharacterBufferFont {};
     let content = Text::new("aa\nbb\ncc", &font)
         .flex_frame()
-        .with_min_width(6)
-        .with_min_height(5)
+        .with_min_size(6, 5)
         .with_horizontal_alignment(HorizontalAlignment::Leading)
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
@@ -218,8 +211,7 @@ fn test_render_min_flex_frame_center_center_alignment() {
     let font = CharacterBufferFont {};
     let content = Text::new("aa\nbb\ncc", &font)
         .flex_frame()
-        .with_min_width(6)
-        .with_min_height(5)
+        .with_min_size(6, 5)
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&content, buffer.size());
@@ -236,8 +228,7 @@ fn test_render_min_flex_frame_center_trailing_alignment() {
     let font = CharacterBufferFont {};
     let content = Text::new("aa\nbb\ncc", &font)
         .flex_frame()
-        .with_min_width(6)
-        .with_min_height(5)
+        .with_min_size(6, 5)
         .with_horizontal_alignment(HorizontalAlignment::Trailing)
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
@@ -255,10 +246,8 @@ fn test_render_min_flex_frame_bottom_leading_alignment() {
     let font = CharacterBufferFont {};
     let content = Text::new("aa\nbb\ncc", &font)
         .flex_frame()
-        .with_min_width(6)
-        .with_min_height(5)
-        .with_horizontal_alignment(HorizontalAlignment::Leading)
-        .with_vertical_alignment(VerticalAlignment::Bottom)
+        .with_min_size(6, 5)
+        .with_alignment(Alignment::BottomLeading)
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&content, buffer.size());
@@ -275,8 +264,7 @@ fn test_render_min_flex_frame_bottom_center_alignment() {
     let font = CharacterBufferFont {};
     let content = Text::new("aa\nbb\ncc", &font)
         .flex_frame()
-        .with_min_width(6)
-        .with_min_height(5)
+        .with_min_size(6, 5)
         .with_vertical_alignment(VerticalAlignment::Bottom)
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
@@ -294,10 +282,8 @@ fn test_render_min_flex_frame_bottom_trailing_alignment() {
     let font = CharacterBufferFont {};
     let content = Text::new("aa\nbb\ncc", &font)
         .flex_frame()
-        .with_min_width(6)
-        .with_min_height(5)
-        .with_horizontal_alignment(HorizontalAlignment::Trailing)
-        .with_vertical_alignment(VerticalAlignment::Bottom)
+        .with_min_size(6, 5)
+        .with_alignment(Alignment::BottomTrailing)
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&content, buffer.size());
@@ -338,8 +324,6 @@ fn test_render_oversize_mix() {
         .with_max_width(u16::MAX)
         .with_min_height(8)
         .with_max_height(u16::MAX)
-        .with_horizontal_alignment(HorizontalAlignment::Center)
-        .with_vertical_alignment(VerticalAlignment::Center)
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&content, buffer.size());
@@ -356,10 +340,8 @@ fn test_compact() {
     let env = DefaultEnvironment::non_animated();
     let content = Rectangle
         .flex_frame()
-        .with_ideal_width(8)
-        .with_ideal_height(4)
-        .with_min_width(2)
-        .with_min_height(2);
+        .with_ideal_size(8, 4)
+        .with_min_size(2, 2);
 
     let layout = content.layout(
         &ProposedDimensions {
