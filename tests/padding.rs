@@ -53,9 +53,7 @@ fn test_clipped_text_trails_correctly() {
 #[test]
 fn test_padding_is_oversized_for_oversized_child() {
     let view = Rectangle
-        .frame()
-        .with_width(10)
-        .with_height(10)
+        .frame_sized(10, 10)
         .padding(Edges::All, 2);
 
     let env = DefaultEnvironment::non_animated();

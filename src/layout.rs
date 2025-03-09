@@ -13,19 +13,59 @@ pub enum LayoutDirection {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Default)]
-pub struct Alignment {
-    pub horizontal: HorizontalAlignment,
-    pub vertical: VerticalAlignment,
+pub enum Alignment {
+    TopLeading,
+    Top,
+    TopTrailing,
+    Leading,
+    #[default]
+    Center,
+    Trailing,
+    BottomLeading,
+    Bottom,
+    BottomTrailing,
+}
+
+impl Alignment {
+    /// The horizontal component of the alignment
+    #[must_use]
+    pub const fn horizontal(&self) -> HorizontalAlignment {
+        match self {
+            Alignment::TopLeading | Alignment::Leading | Alignment::BottomLeading => {
+                HorizontalAlignment::Leading
+            }
+            Alignment::Top | Alignment::Center | Alignment::Bottom => HorizontalAlignment::Center,
+            Alignment::TopTrailing | Alignment::Trailing | Alignment::BottomTrailing => {
+                HorizontalAlignment::Trailing
+            }
+        }
+    }
+
+    /// The vertical component of the alignment
+    #[must_use]
+    pub const fn vertical(&self) -> VerticalAlignment {
+        match self {
+            Alignment::TopLeading | Alignment::Top | Alignment::TopTrailing => {
+                VerticalAlignment::Top
+            }
+            Alignment::Leading | Alignment::Center | Alignment::Trailing => {
+                VerticalAlignment::Center
+            }
+            Alignment::BottomLeading | Alignment::Bottom | Alignment::BottomTrailing => {
+                VerticalAlignment::Bottom
+            }
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Default)]
 pub enum HorizontalAlignment {
-    /// Align the content to the start of the layout direction
+    /// Align the content to the leading edge
     Leading,
-    /// Align the content to the center of the layout direction
+    /// Align the content to the center
     #[default]
     Center,
-    /// Align the content to the end of the layout direction
+    /// Align the content to the trailing edge
     Trailing,
 }
 
@@ -43,12 +83,12 @@ impl HorizontalAlignment {
 #[derive(Clone, Copy, Debug, PartialEq, Default)]
 /// Strategy to align the heights of items that do not fill the available frame height
 pub enum VerticalAlignment {
-    /// Align the content to the start of the layout direction
+    /// Align the content to the top edge
     Top,
-    /// Align the content to the center of the layout direction
+    /// Align the content to the center
     #[default]
     Center,
-    /// Align the content to the end of the layout direction
+    /// Align the content to the bottom edge
     Bottom,
 }
 

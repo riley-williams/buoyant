@@ -22,9 +22,7 @@ const FONT: CharacterBufferFont = CharacterBufferFont;
 
 fn x_bar(alignment: HorizontalAlignment) -> impl CharacterView<char> {
     Text::new("X", &FONT)
-        .flex_frame()
-        .with_infinite_max_width()
-        .with_horizontal_alignment(alignment)
+        .flex_infinite_width(alignment)
         .animated(Animation::linear(Duration::from_secs(1)), alignment)
 }
 
@@ -377,14 +375,10 @@ fn toggle_switch(is_on: bool, subtext: &str) -> impl CharacterView<char> + use<'
         ZStack::new((
             Rectangle
                 .foreground_color('_')
-                .frame()
-                .with_width(5)
-                .with_height(1),
+                .frame_sized(5, 1),
             Rectangle
                 .foreground_color('#')
-                .frame()
-                .with_width(1)
-                .with_height(1),
+                .frame_sized(1, 1),
         ))
         .with_horizontal_alignment(alignment)
         .animated(Animation::linear(Duration::from_secs(1)), is_on),

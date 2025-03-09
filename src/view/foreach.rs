@@ -13,10 +13,6 @@ struct ForEachEnvironment<'a, T> {
 }
 
 impl<T: LayoutEnvironment> LayoutEnvironment for ForEachEnvironment<'_, T> {
-    fn alignment(&self) -> crate::layout::Alignment {
-        self.inner_environment.alignment()
-    }
-
     fn layout_direction(&self) -> LayoutDirection {
         LayoutDirection::Vertical
     }

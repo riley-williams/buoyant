@@ -1,6 +1,6 @@
 use crate::{
     environment::LayoutEnvironment,
-    layout::{HorizontalAlignment, Layout, ResolvedLayout, VerticalAlignment},
+    layout::{Alignment, HorizontalAlignment, Layout, ResolvedLayout, VerticalAlignment},
     primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions},
     render::Renderable,
 };
@@ -33,53 +33,107 @@ impl<T> FlexFrame<T> {
         }
     }
 
+    /// Applies a minimum width to the frame.
+    ///
+    /// The child view may still resolve to a smaller width if it is smaller than
+    /// the minimum width.
     pub const fn with_min_width(mut self, min_width: u16) -> Self {
         self.min_width = Some(min_width);
         self
     }
 
+    /// The width to propose to the child view when a parent view requests a compact width.
+    ///
+    /// This is especially useful for views like shapes which have no inherent size.
     pub const fn with_ideal_width(mut self, ideal_width: u16) -> Self {
         self.ideal_width = Some(ideal_width);
         self
     }
 
-    pub fn with_max_width(mut self, max_width: u16) -> Self {
+    /// The maximum width of the frame.
+    ///
+    /// The child view will be proposed a width up to the max, and the frame will resolve
+    /// greedily up to this width.
+    pub fn with_max_width<U: Into<Dimension>>(mut self, max_width: U) -> Self {
         self.max_width = Some(max_width.into());
         self
     }
 
+    /// Sets the frame to expand to fill as much horizontal space as possible.
     pub const fn with_infinite_max_width(mut self) -> Self {
         self.max_width = Some(Dimension::infinite());
         self
     }
 
+    /// Applies a minimum height to the frame.
+    ///
+    /// The child view may still resolve to a smaller height if it is smaller than
+    /// the minimum height.
     pub const fn with_min_height(mut self, min_height: u16) -> Self {
         self.min_height = Some(min_height);
         self
     }
 
+    /// The height to propose to the child view when a parent view requests a compact height.
+    ///
+    /// This is especially useful for views like shapes which have no inherent size.
     pub const fn with_ideal_height(mut self, ideal_height: u16) -> Self {
         self.ideal_height = Some(ideal_height);
         self
     }
 
-    pub fn with_max_height(mut self, max_height: u16) -> Self {
+    /// The maximum height of the frame.
+    ///
+    /// The child view will be proposed a height up to the max, and the frame will resolve
+    /// greedily up to this height.
+    pub fn with_max_height<U: Into<Dimension>>(mut self, max_height: U) -> Self {
         self.max_height = Some(max_height.into());
         self
     }
 
+    /// Sets the frame to expand to fill as much vertical space as possible.
     pub const fn with_infinite_max_height(mut self) -> Self {
         self.max_height = Some(Dimension::infinite());
         self
     }
 
+    /// Sets the maximum size of the frame.
+    pub fn with_max_size<U: Into<Dimension>>(mut self, max_width: U, max_height: U) -> Self {
+        self.max_width = Some(max_width.into());
+        self.max_height = Some(max_height.into());
+        self
+    }
+
+    /// Sets the ideal size of the frame.
+    pub const fn with_ideal_size(mut self, ideal_width: u16, ideal_height: u16) -> Self {
+        self.ideal_width = Some(ideal_width);
+        self.ideal_height = Some(ideal_height);
+        self
+    }
+
+    /// Sets the minimum size of the frame.
+    pub const fn with_min_size(mut self, min_width: u16, min_height: u16) -> Self {
+        self.min_width = Some(min_width);
+        self.min_height = Some(min_height);
+        self
+    }
+
+    /// The horizontal alignment to apply when the child view is larger or smaller than the frame.
     pub const fn with_horizontal_alignment(mut self, alignment: HorizontalAlignment) -> Self {
         self.horizontal_alignment = alignment;
         self
     }
 
+    /// The vertical alignment to apply when the child view is larger or smaller than the frame.
     pub const fn with_vertical_alignment(mut self, alignment: VerticalAlignment) -> Self {
         self.vertical_alignment = alignment;
+        self
+    }
+
+    /// The alignment to apply when the child view is larger or smaller than the frame.
+    pub const fn with_alignment(mut self, alignment: Alignment) -> Self {
+        self.horizontal_alignment = alignment.horizontal();
+        self.vertical_alignment = alignment.vertical();
         self
     }
 }

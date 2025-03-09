@@ -20,9 +20,6 @@ struct HorizontalEnvironment<'a, T> {
 }
 
 impl<T: LayoutEnvironment> LayoutEnvironment for HorizontalEnvironment<'_, T> {
-    fn alignment(&self) -> crate::layout::Alignment {
-        self.inner_environment.alignment()
-    }
     fn layout_direction(&self) -> LayoutDirection {
         LayoutDirection::Horizontal
     }

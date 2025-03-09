@@ -55,7 +55,7 @@ fn view() -> impl CharacterView<Colors> {
                     "This is in a fixed size box",
                     &FONT,
                 )
-                    .frame().with_width(10).with_height(10),
+                    .frame_sized(10, 10),
             )),
             Text::new(
                 "This is several lines of text.\nEach line is centered in the available space.\n The rectangle fills all the remaining verical space and aligns the content within it.\n2 points of padding are around this text",

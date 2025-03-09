@@ -100,10 +100,10 @@ with configurable minimum and maximum dimensions. Child views won't necessarily 
 the space within this frame, so you can also specify horizontal and vertical alignment to
 place the child within the virtual frame.
 
-Creating virtual frames that are as wide or tall as possible is relatively common, and
-Buoyant provides `.with_infinite_max_width()` and `.with_infinite_max_height()` for configuring
-this. You can use this in combination with a leading horizontal alignment of the
-circle inside the frame to achieve the same result as the previous code.
+Buoyant provides `.with_infinite_max_width()` and `.with_infinite_max_height()` for creating
+virtual frames that are as wide or tall as possible. You can use this in combination with
+a leading horizontal alignment of the circle inside the frame to achieve the same result
+as the previous code.
 
 ```rust,no_run
 # extern crate buoyant;
@@ -162,3 +162,64 @@ fn view() -> impl EmbeddedGraphicsView<Rgb888> {
 ```
 
 This is both faster for Buoyant to lay out and easier to read.
+
+## Preferred implementations
+
+This behavior is *so* common, shortcuts exist to specify an infinite width or height with
+the alignment in one call.
+
+### Maximally wide views
+
+```rust
+# extern crate buoyant;
+# use buoyant::layout::HorizontalAlignment;
+# use buoyant::view::LayoutExtensions as _;
+# use buoyant::view::{shape::Circle, HStack, Spacer};
+# let content = Circle;
+// Avoid:
+HStack::new((
+    Spacer::default(),
+    content,
+))
+# ;
+
+// Preferred:
+content
+    .flex_frame()
+    .with_infinite_max_width()
+    .with_horizontal_alignment(HorizontalAlignment::Trailing)
+# ;
+
+// Preferred, shortcut:
+content
+    .flex_infinite_width(HorizontalAlignment::Trailing)
+# ;
+```
+
+### Maximally tall views
+
+```rust
+# extern crate buoyant;
+# use buoyant::layout::VerticalAlignment;
+# use buoyant::view::LayoutExtensions as _;
+# use buoyant::view::{shape::Circle, VStack, Spacer};
+# let content = Circle;
+// Avoid:
+VStack::new((
+    content,
+    Spacer::default(),
+))
+# ;
+
+// Preferred:
+content
+    .flex_frame()
+    .with_infinite_max_height()
+    .with_vertical_alignment(VerticalAlignment::Top)
+# ;
+
+// Preferred, shortcut:
+content
+    .flex_infinite_height(VerticalAlignment::Top)
+# ;
+```

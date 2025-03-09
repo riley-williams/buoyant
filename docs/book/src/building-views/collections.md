@@ -78,9 +78,7 @@ fn view(swatches: &[Swatch]) -> impl EmbeddedGraphicsView<Rgb888> + use<'_> {
         HStack::new((
             RoundedRectangle::new(8)
                 .foreground_color(swatch.color)
-                .frame()
-                .with_width(40)
-                .with_height(40),
+                .frame_sized(40, 40),
             Text::new(swatch.name, &FONT_9X15).foreground_color(Rgb888::WHITE),
         ))
         .with_spacing(spacing::ELEMENT)

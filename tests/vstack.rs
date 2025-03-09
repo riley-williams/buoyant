@@ -50,9 +50,9 @@ fn test_oversized_layout_3() {
 #[test]
 fn infinite_height_offer_results_in_sum_of_subview_heights() {
     let vstack = VStack::new((
-        Rectangle.frame().with_width(3).with_height(8),
-        Rectangle.frame().with_width(1).with_height(40),
-        Rectangle.frame().with_width(8).with_height(200),
+        Rectangle.frame_sized(3, 8),
+        Rectangle.frame_sized(1, 40),
+        Rectangle.frame_sized(8, 200),
     ))
     .with_spacing(1);
     let offer = ProposedDimensions {
@@ -67,9 +67,9 @@ fn infinite_height_offer_results_in_sum_of_subview_heights() {
 #[test]
 fn compact_height_offer_results_in_sum_of_subview_heights() {
     let vstack = VStack::new((
-        Rectangle.frame().with_width(3).with_height(8),
-        Rectangle.frame().with_width(1).with_height(40),
-        Rectangle.frame().with_width(8).with_height(200),
+        Rectangle.frame_sized(3, 8),
+        Rectangle.frame_sized(1, 40),
+        Rectangle.frame_sized(8, 200),
     ))
     .with_spacing(1);
     let offer = ProposedDimensions {
@@ -84,9 +84,9 @@ fn compact_height_offer_results_in_sum_of_subview_heights() {
 #[test]
 fn infinite_height_offer_results_in_sum_of_subview_heights_minus_empties() {
     let vstack = VStack::new((
-        Rectangle.frame().with_width(3).with_height(8),
+        Rectangle.frame_sized(3, 8),
         EmptyView,
-        Rectangle.frame().with_width(8).with_height(200),
+        Rectangle.frame_sized(8, 200),
     ))
     .with_spacing(1);
     let offer = ProposedDimensions {
@@ -101,9 +101,9 @@ fn infinite_height_offer_results_in_sum_of_subview_heights_minus_empties() {
 #[test]
 fn compact_height_offer_results_in_sum_of_subview_heights_minus_empties() {
     let vstack = VStack::new((
-        Rectangle.frame().with_width(3).with_height(8),
+        Rectangle.frame_sized(3, 8),
         EmptyView,
-        Rectangle.frame().with_width(8).with_height(200),
+        Rectangle.frame_sized(8, 200),
     ))
     .with_spacing(1);
     let offer = ProposedDimensions {
