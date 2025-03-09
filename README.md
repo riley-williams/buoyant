@@ -18,9 +18,11 @@ Get started with the [Book](https://riley-williams.github.io/buoyant/).
 - `CrossTerm`: Renders colored character-pixels to a terminal using
   the `crossterm` crate.
 
-## Building views with Buoyant
+## Example
 
-Here's what an animated toggle button component would look like, implemented with Buoyant:
+Here's what an animated toggle button component could look like, implemented with Buoyant:
+
+![Toggle](./docs/images/toggle.gif)
 
 ```rust
 fn toggle_button(is_on: bool) -> impl EmbeddedGraphicsView<Rgb565> {
@@ -34,11 +36,14 @@ fn toggle_button(is_on: bool) -> impl EmbeddedGraphicsView<Rgb565> {
 
     ZStack::new((
         Capsule.foreground_color(color),
-        Circle.foreground_color(Rgb565::WHITE).padding(2),
+        Circle
+            .foreground_color(Rgb565::WHITE)
+            .padding(Edges::All, 2),
     ))
     .with_horizontal_alignment(alignment)
     .frame_sized(50, 25)
-    .animated(Animation::linear(Duration::from_millis(200)), is_on)
+    .animated(Animation::ease_in_out(Duration::from_millis(500)), is_on)
+    .geometry_group()
 }
 ```
 
@@ -46,25 +51,27 @@ fn toggle_button(is_on: bool) -> impl EmbeddedGraphicsView<Rgb565> {
 
 ### Layout and Rendering
 
-- [x] Fixed-size Stacks with hetereogeneos children (VStack, HStack, ZStack)
-- [x] Stacks with homogeneous children (ForEach) - partial, vertical only
+Static layout and animation between layouts are relatively feature-complete, aside from
+transitions. You should be able to construct most desired layouts and animations.
+
+- [x] Stacks of hetereogeneos views (VStack, HStack, ZStack)
+- [x] Stacks of homogeneous views (ForEach) - partial, vertical only
 - [x] Common SwiftUI primitives (Spacer, Divider)
-- [x] Conditional views - partial, no unwrapping
-- [x] Text, basic line breaking
-- [ ] Text, Unicode line breaking
-- [x] Text, monospaced fonts
-- [ ] Text, arbitrary fonts
-- [x] Animation
-- [ ] Transition
+- [x] Conditional views, with match variable binding
+- [x] Monospaced Text (whitespace-based line breaking)
+- [x] Images (fixed size)
+- [x] Interruptible Animations + Curves
 - [x] Common embedded-graphics shape primitives
-- [ ] Canvas for arbitrary path/shape/raster drawing
+- [ ] Simulated alpha and antialiasing
+- [ ] Transitions
 - [ ] Shape stroke/fill
-- [ ] Shape styles (gradients, fragment shaders)
-- [x] Images
-- [ ] Alpha rendering
-- [ ] Adaptive antialiasing
+- [ ] Shape styles (e.g. gradients)
+- [ ] Canvas for arbitrary path/shape/raster drawing
 
 ### Interactivity
+
+No interactivity or state management currently exists, but it is the next major
+planned feature.
 
 - [ ] State management
 - [ ] Click/tap routing
@@ -72,9 +79,9 @@ fn toggle_button(is_on: bool) -> impl EmbeddedGraphicsView<Rgb565> {
 
 ## Who should use this?
 
-This project should not be used in production...yet. For hobby projects it's
-lightyears better than dealing with raw embedded-graphics. If you're familiar
-with SwiftUI, you should feel especially at home.
+This project could be used in production by the brave, but is probably better suited
+for hobby projects at this point. It's lightyears better than dealing with raw
+embedded-graphics. If you're familiar with SwiftUI, you should feel especially at home.
 
 ## License
 
