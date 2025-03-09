@@ -83,9 +83,7 @@ pub trait LayoutExtensions: Sized {
     /// # let my_view = buoyant::view::shape::Rectangle;
     /// # let alignment = buoyant::layout::HorizontalAlignment::Center;
     /// my_view
-    ///     .flex_frame()
-    ///     .with_infinite_max_width()
-    ///     .with_horizontal_alignment(alignment)
+    ///     .flex_infinite_width(alignment)
     /// # ;
     /// ```
     fn flex_infinite_width(self, alignment: HorizontalAlignment) -> FlexFrame<Self> {
@@ -104,9 +102,7 @@ pub trait LayoutExtensions: Sized {
     /// # let my_view = buoyant::view::shape::Rectangle;
     /// # let alignment = VerticalAlignment::Center;
     /// my_view
-    ///     .flex_frame()
-    ///     .with_infinite_max_height()
-    ///     .with_vertical_alignment(alignment)
+    ///     .flex_infinite_height(alignment)
     /// # ;
     /// ```
     fn flex_infinite_height(self, alignment: VerticalAlignment) -> FlexFrame<Self> {

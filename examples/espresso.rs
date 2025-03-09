@@ -262,9 +262,7 @@ impl App {
         ))
         .with_spacing(spacing::COMPONENT)
         .with_alignment(HorizontalAlignment::Leading)
-        .flex_frame()
-        .with_infinite_max_width()
-        .with_horizontal_alignment(HorizontalAlignment::Leading)
+        .flex_infinite_width(HorizontalAlignment::Leading)
         .padding(Edges::All, spacing::SECTION_MARGIN)
         .foreground_color(color::Space::WHITE)
     }
@@ -320,9 +318,7 @@ fn toggle_text<'a>(
     ))
     .with_spacing(spacing::ELEMENT)
     .with_alignment(HorizontalAlignment::Trailing)
-    .flex_frame()
-    .with_infinite_max_width()
-    .with_horizontal_alignment(HorizontalAlignment::Trailing)
+    .flex_infinite_width(HorizontalAlignment::Trailing)
 }
 
 fn toggle_button(is_on: bool) -> impl EmbeddedGraphicsView<color::Space> {

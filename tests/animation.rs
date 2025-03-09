@@ -22,9 +22,7 @@ const FONT: CharacterBufferFont = CharacterBufferFont;
 
 fn x_bar(alignment: HorizontalAlignment) -> impl CharacterView<char> {
     Text::new("X", &FONT)
-        .flex_frame()
-        .with_infinite_max_width()
-        .with_horizontal_alignment(alignment)
+        .flex_infinite_width(alignment)
         .animated(Animation::linear(Duration::from_secs(1)), alignment)
 }
 

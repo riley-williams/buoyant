@@ -27,6 +27,7 @@ pub enum Alignment {
 }
 
 impl Alignment {
+    /// The horizontal component of the alignment
     #[must_use]
     pub const fn horizontal(&self) -> HorizontalAlignment {
         match self {
@@ -40,6 +41,7 @@ impl Alignment {
         }
     }
 
+    /// The vertical component of the alignment
     #[must_use]
     pub const fn vertical(&self) -> VerticalAlignment {
         match self {
