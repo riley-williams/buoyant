@@ -46,7 +46,7 @@ checksum = "8f68f53c83ab957f72c32642f3868eec03eb974d1fb82e453128456482613d36"
 
 [[package]]
 name = "buoyant"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "crossterm",
  "embedded-graphics",

@@ -31,10 +31,10 @@ use modifier::{
 };
 
 use crate::{
+    animation::Animation,
     environment::DefaultEnvironment,
     primitives::{Point, Size},
     render::{CharacterRender, Renderable},
-    Animation,
 };
 
 pub trait LayoutExtensions: Sized {
@@ -87,7 +87,7 @@ pub trait LayoutExtensions: Sized {
     /// ```
     /// use core::time::Duration;
     /// use buoyant::view::{shape::{Circle, Capsule}, ZStack, padding, LayoutExtensions as _, RenderExtensions as _};
-    /// use buoyant::Animation;
+    /// use buoyant::animation::Animation;
     /// use buoyant::layout::HorizontalAlignment;
     /// use buoyant::render::{EmbeddedGraphicsView, Renderable};
     /// use embedded_graphics::pixelcolor::Rgb565;
@@ -105,7 +105,7 @@ pub trait LayoutExtensions: Sized {
     ///         Circle
     ///             .foreground_color(Rgb565::WHITE)
     ///             .padding(padding::Edges::All, 2)
-    ///             .animated(Animation::Linear(Duration::from_millis(100)), is_on),
+    ///             .animated(Animation::ease_in_out(Duration::from_millis(120)), is_on),
     ///     ))
     ///     .with_horizontal_alignment(alignment)
     ///     .geometry_group()
