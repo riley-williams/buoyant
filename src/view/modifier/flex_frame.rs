@@ -52,9 +52,9 @@ impl<T> FlexFrame<T> {
 
     /// The maximum width of the frame.
     ///
-    /// This width will be proposed to the child, and the frame will resolve greedily
-    /// up to this width.
-    pub fn with_max_width(mut self, max_width: u16) -> Self {
+    /// The child view will be proposed a width up to the max, and the frame will resolve
+    /// greedily up to this width.
+    pub fn with_max_width<U: Into<Dimension>>(mut self, max_width: U) -> Self {
         self.max_width = Some(max_width.into());
         self
     }
@@ -84,9 +84,9 @@ impl<T> FlexFrame<T> {
 
     /// The maximum height of the frame.
     ///
-    /// This height will be proposed to the child, and the frame will resolve greedily
-    /// up to this height.
-    pub fn with_max_height(mut self, max_height: u16) -> Self {
+    /// The child view will be proposed a height up to the max, and the frame will resolve
+    /// greedily up to this height.
+    pub fn with_max_height<U: Into<Dimension>>(mut self, max_height: U) -> Self {
         self.max_height = Some(max_height.into());
         self
     }
@@ -98,7 +98,7 @@ impl<T> FlexFrame<T> {
     }
 
     /// Sets the maximum size of the frame.
-    pub fn with_max_size(mut self, max_width: u16, max_height: u16) -> Self {
+    pub fn with_max_size<U: Into<Dimension>>(mut self, max_width: U, max_height: U) -> Self {
         self.max_width = Some(max_width.into());
         self.max_height = Some(max_height.into());
         self

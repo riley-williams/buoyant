@@ -2,7 +2,10 @@ use buoyant::layout::Alignment;
 use buoyant::primitives::Point;
 use buoyant::render::CharacterRender;
 use buoyant::render::CharacterRenderTarget;
+use buoyant::view::HStack;
 use buoyant::view::RenderExtensions;
+use buoyant::view::Spacer;
+use buoyant::view::VStack;
 use buoyant::{
     environment::DefaultEnvironment,
     font::CharacterBufferFont,
@@ -15,9 +18,7 @@ use buoyant::{
 #[test]
 fn test_min() {
     let font = CharacterBufferFont {};
-    let content = Text::new("123456", &font)
-        .flex_frame()
-        .with_min_size(2, 2);
+    let content = Text::new("123456", &font).flex_frame().with_min_size(2, 2);
 
     let env = DefaultEnvironment::non_animated();
 
@@ -49,9 +50,7 @@ fn test_min() {
 #[test]
 fn test_max() {
     let font = CharacterBufferFont {};
-    let content = Text::new("123456", &font)
-        .flex_frame()
-        .with_max_size(2, 2);
+    let content = Text::new("123456", &font).flex_frame().with_max_size(2, 2);
 
     let env = DefaultEnvironment::non_animated();
 
@@ -682,4 +681,60 @@ fn test_infinite_max_height_with_min_ideal() {
     );
     assert_eq!(layout.resolved_size.width, 5.into());
     assert_eq!(layout.resolved_size.height, 5.into()); // Uses min
+}
+
+/// Usage of ``flex_infinite_width`` should be equivalent to using ``HStack`` with ``Spacer``
+#[test]
+fn infinite_max_width_equivalent_to_hstack_spacer() {
+    let font = CharacterBufferFont {};
+    let stack_view = VStack::new((
+        Text::new("aa", &font),
+        HStack::new((Spacer::default(), Text::new("bb", &font))),
+        HStack::new((Text::new("cc", &font), Spacer::default())),
+    ))
+    .foreground_color(' ');
+
+    let flex_view = VStack::new((
+        Text::new("aa", &font).flex_infinite_width(HorizontalAlignment::Center),
+        Text::new("bb", &font).flex_infinite_width(HorizontalAlignment::Trailing),
+        Text::new("cc", &font).flex_infinite_width(HorizontalAlignment::Leading),
+    ))
+    .foreground_color(' ');
+    let mut buffer1 = FixedTextBuffer::<6, 5>::default();
+    let tree = make_render_tree(&stack_view, buffer1.size());
+    tree.render(&mut buffer1, &' ', Point::zero());
+
+    let mut buffer2 = FixedTextBuffer::<6, 5>::default();
+    let tree = make_render_tree(&flex_view, buffer2.size());
+    tree.render(&mut buffer2, &' ', Point::zero());
+
+    assert_eq!(buffer1, buffer2);
+}
+
+/// Usage of ``flex_infinite_height`` should be equivalent to using ``VStack`` with ``Spacer``
+#[test]
+fn infinite_max_height_equivalent_to_vstack_spacer() {
+    let font = CharacterBufferFont {};
+    let stack_view = HStack::new((
+        Text::new("aa", &font),
+        VStack::new((Spacer::default(), Text::new("bb", &font))),
+        VStack::new((Text::new("cc", &font), Spacer::default())),
+    ))
+    .foreground_color(' ');
+
+    let flex_view = HStack::new((
+        Text::new("aa", &font).flex_infinite_height(VerticalAlignment::Center),
+        Text::new("bb", &font).flex_infinite_height(VerticalAlignment::Bottom),
+        Text::new("cc", &font).flex_infinite_height(VerticalAlignment::Top),
+    ))
+    .foreground_color(' ');
+    let mut buffer1 = FixedTextBuffer::<6, 5>::default();
+    let tree = make_render_tree(&stack_view, buffer1.size());
+    tree.render(&mut buffer1, &' ', Point::zero());
+
+    let mut buffer2 = FixedTextBuffer::<6, 5>::default();
+    let tree = make_render_tree(&flex_view, buffer2.size());
+    tree.render(&mut buffer2, &' ', Point::zero());
+
+    assert_eq!(buffer1, buffer2);
 }

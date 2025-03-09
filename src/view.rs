@@ -65,11 +65,25 @@ pub trait LayoutExtensions: Sized {
     ///     .with_height(height)
     /// # ;
     /// ```
-    fn frame_with_size(self, width: u16, height: u16) -> FixedFrame<Self> {
+    fn frame_sized(self, width: u16, height: u16) -> FixedFrame<Self> {
         FixedFrame::new(self).with_width(width).with_height(height)
     }
 
     /// A virtual frame that can be configured with flexible dimensions.
+    ///
+    /// Examples:
+    ///
+    /// ```
+    /// # use buoyant::view::LayoutExtensions as _;
+    /// # use buoyant::layout::Alignment;
+    /// # let my_view = buoyant::view::shape::Rectangle;
+    /// my_view
+    ///     .flex_frame()
+    ///     .with_min_size(25, 25)
+    ///     .with_max_width(50)
+    ///     .with_alignment(Alignment::TopLeading)
+    /// # ;
+    /// ```
     fn flex_frame(self) -> FlexFrame<Self> {
         FlexFrame::new(self)
     }
@@ -83,7 +97,9 @@ pub trait LayoutExtensions: Sized {
     /// # let my_view = buoyant::view::shape::Rectangle;
     /// # let alignment = buoyant::layout::HorizontalAlignment::Center;
     /// my_view
-    ///     .flex_infinite_width(alignment)
+    ///     .flex_frame()
+    ///     .with_infinite_max_width()
+    ///     .with_horizontal_alignment(alignment)
     /// # ;
     /// ```
     fn flex_infinite_width(self, alignment: HorizontalAlignment) -> FlexFrame<Self> {
@@ -102,12 +118,14 @@ pub trait LayoutExtensions: Sized {
     /// # let my_view = buoyant::view::shape::Rectangle;
     /// # let alignment = VerticalAlignment::Center;
     /// my_view
-    ///     .flex_infinite_height(alignment)
+    ///     .flex_frame()
+    ///     .with_infinite_max_height()
+    ///     .with_vertical_alignment(alignment)
     /// # ;
     /// ```
     fn flex_infinite_height(self, alignment: VerticalAlignment) -> FlexFrame<Self> {
         FlexFrame::new(self)
-            .with_infinite_max_width()
+            .with_infinite_max_height()
             .with_vertical_alignment(alignment)
     }
 
@@ -169,8 +187,7 @@ pub trait LayoutExtensions: Sized {
     ///     ))
     ///     .with_horizontal_alignment(alignment)
     ///     .geometry_group()
-    ///     .frame()
-    ///     .with_size(50, 25)
+    ///     .frame_sized(50, 25)
     /// }
     /// ```
     fn geometry_group(self) -> GeometryGroup<Self> {

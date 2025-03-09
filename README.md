@@ -37,8 +37,7 @@ fn toggle_button(is_on: bool) -> impl EmbeddedGraphicsView<Rgb565> {
         Circle.foreground_color(Rgb565::WHITE).padding(2),
     ))
     .with_horizontal_alignment(alignment)
-    .frame()
-    .with_size(50, 25)
+    .frame_sized(50, 25)
     .animated(Animation::linear(Duration::from_millis(200)), is_on)
 }
 ```
