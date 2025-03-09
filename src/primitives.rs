@@ -84,7 +84,6 @@ impl From<Size> for embedded_graphics_core::geometry::Size {
 }
 
 impl Interpolate for Size {
-    #[must_use]
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
         Size {
             width: Interpolate::interpolate(from.width, to.width, amount),
@@ -132,7 +131,6 @@ impl Point {
 }
 
 impl Interpolate for Point {
-    #[must_use]
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
         Point {
             x: (((i32::from(amount) * i32::from(to.x))
