@@ -54,6 +54,7 @@ impl Interpolate for crossterm::style::Colors {
 }
 
 #[cfg(feature = "crossterm")]
+#[allow(clippy::cast_sign_loss)]
 fn interpolate_crossterm_colors(
     from: Option<crossterm::style::Color>,
     to: Option<crossterm::style::Color>,
@@ -123,8 +124,9 @@ mod embedded_graphics_impl {
 
     impl Interpolate for embedded_graphics_core::pixelcolor::BinaryColor {}
 
-    #[inline]
     /// Interpolate between two colors, using an i16 between 0 and 256
+    #[inline]
+    #[allow(clippy::cast_sign_loss)]
     fn interpolate_channel(a: u8, b: u8, t: i16) -> u8 {
         (i16::from(a).saturating_add(
             ((i16::from(b).wrapping_sub(i16::from(a))).wrapping_mul(t) as u16 >> 8) as i16,
