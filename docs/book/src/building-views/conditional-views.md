@@ -25,7 +25,7 @@ Buoyant provides two macros for creating content conditionally.
 
 ## Conditional Views with `if_view!`
 
-The `if_view!` macro allows you to write views as-if you're writing a plain `if` statement.
+The `if_view!` macro allows you to write views as if you were writing a plain `if` statement.
 
 ![Redacted If View](./images/if-redacted.png)
 

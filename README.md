@@ -54,7 +54,7 @@ fn toggle_button(is_on: bool) -> impl EmbeddedGraphicsView<Rgb565> {
 Static layout and animation between layouts are relatively feature-complete, aside from
 transitions. You should be able to construct most desired layouts and animations.
 
-- [x] Stacks of hetereogeneos views (VStack, HStack, ZStack)
+- [x] Stacks of heterogeneous views (VStack, HStack, ZStack)
 - [x] Stacks of homogeneous views (ForEach) - partial, vertical only
 - [x] Common SwiftUI primitives (Spacer, Divider)
 - [x] Conditional views, with match variable binding
@@ -80,7 +80,7 @@ planned feature.
 ## Who should use this?
 
 This project could be used in production by the brave, but is probably better suited
-for hobby projects at this point. It's lightyears better than dealing with raw
+for hobby projects at this point. It's significantly better than dealing with raw
 embedded-graphics. If you're familiar with SwiftUI, you should feel especially at home.
 
 ## License

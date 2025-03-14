@@ -147,8 +147,6 @@ impl Axis {
 
 pub trait Layout: Sized {
     type Sublayout: Clone + PartialEq;
-    // fn flexibility(&self, axis: Axis, env: &impl LayoutEnvironment) -> (Dimensions, Dimensions);
-
     /// The size of the view given the offer
     fn layout(
         &self,
