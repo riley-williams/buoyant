@@ -14,13 +14,13 @@ pub struct Size {
 impl Size {
     #[must_use]
     pub const fn new(width: u16, height: u16) -> Self {
-        Size { width, height }
+        Self { width, height }
     }
 
     /// Returns the smallest size that contains both sizes.
     #[must_use]
-    pub fn union(&self, rhs: Size) -> Size {
-        Size {
+    pub fn union(&self, rhs: Self) -> Self {
+        Self {
             width: max(self.width, rhs.width),
             height: max(self.height, rhs.height),
         }
@@ -28,8 +28,8 @@ impl Size {
 
     /// Returns the overlapping area of the two sizes, which is the min of the two dimensions.
     #[must_use]
-    pub fn intersection(&self, rhs: Size) -> Size {
-        Size {
+    pub fn intersection(&self, rhs: Self) -> Self {
+        Self {
             width: self.width.min(rhs.width),
             height: self.height.min(rhs.height),
         }
@@ -37,7 +37,7 @@ impl Size {
 
     #[must_use]
     pub const fn zero() -> Self {
-        Size {
+        Self {
             width: 0,
             height: 0,
         }
@@ -57,9 +57,9 @@ impl Size {
 }
 
 impl core::ops::Add for Size {
-    type Output = Size;
-    fn add(self, rhs: Size) -> Size {
-        Size {
+    type Output = Self;
+    fn add(self, rhs: Self) -> Self {
+        Self {
             width: self.width + rhs.width,
             height: self.height + rhs.height,
         }
@@ -69,7 +69,7 @@ impl core::ops::Add for Size {
 #[cfg(feature = "embedded-graphics")]
 impl From<embedded_graphics_core::geometry::Size> for Size {
     fn from(value: embedded_graphics_core::geometry::Size) -> Self {
-        Size {
+        Self {
             width: value.width as u16,
             height: value.height as u16,
         }
@@ -79,13 +79,13 @@ impl From<embedded_graphics_core::geometry::Size> for Size {
 #[cfg(feature = "embedded-graphics")]
 impl From<Size> for embedded_graphics_core::geometry::Size {
     fn from(value: Size) -> Self {
-        embedded_graphics_core::geometry::Size::new(u32::from(value.width), u32::from(value.height))
+        Self::new(u32::from(value.width), u32::from(value.height))
     }
 }
 
 impl Interpolate for Size {
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
-        Size {
+        Self {
             width: Interpolate::interpolate(from.width, to.width, amount),
             height: Interpolate::interpolate(from.height, to.height, amount),
         }
@@ -99,9 +99,9 @@ pub struct Point {
 }
 
 impl core::ops::Add for Point {
-    type Output = Point;
-    fn add(self, rhs: Point) -> Point {
-        Point {
+    type Output = Self;
+    fn add(self, rhs: Self) -> Self {
+        Self {
             x: self.x + rhs.x,
             y: self.y + rhs.y,
         }
@@ -109,9 +109,9 @@ impl core::ops::Add for Point {
 }
 
 impl core::ops::Sub for Point {
-    type Output = Point;
-    fn sub(self, rhs: Point) -> Point {
-        Point {
+    type Output = Self;
+    fn sub(self, rhs: Self) -> Self {
+        Self {
             x: self.x - rhs.x,
             y: self.y - rhs.y,
         }
@@ -121,18 +121,18 @@ impl core::ops::Sub for Point {
 impl Point {
     #[must_use]
     pub const fn new(x: i16, y: i16) -> Self {
-        Point { x, y }
+        Self { x, y }
     }
 
     #[must_use]
     pub const fn zero() -> Self {
-        Point { x: 0, y: 0 }
+        Self { x: 0, y: 0 }
     }
 }
 
 impl Interpolate for Point {
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
-        Point {
+        Self {
             x: (((i32::from(amount) * i32::from(to.x))
                 + (i32::from(255 - amount) * i32::from(from.x)))
                 / 255) as i16,
@@ -146,21 +146,21 @@ impl Interpolate for Point {
 #[cfg(feature = "embedded-graphics")]
 impl From<Point> for embedded_graphics_core::geometry::Point {
     fn from(value: Point) -> Self {
-        embedded_graphics_core::geometry::Point::new(i32::from(value.x), i32::from(value.y))
+        Self::new(i32::from(value.x), i32::from(value.y))
     }
 }
 
 #[cfg(feature = "embedded-graphics")]
 impl From<embedded_graphics_core::geometry::Point> for Point {
     fn from(value: embedded_graphics_core::geometry::Point) -> Self {
-        Point {
+        Self {
             x: value.x as i16,
             y: value.y as i16,
         }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct Frame {
     pub size: Size,
     pub origin: Point,
@@ -169,21 +169,21 @@ pub struct Frame {
 impl Frame {
     #[must_use]
     pub const fn new(origin: Point, size: Size) -> Self {
-        Frame { size, origin }
+        Self { size, origin }
     }
 }
 
 #[cfg(feature = "embedded-graphics")]
 impl From<Frame> for embedded_graphics_core::primitives::Rectangle {
     fn from(value: Frame) -> Self {
-        embedded_graphics_core::primitives::Rectangle::new(value.origin.into(), value.size.into())
+        Self::new(value.origin.into(), value.size.into())
     }
 }
 
 #[cfg(feature = "embedded-graphics")]
 impl From<embedded_graphics_core::primitives::Rectangle> for Frame {
     fn from(value: embedded_graphics_core::primitives::Rectangle) -> Self {
-        Frame {
+        Self {
             origin: value.top_left.into(),
             size: value.size.into(),
         }

@@ -5,7 +5,7 @@ use crate::{
     view::{HorizontalTextAlignment, WhitespaceWrap},
 };
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Text<'a, T, F> {
     pub origin: Point,
     pub size: Size,

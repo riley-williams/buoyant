@@ -12,21 +12,21 @@ pub trait Interpolate: Copy + PartialEq {
 impl Interpolate for u16 {
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
         (((u32::from(amount) * u32::from(to)) + (u32::from(255 - amount) * u32::from(from))) / 255)
-            as u16
+            as Self
     }
 }
 
 impl Interpolate for i16 {
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
         (((i32::from(amount) * i32::from(to)) + (i32::from(255 - amount) * i32::from(from))) / 255)
-            as i16
+            as Self
     }
 }
 
 // TODO: This isn't correct...close enough for now
 impl Interpolate for u32 {
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
-        ((u32::from(amount) * to) + (u32::from(255 - amount) * from)) / 255
+        ((Self::from(amount) * to) + (Self::from(255 - amount) * from)) / 255
     }
 }
 
@@ -46,7 +46,7 @@ impl Interpolate for crossterm::style::Colors {
         let foreground = interpolate_crossterm_colors(from.foreground, to.foreground, amount);
         let background = interpolate_crossterm_colors(from.background, to.background, amount);
 
-        crossterm::style::Colors {
+        Self {
             foreground,
             background,
         }

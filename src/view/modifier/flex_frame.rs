@@ -157,12 +157,14 @@ impl<V: Layout> Layout for FlexFrame<V> {
                 self.min_width,
                 self.max_width.map(Into::into),
             )),
-            ProposedDimension::Compact => match self.ideal_width {
-                Some(ideal_width) => ProposedDimension::Exact(
-                    self.min_width.map_or(ideal_width, |w| w.max(ideal_width)),
-                ),
-                None => ProposedDimension::Compact,
-            },
+            ProposedDimension::Compact => {
+                self.ideal_width
+                    .map_or(ProposedDimension::Compact, |ideal_width| {
+                        ProposedDimension::Exact(
+                            self.min_width.map_or(ideal_width, |w| w.max(ideal_width)),
+                        )
+                    })
+            }
             ProposedDimension::Infinite => match self.max_width {
                 Some(max_width) if max_width.is_infinite() => ProposedDimension::Infinite,
                 Some(max_width) => ProposedDimension::Exact(max_width.into()),
@@ -176,13 +178,15 @@ impl<V: Layout> Layout for FlexFrame<V> {
                 self.min_height,
                 self.max_height.map(Into::into),
             )),
-            ProposedDimension::Compact => match self.ideal_height {
-                Some(ideal_height) => ProposedDimension::Exact(
-                    self.min_height
-                        .map_or(ideal_height, |h| h.max(ideal_height)),
-                ),
-                None => ProposedDimension::Compact,
-            },
+            ProposedDimension::Compact => {
+                self.ideal_height
+                    .map_or(ProposedDimension::Compact, |ideal_height| {
+                        ProposedDimension::Exact(
+                            self.min_height
+                                .map_or(ideal_height, |h| h.max(ideal_height)),
+                        )
+                    })
+            }
             ProposedDimension::Infinite => match self.max_height {
                 Some(max_height) if max_height.is_infinite() => ProposedDimension::Infinite,
                 Some(max_height) => ProposedDimension::Exact(max_height.into()),

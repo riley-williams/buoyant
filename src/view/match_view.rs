@@ -5,18 +5,18 @@ use crate::{
 };
 
 /// A view that can conditionally render one of N subtrees based on the enum variant.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MatchView<T> {
     branch: T,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Branch2<V0, V1> {
     Variant0(V0),
     Variant1(V1),
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Branch3<V0, V1, V2> {
     Variant0(V0),
     Variant1(V1),

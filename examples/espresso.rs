@@ -3,7 +3,7 @@
 //! This example allows you to switch between three tabs using the left and right arrow keys.
 //! The settings can be toggled using the `b`, `w`, and `o` keys.
 //!
-//! To run this example using the embedded_graphics simulator, you must have the `sdl2` package installed.
+//! To run this example using the `embedded_graphics` simulator, you must have the `sdl2` package installed.
 //! See [SDL2](https://github.com/Rust-SDL2/rust-sdl2) for installation instructions.
 
 use std::time::{Duration, Instant};
@@ -60,7 +60,7 @@ mod font {
 mod color {
     use embedded_graphics::prelude::*;
 
-    /// Use this alias instead of directly referring to a specific embedded_graphics
+    /// Use this alias instead of directly referring to a specific `embedded_graphics`
     /// color type to allow portability between displays
     pub type Space = embedded_graphics::pixelcolor::Rgb888;
     pub const ACCENT: Space = Space::CSS_LIGHT_SKY_BLUE;
@@ -133,17 +133,17 @@ enum Tab {
 impl Tab {
     fn next(&mut self) {
         *self = match self {
-            Tab::Brew => Tab::Clean,
-            Tab::Clean => Tab::Settings,
-            Tab::Settings => Tab::Brew,
+            Self::Brew => Self::Clean,
+            Self::Clean => Self::Settings,
+            Self::Settings => Self::Brew,
         };
     }
 
     fn previous(&mut self) {
         *self = match self {
-            Tab::Brew => Tab::Settings,
-            Tab::Clean => Tab::Brew,
-            Tab::Settings => Tab::Clean,
+            Self::Brew => Self::Settings,
+            Self::Clean => Self::Brew,
+            Self::Settings => Self::Clean,
         };
     }
 }

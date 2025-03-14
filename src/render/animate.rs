@@ -37,6 +37,7 @@ impl<T, U: PartialEq> Animate<T, U> {
 }
 
 impl<T: AnimatedJoin, U: PartialEq> AnimatedJoin for Animate<T, U> {
+    #[expect(clippy::useless_let_if_seq)]
     fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
         let (end_time, duration) = if source.value != target.value {
             let duration = target.animation.duration;

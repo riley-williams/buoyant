@@ -76,18 +76,18 @@ impl Curve {
     #[must_use]
     pub fn factor(&self, time: Duration, duration: Duration) -> u8 {
         match self {
-            Curve::Linear => (time.as_millis() * 255)
+            Self::Linear => (time.as_millis() * 255)
                 .checked_div(duration.as_millis())
                 .unwrap_or(255)
                 .min(255) as u8,
-            Curve::EaseIn => {
+            Self::EaseIn => {
                 let x = (time.as_millis() * 256)
                     .checked_div(duration.as_millis())
                     .unwrap_or(255) as u64;
                 let x_2 = (x * x) >> 8;
                 x_2.min(255) as u8
             }
-            Curve::EaseOut => {
+            Self::EaseOut => {
                 let duration_ms = duration.as_millis();
                 let x = (duration_ms.saturating_sub(time.as_millis()) * 256)
                     .checked_div(duration_ms)
@@ -95,7 +95,7 @@ impl Curve {
                 let x_2 = (x * x) >> 8;
                 255u8 - x_2.min(255) as u8
             }
-            Curve::EaseInOut => {
+            Self::EaseInOut => {
                 let x = (time.as_millis() * 256)
                     .checked_div(duration.as_millis())
                     .unwrap_or(255) as i64;
@@ -119,16 +119,16 @@ impl Curve {
     #[allow(dead_code)]
     fn factor_f32(self, time: Duration, duration: Duration) -> f32 {
         match self {
-            Curve::Linear => time.as_secs_f32() / duration.as_secs_f32(),
-            Curve::EaseIn => {
+            Self::Linear => time.as_secs_f32() / duration.as_secs_f32(),
+            Self::EaseIn => {
                 let x = time.as_secs_f32() / duration.as_secs_f32();
                 x * x
             }
-            Curve::EaseOut => {
+            Self::EaseOut => {
                 let x = time.as_secs_f32() / duration.as_secs_f32();
                 1.0 - (1.0 - x) * (1.0 - x)
             }
-            Curve::EaseInOut => {
+            Self::EaseInOut => {
                 let x = time.as_secs_f32() / duration.as_secs_f32();
                 if x < 0.5 {
                     2.0 * x * x

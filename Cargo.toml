@@ -38,8 +38,29 @@ debug = true
 unsafe_code = "forbid"
 
 [lints.clippy]
-pedantic = "warn"
+pedantic = { level = "deny", priority = -1 }
 
-# TODO: Disabled for now.
-cast_possible_wrap = { level = "allow", priority = 1 }
-cast_possible_truncation = { level = "allow", priority = 1 }
+useless_let_if_seq = "warn"
+missing_panics_doc = "warn"
+too_long_first_doc_paragraph = "warn"
+needless_pass_by_ref_mut = "deny"
+use_self = "deny"
+derive_partial_eq_without_eq = "deny"
+type_repetition_in_bounds = "deny"
+option_if_let_else = "deny"
+
+# TODO: Disabled for now, desired fix
+cast_possible_wrap = "allow"
+cast_possible_truncation = "allow"
+exhaustive_structs = "allow"                # warn in 0.5.0
+exhaustive_enums = "allow"                  # warn in 0.5.0
+field_scoped_visibility_modifiers = "allow"
+shadow_unrelated = "allow"
+ref_patterns = "allow"
+cast_sign_loss = "allow"
+string_slice = "allow"
+renamed_function_params = "allow"
+float_arithmetic = "allow"
+indexing_slicing = "allow"
+as_conversions = "allow"
+absolute_paths = "allow"                    # might not make sense...

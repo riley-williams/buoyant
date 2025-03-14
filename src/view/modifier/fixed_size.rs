@@ -44,12 +44,12 @@ impl<V: Layout> Layout for FixedSize<V> {
             offer.height
         };
 
-        let offer = ProposedDimensions {
+        let child_offer = ProposedDimensions {
             width: proposed_width,
             height: proposed_height,
         };
 
-        self.child.layout(&offer, env)
+        self.child.layout(&child_offer, env)
     }
 
     fn priority(&self) -> i8 {

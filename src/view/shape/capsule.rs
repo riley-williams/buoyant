@@ -6,7 +6,7 @@ use crate::{
 };
 
 /// A capsule primitive, oriented horizontally
-#[derive(Debug, Copy, Clone, PartialEq, Default)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Default)]
 pub struct Capsule;
 
 impl Layout for Capsule {

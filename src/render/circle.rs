@@ -13,7 +13,7 @@ impl AnimatedJoin for Circle {
     fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
         let origin = Point::interpolate(source.origin, target.origin, domain.factor);
         let diameter = u16::interpolate(source.diameter, target.diameter, domain.factor);
-        Circle { origin, diameter }
+        Self { origin, diameter }
     }
 }
 

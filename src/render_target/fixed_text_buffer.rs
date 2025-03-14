@@ -3,7 +3,7 @@ use core::fmt::{Display, Formatter, Result};
 use crate::{primitives::Size, render::CharacterRenderTarget};
 
 /// A fixed size text buffer
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FixedTextBuffer<const W: usize, const H: usize> {
     pub text: [[char; W]; H],
 }

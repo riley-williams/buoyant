@@ -16,7 +16,7 @@ impl AnimatedJoin for RoundedRect {
         let origin = Point::interpolate(source.origin, target.origin, domain.factor);
         let size = Size::interpolate(source.size, target.size, domain.factor);
         let r = u16::interpolate(source.corner_radius, target.corner_radius, domain.factor);
-        RoundedRect {
+        Self {
             origin,
             size,
             corner_radius: r,
