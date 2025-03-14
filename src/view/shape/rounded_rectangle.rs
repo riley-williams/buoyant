@@ -5,7 +5,7 @@ use crate::{
     render::Renderable,
 };
 
-#[derive(Debug, Copy, Clone, PartialEq, Default)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Default)]
 pub struct RoundedRectangle {
     corner_radius: u16,
 }

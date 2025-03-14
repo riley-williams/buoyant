@@ -12,7 +12,7 @@ impl<'a, F: FontLayout> WhitespaceWrap<'a, F> {
     pub fn new(text: &'a str, available_width: impl Into<ProposedDimension>, font: &'a F) -> Self {
         Self {
             remaining: text,
-            overflow: &text[0..0],
+            overflow: "",
             available_width: available_width.into(),
             font,
         }
@@ -44,7 +44,7 @@ impl<'a, F: FontLayout> Iterator for WhitespaceWrap<'a, F> {
                 return Some(result);
             }
             let result = self.overflow;
-            self.overflow = &self.overflow[0..0];
+            self.overflow = "";
             return Some(result);
         }
 
@@ -112,13 +112,13 @@ impl<'a, F: FontLayout> Iterator for WhitespaceWrap<'a, F> {
                 }
             }
             let result = &self.remaining[..end];
-            self.remaining = &self.remaining[0..0];
+            self.remaining = "";
             return Some(result);
         }
 
         // No wrap needed - return all remaining text
         let result = self.remaining;
-        self.remaining = &self.remaining[0..0];
+        self.remaining = "";
         Some(result.trim_end())
     }
 }
@@ -263,6 +263,13 @@ mod tests {
     fn newlines_wrap_after_forced_overflow() {
         let wrap = super::WhitespaceWrap::new("hello\nworld", 4, &FONT);
         assert_eq!(wrap.collect::<Vec<_>>(), vec!["hell", "o", "worl", "d"]);
+    }
+
+    #[ignore = "This test is correct, fix later"]
+    #[test]
+    fn multi_byte_unicode_wraps_correctly() {
+        let wrap = super::WhitespaceWrap::new("y̆y̆y̆y̆y̆ y̆y̆y̆ y̆y̆ y̆", 4, &FONT);
+        assert_eq!(wrap.collect::<Vec<_>>(), vec!["y̆y̆y̆y̆", "y̆", "y̆y̆y̆", "y̆y̆ y̆"]);
     }
 
     /// Characters are 1 unit, whitespace is 2 units, and digits are the width of the digit value

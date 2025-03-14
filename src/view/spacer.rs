@@ -5,7 +5,7 @@ use crate::{
     render::NullRender,
 };
 
-#[derive(Debug, Default, PartialEq)]
+#[derive(Debug, Default, PartialEq, Eq)]
 pub struct Spacer {
     min_length: u16,
 }

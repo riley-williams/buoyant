@@ -5,13 +5,13 @@ use crate::{
 
 use super::AnimatedJoin;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum OneOf2<V0, V1> {
     Variant0(V0),
     Variant1(V1),
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum OneOf3<V0, V1, V2> {
     Variant0(V0),
     Variant1(V1),
@@ -21,11 +21,11 @@ pub enum OneOf3<V0, V1, V2> {
 impl<V0: AnimatedJoin, V1: AnimatedJoin> AnimatedJoin for OneOf2<V0, V1> {
     fn join(source: Self, target: Self, domain: &crate::render::AnimationDomain) -> Self {
         match (source, target) {
-            (OneOf2::Variant0(source), OneOf2::Variant0(target)) => {
-                OneOf2::Variant0(V0::join(source, target, domain))
+            (Self::Variant0(source), Self::Variant0(target)) => {
+                Self::Variant0(V0::join(source, target, domain))
             }
-            (OneOf2::Variant1(source), OneOf2::Variant1(target)) => {
-                OneOf2::Variant1(V1::join(source, target, domain))
+            (Self::Variant1(source), Self::Variant1(target)) => {
+                Self::Variant1(V1::join(source, target, domain))
             }
             (_, target) => target,
         }
@@ -35,14 +35,14 @@ impl<V0: AnimatedJoin, V1: AnimatedJoin> AnimatedJoin for OneOf2<V0, V1> {
 impl<V0: AnimatedJoin, V1: AnimatedJoin, V2: AnimatedJoin> AnimatedJoin for OneOf3<V0, V1, V2> {
     fn join(source: Self, target: Self, domain: &crate::render::AnimationDomain) -> Self {
         match (source, target) {
-            (OneOf3::Variant0(source), OneOf3::Variant0(target)) => {
-                OneOf3::Variant0(V0::join(source, target, domain))
+            (Self::Variant0(source), Self::Variant0(target)) => {
+                Self::Variant0(V0::join(source, target, domain))
             }
-            (OneOf3::Variant1(source), OneOf3::Variant1(target)) => {
-                OneOf3::Variant1(V1::join(source, target, domain))
+            (Self::Variant1(source), Self::Variant1(target)) => {
+                Self::Variant1(V1::join(source, target, domain))
             }
-            (OneOf3::Variant2(source), OneOf3::Variant2(target)) => {
-                OneOf3::Variant2(V2::join(source, target, domain))
+            (Self::Variant2(source), Self::Variant2(target)) => {
+                Self::Variant2(V2::join(source, target, domain))
             }
             (_, target) => target,
         }
@@ -56,8 +56,8 @@ where
 {
     fn render(&self, target: &mut impl CharacterRenderTarget<Color = C>, color: &C, offset: Point) {
         match self {
-            OneOf2::Variant0(v0) => v0.render(target, color, offset),
-            OneOf2::Variant1(v1) => v1.render(target, color, offset),
+            Self::Variant0(v0) => v0.render(target, color, offset),
+            Self::Variant1(v1) => v1.render(target, color, offset),
         }
     }
 
@@ -71,10 +71,10 @@ where
         domain: &crate::render::AnimationDomain,
     ) {
         match (source, target) {
-            (OneOf2::Variant0(source), OneOf2::Variant0(target)) => {
+            (Self::Variant0(source), Self::Variant0(target)) => {
                 V0::render_animated(render_target, source, target, style, offset, domain);
             }
-            (OneOf2::Variant1(source), OneOf2::Variant1(target)) => {
+            (Self::Variant1(source), Self::Variant1(target)) => {
                 V1::render_animated(render_target, source, target, style, offset, domain);
             }
             (_, target) => {
@@ -92,9 +92,9 @@ where
 {
     fn render(&self, target: &mut impl CharacterRenderTarget<Color = C>, color: &C, offset: Point) {
         match self {
-            OneOf3::Variant0(v0) => v0.render(target, color, offset),
-            OneOf3::Variant1(v1) => v1.render(target, color, offset),
-            OneOf3::Variant2(v2) => v2.render(target, color, offset),
+            Self::Variant0(v0) => v0.render(target, color, offset),
+            Self::Variant1(v1) => v1.render(target, color, offset),
+            Self::Variant2(v2) => v2.render(target, color, offset),
         }
     }
 
@@ -108,13 +108,13 @@ where
         domain: &crate::render::AnimationDomain,
     ) {
         match (source, target) {
-            (OneOf3::Variant0(source), OneOf3::Variant0(target)) => {
+            (Self::Variant0(source), Self::Variant0(target)) => {
                 V0::render_animated(render_target, source, target, style, offset, domain);
             }
-            (OneOf3::Variant1(source), OneOf3::Variant1(target)) => {
+            (Self::Variant1(source), Self::Variant1(target)) => {
                 V1::render_animated(render_target, source, target, style, offset, domain);
             }
-            (OneOf3::Variant2(source), OneOf3::Variant2(target)) => {
+            (Self::Variant2(source), Self::Variant2(target)) => {
                 V2::render_animated(render_target, source, target, style, offset, domain);
             }
             (_, target) => {
@@ -140,8 +140,8 @@ mod embedded_graphics_render {
     {
         fn render(&self, target: &mut impl DrawTarget<Color = C>, color: &C, offset: Point) {
             match self {
-                OneOf2::Variant0(v0) => v0.render(target, color, offset),
-                OneOf2::Variant1(v1) => v1.render(target, color, offset),
+                Self::Variant0(v0) => v0.render(target, color, offset),
+                Self::Variant1(v1) => v1.render(target, color, offset),
             }
         }
 
@@ -155,10 +155,10 @@ mod embedded_graphics_render {
             domain: &crate::render::AnimationDomain,
         ) {
             match (source, target) {
-                (OneOf2::Variant0(source), OneOf2::Variant0(target)) => {
+                (Self::Variant0(source), Self::Variant0(target)) => {
                     V0::render_animated(render_target, source, target, style, offset, domain);
                 }
-                (OneOf2::Variant1(source), OneOf2::Variant1(target)) => {
+                (Self::Variant1(source), Self::Variant1(target)) => {
                     V1::render_animated(render_target, source, target, style, offset, domain);
                 }
                 (_, target) => {
@@ -177,9 +177,9 @@ mod embedded_graphics_render {
     {
         fn render(&self, target: &mut impl DrawTarget<Color = C>, color: &C, offset: Point) {
             match self {
-                OneOf3::Variant0(v0) => v0.render(target, color, offset),
-                OneOf3::Variant1(v1) => v1.render(target, color, offset),
-                OneOf3::Variant2(v2) => v2.render(target, color, offset),
+                Self::Variant0(v0) => v0.render(target, color, offset),
+                Self::Variant1(v1) => v1.render(target, color, offset),
+                Self::Variant2(v2) => v2.render(target, color, offset),
             }
         }
 
@@ -193,13 +193,13 @@ mod embedded_graphics_render {
             domain: &crate::render::AnimationDomain,
         ) {
             match (source, target) {
-                (OneOf3::Variant0(source), OneOf3::Variant0(target)) => {
+                (Self::Variant0(source), Self::Variant0(target)) => {
                     V0::render_animated(render_target, source, target, style, offset, domain);
                 }
-                (OneOf3::Variant1(source), OneOf3::Variant1(target)) => {
+                (Self::Variant1(source), Self::Variant1(target)) => {
                     V1::render_animated(render_target, source, target, style, offset, domain);
                 }
-                (OneOf3::Variant2(source), OneOf3::Variant2(target)) => {
+                (Self::Variant2(source), Self::Variant2(target)) => {
                     V2::render_animated(render_target, source, target, style, offset, domain);
                 }
                 (_, target) => {

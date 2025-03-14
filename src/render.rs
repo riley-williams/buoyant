@@ -125,7 +125,7 @@ mod embedded_graphics_rendering {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AnimationDomain {
     /// The animation factor of this domain, ranging from 0 to 255
     pub factor: u8,

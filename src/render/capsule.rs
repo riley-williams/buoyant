@@ -19,7 +19,7 @@ impl AnimatedJoin for Capsule {
     fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
         let origin = Point::interpolate(source.origin, target.origin, domain.factor);
         let size = Size::interpolate(source.size, target.size, domain.factor);
-        Capsule::new(origin, size)
+        Self::new(origin, size)
     }
 }
 

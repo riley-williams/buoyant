@@ -139,7 +139,7 @@ where
             size
         };
 
-        let size = layout_n(&mut subview_stages, *offer, self.spacing, layout_fn);
+        let size = layout_n(&subview_stages, *offer, self.spacing, layout_fn);
         ResolvedLayout {
             sublayouts,
             resolved_size: size,
@@ -149,7 +149,6 @@ where
 
 impl<'a, const N: usize, I, V: Renderable<C>, C, F> Renderable<C> for ForEachView<'a, N, I, V, F>
 where
-    V: Layout,
     F: Fn(&'a I) -> V,
 {
     type Renderables = heapless::Vec<V::Renderables, N>;
@@ -190,7 +189,7 @@ where
 }
 
 fn layout_n<const N: usize>(
-    subviews: &mut heapless::Vec<(i8, bool), N>,
+    subviews: &heapless::Vec<(i8, bool), N>,
     offer: ProposedDimensions,
     spacing: u16,
     mut layout_fn: impl FnMut(usize, ProposedDimensions) -> Dimensions,

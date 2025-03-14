@@ -3,7 +3,7 @@ use crate::{
     primitives::{Dimensions, ProposedDimension, ProposedDimensions},
 };
 
-#[derive(Clone, Copy, Debug, PartialEq, Default)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub enum LayoutDirection {
     /// Content is laid out horizontally, from left to right. Typically in a `HStack`
     #[default]
@@ -12,7 +12,7 @@ pub enum LayoutDirection {
     Vertical,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Default)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub enum Alignment {
     TopLeading,
     Top,
@@ -31,11 +31,11 @@ impl Alignment {
     #[must_use]
     pub const fn horizontal(&self) -> HorizontalAlignment {
         match self {
-            Alignment::TopLeading | Alignment::Leading | Alignment::BottomLeading => {
+            Self::TopLeading | Self::Leading | Self::BottomLeading => {
                 HorizontalAlignment::Leading
             }
-            Alignment::Top | Alignment::Center | Alignment::Bottom => HorizontalAlignment::Center,
-            Alignment::TopTrailing | Alignment::Trailing | Alignment::BottomTrailing => {
+            Self::Top | Self::Center | Self::Bottom => HorizontalAlignment::Center,
+            Self::TopTrailing | Self::Trailing | Self::BottomTrailing => {
                 HorizontalAlignment::Trailing
             }
         }
@@ -45,20 +45,20 @@ impl Alignment {
     #[must_use]
     pub const fn vertical(&self) -> VerticalAlignment {
         match self {
-            Alignment::TopLeading | Alignment::Top | Alignment::TopTrailing => {
+            Self::TopLeading | Self::Top | Self::TopTrailing => {
                 VerticalAlignment::Top
             }
-            Alignment::Leading | Alignment::Center | Alignment::Trailing => {
+            Self::Leading | Self::Center | Self::Trailing => {
                 VerticalAlignment::Center
             }
-            Alignment::BottomLeading | Alignment::Bottom | Alignment::BottomTrailing => {
+            Self::BottomLeading | Self::Bottom | Self::BottomTrailing => {
                 VerticalAlignment::Bottom
             }
         }
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Default)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub enum HorizontalAlignment {
     /// Align the content to the leading edge
     Leading,
@@ -73,14 +73,14 @@ impl HorizontalAlignment {
     #[must_use]
     pub const fn align(&self, available: i16, content: i16) -> i16 {
         match self {
-            HorizontalAlignment::Leading => 0,
-            HorizontalAlignment::Center => (available - content) / 2,
-            HorizontalAlignment::Trailing => available - content,
+            Self::Leading => 0,
+            Self::Center => (available - content) / 2,
+            Self::Trailing => available - content,
         }
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Default)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 /// Strategy to align the heights of items that do not fill the available frame height
 pub enum VerticalAlignment {
     /// Align the content to the top edge
@@ -96,14 +96,14 @@ impl VerticalAlignment {
     #[must_use]
     pub const fn align(&self, available: i16, content: i16) -> i16 {
         match self {
-            VerticalAlignment::Top => 0,
-            VerticalAlignment::Center => (available - content) / 2,
-            VerticalAlignment::Bottom => available - content,
+            Self::Top => 0,
+            Self::Center => (available - content) / 2,
+            Self::Bottom => available - content,
         }
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ResolvedLayout<C: Clone + PartialEq> {
     pub sublayouts: C,
     pub resolved_size: Dimensions,
@@ -119,11 +119,11 @@ impl Axis {
     #[must_use]
     pub const fn into_min_proposal(self) -> ProposedDimensions {
         match self {
-            Axis::FixedWidth(w) => ProposedDimensions {
+            Self::FixedWidth(w) => ProposedDimensions {
                 width: ProposedDimension::Exact(w),
                 height: ProposedDimension::Exact(0),
             },
-            Axis::FixedHeight(h) => ProposedDimensions {
+            Self::FixedHeight(h) => ProposedDimensions {
                 width: ProposedDimension::Exact(0),
                 height: ProposedDimension::Exact(h),
             },
@@ -133,11 +133,11 @@ impl Axis {
     #[must_use]
     pub const fn into_max_proposal(self) -> ProposedDimensions {
         match self {
-            Axis::FixedWidth(w) => ProposedDimensions {
+            Self::FixedWidth(w) => ProposedDimensions {
                 width: ProposedDimension::Exact(w),
                 height: ProposedDimension::Infinite,
             },
-            Axis::FixedHeight(h) => ProposedDimensions {
+            Self::FixedHeight(h) => ProposedDimensions {
                 width: ProposedDimension::Infinite,
                 height: ProposedDimension::Exact(h),
             },

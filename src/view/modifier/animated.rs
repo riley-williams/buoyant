@@ -13,7 +13,7 @@ pub struct Animated<View, Value> {
 
 impl<View, Value: PartialEq + Clone> Animated<View, Value> {
     pub const fn new(inner: View, animation: Animation, value: Value) -> Self {
-        Animated {
+        Self {
             inner,
             animation,
             value,

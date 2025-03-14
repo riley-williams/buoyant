@@ -17,12 +17,12 @@ pub struct DefaultEnvironment {
 impl DefaultEnvironment {
     #[must_use]
     pub const fn new(app_time: Duration) -> Self {
-        DefaultEnvironment { app_time }
+        Self { app_time }
     }
 
     #[must_use]
     pub fn non_animated() -> Self {
-        DefaultEnvironment {
+        Self {
             app_time: Duration::default(),
         }
     }
