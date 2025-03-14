@@ -18,7 +18,7 @@ pub trait FontLayout {
     }
 }
 
-/// A simple font for rendering non-unicode characters in a text buffer
+/// A simple font for rendering non-Unicode characters in a text buffer
 /// The width and height of all characters is 1.
 #[derive(Default, Clone, Copy, Debug, PartialEq, Eq)]
 pub struct CharacterBufferFont;

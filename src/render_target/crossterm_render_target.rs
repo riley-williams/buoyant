@@ -10,29 +10,51 @@ use std::io::{stdout, Stdout, Write};
 
 use crate::{primitives::Size, render::CharacterRenderTarget};
 
+/// A target that renders views to the terminal using the crossterm library.
+///
+/// The target will exit the alternate screen when dropped.
+///
+/// Example:
+/// ```
+/// # use buoyant::render_target::CrosstermRenderTarget;
+/// let mut target = CrosstermRenderTarget::default();
+///
+/// target.enter_fullscreen();
+/// target.clear();
+///
+/// // Render view...
+///
+/// ```
 #[derive(Debug)]
 pub struct CrosstermRenderTarget {
     stdout: Stdout,
 }
 
 impl CrosstermRenderTarget {
+    /// Enters the alternate (fullscreen) mode.
     pub fn enter_fullscreen(&mut self) {
         execute!(self.stdout, EnterAlternateScreen).unwrap();
     }
 
+    /// Exits the alternate (fullscreen) mode.
     pub fn exit_fullscreen(&mut self) {
         execute!(self.stdout, LeaveAlternateScreen).unwrap();
     }
 
+    /// Flushes the output buffer.
+    ///
+    /// Ignores errors produced by executing the command.
     pub fn flush(&mut self) {
-        self.stdout.flush().unwrap();
+        _ = self.stdout.flush();
     }
 
+    /// Returns the clear of this [`CrosstermRenderTarget`].
+    ///
+    /// Ignores errors produced by executing the command.
     pub fn clear(&mut self) {
         _ = self
             .stdout
-            .execute(terminal::Clear(terminal::ClearType::All))
-            .unwrap();
+            .execute(terminal::Clear(terminal::ClearType::All));
     }
 }
 
@@ -71,7 +93,10 @@ impl CharacterRenderTarget for CrosstermRenderTarget {
             styled_string = styled_string.on(background);
         }
         self.stdout
-            .queue(cursor::MoveTo(point.x as u16, point.y as u16))
+            .queue(cursor::MoveTo(
+                point.x.try_into().unwrap_or_default(),
+                point.y.try_into().unwrap_or_default(),
+            ))
             .unwrap()
             .queue(style::PrintStyledContent(styled_string))
             .unwrap();
@@ -91,7 +116,10 @@ impl CharacterRenderTarget for CrosstermRenderTarget {
             styled_char = styled_char.on(background);
         }
         self.stdout
-            .queue(cursor::MoveTo(point.x as u16, point.y as u16))
+            .queue(cursor::MoveTo(
+                point.x.try_into().unwrap_or_default(),
+                point.y.try_into().unwrap_or_default(),
+            ))
             .unwrap()
             .queue(style::PrintStyledContent(styled_char))
             .unwrap();
