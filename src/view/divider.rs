@@ -58,7 +58,7 @@ impl Layout for Divider {
     }
 }
 
-impl<C> Renderable<C> for Divider {
+impl Renderable for Divider {
     type Renderables = crate::render::Rect;
 
     fn render_tree(

@@ -78,7 +78,7 @@ impl<V: Layout> Layout for Padding<V> {
     }
 }
 
-impl<T: Renderable<C>, C> Renderable<C> for Padding<T> {
+impl<T: Renderable> Renderable for Padding<T> {
     type Renderables = T::Renderables;
 
     fn render_tree(

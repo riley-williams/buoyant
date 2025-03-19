@@ -55,7 +55,7 @@ impl<T: Layout, U: Layout> Layout for BackgroundView<T, U> {
     }
 }
 
-impl<C, T: Renderable<C>, U: Renderable<C>> Renderable<C> for BackgroundView<T, U> {
+impl<T: Renderable, U: Renderable> Renderable for BackgroundView<T, U> {
     // Tuples are rendered first to last
     type Renderables = (U::Renderables, T::Renderables);
 

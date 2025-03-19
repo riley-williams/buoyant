@@ -61,7 +61,7 @@ impl<V: Layout> Layout for FixedSize<V> {
     }
 }
 
-impl<T: Renderable<C>, C> Renderable<C> for FixedSize<T> {
+impl<T: Renderable> Renderable for FixedSize<T> {
     type Renderables = T::Renderables;
 
     fn render_tree(

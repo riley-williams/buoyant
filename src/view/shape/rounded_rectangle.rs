@@ -32,7 +32,7 @@ impl Layout for RoundedRectangle {
     }
 }
 
-impl<C> Renderable<C> for RoundedRectangle {
+impl Renderable for RoundedRectangle {
     type Renderables = crate::render::RoundedRect;
 
     fn render_tree(

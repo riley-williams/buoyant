@@ -101,7 +101,7 @@ impl<V: Layout> Layout for FixedFrame<V> {
     }
 }
 
-impl<T: Renderable<C>, C> Renderable<C> for FixedFrame<T> {
+impl<T: Renderable> Renderable for FixedFrame<T> {
     type Renderables = T::Renderables;
 
     fn render_tree(

@@ -38,7 +38,7 @@ impl<T: Layout> Layout for Hidden<T> {
     }
 }
 
-impl<C, T: Renderable<C>> Renderable<C> for Hidden<T> {
+impl<T: Renderable> Renderable for Hidden<T> {
     // Render nothing
     type Renderables = ();
 

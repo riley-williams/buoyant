@@ -41,7 +41,7 @@ impl<T: OriginDimensions> Layout for Image<'_, T> {
 }
 
 #[cfg(feature = "embedded-graphics")]
-impl<'a, C, T: ImageDrawable> Renderable<C> for Image<'a, T> {
+impl<'a, T: ImageDrawable> Renderable for Image<'a, T> {
     type Renderables = render::Image<'a, T>;
 
     fn render_tree(
