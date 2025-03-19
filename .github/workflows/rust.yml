@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install SDL2
-        run: sudo apt-get install libsdl2-dev
+        run: sudo apt-get update && sudo apt-get install libsdl2-dev
       - name: Build
         run: cargo build --verbose
       - name: Run tests
@@ -65,7 +65,7 @@ jobs:
           curl -sSL $url | tar -xz --directory=bin
           echo "$(pwd)/bin" >> $GITHUB_PATH
       - name: Install SDL2
-        run: sudo apt-get install libsdl2-dev
+        run: sudo apt-get update && sudo apt-get install libsdl2-dev
       - name: Run book tests
         run: |
           # Create build deps for mdbook to reference
