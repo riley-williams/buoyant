@@ -27,7 +27,7 @@ pub use zstack::ZStack;
 
 use modifier::{
     Animated, BackgroundView, FixedFrame, FixedSize, FlexFrame, ForegroundStyle, GeometryGroup,
-    Padding, Priority,
+    Hidden, Padding, Priority,
 };
 
 use crate::{
@@ -194,7 +194,7 @@ pub trait LayoutExtensions: Sized {
         GeometryGroup::new(self)
     }
 
-    /// A view that uses the layout of the foreground view and renders the background
+    /// Background uses the layout of the foreground view and renders the background
     /// behind it.
     ///
     /// Example:
@@ -216,6 +216,19 @@ pub trait LayoutExtensions: Sized {
     /// ```
     fn background<U>(self, background: impl FnOnce() -> U) -> BackgroundView<Self, U> {
         BackgroundView::new(self, background())
+    }
+
+    /// Lays out the view, but does not render it.
+    ///
+    /// The `.hidden()` modifier is occasionally useful for creating workarounds (read: hacks)
+    /// that produce otherwise impossible layouts. It is typically used in combination with
+    /// `.background(|| ...)` or [`ZStack`].
+    ///
+    /// This is intentionally not configurable with, e.g. `.hidden(true/false)`,
+    /// as it entirely prunes the subtree from the render tree type, resulting in no additional
+    /// memory or computation during rendering / animation.
+    fn hidden(self) -> Hidden<Self> {
+        Hidden::new(self)
     }
 }
 

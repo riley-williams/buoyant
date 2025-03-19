@@ -5,6 +5,7 @@ mod fixed_size;
 mod flex_frame;
 mod foreground_color;
 mod geometry_group;
+mod hidden;
 pub mod padding;
 mod priority;
 
@@ -15,5 +16,6 @@ pub(crate) use fixed_size::FixedSize;
 pub(crate) use flex_frame::FlexFrame;
 pub(crate) use foreground_color::ForegroundStyle;
 pub(crate) use geometry_group::GeometryGroup;
+pub(crate) use hidden::Hidden;
 pub(crate) use padding::Padding;
 pub(crate) use priority::Priority;
