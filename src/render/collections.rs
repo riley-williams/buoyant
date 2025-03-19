@@ -3,7 +3,7 @@ use crate::primitives::Point;
 
 macro_rules! impl_join_for_collections {
     ($(($n:tt, $type:ident)),+) => {
-        impl<$($type: crate::render::AnimatedJoin),+> crate::render::AnimatedJoin for ($($type),+) {
+        impl<$($type: crate::render::AnimatedJoin),+> crate::render::AnimatedJoin for ($($type,)+) {
             fn join(
                 source: Self,
                 target: Self,
@@ -25,6 +25,7 @@ macro_rules! impl_join_for_collections {
 
 #[rustfmt::skip]
 mod impl_join {
+    impl_join_for_collections!((0, T0));
     impl_join_for_collections!((0, T0), (1, T1));
     impl_join_for_collections!((0, T0), (1, T1), (2, T2));
     impl_join_for_collections!((0, T0), (1, T1), (2, T2), (3, T3));
@@ -56,7 +57,7 @@ mod embedded_graphics_impl {
 
     macro_rules! impl_render_for_collections {
     ($(($n:tt, $type:ident)),+) => {
-        impl<Color: embedded_graphics_core::pixelcolor::PixelColor, $($type: crate::render::EmbeddedGraphicsRender<Color> ),+> crate::render::EmbeddedGraphicsRender<Color> for ($($type),+) {
+        impl<Color: embedded_graphics_core::pixelcolor::PixelColor, $($type: crate::render::EmbeddedGraphicsRender<Color> ),+> crate::render::EmbeddedGraphicsRender<Color> for ($($type,)+) {
             fn render(
                 &self,
                 target: &mut impl embedded_graphics_core::draw_target::DrawTarget<Color = Color>,
@@ -93,6 +94,7 @@ mod embedded_graphics_impl {
 
     #[rustfmt::skip]
     mod impl_render {
+        impl_render_for_collections!((0, T0));
         impl_render_for_collections!((0, T0), (1, T1));
         impl_render_for_collections!((0, T0), (1, T1), (2, T2));
         impl_render_for_collections!((0, T0), (1, T1), (2, T2), (3, T3));
@@ -137,7 +139,7 @@ mod embedded_graphics_impl {
 
 macro_rules! impl_char_render_for_collections {
     ($(($n:tt, $type:ident)),+) => {
-        impl<Color, $($type: crate::render::CharacterRender<Color> ),+> crate::render::CharacterRender<Color> for ($($type),+) {
+        impl<Color, $($type: crate::render::CharacterRender<Color> ),+> crate::render::CharacterRender<Color> for ($($type,)+) {
             fn render(
                 &self,
                 target: &mut impl crate::render::CharacterRenderTarget<Color = Color>,
@@ -174,6 +176,7 @@ macro_rules! impl_char_render_for_collections {
 
 #[rustfmt::skip]
 mod impl_char_render {
+    impl_char_render_for_collections!((0, T0));
     impl_char_render_for_collections!((0, T0), (1, T1));
     impl_char_render_for_collections!((0, T0), (1, T1), (2, T2));
     impl_char_render_for_collections!((0, T0), (1, T1), (2, T2), (3, T3));
