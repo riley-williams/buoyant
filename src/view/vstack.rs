@@ -190,8 +190,8 @@ use paste::paste;
 macro_rules! impl_layout_for_vstack {
     ($(($n:tt, $type:ident)),+) => {
         paste! {
-        impl<$($type: Layout),+> Layout for VStack<($($type),+)> {
-            type Sublayout = ($(ResolvedLayout<$type::Sublayout>),+);
+        impl<$($type: Layout),+> Layout for VStack<($($type,)+)> {
+            type Sublayout = ($(ResolvedLayout<$type::Sublayout>,)+);
 
             fn layout(
                 &self,
@@ -222,14 +222,14 @@ macro_rules! impl_layout_for_vstack {
 
                 let total_size = layout_n(&mut subviews, *offer, self.spacing);
                 ResolvedLayout {
-                    sublayouts: ($([<c$n>].unwrap()),+),
+                    sublayouts: ($([<c$n>].unwrap(),)+),
                     resolved_size: total_size,
                 }
             }
         }
 
-        impl<$($type: Renderable<C>),+, C> Renderable<C> for VStack<($($type),+)> {
-            type Renderables = ($($type::Renderables),+);
+        impl<$($type: Renderable<C>),+, C> Renderable<C> for VStack<($($type,)+)> {
+            type Renderables = ($($type::Renderables,)+);
 
             #[allow(unused_assignments)]
             fn render_tree(
@@ -262,7 +262,7 @@ macro_rules! impl_layout_for_vstack {
                     }
                 )+
 
-                ($([<subtree_$n>]),+)
+                ($([<subtree_$n>],)+)
             }
         }
     }
@@ -282,6 +282,7 @@ macro_rules! count {
     ($head:tt $(, $rest:tt)*) => (1 + count!($($rest),*));
 }
 
+impl_layout_for_vstack!((0, T0));
 impl_layout_for_vstack!((0, T0), (1, T1));
 impl_layout_for_vstack!((0, T0), (1, T1), (2, T2));
 impl_layout_for_vstack!((0, T0), (1, T1), (2, T2), (3, T3));

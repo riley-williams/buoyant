@@ -81,8 +81,8 @@ impl<T> ZStack<T> {
 macro_rules! impl_layout_for_zstack {
     ($(($n:tt, $type:ident)),+) => {
         paste! {
-        impl<$($type: Layout),+> Layout for ZStack<($($type),+)> {
-            type Sublayout = ($(ResolvedLayout<$type::Sublayout>),+);
+        impl<$($type: Layout),+> Layout for ZStack<($($type,)+)> {
+            type Sublayout = ($(ResolvedLayout<$type::Sublayout>,)+);
 
             fn layout(
                 &self,
@@ -112,15 +112,15 @@ macro_rules! impl_layout_for_zstack {
 
                 ResolvedLayout {
                     sublayouts: ($(
-                        [<layout$n>]
-                    ),+),
+                        [<layout$n>],
+                    )+),
                     resolved_size: size.intersecting_proposal(offer),
                 }
             }
         }
 
-        impl<$($type: Renderable<C>),+, C> Renderable<C> for ZStack<($($type),+)> {
-            type Renderables = ($($type::Renderables),+);
+        impl<$($type: Renderable<C>),+, C> Renderable<C> for ZStack<($($type,)+)> {
+            type Renderables = ($($type::Renderables,)+);
 
             fn render_tree(
                 &self,
@@ -144,8 +144,8 @@ macro_rules! impl_layout_for_zstack {
 
                 (
                     $(
-                        self.items.$n.render_tree(&layout.sublayouts.$n, [<offset_$n>], env)
-                    ),+
+                        self.items.$n.render_tree(&layout.sublayouts.$n, [<offset_$n>], env),
+                    )+
                 )
             }
         }
@@ -153,6 +153,7 @@ macro_rules! impl_layout_for_zstack {
     }
 }
 
+impl_layout_for_zstack!((0, T0));
 impl_layout_for_zstack!((0, T0), (1, T1));
 impl_layout_for_zstack!((0, T0), (1, T1), (2, T2));
 impl_layout_for_zstack!((0, T0), (1, T1), (2, T2), (3, T3));

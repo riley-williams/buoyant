@@ -201,8 +201,8 @@ macro_rules! count {
 macro_rules! impl_layout_for_hstack {
     ($(($n:tt, $type:ident)),+) => {
         paste! {
-        impl<$($type: Layout),+> Layout for HStack<($($type),+)> {
-            type Sublayout = ($(ResolvedLayout<$type::Sublayout>),+);
+        impl<$($type: Layout),+> Layout for HStack<($($type,)+)> {
+            type Sublayout = ($(ResolvedLayout<$type::Sublayout>,)+);
 
             fn layout(
                 &self,
@@ -231,15 +231,15 @@ macro_rules! impl_layout_for_hstack {
                 let total_size = layout_n(&mut subviews, *offer, self.spacing);
                 ResolvedLayout {
                     sublayouts: ($(
-                        [<c $n>] .unwrap()
-                    ),+),
+                        [<c $n>] .unwrap(),
+                    )+),
                     resolved_size: total_size,
                 }
             }
         }
 
-        impl<$($type: Renderable<C>),+, C> Renderable<C> for HStack<($($type),+)> {
-            type Renderables = ($($type::Renderables),+);
+        impl<$($type: Renderable<C>),+, C> Renderable<C> for HStack<($($type,)+)> {
+            type Renderables = ($($type::Renderables,)+);
 
             #[allow(unused_assignments)]
             fn render_tree(
@@ -271,13 +271,14 @@ macro_rules! impl_layout_for_hstack {
                     }
                 )+
 
-                ($([<subtree_$n>]),+)
+                ($([<subtree_$n>],)+)
             }
         }
     }
     }
 }
 
+impl_layout_for_hstack!((0, T0));
 impl_layout_for_hstack!((0, T0), (1, T1));
 impl_layout_for_hstack!((0, T0), (1, T1), (2, T2));
 impl_layout_for_hstack!((0, T0), (1, T1), (2, T2), (3, T3));
