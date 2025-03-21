@@ -35,7 +35,7 @@ impl Layout for Rectangle {
     }
 }
 
-impl<C> Renderable<C> for Rectangle {
+impl Renderable for Rectangle {
     type Renderables = crate::render::Rect;
 
     fn render_tree(

@@ -41,7 +41,7 @@ impl<T: Layout, U> Layout for Animated<T, U> {
     }
 }
 
-impl<T: Renderable<C>, C, U: PartialEq + Clone> Renderable<C> for Animated<T, U> {
+impl<T: Renderable, U: PartialEq + Clone> Renderable for Animated<T, U> {
     type Renderables = Animate<T::Renderables, U>;
 
     fn render_tree(

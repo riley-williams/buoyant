@@ -91,7 +91,7 @@ impl<T: AsRef<str>, F: FontLayout> Layout for Text<'_, T, F> {
     }
 }
 
-impl<'a, T: AsRef<str> + Clone, C, F: FontLayout> Renderable<C> for Text<'a, T, F> {
+impl<'a, T: AsRef<str> + Clone, F: FontLayout> Renderable for Text<'a, T, F> {
     type Renderables = render::Text<'a, T, F>;
 
     fn render_tree(

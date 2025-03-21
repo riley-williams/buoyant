@@ -38,7 +38,7 @@ impl<Inner: Layout, Color> Layout for ForegroundStyle<Inner, Color> {
     }
 }
 
-impl<C: Clone, V: Renderable<C>> Renderable<C> for ForegroundStyle<V, C> {
+impl<C: Clone, V: Renderable> Renderable for ForegroundStyle<V, C> {
     type Renderables = ShadeSubtree<C, V::Renderables>;
 
     fn render_tree(

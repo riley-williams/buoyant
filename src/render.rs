@@ -38,7 +38,7 @@ pub use text::Text;
 /// Views may have a matching renderable, like in the case of ``Rectangle``,
 /// which has a concrete size and position. Some views like the frame modifier
 /// do not produce a node at all, and instead insert their subview render tree.
-pub trait Renderable<Color>: Layout {
+pub trait Renderable: Layout {
     type Renderables;
     fn render_tree(
         &self,
@@ -52,13 +52,13 @@ pub trait Renderable<Color>: Layout {
 ///
 /// This trait primarily serves as a shorthand for the more verbose ``Renderable<C, Renderables:
 /// CharacterRender<C>>`` bound
-pub trait CharacterView<C>: Renderable<C, Renderables: CharacterRender<C>> {}
-impl<C, T: Renderable<C, Renderables: CharacterRender<C>>> CharacterView<C> for T {}
+pub trait CharacterView<C>: Renderable<Renderables: CharacterRender<C>> {}
+impl<C, T: Renderable<Renderables: CharacterRender<C>>> CharacterView<C> for T {}
 
 /// A type that does not render, produces no side effects, and has no children.
 pub trait NullRender {}
 
-impl<C, T: NullRender + Layout> Renderable<C> for T {
+impl<T: NullRender + Layout> Renderable for T {
     type Renderables = ();
 
     fn render_tree(
@@ -115,11 +115,11 @@ mod embedded_graphics_rendering {
     /// This trait serves as a shorthand for the more verbose `Renderable<C, Renderables:
     /// EmbeddedGraphicsRender<C>>` bound
     pub trait EmbeddedGraphicsView<C: PixelColor>:
-        Renderable<C, Renderables: EmbeddedGraphicsRender<C>>
+        Renderable<Renderables: EmbeddedGraphicsRender<C>>
     {
     }
 
-    impl<C: PixelColor, T: Renderable<C, Renderables: EmbeddedGraphicsRender<C>>>
+    impl<C: PixelColor, T: Renderable<Renderables: EmbeddedGraphicsRender<C>>>
         EmbeddedGraphicsView<C> for T
     {
     }

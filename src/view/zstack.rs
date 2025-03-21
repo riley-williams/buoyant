@@ -119,7 +119,7 @@ macro_rules! impl_layout_for_zstack {
             }
         }
 
-        impl<$($type: Renderable<C>),+, C> Renderable<C> for ZStack<($($type),+)> {
+        impl<$($type: Renderable),+> Renderable for ZStack<($($type),+)> {
             type Renderables = ($($type::Renderables),+);
 
             fn render_tree(

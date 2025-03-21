@@ -237,7 +237,7 @@ fn greatest_possible(proposal: ProposedDimension, ideal: Dimension) -> Dimension
     }
 }
 
-impl<T: Renderable<C>, C> Renderable<C> for FlexFrame<T> {
+impl<T: Renderable, > Renderable for FlexFrame<T> {
     type Renderables = T::Renderables;
 
     fn render_tree(

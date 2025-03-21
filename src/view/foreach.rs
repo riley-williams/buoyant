@@ -147,7 +147,7 @@ where
     }
 }
 
-impl<'a, const N: usize, I, V: Renderable<C>, C, F> Renderable<C> for ForEachView<'a, N, I, V, F>
+impl<'a, const N: usize, I, V: Renderable, F> Renderable for ForEachView<'a, N, I, V, F>
 where
     F: Fn(&'a I) -> V,
 {

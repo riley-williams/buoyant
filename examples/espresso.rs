@@ -205,8 +205,7 @@ impl App {
 
     fn tab_bar(
         tab: Tab,
-    ) -> impl buoyant::render::Renderable<color::Space, Renderables: EmbeddedGraphicsRender<color::Space>>
-    {
+    ) -> impl buoyant::render::Renderable<Renderables: EmbeddedGraphicsRender<color::Space>> {
         HStack::new((
             Self::tab_item("Brew", tab == Tab::Brew),
             Self::tab_item("Clean", tab == Tab::Clean),
@@ -219,10 +218,8 @@ impl App {
     fn tab_item(
         name: &str,
         is_selected: bool,
-    ) -> impl buoyant::render::Renderable<
-        color::Space,
-        Renderables: EmbeddedGraphicsRender<color::Space>,
-    > + use<'_> {
+    ) -> impl buoyant::render::Renderable<Renderables: EmbeddedGraphicsRender<color::Space>> + use<'_>
+    {
         let (text_color, bar_height) = if is_selected {
             (color::ACCENT, 4)
         } else {
@@ -250,8 +247,7 @@ impl App {
 
     fn brew_tab(
         _state: &AppState,
-    ) -> impl buoyant::render::Renderable<color::Space, Renderables: EmbeddedGraphicsRender<color::Space>>
-    {
+    ) -> impl buoyant::render::Renderable<Renderables: EmbeddedGraphicsRender<color::Space>> {
         VStack::new((
             Text::new("Good morning", &font::BODY),
             Text::new(
@@ -269,8 +265,7 @@ impl App {
 
     fn settings_tab(
         state: &AppState,
-    ) -> impl buoyant::render::Renderable<color::Space, Renderables: EmbeddedGraphicsRender<color::Space>>
-    {
+    ) -> impl buoyant::render::Renderable<Renderables: EmbeddedGraphicsRender<color::Space>> {
         VStack::new((
             toggle_text(
                 "Auto (b)rew",

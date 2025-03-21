@@ -238,7 +238,7 @@ macro_rules! impl_layout_for_hstack {
             }
         }
 
-        impl<$($type: Renderable<C>),+, C> Renderable<C> for HStack<($($type),+)> {
+        impl<$($type: Renderable),+> Renderable for HStack<($($type),+)> {
             type Renderables = ($($type::Renderables),+);
 
             #[allow(unused_assignments)]

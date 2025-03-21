@@ -254,7 +254,7 @@ impl<V0: Layout, V1: Layout, V2: Layout> Layout for MatchView<Branch3<V0, V1, V2
     }
 }
 
-impl<V0: Renderable<C>, V1: Renderable<C>, C> Renderable<C> for MatchView<Branch2<V0, V1>> {
+impl<V0: Renderable, V1: Renderable> Renderable for MatchView<Branch2<V0, V1>> {
     type Renderables = OneOf2<V0::Renderables, V1::Renderables>;
 
     fn render_tree(
@@ -276,7 +276,7 @@ impl<V0: Renderable<C>, V1: Renderable<C>, C> Renderable<C> for MatchView<Branch
     }
 }
 
-impl<V0: Renderable<C>, V1: Renderable<C>, V2: Renderable<C>, C> Renderable<C>
+impl<V0: Renderable, V1: Renderable, V2: Renderable> Renderable
     for MatchView<Branch3<V0, V1, V2>>
 {
     type Renderables = OneOf3<V0::Renderables, V1::Renderables, V2::Renderables>;

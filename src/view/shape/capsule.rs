@@ -24,7 +24,7 @@ impl Layout for Capsule {
     }
 }
 
-impl<C> Renderable<C> for Capsule {
+impl Renderable for Capsule {
     type Renderables = crate::render::Capsule;
 
     fn render_tree(

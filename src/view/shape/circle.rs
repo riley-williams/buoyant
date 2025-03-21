@@ -35,7 +35,7 @@ impl Layout for Circle {
     }
 }
 
-impl<C> Renderable<C> for Circle {
+impl Renderable for Circle {
     type Renderables = crate::render::Circle;
 
     fn render_tree(

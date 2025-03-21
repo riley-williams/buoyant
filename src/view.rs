@@ -240,12 +240,12 @@ pub trait RenderExtensions<C>: Sized {
 }
 
 impl<T: crate::layout::Layout> LayoutExtensions for T {}
-impl<T: Renderable<C>, C> RenderExtensions<C> for T {}
+impl<T: Renderable, C> RenderExtensions<C> for T {}
 
 // TODO: Remove this
 pub fn make_render_tree<C, V>(view: &V, size: Size) -> V::Renderables
 where
-    V: Renderable<C>,
+    V: Renderable,
     V::Renderables: CharacterRender<C>,
 {
     let env = DefaultEnvironment::default();

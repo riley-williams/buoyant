@@ -228,7 +228,7 @@ macro_rules! impl_layout_for_vstack {
             }
         }
 
-        impl<$($type: Renderable<C>),+, C> Renderable<C> for VStack<($($type),+)> {
+        impl<$($type: Renderable),+> Renderable for VStack<($($type),+)> {
             type Renderables = ($($type::Renderables),+);
 
             #[allow(unused_assignments)]
