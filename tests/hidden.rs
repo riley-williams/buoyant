@@ -1,3 +1,4 @@
+use buoyant::layout::Alignment;
 use buoyant::view::padding::Edges;
 use buoyant::view::shape::Rectangle;
 use buoyant::{
@@ -12,11 +13,13 @@ use buoyant::{
 fn background_renders_on_hidden_view() {
     let font = CharacterBufferFont {};
     let hstack = HStack::new((
-        Text::new("1234", &font).hidden().background(|| {
-            Rectangle
-                .foreground_color('+')
-                .padding(Edges::Horizontal, 1)
-        }),
+        Text::new("1234", &font)
+            .hidden()
+            .background(Alignment::default(), || {
+                Rectangle
+                    .foreground_color('+')
+                    .padding(Edges::Horizontal, 1)
+            }),
         Rectangle,
     ))
     .foreground_color('-');
