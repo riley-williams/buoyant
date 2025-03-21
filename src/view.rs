@@ -10,6 +10,7 @@ mod modifier;
 pub mod shape;
 mod spacer;
 mod text;
+mod view_that_fits;
 mod vstack;
 mod zstack;
 
@@ -22,6 +23,7 @@ pub use modifier::padding;
 pub use spacer::Spacer;
 pub(crate) use text::WhitespaceWrap;
 pub use text::{HorizontalTextAlignment, Text};
+pub use view_that_fits::{FitAxis, ViewThatFits};
 pub use vstack::VStack;
 pub use zstack::ZStack;
 

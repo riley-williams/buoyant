@@ -22,6 +22,15 @@ pub enum Branch3<V0, V1, V2> {
     Variant1(V1),
     Variant2(V2),
 }
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Branch4<V0, V1, V2, V3> {
+    Variant0(V0),
+    Variant1(V1),
+    Variant2(V2),
+    Variant3(V3),
+}
+
 // and so on...maybe up to N=10?
 
 impl<V0, V1> MatchView<Branch2<V0, V1>> {
@@ -276,9 +285,7 @@ impl<V0: Renderable, V1: Renderable> Renderable for MatchView<Branch2<V0, V1>> {
     }
 }
 
-impl<V0: Renderable, V1: Renderable, V2: Renderable> Renderable
-    for MatchView<Branch3<V0, V1, V2>>
-{
+impl<V0: Renderable, V1: Renderable, V2: Renderable> Renderable for MatchView<Branch3<V0, V1, V2>> {
     type Renderables = OneOf3<V0::Renderables, V1::Renderables, V2::Renderables>;
 
     fn render_tree(

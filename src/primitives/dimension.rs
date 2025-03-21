@@ -16,6 +16,23 @@ impl ProposedDimensions {
             height: self.height.resolve_most_flexible(minimum, ideal),
         }
     }
+
+    /// Determines if a given size fits within the proposal along the given axes
+    ///
+    /// Compact and infinite proposals always return true for any size
+    #[must_use]
+    pub const fn contains(&self, size: Dimensions, horizontal: bool, vertical: bool) -> bool {
+        (!horizontal
+            || match self.width {
+                ProposedDimension::Exact(d) => size.width.0 <= d,
+                ProposedDimension::Compact | ProposedDimension::Infinite => true,
+            })
+            && (!vertical
+                || match self.height {
+                    ProposedDimension::Exact(d) => size.height.0 <= d,
+                    ProposedDimension::Compact | ProposedDimension::Infinite => true,
+                })
+    }
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ProposedDimension {
@@ -384,10 +401,7 @@ impl Interpolate for Dimension {
 #[cfg(feature = "embedded-graphics")]
 impl From<Dimensions> for embedded_graphics_core::geometry::Size {
     fn from(value: Dimensions) -> Self {
-        Self::new(
-            u32::from(value.width.0),
-            u32::from(value.height.0),
-        )
+        Self::new(u32::from(value.width.0), u32::from(value.height.0))
     }
 }
 
@@ -395,30 +409,30 @@ impl From<Dimensions> for embedded_graphics_core::geometry::Size {
 mod tests {
     use crate::primitives::Interpolate as _;
 
-    use super::ProposedDimension;
+    use super::{Dimension, Dimensions, ProposedDimension, ProposedDimensions};
 
     #[test]
     fn interpolate_dimensions() {
-        let from = super::Dimensions::new(10, 20);
-        let to = super::Dimensions::new(20, 30);
-        let result = super::Dimensions::interpolate(from, to, 128);
+        let from = Dimensions::new(10, 20);
+        let to = Dimensions::new(20, 30);
+        let result = Dimensions::interpolate(from, to, 128);
         assert_eq!(result.width.0, 15);
         assert_eq!(result.height.0, 25);
     }
 
     #[test]
     fn interpolate_dimension_min() {
-        let from = super::Dimension::from(10);
-        let to = super::Dimension::from(30);
-        let result = super::Dimension::interpolate(from, to, 0);
+        let from = Dimension::from(10);
+        let to = Dimension::from(30);
+        let result = Dimension::interpolate(from, to, 0);
         assert_eq!(result.0, 10);
     }
 
     #[test]
     fn interpolate_dimension_max() {
-        let from = super::Dimension::from(10);
-        let to = super::Dimension::from(30);
-        let result = super::Dimension::interpolate(from, to, 255);
+        let from = Dimension::from(10);
+        let to = Dimension::from(30);
+        let result = Dimension::interpolate(from, to, 255);
         assert_eq!(result.0, 30);
     }
 
@@ -433,5 +447,57 @@ mod tests {
         assert!(ProposedDimension::Compact < ProposedDimension::Infinite);
         assert!(ProposedDimension::Exact(0) < ProposedDimension::Infinite);
         assert!(ProposedDimension::Exact(u16::MAX) < ProposedDimension::Infinite);
+    }
+
+    #[test]
+    fn exact_proposed_dimension_contains() {
+        let proposal = ProposedDimensions {
+            width: ProposedDimension::Exact(10),
+            height: ProposedDimension::Exact(20),
+        };
+
+        let smaller_size = Dimensions::new(5, 10);
+        let equal_size = Dimensions::new(10, 20);
+        let larger_size = Dimensions::new(15, 30);
+        assert!(proposal.contains(smaller_size, true, true));
+        assert!(proposal.contains(equal_size, true, true));
+        assert!(!proposal.contains(larger_size, true, true));
+        assert!(proposal.contains(Dimensions::new(1, 30), true, false));
+        assert!(proposal.contains(Dimensions::new(100, 3), false, true));
+        assert!(proposal.contains(Dimensions::new(100, 100), false, false));
+    }
+
+    #[test]
+    fn proposed_dimension_contains_compact() {
+        let proposal = ProposedDimensions {
+            width: ProposedDimension::Compact,
+            height: ProposedDimension::Compact,
+        };
+
+        let smaller_size = Dimensions::new(5, 10);
+        let equal_size = Dimensions::new(10, 20);
+        let infinite_size = Dimensions {
+            width: Dimension::infinite(),
+            height: Dimension::infinite(),
+        };
+        assert!(proposal.contains(smaller_size, true, true));
+        assert!(proposal.contains(equal_size, true, true));
+        assert!(proposal.contains(infinite_size, true, true));
+    }
+
+    #[test]
+    fn proposed_dimension_contains_infinite() {
+        let proposal = ProposedDimensions {
+            width: ProposedDimension::Infinite,
+            height: ProposedDimension::Infinite,
+        };
+
+        let fixed_size = Dimensions::new(5, 10);
+        let infinite_size = Dimensions {
+            width: Dimension::infinite(),
+            height: Dimension::infinite(),
+        };
+        assert!(proposal.contains(fixed_size, true, true));
+        assert!(proposal.contains(infinite_size, true, true));
     }
 }
