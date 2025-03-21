@@ -1,14 +1,15 @@
 [package]
 name = "buoyant"
-version = "0.4.4"
+version = "0.5.0-alpha.0"
 authors = ["Riley Williams"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "SwiftUI-like UIs in Rust for embedded devices"
 readme = "README.md"
 repository = "https://github.com/riley-williams/buoyant"
-keywords = ["ui", "graphics"]
-exclude = [".github"]
+keywords = ["ui", "gui", "graphics", "no-std", "embedded"]
+categories = ["gui", "graphics", "no-std", "embedded"]
+exclude = [".github", ".markdownlint.yml"]
 
 [badges]
 maintenance = { status = "experimental" }
