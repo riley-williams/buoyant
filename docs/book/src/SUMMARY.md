@@ -10,3 +10,8 @@
   - [Mixed Alignment](./building-views/mixed-alignment.md)
   - [Collections](./building-views/collections.md)
   - [Conditional Views](./building-views/conditional-views.md)
+- [Animation](./animation.md)
+  - [Render Trees](./animation/render-trees.md)
+  - [Compound Animation](./animation/compound-animation.md)
+  - [Animated Render Loops](./animation/animated-render-loops.md)
+  - [Transitions](./animation/transitions.md)

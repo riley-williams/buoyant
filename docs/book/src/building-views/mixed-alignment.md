@@ -82,7 +82,7 @@ This *does* produce the desired result, but there's a better way to achieve it.
 ### A note for SwiftUI developers
 
 In SwiftUI, Spacers have a 10 point minimum length. While it's probably not an issue
-for our specific example, using the HStack+Spacer solution in SwiftUI without manually
+for this specific example, using the HStack+Spacer solution in SwiftUI without manually
 overriding the Spacer minimum length results in 10 points of space your content can never
 fill. Text wraps a bit early and you can't put your finger on why you feel a little sad.
 
