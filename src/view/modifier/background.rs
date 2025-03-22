@@ -1,7 +1,7 @@
 use crate::{
     environment::LayoutEnvironment,
-    layout::{Layout, ResolvedLayout},
-    primitives::{ProposedDimension, ProposedDimensions},
+    layout::{Alignment, Layout, ResolvedLayout},
+    primitives::{Point, ProposedDimension, ProposedDimensions},
     render::Renderable,
 };
 
@@ -11,13 +11,15 @@ use crate::{
 pub struct BackgroundView<T, U> {
     foreground: T,
     background: U,
+    alignment: Alignment,
 }
 
 impl<T, U> BackgroundView<T, U> {
-    pub const fn new(foreground: T, background: U) -> Self {
+    pub const fn new(foreground: T, background: U, alignment: Alignment) -> Self {
         Self {
             foreground,
             background,
+            alignment,
         }
     }
 }
@@ -65,9 +67,21 @@ impl<T: Renderable, U: Renderable> Renderable for BackgroundView<T, U> {
         origin: crate::primitives::Point,
         env: &impl LayoutEnvironment,
     ) -> Self::Renderables {
+        let new_origin = origin
+            + Point::new(
+                self.alignment.horizontal().align(
+                    layout.resolved_size.width.into(),
+                    layout.sublayouts.1.resolved_size.width.into(),
+                ),
+                self.alignment.vertical().align(
+                    layout.resolved_size.height.into(),
+                    layout.sublayouts.1.resolved_size.height.into(),
+                ),
+            );
+
         (
             self.background
-                .render_tree(&layout.sublayouts.1, origin, env),
+                .render_tree(&layout.sublayouts.1, new_origin, env),
             self.foreground
                 .render_tree(&layout.sublayouts.0, origin, env),
         )

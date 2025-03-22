@@ -31,9 +31,7 @@ impl Alignment {
     #[must_use]
     pub const fn horizontal(&self) -> HorizontalAlignment {
         match self {
-            Self::TopLeading | Self::Leading | Self::BottomLeading => {
-                HorizontalAlignment::Leading
-            }
+            Self::TopLeading | Self::Leading | Self::BottomLeading => HorizontalAlignment::Leading,
             Self::Top | Self::Center | Self::Bottom => HorizontalAlignment::Center,
             Self::TopTrailing | Self::Trailing | Self::BottomTrailing => {
                 HorizontalAlignment::Trailing
@@ -45,15 +43,9 @@ impl Alignment {
     #[must_use]
     pub const fn vertical(&self) -> VerticalAlignment {
         match self {
-            Self::TopLeading | Self::Top | Self::TopTrailing => {
-                VerticalAlignment::Top
-            }
-            Self::Leading | Self::Center | Self::Trailing => {
-                VerticalAlignment::Center
-            }
-            Self::BottomLeading | Self::Bottom | Self::BottomTrailing => {
-                VerticalAlignment::Bottom
-            }
+            Self::TopLeading | Self::Top | Self::TopTrailing => VerticalAlignment::Top,
+            Self::Leading | Self::Center | Self::Trailing => VerticalAlignment::Center,
+            Self::BottomLeading | Self::Bottom | Self::BottomTrailing => VerticalAlignment::Bottom,
         }
     }
 }

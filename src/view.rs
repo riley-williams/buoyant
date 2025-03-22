@@ -33,7 +33,7 @@ use modifier::{
 use crate::{
     animation::Animation,
     environment::DefaultEnvironment,
-    layout::{HorizontalAlignment, VerticalAlignment},
+    layout::{Alignment, HorizontalAlignment, VerticalAlignment},
     primitives::{Point, Size},
     render::{CharacterRender, Renderable},
 };
@@ -201,6 +201,7 @@ pub trait LayoutExtensions: Sized {
     ///
     /// ```
     /// use buoyant::view::{padding::Edges, shape::RoundedRectangle, Text, LayoutExtensions as _, RenderExtensions as _};
+    /// use buoyant::layout::Alignment;
     /// use buoyant::render::{EmbeddedGraphicsView};
     /// use embedded_graphics::{prelude::*, pixelcolor::Rgb565, mono_font::ascii::FONT_9X15_BOLD};
     ///
@@ -208,14 +209,18 @@ pub trait LayoutExtensions: Sized {
     ///     Text::new("Press me", &FONT_9X15_BOLD)
     ///         .foreground_color(Rgb565::WHITE)
     ///         .padding(Edges::All, 10)
-    ///         .background(|| {
+    ///         .background(Alignment::default(), || {
     ///             RoundedRectangle::new(10)
     ///                 .foreground_color(Rgb565::BLUE)
     ///         })
     /// }
     /// ```
-    fn background<U>(self, background: impl FnOnce() -> U) -> BackgroundView<Self, U> {
-        BackgroundView::new(self, background())
+    fn background<U>(
+        self,
+        alignment: Alignment,
+        background: impl FnOnce() -> U,
+    ) -> BackgroundView<Self, U> {
+        BackgroundView::new(self, background(), alignment)
     }
 
     /// Lays out the view, but does not render it.
