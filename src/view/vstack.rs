@@ -124,7 +124,7 @@ fn layout_n<const N: usize>(
     let mut max_width: Dimension = 0.into();
     loop {
         // collect the unsized subviews with the max layout priority into a group
-        let mut subviews_indecies: [usize; N] = [0; N];
+        let mut subviews_indices: [usize; N] = [0; N];
         let mut max = i8::MIN;
         let mut slice_start: usize = 0;
         let mut slice_len: usize = 0;
@@ -137,14 +137,14 @@ fn layout_n<const N: usize>(
                     max = *priority;
                     slice_start = i;
                     slice_len = 1;
-                    subviews_indecies[slice_start] = i;
+                    subviews_indices[slice_start] = i;
                 }
                 core::cmp::Ordering::Equal => {
                     if slice_len == 0 {
                         slice_start = i;
                     }
 
-                    subviews_indecies[slice_start + slice_len] = i;
+                    subviews_indices[slice_start + slice_len] = i;
                     slice_len += 1;
                 }
                 core::cmp::Ordering::Greater => {}
@@ -156,12 +156,12 @@ fn layout_n<const N: usize>(
             break;
         }
 
-        let group_indecies = &mut subviews_indecies[slice_start..slice_start + slice_len];
-        group_indecies.sort_unstable_by_key(|&i| flexibilities[i]);
+        let group_indices = &mut subviews_indices[slice_start..slice_start + slice_len];
+        group_indices.sort_unstable_by_key(|&i| flexibilities[i]);
 
-        let mut remaining_group_size = group_indecies.len() as u16;
+        let mut remaining_group_size = group_indices.len() as u16;
 
-        for index in group_indecies {
+        for index in group_indices {
             let height_fraction =
                 remaining_height / remaining_group_size + remaining_height % remaining_group_size;
             let size = subviews[*index].0(ProposedDimensions {

@@ -419,7 +419,7 @@ fn test_flexible_layout_fills_frame_10k() {
     VStack::new((
         Spacer::default(),
         Text::new(
-            "This is several lines of text.\nEach line is centered in the available space.\n Spacers are used to fill all the remaining verical space and align the content within it.\n2 points of padding are around this text",
+            "This is several lines of text.\nEach line is centered in the available space.\n Spacers are used to fill all the remaining vertical space and align the content within it.\n2 points of padding are around this text",
             &font,
         )
             .multiline_text_alignment(HorizontalTextAlignment::Center)
@@ -467,7 +467,7 @@ fn test_layout_3_extra_space_allocation() {
 }
 
 #[test]
-fn empty_view_does_not_recieve_spacing() {
+fn empty_view_does_not_receive_spacing() {
     // The VStack should attempt to lay out the views into the full width of the offer.
     let font = CharacterBufferFont {};
     let vstack = VStack::new((Text::new("a", &font), EmptyView, Text::new("c", &font)))

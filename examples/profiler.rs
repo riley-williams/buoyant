@@ -43,7 +43,7 @@ fn main() {
      VStack::new((
          Spacer::default(),
          Text::new(
-             "This is several lines of text.\nEach line is centered in the available space.\n Spacers are used to fill all the remaining verical space and align the content within it.\n2 points of padding are around this text",
+             "This is several lines of text.\nEach line is centered in the available space.\n Spacers are used to fill all the remaining vertical space and align the content within it.\n2 points of padding are around this text",
              &font,
          )
              .multiline_text_alignment(HorizontalTextAlignment::Center)
