@@ -26,7 +26,7 @@ pub use circle::Circle;
 #[cfg(feature = "embedded-graphics")]
 pub use image::Image;
 pub use offset::Offset;
-pub use one_of::{OneOf2, OneOf3};
+pub use one_of::{OneOf2, OneOf3, OneOf4};
 pub use rect::Rect;
 pub use rounded_rect::RoundedRect;
 pub use shade_subtree::ShadeSubtree;

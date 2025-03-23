@@ -19,7 +19,7 @@ impl Layout for Capsule {
     ) -> ResolvedLayout<Self::Sublayout> {
         ResolvedLayout {
             sublayouts: (),
-            resolved_size: offer.resolve_most_flexible(0, 10),
+            resolved_size: offer.resolve_most_flexible(0, 1),
         }
     }
 }

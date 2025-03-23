@@ -1,8 +1,8 @@
 # Transitions
 
-Transitions occur when you have a conditional view like `if_view!` or `match_view!` that
-changes branches. Because the branches contain different subtrees, there is no reasonable
-way to animate between them.
+Transitions occur when you have a conditional view like `if_view!`, `match_view!`, or
+`ViewThatFits` which changes branches. Because the branches contain different subtrees,
+there is no reasonable way to animate between them.
 
 ![Transition](./images/transition.svg)
 
