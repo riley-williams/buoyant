@@ -232,6 +232,7 @@ mod tests {
     #[test]
     fn partial_words_are_wrapped_3() {
         let wrap = super::WhitespaceWrap::new("hello world", 3, &FONT);
+        // @typos-ignore
         assert_eq!(wrap.collect::<Vec<_>>(), vec!["hel", "lo", "wor", "ld"]);
     }
 
@@ -262,6 +263,7 @@ mod tests {
     #[test]
     fn newlines_wrap_after_forced_overflow() {
         let wrap = super::WhitespaceWrap::new("hello\nworld", 4, &FONT);
+        // @typos-ignore
         assert_eq!(wrap.collect::<Vec<_>>(), vec!["hell", "o", "worl", "d"]);
     }
 

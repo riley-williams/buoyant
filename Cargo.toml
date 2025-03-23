@@ -29,7 +29,7 @@ paste = "1.0.15"
 
 [dev-dependencies]
 embedded-graphics-simulator = { version = "0.7.0", default-features = false, features = [
-  "with-sdl",
+    "with-sdl",
 ] }
 
 [profile.release]
@@ -65,3 +65,9 @@ float_arithmetic = "allow"
 indexing_slicing = "allow"
 as_conversions = "allow"
 absolute_paths = "allow"                    # might not make sense...
+
+[package.metadata.typos]
+default.extend-ignore-re = [
+    # Ignore line following `// @typos-ignore` line
+    "(?m)^\\s*// @typos-ignore$\n.*",
+]

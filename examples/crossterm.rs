@@ -58,7 +58,7 @@ fn view() -> impl CharacterView<Colors> {
                     .frame_sized(10, 10),
             )),
             Text::new(
-                "This is several lines of text.\nEach line is centered in the available space.\n The rectangle fills all the remaining verical space and aligns the content within it.\n2 points of padding are around this text",
+                "This is several lines of text.\nEach line is centered in the available space.\n The rectangle fills all the remaining vertical space and aligns the content within it.\n2 points of padding are around this text",
                 &FONT,
             )
                 .multiline_text_alignment(HorizontalTextAlignment::Center)
