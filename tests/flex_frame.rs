@@ -397,8 +397,8 @@ fn test_infinite_width_with_min_ideal() {
     );
     // Rectangle's infinite offer leads to child returning infinite, then min ensures at least 2.
     assert!(layout.resolved_size.width.is_infinite());
-    // For height with Compact, child's default is 10, no min => 10
-    assert_eq!(layout.resolved_size.height, 10.into());
+    // For height with Compact, child's default is 1, so min => 1
+    assert_eq!(layout.resolved_size.height, 1.into());
 
     let layout2 = content.layout(
         &ProposedDimensions {
@@ -452,8 +452,8 @@ fn test_infinite_height_with_min_ideal() {
     );
     // For height = infinite, child returns infinite; flex frame ensures at least 2 => u16::MAX
     assert!(layout.resolved_size.height.is_infinite());
-    // For width with Compact, child's default is 10, no min => 10
-    assert_eq!(layout.resolved_size.width, 10.into());
+    // For width with Compact, child's default is 1, so min => 1
+    assert_eq!(layout.resolved_size.width, 1.into());
 
     let layout2 = content.layout(
         &ProposedDimensions {
@@ -575,7 +575,7 @@ fn test_infinite_max_width() {
         },
         &env,
     );
-    assert_eq!(layout.resolved_size.width, 10.into()); // Default magic value
+    assert_eq!(layout.resolved_size.width, 1.into()); // Default magic value
     assert_eq!(layout.resolved_size.height, 5.into());
 }
 
@@ -647,7 +647,7 @@ fn test_infinite_max_height() {
         &env,
     );
     assert_eq!(layout.resolved_size.width, 5.into());
-    assert_eq!(layout.resolved_size.height, 10.into()); // Default magic value
+    assert_eq!(layout.resolved_size.height, 1.into()); // Default magic value
 }
 
 #[test]

@@ -24,7 +24,7 @@ impl Layout for Circle {
         offer: &ProposedDimensions,
         _: &impl crate::environment::LayoutEnvironment,
     ) -> ResolvedLayout<Self::Sublayout> {
-        let minimum_dimension = offer.width.min(offer.height).resolve_most_flexible(0, 10);
+        let minimum_dimension = offer.width.min(offer.height).resolve_most_flexible(0, 1);
         ResolvedLayout {
             sublayouts: (),
             resolved_size: Dimensions {

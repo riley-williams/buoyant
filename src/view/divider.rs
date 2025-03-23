@@ -39,12 +39,12 @@ impl Layout for Divider {
     ) -> ResolvedLayout<()> {
         let size = match env.layout_direction() {
             LayoutDirection::Vertical => Dimensions {
-                width: offer.width.resolve_most_flexible(0, 10),
+                width: offer.width.resolve_most_flexible(0, 1),
                 height: self.weight.into(),
             },
             LayoutDirection::Horizontal => Dimensions {
                 width: self.weight.into(),
-                height: offer.height.resolve_most_flexible(0, 10),
+                height: offer.height.resolve_most_flexible(0, 1),
             },
         };
         ResolvedLayout {
