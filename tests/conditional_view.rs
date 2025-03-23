@@ -5,7 +5,7 @@ use buoyant::primitives::{Point, Size};
 use buoyant::render::CharacterRenderTarget;
 use buoyant::render::{CharacterRender as _, Renderable as _};
 use buoyant::render_target::FixedTextBuffer;
-use buoyant::view::{RenderExtensions as _, Text};
+use buoyant::view::{Text, ViewExt as _};
 use common::TestEnv;
 
 mod common;

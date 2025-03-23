@@ -42,7 +42,7 @@ Both stacks can contain a heterogeneous set of views and can be nested inside ot
 # 
 use buoyant::view::shape::{Circle, Rectangle};
 use buoyant::view::HStack;
-use buoyant::view::RenderExtensions as _;
+use buoyant::view::ViewExt as _;
 use buoyant::render::EmbeddedGraphicsView;
 
 fn view() -> impl EmbeddedGraphicsView<Rgb888> {
@@ -101,7 +101,7 @@ it can contain a heterogeneous set of views.
 # 
 use buoyant::view::padding::Edges;
 use buoyant::view::shape::{Circle, Rectangle};
-use buoyant::view::{LayoutExtensions as _, RenderExtensions as _};
+use buoyant::view::ViewExt as _;
 use buoyant::view::ZStack;
 use buoyant::render::EmbeddedGraphicsView;
 
@@ -161,7 +161,7 @@ Stacks can be nested to create complex layouts.
 # 
 use buoyant::view::padding::Edges;
 use buoyant::view::shape::{Circle, Rectangle};
-use buoyant::view::{LayoutExtensions as _, RenderExtensions as _};
+use buoyant::view::ViewExt as _;
 use buoyant::view::{HStack, VStack, ZStack};
 use buoyant::render::EmbeddedGraphicsView;
 

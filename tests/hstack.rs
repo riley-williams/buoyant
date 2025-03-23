@@ -7,9 +7,9 @@ use buoyant::primitives::{Dimensions, Point, ProposedDimension, ProposedDimensio
 use buoyant::render::{CharacterRender, Renderable};
 use buoyant::render::{CharacterRenderTarget, CharacterView};
 use buoyant::render_target::FixedTextBuffer;
+use buoyant::view::make_render_tree;
 use buoyant::view::padding::Edges;
-use buoyant::view::{make_render_tree, RenderExtensions as _};
-use buoyant::view::{shape::Rectangle, Divider, EmptyView, HStack, LayoutExtensions, Spacer, Text};
+use buoyant::view::{shape::Rectangle, Divider, EmptyView, HStack, Spacer, Text, ViewExt};
 
 #[test]
 fn test_greedy_layout_2() {

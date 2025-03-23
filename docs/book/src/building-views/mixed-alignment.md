@@ -52,7 +52,7 @@ I'll briefly indulge this misconception.
 // No!
 use buoyant::layout::HorizontalAlignment;
 use buoyant::view::shape::Circle;
-use buoyant::view::RenderExtensions as _;
+use buoyant::view::ViewExt as _;
 use buoyant::view::{HStack, Spacer, VStack};
 use buoyant::render::EmbeddedGraphicsView;
 
@@ -143,7 +143,7 @@ as the previous code.
 use buoyant::layout::HorizontalAlignment;
 use buoyant::view::shape::Circle;
 use buoyant::view::VStack;
-use buoyant::view::{LayoutExtensions as _, RenderExtensions as _};
+use buoyant::view::ViewExt as _;
 use buoyant::render::EmbeddedGraphicsView;
 
 fn view() -> impl EmbeddedGraphicsView<Rgb888> {
@@ -173,7 +173,7 @@ the alignment in one call.
 ```rust
 # extern crate buoyant;
 # use buoyant::layout::HorizontalAlignment;
-# use buoyant::view::LayoutExtensions as _;
+# use buoyant::view::ViewExt as _;
 # use buoyant::view::{shape::Circle, HStack, Spacer};
 # let content = Circle;
 // Avoid:
@@ -201,7 +201,7 @@ content
 ```rust
 # extern crate buoyant;
 # use buoyant::layout::VerticalAlignment;
-# use buoyant::view::LayoutExtensions as _;
+# use buoyant::view::ViewExt as _;
 # use buoyant::view::{shape::Circle, VStack, Spacer};
 # let content = Circle;
 // Avoid:

@@ -2,7 +2,7 @@ use buoyant::layout::{Layout, LayoutDirection};
 use buoyant::primitives::{Point, Size};
 use buoyant::render::{CharacterRender, CharacterRenderTarget as _, Renderable as _};
 use buoyant::render_target::FixedTextBuffer;
-use buoyant::view::{Divider, RenderExtensions as _};
+use buoyant::view::{Divider, ViewExt as _};
 
 mod common;
 use common::TestEnv;

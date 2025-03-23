@@ -51,7 +51,7 @@ better choice. Use ForEach when you want to display a collection of like views.
 use buoyant::layout::HorizontalAlignment;
 use buoyant::view::padding::Edges;
 use buoyant::view::{shape::RoundedRectangle, ForEach, HStack, Text};
-use buoyant::view::{LayoutExtensions as _, RenderExtensions as _};
+use buoyant::view::{ViewExt as _};
 use embedded_graphics::{mono_font::ascii::FONT_9X15, pixelcolor::Rgb888, prelude::*};
 
 static SWATCHES: [Swatch; 4] = [

@@ -41,7 +41,7 @@ Here, `Spacer` is used to push the two `Circle`s to either side.
 # 
 use buoyant::layout::HorizontalAlignment;
 use buoyant::view::shape::{Capsule, Circle, Rectangle};
-use buoyant::view::RenderExtensions as _;
+use buoyant::view::ViewExt as _;
 use buoyant::view::{HStack, Spacer, VStack};
 use buoyant::render::EmbeddedGraphicsView;
 
