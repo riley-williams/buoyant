@@ -4,7 +4,7 @@ use buoyant::{
     primitives::{Dimensions, Point, ProposedDimension, ProposedDimensions, Size},
     render::{CharacterRender, CharacterRenderTarget},
     render_target::FixedTextBuffer,
-    view::{make_render_tree, LayoutExtensions, RenderExtensions as _, Text},
+    view::{make_render_tree, Text, ViewExt},
 };
 mod common;
 
@@ -70,8 +70,7 @@ fn test_fixed_height() {
 #[test]
 fn test_fixed_frame_compact_width_height() {
     let font = CharacterBufferFont {};
-    let content = Text::new("123456", &font)
-        .frame_sized(2, 2);
+    let content = Text::new("123456", &font).frame_sized(2, 2);
     let env = common::TestEnv::default();
 
     assert_eq!(
@@ -117,8 +116,7 @@ fn test_fixed_frame_compact_width_height() {
 #[test]
 fn test_fixed_frame_infinite_width_height() {
     let font = CharacterBufferFont {};
-    let content = Text::new("123456", &font)
-        .frame_sized(25, 25);
+    let content = Text::new("123456", &font).frame_sized(25, 25);
     let env = common::TestEnv::default();
 
     assert_eq!(

@@ -11,8 +11,8 @@ use buoyant::{
     primitives::{Dimensions, Size},
     render_target::FixedTextBuffer,
     view::{
-        make_render_tree, shape::Rectangle, Divider, HorizontalTextAlignment, LayoutExtensions,
-        RenderExtensions, Spacer, Text, VStack,
+        make_render_tree, shape::Rectangle, Divider, HorizontalTextAlignment, Spacer, Text, VStack,
+        ViewExt,
     },
 };
 
@@ -52,9 +52,7 @@ fn test_clipped_text_trails_correctly() {
 
 #[test]
 fn test_padding_is_oversized_for_oversized_child() {
-    let view = Rectangle
-        .frame_sized(10, 10)
-        .padding(Edges::All, 2);
+    let view = Rectangle.frame_sized(10, 10).padding(Edges::All, 2);
 
     let env = DefaultEnvironment::non_animated();
 

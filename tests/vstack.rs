@@ -5,11 +5,11 @@ use buoyant::primitives::{Dimensions, Point, ProposedDimension, ProposedDimensio
 use buoyant::render::CharacterRender;
 use buoyant::render::CharacterRenderTarget;
 use buoyant::render_target::FixedTextBuffer;
+use buoyant::view::make_render_tree;
 use buoyant::view::padding::Edges;
-use buoyant::view::{make_render_tree, RenderExtensions as _};
 use buoyant::view::{
-    shape::Rectangle, Divider, EmptyView, HStack, HorizontalTextAlignment, LayoutExtensions,
-    Spacer, Text, VStack,
+    shape::Rectangle, Divider, EmptyView, HStack, HorizontalTextAlignment, Spacer, Text, VStack,
+    ViewExt,
 };
 
 mod common;

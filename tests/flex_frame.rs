@@ -3,7 +3,6 @@ use buoyant::primitives::Point;
 use buoyant::render::CharacterRender;
 use buoyant::render::CharacterRenderTarget;
 use buoyant::view::HStack;
-use buoyant::view::RenderExtensions;
 use buoyant::view::Spacer;
 use buoyant::view::VStack;
 use buoyant::{
@@ -12,7 +11,7 @@ use buoyant::{
     layout::{HorizontalAlignment, Layout, VerticalAlignment},
     primitives::{ProposedDimension, ProposedDimensions, Size},
     render_target::FixedTextBuffer,
-    view::{make_render_tree, shape::Rectangle, LayoutExtensions, Text},
+    view::{make_render_tree, shape::Rectangle, Text, ViewExt},
 };
 
 #[test]

@@ -4,7 +4,7 @@ use buoyant::render::CharacterRender;
 use buoyant::render::CharacterRenderTarget;
 use buoyant::render::CharacterView;
 use buoyant::view::padding::Edges;
-use buoyant::view::{make_render_tree, LayoutExtensions, RenderExtensions};
+use buoyant::view::{make_render_tree, ViewExt};
 use buoyant::{
     layout::VerticalAlignment,
     render_target::CrosstermRenderTarget,

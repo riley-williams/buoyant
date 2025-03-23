@@ -3,7 +3,7 @@ use buoyant::{
     font::CharacterBufferFont,
     layout::Layout as _,
     primitives::{Dimensions, Size},
-    view::{shape::Rectangle, HStack, LayoutExtensions, Text, VStack},
+    view::{shape::Rectangle, HStack, Text, VStack, ViewExt},
 };
 
 /// The greedy lower priority view with a non-zero min size results in a layout overflow

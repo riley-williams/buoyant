@@ -39,7 +39,7 @@ use crate::{
 };
 
 /// Modifiers that extend the functionality of views.
-pub trait LayoutExtensions: Sized {
+pub trait ViewExt: Sized {
     /// Applies padding to the specified edges
     fn padding(self, edges: padding::Edges, amount: u16) -> Padding<Self> {
         Padding::new(edges, amount, self)
@@ -55,7 +55,7 @@ pub trait LayoutExtensions: Sized {
     /// This is a shortcut for:
     ///
     /// ```
-    /// # use buoyant::view::LayoutExtensions as _;
+    /// # use buoyant::view::ViewExt as _;
     /// # let my_view = buoyant::view::shape::Rectangle;
     /// # let width = 100;
     /// # let height = 100;
@@ -74,7 +74,7 @@ pub trait LayoutExtensions: Sized {
     /// Examples:
     ///
     /// ```
-    /// # use buoyant::view::LayoutExtensions as _;
+    /// # use buoyant::view::ViewExt as _;
     /// # use buoyant::layout::Alignment;
     /// # let my_view = buoyant::view::shape::Rectangle;
     /// my_view
@@ -93,7 +93,7 @@ pub trait LayoutExtensions: Sized {
     /// This is a shortcut for:
     ///
     /// ```
-    /// # use buoyant::view::LayoutExtensions as _;
+    /// # use buoyant::view::ViewExt as _;
     /// # let my_view = buoyant::view::shape::Rectangle;
     /// # let alignment = buoyant::layout::HorizontalAlignment::Center;
     /// my_view
@@ -113,7 +113,7 @@ pub trait LayoutExtensions: Sized {
     /// This is a shortcut for:
     ///
     /// ```
-    /// # use buoyant::view::LayoutExtensions as _;
+    /// # use buoyant::view::ViewExt as _;
     /// # use buoyant::layout::VerticalAlignment;
     /// # let my_view = buoyant::view::shape::Rectangle;
     /// # let alignment = VerticalAlignment::Center;
@@ -164,7 +164,7 @@ pub trait LayoutExtensions: Sized {
     ///
     /// ```
     /// use core::time::Duration;
-    /// use buoyant::view::{shape::{Circle, Capsule}, ZStack, padding, LayoutExtensions as _, RenderExtensions as _};
+    /// use buoyant::view::{shape::{Circle, Capsule}, ZStack, padding, ViewExt as _};
     /// use buoyant::animation::Animation;
     /// use buoyant::layout::HorizontalAlignment;
     /// use buoyant::render::{EmbeddedGraphicsView, Renderable};
@@ -200,7 +200,7 @@ pub trait LayoutExtensions: Sized {
     /// Example:
     ///
     /// ```
-    /// use buoyant::view::{padding::Edges, shape::RoundedRectangle, Text, LayoutExtensions as _, RenderExtensions as _};
+    /// use buoyant::view::{padding::Edges, shape::RoundedRectangle, Text, ViewExt as _};
     /// use buoyant::layout::Alignment;
     /// use buoyant::render::{EmbeddedGraphicsView};
     /// use embedded_graphics::{prelude::*, pixelcolor::Rgb565, mono_font::ascii::FONT_9X15_BOLD};
@@ -235,17 +235,14 @@ pub trait LayoutExtensions: Sized {
     fn hidden(self) -> Hidden<Self> {
         Hidden::new(self)
     }
-}
 
-pub trait RenderExtensions<C>: Sized {
     /// Sets the foreground color
-    fn foreground_color(self, color: C) -> ForegroundStyle<Self, C> {
+    fn foreground_color<C>(self, color: C) -> ForegroundStyle<Self, C> {
         ForegroundStyle::new(color, self)
     }
 }
 
-impl<T: crate::layout::Layout> LayoutExtensions for T {}
-impl<T: Renderable, C> RenderExtensions<C> for T {}
+impl<T: crate::layout::Layout> ViewExt for T {}
 
 // TODO: Remove this
 pub fn make_render_tree<C, V>(view: &V, size: Size) -> V::Renderables

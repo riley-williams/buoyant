@@ -6,7 +6,7 @@ use buoyant::primitives::{Point, Size};
 use buoyant::render::{CharacterRender, CharacterView};
 use buoyant::render::{CharacterRenderTarget, Renderable};
 use buoyant::render_target::FixedTextBuffer;
-use buoyant::view::{RenderExtensions as _, Text};
+use buoyant::view::{Text, ViewExt as _};
 use std::string::String;
 
 #[test]

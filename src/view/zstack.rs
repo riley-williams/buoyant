@@ -16,7 +16,7 @@ use paste::paste;
 /// ```rust
 /// use buoyant::font::CharacterBufferFont;
 /// use buoyant::layout::Alignment;
-/// use buoyant::view::{ZStack, shape::Rectangle, Text, RenderExtensions as _};
+/// use buoyant::view::{ZStack, shape::Rectangle, Text, ViewExt as _};
 ///
 /// /// A fish at the bottom right corner of an 'o'cean
 /// let font = CharacterBufferFont {};
@@ -98,7 +98,7 @@ macro_rules! impl_layout_for_zstack {
                     // FIXME: The `.into()` here is almost certainly wrong.
                     // While it would be unusual for a view to respond requesting infinite
                     // width or height in response to a compact request, this does not
-                    // effectively handle it. This also increases the liklihood of overflow
+                    // effectively handle it. This also increases the likelihood of overflow
                     // due to the way Dimension is implemented
                     let offer = ProposedDimensions {
                         width: ProposedDimension::Exact(size.width.into()),

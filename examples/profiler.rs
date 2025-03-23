@@ -8,8 +8,7 @@ use buoyant::{
     primitives::Size,
     render_target::FixedTextBuffer,
     view::{
-        make_render_tree, Divider, HStack, HorizontalTextAlignment, LayoutExtensions,
-        RenderExtensions as _, Spacer, Text, VStack,
+        make_render_tree, Divider, HStack, HorizontalTextAlignment, Spacer, Text, VStack, ViewExt,
     },
 };
 
