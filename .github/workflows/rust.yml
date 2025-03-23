@@ -48,7 +48,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: DavidAnson/markdownlint-cli2-action@v19.1.0
+      - name: Markdown lint # v19.1.0
+        uses: DavidAnson/markdownlint-cli2-action@05f32210e84442804257b2a6f20b273450ec8265
         with:
           globs: "**/*.md"
 
@@ -77,8 +78,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Check semver
-        uses: obi1kenobi/cargo-semver-checks-action@v2
+      - name: Check semver # v2.6
+        uses: obi1kenobi/cargo-semver-checks-action@7272cc2caa468d3e009a2b0a9cc366839348237b
 
   typos:
     runs-on: ubuntu-latest
@@ -86,5 +87,5 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Check for typos
-        uses: crate-ci/typos@v1.30.2
+      - name: Check for typos # v1.30.2
+        uses: crate-ci/typos@7bc041cbb7ca9167c9e0e4ccbb26f48eb0f9d4e0
