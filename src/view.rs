@@ -244,6 +244,80 @@ pub trait ViewExt: Sized {
 
 impl<T: crate::layout::Layout> ViewExt for T {}
 
+#[deprecated(
+    since = "0.5.0",
+    note = "`RenderExtensions` has been replaced with `ViewExt`"
+)]
+pub trait RenderExtensions: ViewExt {
+    fn foreground_color<C>(self, color: C) -> ForegroundStyle<Self, C> {
+        <Self as ViewExt>::foreground_color(self, color)
+    }
+}
+
+#[allow(deprecated)]
+impl<T: crate::layout::Layout> RenderExtensions for T {}
+
+#[deprecated(
+    since = "0.5.0",
+    note = "`LayoutExtensions` has been replaced with `ViewExt`"
+)]
+pub trait LayoutExtensions: ViewExt {
+    fn padding(self, edges: padding::Edges, amount: u16) -> Padding<Self> {
+        <Self as ViewExt>::padding(self, edges, amount)
+    }
+
+    fn frame(self) -> FixedFrame<Self> {
+        <Self as ViewExt>::frame(self)
+    }
+
+    fn frame_sized(self, width: u16, height: u16) -> FixedFrame<Self> {
+        <Self as ViewExt>::frame_sized(self, width, height)
+    }
+
+    fn flex_frame(self) -> FlexFrame<Self> {
+        <Self as ViewExt>::flex_frame(self)
+    }
+
+    fn flex_infinite_width(self, alignment: HorizontalAlignment) -> FlexFrame<Self> {
+        <Self as ViewExt>::flex_infinite_width(self, alignment)
+    }
+
+    fn flex_infinite_height(self, alignment: VerticalAlignment) -> FlexFrame<Self> {
+        <Self as ViewExt>::flex_infinite_height(self, alignment)
+    }
+
+    fn fixed_size(self, horizontal: bool, vertical: bool) -> FixedSize<Self> {
+        <Self as ViewExt>::fixed_size(self, horizontal, vertical)
+    }
+
+    fn priority(self, priority: i8) -> Priority<Self> {
+        <Self as ViewExt>::priority(self, priority)
+    }
+
+    fn animated<T: PartialEq + Clone>(self, animation: Animation, value: T) -> Animated<Self, T> {
+        <Self as ViewExt>::animated(self, animation, value)
+    }
+
+    fn geometry_group(self) -> GeometryGroup<Self> {
+        <Self as ViewExt>::geometry_group(self)
+    }
+
+    fn background<U>(
+        self,
+        alignment: Alignment,
+        background: impl FnOnce() -> U,
+    ) -> BackgroundView<Self, U> {
+        <Self as ViewExt>::background(self, alignment, background)
+    }
+
+    fn hidden(self) -> Hidden<Self> {
+        <Self as ViewExt>::hidden(self)
+    }
+}
+
+#[allow(deprecated)]
+impl<T: crate::layout::Layout> LayoutExtensions for T {}
+
 // TODO: Remove this
 pub fn make_render_tree<C, V>(view: &V, size: Size) -> V::Renderables
 where
