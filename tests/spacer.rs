@@ -6,7 +6,7 @@ use buoyant::primitives::{
 use buoyant::render::CharacterRender;
 use buoyant::render::CharacterRenderTarget;
 use buoyant::render_target::FixedTextBuffer;
-use buoyant::view::{make_render_tree, HStack, RenderExtensions as _, Spacer, Text, VStack};
+use buoyant::view::{make_render_tree, HStack, Spacer, Text, VStack, ViewExt as _};
 use common::{collect_text, TestEnv};
 
 mod common;

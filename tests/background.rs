@@ -6,7 +6,7 @@ use buoyant::{
     render_target::FixedTextBuffer,
     view::{
         make_render_tree, padding::Edges, shape::Rectangle, EmptyView, HorizontalTextAlignment,
-        LayoutExtensions as _, RenderExtensions as _, Text,
+        Text, ViewExt as _,
     },
 };
 

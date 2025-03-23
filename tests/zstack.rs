@@ -7,9 +7,7 @@ use buoyant::render::CharacterRenderTarget;
 use buoyant::render_target::FixedTextBuffer;
 use buoyant::view::padding::Edges;
 use buoyant::view::shape::Rectangle;
-use buoyant::view::{
-    make_render_tree, Divider, LayoutExtensions, RenderExtensions as _, Spacer, Text, ZStack,
-};
+use buoyant::view::{make_render_tree, Divider, Spacer, Text, ViewExt, ZStack};
 
 #[test]
 fn test_layout_fills_two() {

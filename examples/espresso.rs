@@ -22,8 +22,7 @@ use buoyant::{
     view::{
         padding::Edges,
         shape::{Circle, Rectangle},
-        HStack, HorizontalTextAlignment, LayoutExtensions as _, RenderExtensions, Text, VStack,
-        ZStack,
+        HStack, HorizontalTextAlignment, Text, VStack, ViewExt as _, ZStack,
     },
 };
 use embedded_graphics::prelude::*;

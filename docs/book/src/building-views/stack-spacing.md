@@ -43,7 +43,7 @@ You can configure the spacing between child views using `.with_spacing`.
 # 
 use buoyant::layout::HorizontalAlignment;
 use buoyant::view::shape::{Capsule, Circle, Rectangle};
-use buoyant::view::RenderExtensions as _;
+use buoyant::view::ViewExt as _;
 use buoyant::view::VStack;
 use buoyant::render::EmbeddedGraphicsView;
 
@@ -104,7 +104,7 @@ use buoyant::layout::{HorizontalAlignment, VerticalAlignment};
 use buoyant::view::padding::Edges;
 use buoyant::view::shape::Circle;
 use buoyant::view::{HStack, Text, VStack};
-use buoyant::view::{LayoutExtensions as _, RenderExtensions as _};
+use buoyant::view::ViewExt as _;
 use buoyant::render::EmbeddedGraphicsView;
 use embedded_graphics::{
     mono_font::ascii::{FONT_7X13, FONT_9X15, FONT_9X15_BOLD},

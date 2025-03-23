@@ -2,7 +2,7 @@ use buoyant::primitives::Point;
 use buoyant::render::CharacterRender;
 use buoyant::render::CharacterRenderTarget;
 use buoyant::view::ForEach;
-use buoyant::view::RenderExtensions as _;
+use buoyant::view::ViewExt as _;
 use buoyant::{
     font::CharacterBufferFont,
     layout::{HorizontalAlignment, VerticalAlignment},

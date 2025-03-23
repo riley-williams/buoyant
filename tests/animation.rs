@@ -13,8 +13,8 @@ use buoyant::{
     },
     render_target::FixedTextBuffer,
     view::{
-        make_render_tree, shape::Rectangle, Divider, EmptyView, HorizontalTextAlignment,
-        LayoutExtensions, RenderExtensions as _, Text, VStack, ZStack,
+        make_render_tree, shape::Rectangle, Divider, EmptyView, HorizontalTextAlignment, Text,
+        VStack, ViewExt, ZStack,
     },
 };
 
@@ -373,12 +373,8 @@ fn toggle_switch(is_on: bool, subtext: &str) -> impl CharacterView<char> + use<'
 
     VStack::new((
         ZStack::new((
-            Rectangle
-                .foreground_color('_')
-                .frame_sized(5, 1),
-            Rectangle
-                .foreground_color('#')
-                .frame_sized(1, 1),
+            Rectangle.foreground_color('_').frame_sized(5, 1),
+            Rectangle.foreground_color('#').frame_sized(1, 1),
         ))
         .with_horizontal_alignment(alignment)
         .animated(Animation::linear(Duration::from_secs(1)), is_on),

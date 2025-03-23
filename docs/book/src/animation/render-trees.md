@@ -18,7 +18,7 @@ This tree is what is actually rendered.
 #     view::{
 #         padding::Edges,
 #         shape::{Capsule, Circle},
-#         LayoutExtensions as _, RenderExtensions as _, ZStack,
+#         ViewExt as _, ZStack,
 #     },
 # };
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::RgbColor as _};

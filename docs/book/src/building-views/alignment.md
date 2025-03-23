@@ -53,7 +53,7 @@ you could set ``VerticalAlignment::Top``.
 use buoyant::layout::VerticalAlignment;
 use buoyant::view::shape::{Circle, Rectangle};
 use buoyant::view::HStack;
-use buoyant::view::RenderExtensions as _;
+use buoyant::view::ViewExt as _;
 use buoyant::render::EmbeddedGraphicsView;
 
 fn view() -> impl EmbeddedGraphicsView<Rgb888> {

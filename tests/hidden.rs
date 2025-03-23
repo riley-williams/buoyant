@@ -6,7 +6,7 @@ use buoyant::{
     primitives::Point,
     render::{CharacterRender as _, CharacterRenderTarget as _},
     render_target::FixedTextBuffer,
-    view::{make_render_tree, HStack, LayoutExtensions as _, RenderExtensions as _, Text},
+    view::{make_render_tree, HStack, Text, ViewExt as _},
 };
 
 #[test]

@@ -9,10 +9,7 @@ use buoyant::{
     primitives::{Dimensions, Point, ProposedDimension, ProposedDimensions, Size},
     render::Renderable as _,
     render_target::FixedTextBuffer,
-    view::{
-        make_render_tree, HorizontalTextAlignment, LayoutExtensions as _, RenderExtensions as _,
-        Text,
-    },
+    view::{make_render_tree, HorizontalTextAlignment, Text, ViewExt as _},
 };
 
 #[derive(Debug)]

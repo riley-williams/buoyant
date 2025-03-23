@@ -17,7 +17,7 @@ views when all the branches are the same type:
 # use buoyant::{
 #     if_view,
 #     render::EmbeddedGraphicsView,
-#     view::{shape::Rectangle, LayoutExtensions},
+#     view::{shape::Rectangle, ViewExt},
 # };
 # use embedded_graphics::pixelcolor::Rgb888;
 # 

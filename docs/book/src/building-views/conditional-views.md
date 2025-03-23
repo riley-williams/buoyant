@@ -62,7 +62,7 @@ The `if_view!` macro allows you to write views as if you were writing a plain `i
 # }
 #
 use buoyant::if_view;
-use buoyant::view::{padding::Edges, shape::RoundedRectangle, LayoutExtensions as _, Text, VStack};
+use buoyant::view::{padding::Edges, shape::RoundedRectangle, ViewExt as _, Text, VStack};
 use embedded_graphics::{mono_font::ascii::FONT_9X15, pixelcolor::Rgb888, prelude::*};
 
 fn secret_message(message: &str, is_redacted: bool) -> impl EmbeddedGraphicsView<Rgb888> + use<'_> {
@@ -131,7 +131,7 @@ variables in the match arms.
 #
 use buoyant::match_view;
 use buoyant::view::shape::{Rectangle, RoundedRectangle};
-use buoyant::view::{padding::Edges, LayoutExtensions as _, RenderExtensions as _, VStack};
+use buoyant::view::{padding::Edges, ViewExt as _, VStack};
 use embedded_graphics::{pixelcolor::Rgb888, prelude::*};
 
 #[derive(Debug, Clone, Copy)]
