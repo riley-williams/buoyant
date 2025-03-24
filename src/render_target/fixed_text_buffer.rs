@@ -1,6 +1,11 @@
 use core::fmt::{Display, Formatter, Result};
 
-use crate::{primitives::Size, render::CharacterRenderTarget};
+use crate::primitives::Size;
+
+use super::{
+    geometry::{Point, Rectangle},
+    Brush, RenderTarget,
+};
 
 /// A fixed size text buffer
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -11,6 +16,18 @@ pub struct FixedTextBuffer<const W: usize, const H: usize> {
 impl<const W: usize, const H: usize> FixedTextBuffer<W, H> {
     pub const fn clear(&mut self) {
         self.text = [[' '; W]; H];
+    }
+
+    fn draw_character(&mut self, point: Point, character: char) {
+        #[allow(clippy::cast_sign_loss)]
+        if point.x < W as i32 && point.y < H as i32 && point.x >= 0 && point.y >= 0 {
+            self.text[point.y as usize][point.x as usize] = character;
+        }
+    }
+
+    #[must_use]
+    pub const fn size(&self) -> Size {
+        Size::new(W as u16, H as u16)
     }
 }
 
@@ -34,29 +51,85 @@ impl<const W: usize, const H: usize> Default for FixedTextBuffer<W, H> {
     }
 }
 
-impl<const W: usize, const H: usize> CharacterRenderTarget for FixedTextBuffer<W, H> {
-    type Color = char;
+impl<const W: usize, const H: usize> RenderTarget for FixedTextBuffer<W, H> {
+    type ColorFormat = char;
+    type Layer = ();
 
-    fn draw_character(
+    fn reset(&mut self) {
+        todo!()
+    }
+
+    fn push_layer(&mut self) -> Self::Layer {
+        todo!()
+    }
+
+    fn pop_layer(&mut self, _layer: Self::Layer) {
+        todo!()
+    }
+
+    fn fill(
         &mut self,
-        point: crate::primitives::Point,
-        character: char,
-        _color: &Self::Color,
+        transform_offset: Point,
+        brush: super::Brush<'_, impl Into<Self::ColorFormat>>,
+        _brush_offset: Option<Point>,
+        shape: &impl super::Shape,
     ) {
-        #[allow(clippy::cast_sign_loss)]
-        if point.x < W as i16 && point.y < H as i16 && point.x >= 0 && point.y >= 0 {
-            self.text[point.y as usize][point.x as usize] = character;
+        if let Some(rect) = shape.as_rect() {
+            let Brush::Solid(color) = brush else { return };
+            let color = color.into();
+            for y in transform_offset.y..(transform_offset.y + rect.size.1 as i32) {
+                for x in transform_offset.x..(transform_offset.x + rect.size.0 as i32) {
+                    let point = Point::new(rect.origin.x + x, rect.origin.y + y);
+                    self.draw_character(point, color);
+                }
+            }
         }
     }
 
-    fn draw_color(&mut self, point: crate::primitives::Point, color: &Self::Color) {
-        #[allow(clippy::cast_sign_loss)]
-        if point.x < W as i16 && point.y < H as i16 && point.x >= 0 && point.y >= 0 {
-            self.text[point.y as usize][point.x as usize] = *color;
+    fn stroke(
+        &mut self,
+        _stroke: &super::Stroke,
+        transform_offset: Point,
+        brush: super::Brush<'_, impl Into<Self::ColorFormat>>,
+        _brush_offset: Option<Point>,
+        shape: &impl super::Shape,
+    ) {
+        if let Some(rect) = shape.as_rect() {
+            let origin = Point::new(
+                rect.origin.x + transform_offset.x,
+                rect.origin.y + transform_offset.y,
+            );
+            let rect = Rectangle::new(origin, rect.size);
+            let Brush::Solid(color) = brush else { return };
+            let color = color.into();
+            for y in 0..rect.size.1 {
+                if y == 0 || y == rect.size.1 {
+                    for x in 0..rect.size.0 {
+                        let point = Point::new(rect.origin.x + x as i32, rect.origin.y + y as i32);
+                        self.draw_character(point, color);
+                    }
+                } else {
+                    let point = Point::new(rect.origin.x, rect.origin.y + y as i32);
+                    self.draw_character(point, color);
+                    let point =
+                        Point::new(rect.origin.x + rect.size.0 as i32, rect.origin.y + y as i32);
+                    self.draw_character(point, color);
+                }
+            }
         }
     }
 
-    fn size(&self) -> Size {
-        Size::new(W as u16, H as u16)
+    fn draw_glyphs(
+        &mut self,
+        offset: Point,
+        _brush: super::Brush<'_, impl Into<Self::ColorFormat>>,
+        text: &str,
+    ) {
+        let mut x = offset.x;
+        for c in text.chars() {
+            let point = Point::new(x, offset.y);
+            x += 1;
+            self.draw_character(point, c);
+        }
     }
 }

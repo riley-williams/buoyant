@@ -4,7 +4,7 @@ use buoyant::view::shape::Rectangle;
 use buoyant::{
     font::CharacterBufferFont,
     primitives::Point,
-    render::{CharacterRender as _, CharacterRenderTarget as _},
+    render::Render as _,
     render_target::FixedTextBuffer,
     view::{make_render_tree, HStack, Text, ViewExt as _},
 };

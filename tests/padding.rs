@@ -1,8 +1,7 @@
 use std::iter::zip;
 
 use buoyant::primitives::Point;
-use buoyant::render::CharacterRender;
-use buoyant::render::CharacterRenderTarget;
+use buoyant::render::Render;
 use buoyant::view::padding::Edges;
 use buoyant::{
     environment::DefaultEnvironment,

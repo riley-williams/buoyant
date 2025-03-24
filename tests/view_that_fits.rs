@@ -3,25 +3,25 @@ use buoyant::{
     font::CharacterBufferFont,
     layout::Layout as _,
     primitives::Point,
-    render::{CharacterRender as _, CharacterRenderTarget as _, CharacterView, Renderable as _},
+    render::{Render as _, Renderable as _},
     render_target::FixedTextBuffer,
-    view::{shape::Rectangle, FitAxis, HStack, Text, VStack, ViewExt, ViewThatFits},
+    view::{shape::Rectangle, FitAxis, HStack, Text, VStack, View, ViewExt, ViewThatFits},
 };
 
-fn single_variant_view() -> impl CharacterView<char> {
+fn single_variant_view() -> impl View<char> {
     ViewThatFits::new(FitAxis::Vertical, {
         Text::new("Single variant", &CharacterBufferFont)
     })
 }
 
-fn two_variant_view() -> impl CharacterView<char> {
+fn two_variant_view() -> impl View<char> {
     ViewThatFits::new(FitAxis::Vertical, {
         Text::new("This is the first variant", &CharacterBufferFont)
     })
     .or(Text::new("Second variant", &CharacterBufferFont))
 }
 
-fn three_variant_view() -> impl CharacterView<char> {
+fn three_variant_view() -> impl View<char> {
     ViewThatFits::new(FitAxis::Vertical, {
         Text::new("This is the longest variant", &CharacterBufferFont)
     })
@@ -29,7 +29,7 @@ fn three_variant_view() -> impl CharacterView<char> {
     .or(Text::new("Short", &CharacterBufferFont))
 }
 
-fn four_variant() -> impl CharacterView<char> {
+fn four_variant() -> impl View<char> {
     ViewThatFits::new(FitAxis::Vertical, {
         Text::new("12 hours, 16 minutes, and 3 seconds", &CharacterBufferFont)
     })
@@ -293,7 +293,7 @@ fn four_variant_vertical_fourth_clipping() {
     assert_eq!(buffer.text[0].iter().collect::<String>(), "~12");
 }
 
-fn fit_rects() -> impl CharacterView<char> {
+fn fit_rects() -> impl View<char> {
     ViewThatFits::new(FitAxis::Both, {
         VStack::new((
             HStack::new((
