@@ -1,9 +1,8 @@
 use buoyant::font::CharacterBufferFont;
 use buoyant::primitives::Point;
-use buoyant::render::CharacterRender;
-use buoyant::render::CharacterRenderTarget;
-use buoyant::render::CharacterView;
+use buoyant::render::Render;
 use buoyant::view::padding::Edges;
+use buoyant::view::View;
 use buoyant::view::{make_render_tree, ViewExt};
 use buoyant::{
     layout::VerticalAlignment,
@@ -17,7 +16,7 @@ use crossterm::style::Colors;
 
 const FONT: CharacterBufferFont = CharacterBufferFont;
 
-fn view() -> impl CharacterView<Colors> {
+fn view() -> impl View<Colors> {
     VStack::new((
         HStack::new((
             Text::new(
@@ -112,7 +111,7 @@ fn main() {
     }
 }
 
-fn render_view(target: &mut CrosstermRenderTarget, view: &impl CharacterView<Colors>) {
+fn render_view(target: &mut CrosstermRenderTarget, view: &impl View<Colors>) {
     target.clear();
     let size = target.size();
     let tree = make_render_tree(view, size);

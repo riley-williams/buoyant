@@ -1,9 +1,7 @@
-use embedded_graphics::Drawable;
-use embedded_graphics::{image::ImageDrawable, prelude::PixelColor};
-
 use crate::primitives::{Interpolate as _, Point};
+use crate::render_target::RenderTarget;
 
-use super::{AnimatedJoin, AnimationDomain, EmbeddedGraphicsRender};
+use super::{AnimatedJoin, AnimationDomain, Render};
 
 #[non_exhaustive]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -26,29 +24,29 @@ impl<T> AnimatedJoin for Image<'_, T> {
         }
     }
 }
-
-impl<C: PixelColor, T: ImageDrawable<Color = C>> EmbeddedGraphicsRender<C> for Image<'_, T> {
+// FIXME: Implement Render for Image
+impl<C, T> Render<C> for Image<'_, T> {
     fn render(
         &self,
-        render_target: &mut impl embedded_graphics::prelude::DrawTarget<Color = C>,
+        render_target: &mut impl RenderTarget<ColorFormat = C>,
         _style: &C,
         offset: crate::primitives::Point,
     ) {
-        let origin = self.origin + offset;
-        let image = embedded_graphics::image::Image::new(self.image, origin.into());
-        _ = image.draw(render_target);
+        // let origin = self.origin + offset;
+        // let image = embedded_graphics::image::Image::new(self.image, origin.into());
+        // _ = image.draw(render_target);
     }
 
     fn render_animated(
-        render_target: &mut impl embedded_graphics::prelude::DrawTarget<Color = C>,
+        render_target: &mut impl RenderTarget<ColorFormat = C>,
         source: &Self,
         target: &Self,
         _style: &C,
         offset: crate::primitives::Point,
         domain: &super::AnimationDomain,
     ) {
-        let origin = offset + Point::interpolate(source.origin, target.origin, domain.factor);
-        let image = embedded_graphics::image::Image::new(target.image, origin.into());
-        _ = image.draw(render_target);
+        // let origin = offset + Point::interpolate(source.origin, target.origin, domain.factor);
+        // let image = embedded_graphics::image::Image::new(target.image, origin.into());
+        // _ = image.draw(render_target);
     }
 }
