@@ -1,8 +1,8 @@
 use crate::{
     environment::LayoutEnvironment,
     layout::{Layout, LayoutDirection, ResolvedLayout},
-    primitives::{Dimensions, ProposedDimensions},
-    render::NullRender,
+    primitives::{Dimensions, Point, ProposedDimensions},
+    render::Renderable,
 };
 
 #[derive(Debug, Default, PartialEq, Eq)]
@@ -40,4 +40,14 @@ impl Layout for Spacer {
     }
 }
 
-impl NullRender for Spacer {}
+impl Renderable for Spacer {
+    type Renderables = ();
+
+    fn render_tree(
+        &self,
+        _layout: &ResolvedLayout<Self::Sublayout>,
+        _origin: Point,
+        _env: &impl LayoutEnvironment,
+    ) {
+    }
+}
