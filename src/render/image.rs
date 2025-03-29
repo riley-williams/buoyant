@@ -1,5 +1,5 @@
 use crate::primitives::{Interpolate as _, Point};
-use crate::render_target::RenderTarget;
+use crate::render_target::{Image as DrawImage, ImageBrush, RenderTarget};
 
 use super::{AnimatedJoin, AnimationDomain, Render};
 
@@ -25,16 +25,22 @@ impl<T> AnimatedJoin for Image<'_, T> {
     }
 }
 // FIXME: Implement Render for Image
-impl<C, T> Render<C> for Image<'_, T> {
+impl<C: From<<T as crate::render_target::Image>::ColorFormat>, T: DrawImage> Render<C>
+    for Image<'_, T>
+{
     fn render(
         &self,
         render_target: &mut impl RenderTarget<ColorFormat = C>,
         _style: &C,
         offset: crate::primitives::Point,
     ) {
-        // let origin = self.origin + offset;
-        // let image = embedded_graphics::image::Image::new(self.image, origin.into());
-        // _ = image.draw(render_target);
+        let origin = self.origin + offset;
+        let rectangle = crate::render_target::geometry::Rectangle::new(
+            crate::render_target::geometry::Point::new(0, 0),
+            (self.image.width(), self.image.height()),
+        );
+        let brush = ImageBrush::new(self.image);
+        render_target.fill(origin.into(), &brush, None, &rectangle);
     }
 
     fn render_animated(
@@ -45,8 +51,12 @@ impl<C, T> Render<C> for Image<'_, T> {
         offset: crate::primitives::Point,
         domain: &super::AnimationDomain,
     ) {
-        // let origin = offset + Point::interpolate(source.origin, target.origin, domain.factor);
-        // let image = embedded_graphics::image::Image::new(target.image, origin.into());
-        // _ = image.draw(render_target);
+        let origin = offset + Point::interpolate(source.origin, target.origin, domain.factor);
+        let rectangle = crate::render_target::geometry::Rectangle::new(
+            crate::render_target::geometry::Point::new(0, 0),
+            (target.image.width(), target.image.height()),
+        );
+        let brush = ImageBrush::new(target.image);
+        render_target.fill(origin.into(), &brush, None, &rectangle);
     }
 }

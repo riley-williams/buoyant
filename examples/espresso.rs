@@ -247,6 +247,10 @@ impl App {
                 &font::CAPTION_BOLD,
             )
             .multiline_text_alignment(HorizontalTextAlignment::Leading),
+            Text::new("abcdefghijklmnopqrstuvwxyz", &font::CAPTION)
+                .multiline_text_alignment(HorizontalTextAlignment::Leading),
+            Text::new("abcdefghijklmnopqrstuvwxyz", &font::CAPTION_BOLD)
+                .multiline_text_alignment(HorizontalTextAlignment::Leading),
         ))
         .with_spacing(spacing::COMPONENT)
         .with_alignment(HorizontalAlignment::Leading)

@@ -1,9 +1,8 @@
-
 use crate::{
-    font::FontLayout,
+    font::{FontMetrics, FontRender},
     primitives::{Interpolate, Point, Size},
     render::{AnimatedJoin, AnimationDomain, Render},
-    render_target::{self, RenderTarget},
+    render_target::{self, Glyph, RenderTarget, SolidBrush},
     view::{HorizontalTextAlignment, WhitespaceWrap},
 };
 
@@ -24,7 +23,7 @@ impl<T: AsRef<str>, F> AnimatedJoin for Text<'_, T, F> {
     }
 }
 
-impl<C: Copy, T: AsRef<str>, F: FontLayout> Render<C> for Text<'_, T, F> {
+impl<C: Copy, T: AsRef<str>, F: FontRender> Render<C> for Text<'_, T, F> {
     fn render(
         &self,
         render_target: &mut impl RenderTarget<ColorFormat = C>,
@@ -35,26 +34,38 @@ impl<C: Copy, T: AsRef<str>, F: FontLayout> Render<C> for Text<'_, T, F> {
             return;
         }
 
-        let brush = crate::render_target::Brush::Solid(*style);
+        let brush = SolidBrush::new(*style);
 
         let origin = self.origin + offset;
         let line_height = self.font.line_height() as i16;
 
         let mut height = 0;
         let wrap = WhitespaceWrap::new(self.text.as_ref(), self.size.width, self.font);
+
+        let metrics = self.font.metrics();
+
         for line in wrap {
             // TODO: WhitespaceWrap should also return the width of the line
             let width = self.font.str_width(line);
 
-            let x = self.alignment.align(self.size.width as i16, width as i16);
-            // embedded_graphics draws text at the baseline
+            let line_x = self.alignment.align(self.size.width as i16, width as i16) + origin.x;
+
+            let mut x = 0;
             render_target.draw_glyphs(
-                render_target::geometry::Point::new(
-                    (origin.x + x).into(),
-                    (origin.y + height).into(),
-                ),
-                brush.clone(),
-                line,
+                render_target::geometry::Point::new(line_x.into(), (origin.y + height).into()),
+                &brush,
+                line.chars().map(|c| {
+                    let index = self.font.glyph_index(c);
+                    let glyph = Glyph {
+                        id: index,
+                        character: c,
+                        x: x.into(),
+                        y: 0,
+                    };
+                    x += metrics.advance(glyph.id) as i16;
+                    glyph
+                }),
+                self.font,
             );
 
             height += line_height;
@@ -63,6 +74,7 @@ impl<C: Copy, T: AsRef<str>, F: FontLayout> Render<C> for Text<'_, T, F> {
             }
         }
     }
+
     fn render_animated(
         render_target: &mut impl RenderTarget<ColorFormat = C>,
         source: &Self,

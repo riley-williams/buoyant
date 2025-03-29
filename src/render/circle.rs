@@ -1,6 +1,6 @@
 use crate::{
     primitives::{Interpolate, Point},
-    render_target::{geometry::Circle as CircleGeometry, Brush, RenderTarget},
+    render_target::{geometry::Circle as CircleGeometry, RenderTarget, SolidBrush},
 };
 
 use super::{AnimatedJoin, AnimationDomain, Render};
@@ -27,10 +27,10 @@ impl<C: Copy> Render<C> for Circle {
         style: &C,
         offset: Point,
     ) {
-        let brush = Brush::Solid(*style);
+        let brush = SolidBrush::new(*style);
         render_target.fill(
             offset.into(),
-            brush,
+            &brush,
             None,
             &CircleGeometry::new(self.origin.into(), self.diameter.into()),
         );

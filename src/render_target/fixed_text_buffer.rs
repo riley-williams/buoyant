@@ -1,10 +1,10 @@
 use core::fmt::{Display, Formatter, Result};
 
-use crate::primitives::Size;
+use crate::{font::GlyphIndex, primitives::Size};
 
 use super::{
     geometry::{Point, Rectangle},
-    Brush, RenderTarget,
+    Brush, Glyph, RenderTarget, Shape, Stroke,
 };
 
 /// A fixed size text buffer
@@ -67,15 +67,17 @@ impl<const W: usize, const H: usize> RenderTarget for FixedTextBuffer<W, H> {
         todo!()
     }
 
-    fn fill(
+    fn fill<C: Into<Self::ColorFormat>>(
         &mut self,
         transform_offset: Point,
-        brush: super::Brush<'_, impl Into<Self::ColorFormat>>,
-        _brush_offset: Option<Point>,
-        shape: &impl super::Shape,
+        brush: &impl Brush<ColorFormat = C>,
+        brush_offset: Option<Point>,
+        shape: &impl Shape,
     ) {
         if let Some(rect) = shape.as_rect() {
-            let Brush::Solid(color) = brush else { return };
+            let Some(color) = brush.as_solid() else {
+                return;
+            };
             let color = color.into();
             for y in transform_offset.y..(transform_offset.y + rect.size.1 as i32) {
                 for x in transform_offset.x..(transform_offset.x + rect.size.0 as i32) {
@@ -86,13 +88,13 @@ impl<const W: usize, const H: usize> RenderTarget for FixedTextBuffer<W, H> {
         }
     }
 
-    fn stroke(
+    fn stroke<C: Into<Self::ColorFormat>>(
         &mut self,
-        _stroke: &super::Stroke,
+        stroke: &Stroke,
         transform_offset: Point,
-        brush: super::Brush<'_, impl Into<Self::ColorFormat>>,
-        _brush_offset: Option<Point>,
-        shape: &impl super::Shape,
+        brush: &impl Brush<ColorFormat = C>,
+        brush_offset: Option<Point>,
+        shape: &impl Shape,
     ) {
         if let Some(rect) = shape.as_rect() {
             let origin = Point::new(
@@ -100,7 +102,9 @@ impl<const W: usize, const H: usize> RenderTarget for FixedTextBuffer<W, H> {
                 rect.origin.y + transform_offset.y,
             );
             let rect = Rectangle::new(origin, rect.size);
-            let Brush::Solid(color) = brush else { return };
+            let Some(color) = brush.as_solid() else {
+                return;
+            };
             let color = color.into();
             for y in 0..rect.size.1 {
                 if y == 0 || y == rect.size.1 {
@@ -119,17 +123,20 @@ impl<const W: usize, const H: usize> RenderTarget for FixedTextBuffer<W, H> {
         }
     }
 
-    fn draw_glyphs(
+    fn draw_glyphs<C: Into<Self::ColorFormat>>(
         &mut self,
-        offset: Point,
-        _brush: super::Brush<'_, impl Into<Self::ColorFormat>>,
-        text: &str,
+        mut offset: Point,
+        brush: &impl Brush<ColorFormat = C>,
+        glyphs: impl Iterator<Item = Glyph>,
+        font: &impl crate::font::FontRender,
     ) {
-        let mut x = offset.x;
-        for c in text.chars() {
-            let point = Point::new(x, offset.y);
-            x += 1;
+        let Some(color) = brush.as_solid() else {
+            return;
+        };
+        for c in glyphs.map(|g| g.character) {
+            let point = Point::new(offset.x, offset.y);
             self.draw_character(point, c);
+            offset.x += 1;
         }
     }
 }
