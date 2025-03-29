@@ -1,6 +1,9 @@
-use crate::render_target::{
-    geometry::{Circle, Line, Point, Rectangle, RoundedRectangle},
-    Brush, PathEl, RenderTarget, Shape,
+use crate::{
+    font::FontLayout as _,
+    render_target::{
+        geometry::{Circle, Line, Point, Rectangle, RoundedRectangle},
+        Brush, PathEl, RenderTarget, Shape,
+    },
 };
 use embedded_graphics::{
     draw_target::DrawTarget,
@@ -13,10 +16,10 @@ use embedded_graphics::{
         Rectangle as EgRectangle, RoundedRectangle as EgRoundedRectangle,
     },
     text::Text,
-    Drawable,
+    Drawable, Pixel,
 };
 
-use super::Stroke;
+use super::{Glyph, SolidBrush, Stroke};
 
 #[derive(Debug)]
 pub struct EmbeddedGraphicsRenderTarget<D, C>
@@ -69,17 +72,16 @@ where
         self.frame = layer;
     }
 
-    fn fill(
+    fn fill<T: Into<Self::ColorFormat>>(
         &mut self,
         transform_offset: Point,
-        brush: Brush<'_, impl Into<Self::ColorFormat>>,
-        _brush_offset: Option<Point>,
+        brush: &impl Brush<ColorFormat = T>,
+        brush_offset: Option<Point>,
         shape: &impl Shape,
     ) {
         // Convert the brush to the embedded_graphics color
-        let color = match brush {
-            Brush::Solid(color) => color.into(),
-            Brush::Image(_) => return, // Not supported yet
+        let Some(color) = brush.as_solid().map(Into::into) else {
+            return;
         };
 
         let style = PrimitiveStyleBuilder::new().fill_color(color).build();
@@ -101,18 +103,17 @@ where
         }
     }
 
-    fn stroke(
+    fn stroke<T: Into<Self::ColorFormat>>(
         &mut self,
         stroke: &Stroke,
         transform_offset: Point,
-        brush: Brush<'_, impl Into<Self::ColorFormat>>,
-        _brush_offset: Option<Point>,
+        brush: &impl Brush<ColorFormat = T>,
+        brush_offset: Option<Point>,
         shape: &impl Shape,
     ) {
         // Convert the brush to the embedded_graphics color
-        let color = match brush {
-            Brush::Solid(color) => color.into(),
-            Brush::Image(_) => return, // Not supported yet
+        let Some(color) = brush.as_solid().map(Into::into) else {
+            return;
         };
 
         let style = PrimitiveStyleBuilder::new()
@@ -136,27 +137,51 @@ where
         }
     }
 
-    fn draw_glyphs(
+    fn draw_glyphs<T: Into<Self::ColorFormat>>(
         &mut self,
         offset: Point,
-        brush: Brush<'_, impl Into<Self::ColorFormat>>,
-        text: &str,
+        brush: &impl Brush<ColorFormat = T>,
+        glyphs: impl Iterator<Item = Glyph>,
+        font: &impl crate::font::FontRender,
     ) {
-        let font = &embedded_graphics::mono_font::ascii::FONT_6X10;
-        let color = match brush {
-            Brush::Solid(c) => c,
-            Brush::Image(_) => return,
+        let Some(color) = brush.as_solid().map(Into::into) else {
+            return;
         };
-        let style = MonoTextStyleBuilder::new()
-            .font(font)
-            .text_color(color.into())
-            .build();
-        _ = Text::new(
-            text,
-            EgPoint::new(offset.x, offset.y + font.baseline as i32),
-            style,
-        )
-        .draw(&mut self.target);
+        for glyph in glyphs {
+            if let Some(mask) = font.as_mask(glyph.id) {
+                let render_offset = offset + Point::new(glyph.x, glyph.y);
+                let x_max: i32 = render_offset.x + i32::from(mask.width);
+                let mut x = render_offset.x;
+                let mut y = render_offset.y;
+                _ = self.target.draw_iter(mask.iter.filter_map(|p| {
+                    let pixel = if p {
+                        Some(Pixel(EgPoint::new(x, y), color))
+                    } else {
+                        None
+                    };
+                    x += 1;
+                    if x >= x_max {
+                        x = render_offset.x;
+                        y += 1;
+                    }
+                    pixel
+                }));
+            } else {
+                //FIXME: for debugging, draw a rectangle
+                let width = font.character_width('x');
+                let height = font.line_height();
+                let style = PrimitiveStyleBuilder::new()
+                    .stroke_width(1)
+                    .stroke_color(color)
+                    .build();
+
+                self.draw_rectangle(
+                    &Rectangle::new(offset, (u32::from(width), u32::from(height))),
+                    offset,
+                    &style,
+                );
+            }
+        }
     }
 }
 

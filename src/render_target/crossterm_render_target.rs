@@ -10,7 +10,7 @@ use std::io::{stdout, Stdout, Write};
 
 use crate::{primitives::Size, render_target::geometry::Point};
 
-use super::{Brush, RenderTarget};
+use super::{Brush, Glyph, RenderTarget, Shape, Stroke};
 
 /// A target that renders views to the terminal using the crossterm library.
 ///
@@ -137,15 +137,17 @@ impl RenderTarget for CrosstermRenderTarget {
         unimplemented!()
     }
 
-    fn fill(
+    fn fill<C: Into<Self::ColorFormat>>(
         &mut self,
-        _transform_offset: super::geometry::Point,
-        brush: super::Brush<'_, impl Into<Self::ColorFormat>>,
-        _brush_offset: Option<super::geometry::Point>,
-        shape: &impl super::Shape,
+        transform_offset: Point,
+        brush: &impl Brush<ColorFormat = C>,
+        brush_offset: Option<Point>,
+        shape: &impl Shape,
     ) {
         if let Some(rect) = shape.as_rect() {
-            let Brush::Solid(color) = brush else { return };
+            let Some(color) = brush.as_solid() else {
+                return;
+            };
             let color = color.into();
             let size = self.size();
             for y in 0..rect.size.1 {
@@ -160,24 +162,31 @@ impl RenderTarget for CrosstermRenderTarget {
         }
     }
 
-    fn stroke(
+    fn stroke<C: Into<Self::ColorFormat>>(
         &mut self,
-        _stroke: &super::Stroke,
-        _transform_offset: super::geometry::Point,
-        _brush: super::Brush<'_, impl Into<Self::ColorFormat>>,
-        _brush_offset: Option<super::geometry::Point>,
-        _shape: &impl super::Shape,
+        _stroke: &Stroke,
+        _transform_offset: Point,
+        _brush: &impl Brush<ColorFormat = C>,
+        _brush_offset: Option<Point>,
+        _shape: &impl Shape,
     ) {
         unimplemented!();
     }
 
-    fn draw_glyphs(
+    fn draw_glyphs<C: Into<Self::ColorFormat>>(
         &mut self,
-        offset: super::geometry::Point,
-        brush: super::Brush<'_, impl Into<Self::ColorFormat>>,
-        text: &str,
+        mut offset: Point,
+        brush: &impl Brush<ColorFormat = C>,
+        glyphs: impl Iterator<Item = Glyph>,
+        font: &impl crate::font::FontRender,
     ) {
-        let Brush::Solid(color) = brush else { return };
-        self.draw_string(offset, text, color.into());
+        let Some(color) = brush.as_solid().map(Into::into) else {
+            return;
+        };
+        for c in glyphs.map(|g| g.character) {
+            let point = Point::new(offset.x, offset.y);
+            self.draw_character(point, c, color);
+            offset.x += 1;
+        }
     }
 }
