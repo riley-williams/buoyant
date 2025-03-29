@@ -1,5 +1,5 @@
 use buoyant::primitives::Point;
-use buoyant::render::{CharacterRender as _, CharacterRenderTarget};
+use buoyant::render::Render;
 use buoyant::view::padding::Edges;
 use buoyant::{
     environment::DefaultEnvironment,

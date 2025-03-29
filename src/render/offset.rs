@@ -1,6 +1,9 @@
-use crate::{primitives::Interpolate as _, primitives::Point};
+use crate::{
+    primitives::{Interpolate as _, Point},
+    render_target::RenderTarget,
+};
 
-use super::{AnimatedJoin, AnimationDomain, CharacterRender, CharacterRenderTarget};
+use super::{AnimatedJoin, AnimationDomain, Render};
 
 /// A render tree item that offsets its children by a fixed amount.
 /// The offset is animated, resulting in all children moving in unison.
@@ -25,10 +28,10 @@ impl<T: AnimatedJoin> AnimatedJoin for Offset<T> {
     }
 }
 
-impl<T: CharacterRender<C>, C> CharacterRender<C> for Offset<T> {
+impl<T: Render<C>, C> Render<C> for Offset<T> {
     fn render(
         &self,
-        render_target: &mut impl CharacterRenderTarget<Color = C>,
+        render_target: &mut impl RenderTarget<ColorFormat = C>,
         style: &C,
         offset: Point,
     ) {
@@ -37,7 +40,7 @@ impl<T: CharacterRender<C>, C> CharacterRender<C> for Offset<T> {
     }
 
     fn render_animated(
-        render_target: &mut impl CharacterRenderTarget<Color = C>,
+        render_target: &mut impl RenderTarget<ColorFormat = C>,
         source: &Self,
         target: &Self,
         style: &C,
@@ -52,42 +55,5 @@ impl<T: CharacterRender<C>, C> CharacterRender<C> for Offset<T> {
             Point::interpolate(source.offset, target.offset, domain.factor) + offset,
             domain,
         );
-    }
-}
-
-#[cfg(feature = "embedded-graphics")]
-mod embedded_graphics_impl {
-    use embedded_graphics::prelude::PixelColor;
-    use embedded_graphics_core::draw_target::DrawTarget;
-
-    use crate::primitives::Interpolate;
-    use crate::primitives::Point;
-    use crate::render::EmbeddedGraphicsRender;
-
-    use super::Offset;
-
-    impl<T: EmbeddedGraphicsRender<C>, C: PixelColor> EmbeddedGraphicsRender<C> for Offset<T> {
-        fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &C, offset: Point) {
-            self.subtree
-                .render(render_target, style, self.offset + offset);
-        }
-
-        fn render_animated(
-            render_target: &mut impl DrawTarget<Color = C>,
-            source: &Self,
-            target: &Self,
-            style: &C,
-            offset: Point,
-            domain: &super::AnimationDomain,
-        ) {
-            T::render_animated(
-                render_target,
-                &source.subtree,
-                &target.subtree,
-                style,
-                Point::interpolate(source.offset, target.offset, domain.factor) + offset,
-                domain,
-            );
-        }
     }
 }
