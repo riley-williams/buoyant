@@ -1,6 +1,6 @@
 use core::fmt::{Display, Formatter, Result};
 
-use crate::{font::GlyphIndex, primitives::Size};
+use crate::primitives::Size;
 
 use super::{
     geometry::{Point, Rectangle},
@@ -71,7 +71,7 @@ impl<const W: usize, const H: usize> RenderTarget for FixedTextBuffer<W, H> {
         &mut self,
         transform_offset: Point,
         brush: &impl Brush<ColorFormat = C>,
-        brush_offset: Option<Point>,
+        _brush_offset: Option<Point>,
         shape: &impl Shape,
     ) {
         if let Some(rect) = shape.as_rect() {
@@ -90,10 +90,10 @@ impl<const W: usize, const H: usize> RenderTarget for FixedTextBuffer<W, H> {
 
     fn stroke<C: Into<Self::ColorFormat>>(
         &mut self,
-        stroke: &Stroke,
+        _stroke: &Stroke,
         transform_offset: Point,
         brush: &impl Brush<ColorFormat = C>,
-        brush_offset: Option<Point>,
+        _brush_offset: Option<Point>,
         shape: &impl Shape,
     ) {
         if let Some(rect) = shape.as_rect() {
@@ -126,13 +126,10 @@ impl<const W: usize, const H: usize> RenderTarget for FixedTextBuffer<W, H> {
     fn draw_glyphs<C: Into<Self::ColorFormat>>(
         &mut self,
         mut offset: Point,
-        brush: &impl Brush<ColorFormat = C>,
+        _brush: &impl Brush<ColorFormat = C>,
         glyphs: impl Iterator<Item = Glyph>,
-        font: &impl crate::font::FontRender,
+        _font: &impl crate::font::FontRender,
     ) {
-        let Some(color) = brush.as_solid() else {
-            return;
-        };
         for c in glyphs.map(|g| g.character) {
             let point = Point::new(offset.x, offset.y);
             self.draw_character(point, c);

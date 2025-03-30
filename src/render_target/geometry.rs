@@ -200,9 +200,6 @@ impl Shape for Circle {
 
     #[expect(clippy::cast_precision_loss)]
     fn path_elements(&self, _tolerance: u16) -> Self::PathElementsIter<'_> {
-        // We have exactly 64 segments (66 elements - MoveTo - ClosePath)
-        const SEGMENTS: usize = 64;
-
         let radius = self.diameter as f32 / 2.0;
         let center_x = self.origin.x as f32 + radius;
         let center_y = self.origin.y as f32 + radius;
@@ -210,15 +207,16 @@ impl Shape for Circle {
         let mut elements = [PathEl::ClosePath; 66];
 
         // First point (MoveTo)
-        let first_point = Point::new((center_x + radius).round() as i32, center_y.round() as i32);
+        let first_point = Point::new((center_x + radius) as i32, center_y as i32);
         elements[0] = PathEl::MoveTo(first_point);
 
-        // Add exactly SEGMENTS line segments around the circle
-        (1..=SEGMENTS).for_each(|i| {
-            let angle = (i as f32 * 2.0 * core::f32::consts::PI) / SEGMENTS as f32;
+        // FIXME: This is lazy, need to implement actual circle
+        #[cfg(feature = "std")]
+        (1..=64).for_each(|i| {
+            let angle = (i as f32 * 2.0 * core::f32::consts::PI) / 64.0;
             let x = center_x + radius * angle.cos();
             let y = center_y + radius * angle.sin();
-            elements[i] = PathEl::LineTo(Point::new(x.round() as i32, y.round() as i32));
+            elements[i] = PathEl::LineTo(Point::new(x as i32, y as i32));
         });
 
         // Close the path (already initialized with ClosePath)

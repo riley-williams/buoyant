@@ -75,8 +75,7 @@ If this view involved animation, the environment would be used to inject the tim
 # extern crate buoyant;
 # extern crate embedded_graphics;
 #
-# use buoyant::view::{padding::Edges, HStack, ViewExt as _, Spacer, Text};
-# use buoyant::render::EmbeddedGraphicsView;
+# use buoyant::view::{padding::Edges, HStack,  Spacer, Text, View, ViewExt as _,};
 # use embedded_graphics::{mono_font::ascii::FONT_10X20, pixelcolor::Rgb888, prelude::*};
 #
 {{#include quickstart.rs:view}}

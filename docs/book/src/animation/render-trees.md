@@ -14,16 +14,15 @@ This tree is what is actually rendered.
 # use buoyant::{
 #     animation::Animation,
 #     layout::Alignment::{Leading, Trailing},
-#     render::EmbeddedGraphicsView,
 #     view::{
 #         padding::Edges,
 #         shape::{Capsule, Circle},
-#         ViewExt as _, ZStack,
+#         View, ViewExt as _, ZStack,
 #     },
 # };
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::RgbColor as _};
 # 
-fn toggle(is_on: bool) -> impl EmbeddedGraphicsView<Rgb888> {
+fn toggle(is_on: bool) -> impl View<Rgb888> {
     ZStack::new((
         Capsule.foreground_color(Rgb888::BLACK),
         Circle

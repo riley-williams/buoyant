@@ -1,6 +1,9 @@
 #[cfg(feature = "crossterm")]
 mod crossterm_render_target;
+
+#[cfg(feature = "embedded-graphics")]
 mod embedded_graphics_target;
+#[cfg(feature = "embedded-graphics")]
 pub use embedded_graphics_target::EmbeddedGraphicsRenderTarget;
 
 use core::marker::PhantomData;

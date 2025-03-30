@@ -1,25 +1,20 @@
-use crate::{
-    font::FontLayout as _,
-    render_target::{
-        geometry::{Circle, Line, Point, Rectangle, RoundedRectangle},
-        Brush, PathEl, RenderTarget, Shape,
-    },
+use crate::render_target::{
+    geometry::{Circle, Line, Point, Rectangle, RoundedRectangle},
+    Brush, PathEl, RenderTarget, Shape,
 };
 use embedded_graphics::{
     draw_target::DrawTarget,
     geometry::{Point as EgPoint, Size},
-    mono_font::MonoTextStyleBuilder,
     pixelcolor::PixelColor,
     prelude::Primitive as _,
     primitives::{
         Circle as EgCircle, Line as EgLine, PrimitiveStyle, PrimitiveStyleBuilder,
         Rectangle as EgRectangle, RoundedRectangle as EgRoundedRectangle,
     },
-    text::Text,
     Drawable, Pixel,
 };
 
-use super::{Glyph, SolidBrush, Stroke};
+use super::{Glyph, Stroke};
 
 #[derive(Debug)]
 pub struct EmbeddedGraphicsRenderTarget<D, C>
@@ -76,7 +71,7 @@ where
         &mut self,
         transform_offset: Point,
         brush: &impl Brush<ColorFormat = T>,
-        brush_offset: Option<Point>,
+        _brush_offset: Option<Point>,
         shape: &impl Shape,
     ) {
         // Convert the brush to the embedded_graphics color
@@ -108,7 +103,7 @@ where
         stroke: &Stroke,
         transform_offset: Point,
         brush: &impl Brush<ColorFormat = T>,
-        brush_offset: Option<Point>,
+        _brush_offset: Option<Point>,
         shape: &impl Shape,
     ) {
         // Convert the brush to the embedded_graphics color
@@ -121,7 +116,7 @@ where
             .stroke_color(color)
             .build();
 
-        // FIXME: Does frame offset replace the need for passing offset everywhere?
+        // FIXME: Does layer offset replace the need for passing offset everywhere?
 
         if let Some(line) = shape.as_line() {
             self.draw_line(&line, transform_offset, &style);

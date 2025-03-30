@@ -70,6 +70,7 @@ impl CrosstermRenderTarget {
         self.draw_character(point, ' ', color);
     }
 
+    #[expect(unused, reason = "This is probably useful later")]
     fn draw_string(&mut self, point: Point, string: &str, color: Colors) {
         let mut styled_string = string.stylize();
         if let Some(foreground) = color.foreground {
@@ -139,9 +140,9 @@ impl RenderTarget for CrosstermRenderTarget {
 
     fn fill<C: Into<Self::ColorFormat>>(
         &mut self,
-        transform_offset: Point,
+        _transform_offset: Point,
         brush: &impl Brush<ColorFormat = C>,
-        brush_offset: Option<Point>,
+        _brush_offset: Option<Point>,
         shape: &impl Shape,
     ) {
         if let Some(rect) = shape.as_rect() {
@@ -178,7 +179,7 @@ impl RenderTarget for CrosstermRenderTarget {
         mut offset: Point,
         brush: &impl Brush<ColorFormat = C>,
         glyphs: impl Iterator<Item = Glyph>,
-        font: &impl crate::font::FontRender,
+        _font: &impl crate::font::FontRender,
     ) {
         let Some(color) = brush.as_solid().map(Into::into) else {
             return;
