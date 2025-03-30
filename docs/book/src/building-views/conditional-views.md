@@ -5,11 +5,10 @@ If you try something like this:
 ```rust,compile_fail
 # extern crate buoyant;
 # extern crate embedded_graphics;
-# use buoyant::render::EmbeddedGraphicsView;
-# use buoyant::view::{Text, shape::Rectangle};
+# use buoyant::view::{Text, shape::Rectangle, View};
 # use embedded_graphics::{mono_font::ascii::FONT_9X15, pixelcolor::Rgb888, prelude::*};
 #
-fn view(is_redacted: bool) -> impl EmbeddedGraphicsView<Rgb888> {
+fn view(is_redacted: bool) -> impl View<Rgb888> {
     if is_redacted {
         Rectangle
     } else {
@@ -36,7 +35,7 @@ The `if_view!` macro allows you to write views as if you were writing a plain `i
 # use buoyant::{
 #     environment::DefaultEnvironment,
 #     layout::Layout,
-#     render::{EmbeddedGraphicsRender, EmbeddedGraphicsView, Renderable},
+#     render::{Render, Renderable},
 # };
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
 #
@@ -62,10 +61,10 @@ The `if_view!` macro allows you to write views as if you were writing a plain `i
 # }
 #
 use buoyant::if_view;
-use buoyant::view::{padding::Edges, shape::RoundedRectangle, ViewExt as _, Text, VStack};
+use buoyant::view::{padding::Edges, shape::RoundedRectangle, View, ViewExt as _, Text, VStack};
 use embedded_graphics::{mono_font::ascii::FONT_9X15, pixelcolor::Rgb888, prelude::*};
 
-fn secret_message(message: &str, is_redacted: bool) -> impl EmbeddedGraphicsView<Rgb888> + use<'_> {
+fn secret_message(message: &str, is_redacted: bool) -> impl View<Rgb888> + use<'_> {
     if_view!((is_redacted) {
         RoundedRectangle::new(4)
             .frame()
@@ -76,7 +75,7 @@ fn secret_message(message: &str, is_redacted: bool) -> impl EmbeddedGraphicsView
     })
 }
 
-fn view() -> impl EmbeddedGraphicsView<Rgb888> {
+fn view() -> impl View<Rgb888> {
     VStack::new((
         secret_message("Top secret message", true),
         secret_message("Hi Mom!", false),
@@ -103,7 +102,7 @@ variables in the match arms.
 # use buoyant::{
 #     environment::DefaultEnvironment,
 #     layout::Layout,
-#     render::{EmbeddedGraphicsRender, EmbeddedGraphicsView, Renderable},
+#     render::{Render, Renderable},
 #     view::EmptyView,
 # };
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
@@ -131,7 +130,7 @@ variables in the match arms.
 #
 use buoyant::match_view;
 use buoyant::view::shape::{Rectangle, RoundedRectangle};
-use buoyant::view::{padding::Edges, ViewExt as _, VStack};
+use buoyant::view::{padding::Edges, View, ViewExt as _, VStack};
 use embedded_graphics::{pixelcolor::Rgb888, prelude::*};
 
 #[derive(Debug, Clone, Copy)]
@@ -141,7 +140,7 @@ enum Shape {
     None,
 }
 
-fn shape(shape: Shape) -> impl EmbeddedGraphicsView<Rgb888> {
+fn shape(shape: Shape) -> impl View<Rgb888> {
     match_view!(shape => {
         Shape::Rectangle => {
             Rectangle
@@ -155,7 +154,7 @@ fn shape(shape: Shape) -> impl EmbeddedGraphicsView<Rgb888> {
     })
 }
 
-fn view() -> impl EmbeddedGraphicsView<Rgb888> {
+fn view() -> impl View<Rgb888> {
     VStack::new((
         shape(Shape::Rectangle)
             .foreground_color(Rgb888::CSS_PALE_GREEN),
@@ -184,14 +183,13 @@ When an `if_view!` does not specify an else, `EmptyView` is implied for the else
 ```rust
 # extern crate buoyant;
 # extern crate embedded_graphics;
-# use buoyant::render::EmbeddedGraphicsView;
 # use embedded_graphics::pixelcolor::Rgb888;
 # use embedded_graphics::mono_font::ascii::FONT_9X15;
-use buoyant::view::{Text, shape::Rectangle};
+use buoyant::view::{Text, shape::Rectangle, View};
 use buoyant::if_view;
 
 /// A rectangle if not hidden, otherwise implicit `EmptyView`
-fn maybe_rectangle(hidden: bool) -> impl EmbeddedGraphicsView<Rgb888> {
+fn maybe_rectangle(hidden: bool) -> impl View<Rgb888> {
     if_view!((!hidden) {
         Rectangle
     })

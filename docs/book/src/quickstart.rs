@@ -3,8 +3,8 @@
 use buoyant::{
     environment::DefaultEnvironment,
     layout::Layout,
-    render::{EmbeddedGraphicsRender as _, EmbeddedGraphicsView, Renderable as _},
-    view::{padding::Edges, HStack, Spacer, Text, ViewExt as _},
+    render::{Render as _, Renderable as _},
+    view::{padding::Edges, HStack, Spacer, Text, View, ViewExt as _},
 };
 use embedded_graphics::{mono_font::ascii::FONT_10X20, pixelcolor::Rgb888, prelude::*};
 use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
@@ -36,7 +36,7 @@ fn main() {
 
 // ANCHOR_END: simulator2
 // ANCHOR: view
-fn hello_view() -> impl EmbeddedGraphicsView<Rgb888> {
+fn hello_view() -> impl View<Rgb888> {
     HStack::new((
         Text::new("Hello", &FONT_10X20).foreground_color(Rgb888::GREEN),
         Spacer::default(),

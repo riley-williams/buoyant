@@ -22,7 +22,7 @@ I'll briefly indulge this misconception.
 # use buoyant::{
 #     environment::DefaultEnvironment,
 #     layout::Layout as _,
-#     render::{EmbeddedGraphicsRender as _, Renderable as _},
+#     render::{Render as _, Renderable as _},
 # };
 #
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::*};
@@ -52,11 +52,10 @@ I'll briefly indulge this misconception.
 // No!
 use buoyant::layout::HorizontalAlignment;
 use buoyant::view::shape::Circle;
-use buoyant::view::ViewExt as _;
+use buoyant::view::{View, ViewExt as _};
 use buoyant::view::{HStack, Spacer, VStack};
-use buoyant::render::EmbeddedGraphicsView;
 
-fn view() -> impl EmbeddedGraphicsView<Rgb888> {
+fn view() -> impl View<Rgb888> {
     VStack::new((
         Circle.foreground_color(Rgb888::CSS_CORAL),
         HStack::new((
@@ -113,7 +112,7 @@ as the previous code.
 # use buoyant::{
 #     environment::DefaultEnvironment,
 #     layout::Layout as _,
-#     render::{EmbeddedGraphicsRender, Renderable},
+#     render::{Render, Renderable},
 # };
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::*};
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
@@ -143,10 +142,9 @@ as the previous code.
 use buoyant::layout::HorizontalAlignment;
 use buoyant::view::shape::Circle;
 use buoyant::view::VStack;
-use buoyant::view::ViewExt as _;
-use buoyant::render::EmbeddedGraphicsView;
+use buoyant::view::{View, ViewExt as _};
 
-fn view() -> impl EmbeddedGraphicsView<Rgb888> {
+fn view() -> impl View<Rgb888> {
     VStack::new((
         Circle.foreground_color(Rgb888::CSS_CORAL),
         Circle

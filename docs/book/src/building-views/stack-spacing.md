@@ -15,7 +15,7 @@ You can configure the spacing between child views using `.with_spacing`.
 # use buoyant::{
 #     environment::DefaultEnvironment,
 #     layout::Layout,
-#     render::{EmbeddedGraphicsRender as _, Renderable as _},
+#     render::{Render as _, Renderable as _},
 # };
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::*};
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
@@ -43,11 +43,10 @@ You can configure the spacing between child views using `.with_spacing`.
 # 
 use buoyant::layout::HorizontalAlignment;
 use buoyant::view::shape::{Capsule, Circle, Rectangle};
-use buoyant::view::ViewExt as _;
+use buoyant::view::{View, ViewExt as _};
 use buoyant::view::VStack;
-use buoyant::render::EmbeddedGraphicsView;
 
-fn view() -> impl EmbeddedGraphicsView<Rgb888> {
+fn view() -> impl View<Rgb888> {
     VStack::new((
         Circle.foreground_color(Rgb888::CSS_CORAL),
         Rectangle
@@ -75,7 +74,7 @@ incrementally larger values for each class of separation.
 # use buoyant::{
 #     environment::DefaultEnvironment,
 #     layout::Layout,
-#     render::{EmbeddedGraphicsRender as _, Renderable as _},
+#     render::{Render as _, Renderable as _},
 # };
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
 # 
@@ -104,8 +103,7 @@ use buoyant::layout::{HorizontalAlignment, VerticalAlignment};
 use buoyant::view::padding::Edges;
 use buoyant::view::shape::Circle;
 use buoyant::view::{HStack, Text, VStack};
-use buoyant::view::ViewExt as _;
-use buoyant::render::EmbeddedGraphicsView;
+use buoyant::view::{View, ViewExt as _};
 use embedded_graphics::{
     mono_font::ascii::{FONT_7X13, FONT_9X15, FONT_9X15_BOLD},
     pixelcolor::Rgb888,
@@ -118,7 +116,7 @@ mod spacing {
     pub const SECTION: u16 = 18;
 }
 
-fn view() -> impl EmbeddedGraphicsView<Rgb888> {
+fn view() -> impl View<Rgb888> {
     VStack::new((
         VStack::new((
             Text::new("Parents", &FONT_9X15_BOLD),
@@ -145,7 +143,7 @@ fn contact_row<'a>(
     color: Rgb888,
     name: &'a str,
     relationship: &'a str,
-) -> impl EmbeddedGraphicsView<Rgb888> + use<'a> {
+) -> impl View<Rgb888> + use<'a> {
     HStack::new((
         Circle.foreground_color(color).frame().with_width(40),
         VStack::new((
