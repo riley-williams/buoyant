@@ -3,10 +3,10 @@ use buoyant::font::CharacterBufferFont;
 use buoyant::layout::Layout;
 use buoyant::match_view;
 use buoyant::primitives::{Point, Size};
-use buoyant::render::{CharacterRender, CharacterView};
-use buoyant::render::{CharacterRenderTarget, Renderable};
+use buoyant::render::Render;
+use buoyant::render::Renderable;
 use buoyant::render_target::FixedTextBuffer;
-use buoyant::view::{Text, ViewExt as _};
+use buoyant::view::{Text, View, ViewExt as _};
 use std::string::String;
 
 #[test]
@@ -104,10 +104,7 @@ fn test_match_view_borrow() {
         C,
     }
 
-    fn borrow_view<'a>(
-        s: &'a State,
-        font: &'a CharacterBufferFont,
-    ) -> impl CharacterView<char> + use<'a> {
+    fn borrow_view<'a>(s: &'a State, font: &'a CharacterBufferFont) -> impl View<char> + use<'a> {
         match_view!(s => {
             State::A => Text::new("AAA", font),
             State::B(msg) => Text::new(msg, font),

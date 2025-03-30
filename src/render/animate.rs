@@ -3,7 +3,8 @@ use core::time::Duration;
 use crate::{
     animation::Animation,
     primitives::Point,
-    render::{AnimationDomain, CharacterRender},
+    render::{AnimationDomain, Render},
+    render_target::RenderTarget,
 };
 
 use super::AnimatedJoin;
@@ -84,10 +85,10 @@ impl<T: AnimatedJoin, U: PartialEq> AnimatedJoin for Animate<T, U> {
     }
 }
 
-impl<C, T: CharacterRender<C>, U: PartialEq> CharacterRender<C> for Animate<T, U> {
+impl<C, T: Render<C>, U: PartialEq> Render<C> for Animate<T, U> {
     fn render(
         &self,
-        render_target: &mut impl crate::render::CharacterRenderTarget<Color = C>,
+        render_target: &mut impl RenderTarget<ColorFormat = C>,
         style: &C,
         offset: Point,
     ) {
@@ -95,7 +96,7 @@ impl<C, T: CharacterRender<C>, U: PartialEq> CharacterRender<C> for Animate<T, U
     }
 
     fn render_animated(
-        render_target: &mut impl crate::render::CharacterRenderTarget<Color = C>,
+        render_target: &mut impl RenderTarget<ColorFormat = C>,
         source: &Self,
         target: &Self,
         style: &C,
@@ -138,76 +139,5 @@ impl<C, T: CharacterRender<C>, U: PartialEq> CharacterRender<C> for Animate<T, U
             offset,
             &subdomain,
         );
-    }
-}
-
-// TODO: This implementation should always be exactly the same as the character render implementation.
-
-#[cfg(feature = "embedded-graphics")]
-mod embedded_graphics_impl {
-    use core::time::Duration;
-
-    use crate::{
-        primitives::Point,
-        render::{AnimationDomain, EmbeddedGraphicsRender},
-    };
-
-    use embedded_graphics::prelude::PixelColor;
-    use embedded_graphics_core::draw_target::DrawTarget;
-
-    use super::Animate;
-
-    impl<C: PixelColor, T: EmbeddedGraphicsRender<C>, U: PartialEq> EmbeddedGraphicsRender<C>
-        for Animate<T, U>
-    {
-        fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &C, offset: Point) {
-            self.subtree.render(render_target, style, offset);
-        }
-
-        fn render_animated(
-            render_target: &mut impl DrawTarget<Color = C>,
-            source: &Self,
-            target: &Self,
-            style: &C,
-            offset: Point,
-            domain: &AnimationDomain,
-        ) {
-            let (end_time, duration) = if source.value != target.value {
-                let duration = target.animation.duration;
-                (target.frame_time + duration, duration)
-            } else if source.is_partial {
-                // continue source animation
-                let duration = source.animation.duration;
-                (source.frame_time + duration, duration)
-            } else {
-                // no animation
-                (domain.app_time, Duration::from_secs(0))
-            };
-
-            let subdomain = if end_time == Duration::from_secs(0) || domain.app_time >= end_time {
-                // animation has already completed or there was zero duration
-                AnimationDomain {
-                    factor: 255,
-                    app_time: domain.app_time,
-                }
-            } else {
-                // compute factor
-                let diff = duration.saturating_sub(end_time.saturating_sub(domain.app_time));
-                let factor = source.animation.curve.factor(diff, duration);
-                AnimationDomain {
-                    factor,
-                    app_time: domain.app_time,
-                }
-            };
-
-            T::render_animated(
-                render_target,
-                &source.subtree,
-                &target.subtree,
-                style,
-                offset,
-                &subdomain,
-            );
-        }
     }
 }

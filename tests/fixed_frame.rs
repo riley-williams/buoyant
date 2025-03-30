@@ -2,7 +2,7 @@ use buoyant::{
     font::CharacterBufferFont,
     layout::{Alignment, HorizontalAlignment, Layout, VerticalAlignment},
     primitives::{Dimensions, Point, ProposedDimension, ProposedDimensions, Size},
-    render::{CharacterRender, CharacterRenderTarget},
+    render::Render,
     render_target::FixedTextBuffer,
     view::{make_render_tree, Text, ViewExt},
 };

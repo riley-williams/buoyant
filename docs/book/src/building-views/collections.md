@@ -13,7 +13,7 @@ better choice. Use ForEach when you want to display a collection of like views.
 # use buoyant::{
 #     environment::DefaultEnvironment,
 #     layout::Layout,
-#     render::{EmbeddedGraphicsRender, EmbeddedGraphicsView, Renderable},
+#     render::{Render, Renderable},
 # };
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
 #
@@ -51,7 +51,7 @@ better choice. Use ForEach when you want to display a collection of like views.
 use buoyant::layout::HorizontalAlignment;
 use buoyant::view::padding::Edges;
 use buoyant::view::{shape::RoundedRectangle, ForEach, HStack, Text};
-use buoyant::view::{ViewExt as _};
+use buoyant::view::{View, ViewExt as _};
 use embedded_graphics::{mono_font::ascii::FONT_9X15, pixelcolor::Rgb888, prelude::*};
 
 static SWATCHES: [Swatch; 4] = [
@@ -73,7 +73,7 @@ static SWATCHES: [Swatch; 4] = [
     },
 ];
 
-fn view(swatches: &[Swatch]) -> impl EmbeddedGraphicsView<Rgb888> + use<'_> {
+fn view(swatches: &[Swatch]) -> impl View<Rgb888> + use<'_> {
     ForEach::<10>::new(swatches, |swatch| {
         HStack::new((
             RoundedRectangle::new(8)

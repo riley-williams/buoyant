@@ -1,6 +1,6 @@
 use buoyant::layout::{Layout, LayoutDirection};
 use buoyant::primitives::{Point, Size};
-use buoyant::render::{CharacterRender, CharacterRenderTarget as _, Renderable as _};
+use buoyant::render::{Render, Renderable as _};
 use buoyant::render_target::FixedTextBuffer;
 use buoyant::view::{Divider, ViewExt as _};
 
