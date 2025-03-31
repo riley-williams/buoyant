@@ -23,7 +23,7 @@ impl<'a, F: FontLayout> WhitespaceWrap<'a, F> {
         let mut width = 0;
         for (pos, ch) in text.char_indices() {
             width += self.font.character_width(ch);
-            if ProposedDimension::Exact(width) > self.available_width {
+            if ProposedDimension::Exact(width.into()) > self.available_width {
                 return Some(if pos > 0 { pos } else { 1 });
             }
         }
@@ -85,7 +85,7 @@ impl<'a, F: FontLayout> Iterator for WhitespaceWrap<'a, F> {
             }
 
             // Check for force split
-            if ProposedDimension::Exact(width) > self.available_width {
+            if ProposedDimension::Exact(width.into()) > self.available_width {
                 if let Some(space_pos) = last_space {
                     // Split at last space
                     let (result, rest) = self.remaining.split_at(space_pos);
@@ -106,7 +106,7 @@ impl<'a, F: FontLayout> Iterator for WhitespaceWrap<'a, F> {
             let mut width = 0;
             for (pos, ch) in self.remaining.char_indices() {
                 width += self.font.character_width(ch);
-                if ProposedDimension::Exact(width) > self.available_width {
+                if ProposedDimension::Exact(width.into()) > self.available_width {
                     end = pos;
                     break;
                 }

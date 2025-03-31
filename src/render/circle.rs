@@ -1,6 +1,6 @@
 use crate::{
-    primitives::{Interpolate, Point},
-    render_target::{geometry::Circle as CircleGeometry, RenderTarget, SolidBrush},
+    primitives::{geometry, Interpolate, Point},
+    render_target::{RenderTarget, SolidBrush},
 };
 
 use super::{AnimatedJoin, AnimationDomain, Render};
@@ -9,13 +9,13 @@ use super::{AnimatedJoin, AnimationDomain, Render};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Circle {
     pub origin: Point,
-    pub diameter: u16,
+    pub diameter: u32,
 }
 
 impl AnimatedJoin for Circle {
     fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
         let origin = Point::interpolate(source.origin, target.origin, domain.factor);
-        let diameter = u16::interpolate(source.diameter, target.diameter, domain.factor);
+        let diameter = u32::interpolate(source.diameter, target.diameter, domain.factor);
         Self { origin, diameter }
     }
 }
@@ -29,10 +29,10 @@ impl<C: Copy> Render<C> for Circle {
     ) {
         let brush = SolidBrush::new(*style);
         render_target.fill(
-            offset.into(),
+            offset,
             &brush,
             None,
-            &CircleGeometry::new(self.origin.into(), self.diameter.into()),
+            &geometry::Circle::new(self.origin, self.diameter),
         );
     }
 

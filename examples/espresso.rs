@@ -32,13 +32,13 @@ use embedded_graphics_simulator::{
 #[allow(unused)]
 mod spacing {
     /// Spacing between sections / groups
-    pub const SECTION: u16 = 24;
+    pub const SECTION: u32 = 24;
     /// Outer padding to the edge of the screen
-    pub const SECTION_MARGIN: u16 = 16;
+    pub const SECTION_MARGIN: u32 = 16;
     /// Spacing between distinct visual components in a section / group
-    pub const COMPONENT: u16 = 16;
+    pub const COMPONENT: u32 = 16;
     /// Spacing between elements within a component
-    pub const ELEMENT: u16 = 8;
+    pub const ELEMENT: u32 = 8;
 }
 
 #[allow(unused)]
@@ -247,10 +247,6 @@ impl App {
                 &font::CAPTION_BOLD,
             )
             .multiline_text_alignment(HorizontalTextAlignment::Leading),
-            Text::new("abcdefghijklmnopqrstuvwxyz", &font::CAPTION)
-                .multiline_text_alignment(HorizontalTextAlignment::Leading),
-            Text::new("abcdefghijklmnopqrstuvwxyz", &font::CAPTION_BOLD)
-                .multiline_text_alignment(HorizontalTextAlignment::Leading),
         ))
         .with_spacing(spacing::COMPONENT)
         .with_alignment(HorizontalAlignment::Leading)

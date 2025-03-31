@@ -1,32 +1,51 @@
-use super::{PathEl, Shape};
+use super::{Point, Size};
 
+/// The element of a Bézier path.
+///
+/// A valid path has `MoveTo` at the beginning of each subpath.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Point {
-    pub x: i32,
-    pub y: i32,
+pub enum PathEl {
+    /// Move directly to the point without drawing anything, starting a new
+    /// subpath.
+    MoveTo(Point),
+    /// Draw a line from the current location to the point.
+    LineTo(Point),
+    /// Draw a quadratic bezier using the current location and the two points.
+    QuadTo(Point, Point),
+    /// Draw a cubic bezier using the current location and the three points.
+    CurveTo(Point, Point, Point),
+    /// Close off the path.
+    ClosePath,
 }
 
-impl Point {
-    #[must_use]
-    pub const fn new(x: i32, y: i32) -> Self {
-        Self { x, y }
+pub trait Shape {
+    type PathElementsIter<'iter>: Iterator<Item = PathEl> + 'iter
+    where
+        Self: 'iter;
+
+    fn path_elements(&self, tolerance: u16) -> Self::PathElementsIter<'_>;
+
+    /// The smallest rectangle that encloses the shape.
+    fn bounding_box(&self) -> Rectangle;
+
+    /// If the shape is a line, make it available.
+    fn as_line(&self) -> Option<Line> {
+        None
     }
-}
 
-impl From<crate::primitives::Point> for Point {
-    fn from(value: crate::primitives::Point) -> Self {
-        Self {
-            x: value.x.into(),
-            y: value.y.into(),
-        }
+    /// If the shape is a rectangle, make it available.
+    fn as_rect(&self) -> Option<Rectangle> {
+        None
     }
-}
 
-impl core::ops::Add<Self> for Point {
-    type Output = Self;
+    /// If the shape is a rounded rectangle, make it available.
+    fn as_rounded_rect(&self) -> Option<RoundedRectangle> {
+        None
+    }
 
-    fn add(self, rhs: Self) -> Self {
-        Self::new(self.x + rhs.x, self.y + rhs.y)
+    /// If the shape is a circle, make it available.
+    fn as_circle(&self) -> Option<Circle> {
+        None
     }
 }
 
@@ -45,14 +64,14 @@ impl Line {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Circle {
-    // Top left corner of the bounding box
+    /// Top left corner of the bounding box
     pub origin: Point,
-    pub diameter: i32,
+    pub diameter: u32,
 }
 
 impl Circle {
     #[must_use]
-    pub const fn new(origin: Point, diameter: i32) -> Self {
+    pub const fn new(origin: Point, diameter: u32) -> Self {
         Self { origin, diameter }
     }
 }
@@ -60,16 +79,13 @@ impl Circle {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Rectangle {
     pub origin: Point,
-    pub size: (u32, u32),
+    pub size: Size,
 }
 
 impl Rectangle {
     #[must_use]
-    pub const fn new(origin: Point, size: (u32, u32)) -> Self {
-        Self {
-            origin,
-            size: (size.0, size.1),
-        }
+    pub const fn new(origin: Point, size: Size) -> Self {
+        Self { origin, size }
     }
 }
 
@@ -77,8 +93,8 @@ impl Rectangle {
 impl From<embedded_graphics_core::primitives::Rectangle> for Rectangle {
     fn from(value: embedded_graphics_core::primitives::Rectangle) -> Self {
         Self {
-            origin: Point::new(value.top_left.x, value.top_left.y),
-            size: (value.size.width, value.size.height),
+            origin: value.top_left.into(),
+            size: value.size.into(),
         }
     }
 }
@@ -86,17 +102,17 @@ impl From<embedded_graphics_core::primitives::Rectangle> for Rectangle {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct RoundedRectangle {
     pub origin: Point,
-    pub size: (i32, i32),
-    pub radius: i32,
+    pub size: Size,
+    pub radius: u32,
 }
 
 impl RoundedRectangle {
     #[must_use]
-    pub const fn new(origin: Point, size: (u16, u16), radius: u16) -> Self {
+    pub const fn new(origin: Point, size: Size, radius: u32) -> Self {
         Self {
             origin,
-            size: (size.0 as i32, size.1 as i32),
-            radius: radius as i32,
+            size,
+            radius,
         }
     }
 }
@@ -142,12 +158,13 @@ impl Shape for Line {
     fn bounding_box(&self) -> Rectangle {
         let min_x = self.start.x.min(self.end.x);
         let min_y = self.start.y.min(self.end.y);
-        let max_x = self.start.x.max(self.end.x);
-        let max_y = self.start.y.max(self.end.y);
 
         Rectangle::new(
             Point::new(min_x, min_y),
-            ((max_x - min_x) as u32, (max_y - min_y) as u32),
+            Size::new(
+                self.start.x.abs_diff(self.end.x),
+                self.start.y.abs_diff(self.end.y),
+            ),
         )
     }
 
@@ -164,12 +181,12 @@ impl Shape for Rectangle {
 
     fn path_elements(&self, _tolerance: u16) -> Self::PathElementsIter<'_> {
         let top_left = self.origin;
-        let top_right = Point::new(self.origin.x + self.size.0 as i32, self.origin.y);
+        let top_right = Point::new(self.origin.x + self.size.width as i32, self.origin.y);
         let bottom_right = Point::new(
-            self.origin.x + self.size.0 as i32,
-            self.origin.y + self.size.1 as i32,
+            self.origin.x + self.size.width as i32,
+            self.origin.y + self.size.height as i32,
         );
-        let bottom_left = Point::new(self.origin.x, self.origin.y + self.size.1 as i32);
+        let bottom_left = Point::new(self.origin.x, self.origin.y + self.size.height as i32);
 
         let elements = [
             PathEl::MoveTo(top_left),
@@ -200,13 +217,13 @@ impl Shape for Circle {
 
     #[expect(clippy::cast_precision_loss)]
     fn path_elements(&self, _tolerance: u16) -> Self::PathElementsIter<'_> {
+        // FIXME: This can be approximated quite well with a 4x cubic bezier
         let radius = self.diameter as f32 / 2.0;
         let center_x = self.origin.x as f32 + radius;
         let center_y = self.origin.y as f32 + radius;
 
         let mut elements = [PathEl::ClosePath; 66];
 
-        // First point (MoveTo)
         let first_point = Point::new((center_x + radius) as i32, center_y as i32);
         elements[0] = PathEl::MoveTo(first_point);
 
@@ -225,7 +242,7 @@ impl Shape for Circle {
     }
 
     fn bounding_box(&self) -> Rectangle {
-        Rectangle::new(self.origin, (self.diameter as u32, self.diameter as u32))
+        Rectangle::new(self.origin, Size::new(self.diameter, self.diameter))
     }
 
     fn as_circle(&self) -> Option<Circle> {
@@ -240,12 +257,13 @@ impl Shape for RoundedRectangle {
         Self: 'iter;
 
     fn path_elements(&self, _tolerance: u16) -> Self::PathElementsIter<'_> {
-        let r = self.radius;
-        let width = self.size.0;
-        let height = self.size.1;
+        let r = self.radius as i32;
+        let width = self.size.width as i32;
+        let height = self.size.height as i32;
         let x = self.origin.x;
         let y = self.origin.y;
 
+        // FIXME: The quad points used here are suboptimal
         let elements = [
             // Starting point
             PathEl::MoveTo(Point::new(x + width - r, y)),
@@ -275,7 +293,7 @@ impl Shape for RoundedRectangle {
     }
 
     fn bounding_box(&self) -> Rectangle {
-        Rectangle::new(self.origin, (self.size.0 as u32, self.size.1 as u32))
+        Rectangle::new(self.origin, self.size)
     }
 
     fn as_rounded_rect(&self) -> Option<RoundedRectangle> {

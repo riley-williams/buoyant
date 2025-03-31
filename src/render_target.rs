@@ -13,61 +13,11 @@ pub use crossterm_render_target::CrosstermRenderTarget;
 
 mod fixed_text_buffer;
 pub use fixed_text_buffer::FixedTextBuffer;
-pub mod geometry;
 
-use geometry::Point;
-
-use crate::font::{self, FontMetrics as _, GlyphIndex};
-
-/// The element of a Bézier path.
-///
-/// A valid path has `MoveTo` at the beginning of each subpath.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum PathEl {
-    /// Move directly to the point without drawing anything, starting a new
-    /// subpath.
-    MoveTo(Point),
-    /// Draw a line from the current location to the point.
-    LineTo(Point),
-    /// Draw a quadratic bezier using the current location and the two points.
-    QuadTo(Point, Point),
-    /// Draw a cubic bezier using the current location and the three points.
-    CurveTo(Point, Point, Point),
-    /// Close off the path.
-    ClosePath,
-}
-
-pub trait Shape {
-    type PathElementsIter<'iter>: Iterator<Item = PathEl> + 'iter
-    where
-        Self: 'iter;
-
-    fn path_elements(&self, tolerance: u16) -> Self::PathElementsIter<'_>;
-
-    /// The smallest rectangle that encloses the shape.
-    fn bounding_box(&self) -> geometry::Rectangle;
-
-    /// If the shape is a line, make it available.
-    fn as_line(&self) -> Option<geometry::Line> {
-        None
-    }
-
-    /// If the shape is a rectangle, make it available.
-    fn as_rect(&self) -> Option<geometry::Rectangle> {
-        None
-    }
-
-    /// If the shape is a rounded rectangle, make it available.
-    fn as_rounded_rect(&self) -> Option<geometry::RoundedRectangle> {
-        None
-    }
-
-    /// If the shape is a circle, make it available.
-    fn as_circle(&self) -> Option<geometry::Circle> {
-        None
-    }
-}
-
+use crate::{
+    font::{self, FontMetrics as _, GlyphIndex},
+    primitives::{geometry::Shape, Point},
+};
 pub trait RenderTarget {
     type Layer;
     type ColorFormat;

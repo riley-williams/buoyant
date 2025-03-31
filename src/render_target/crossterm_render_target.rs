@@ -8,7 +8,7 @@ use crossterm::{
 #[cfg(feature = "std")]
 use std::io::{stdout, Stdout, Write};
 
-use crate::{primitives::Size, render_target::geometry::Point};
+use crate::primitives::{geometry::Rectangle, Point, Size};
 
 use super::{Brush, Glyph, RenderTarget, Shape, Stroke};
 
@@ -62,7 +62,7 @@ impl CrosstermRenderTarget {
     #[must_use]
     pub fn size(&self) -> Size {
         crossterm::terminal::size()
-            .map(|(w, h)| Size::new(w, h))
+            .map(|(w, h)| Size::new(w.into(), h.into()))
             .unwrap_or_default()
     }
 
@@ -131,11 +131,11 @@ impl RenderTarget for CrosstermRenderTarget {
     }
 
     fn push_layer(&mut self) -> Self::Layer {
-        unimplemented!()
+        /// FIXME: unused, but should be replaced with frame/clipping
     }
 
     fn pop_layer(&mut self, _layer: Self::Layer) {
-        unimplemented!()
+        /// FIXME: unused, but should be replaced with frame/clipping
     }
 
     fn fill<C: Into<Self::ColorFormat>>(
@@ -151,10 +151,10 @@ impl RenderTarget for CrosstermRenderTarget {
             };
             let color = color.into();
             let size = self.size();
-            for y in 0..rect.size.1 {
-                for x in 0..rect.size.0 {
+            for y in 0..rect.size.height {
+                for x in 0..rect.size.width {
                     let point = Point::new(rect.origin.x + x as i32, rect.origin.y + y as i32);
-                    if point.x >= size.width.into() || point.y >= size.height.into() {
+                    if point.x >= size.width as i32 || point.y >= size.height as i32 {
                         continue;
                     }
                     self.draw_color(point, color);
@@ -166,12 +166,37 @@ impl RenderTarget for CrosstermRenderTarget {
     fn stroke<C: Into<Self::ColorFormat>>(
         &mut self,
         _stroke: &Stroke,
-        _transform_offset: Point,
-        _brush: &impl Brush<ColorFormat = C>,
+        transform_offset: Point,
+        brush: &impl Brush<ColorFormat = C>,
         _brush_offset: Option<Point>,
-        _shape: &impl Shape,
+        shape: &impl Shape,
     ) {
-        unimplemented!();
+        // FIXME: This implementation is untested and only partially correct
+        if let Some(rect) = shape.as_rect() {
+            let origin = Point::new(
+                rect.origin.x + transform_offset.x,
+                rect.origin.y + transform_offset.y,
+            );
+            let rect = Rectangle::new(origin, rect.size);
+            let Some(color) = brush.as_solid() else {
+                return;
+            };
+            let color = color.into();
+            for y in 0..rect.size.height as i32 {
+                if y == 0 || y == rect.size.height as i32 {
+                    for x in 0..rect.size.width as i32 {
+                        let point = Point::new(rect.origin.x + x, rect.origin.y + y);
+                        self.draw_color(point, color);
+                    }
+                } else {
+                    let point = Point::new(rect.origin.x, rect.origin.y + y);
+                    self.draw_color(point, color);
+                    let point =
+                        Point::new(rect.origin.x + rect.size.width as i32, rect.origin.y + y);
+                    self.draw_color(point, color);
+                }
+            }
+        }
     }
 
     fn draw_glyphs<C: Into<Self::ColorFormat>>(

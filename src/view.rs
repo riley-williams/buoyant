@@ -46,7 +46,7 @@ impl<C, T: Renderable<Renderables: Render<C>>> View<C> for T {}
 /// Modifiers that extend the functionality of views.
 pub trait ViewExt: Sized {
     /// Applies padding to the specified edges
-    fn padding(self, edges: padding::Edges, amount: u16) -> Padding<Self> {
+    fn padding(self, edges: padding::Edges, amount: u32) -> Padding<Self> {
         Padding::new(edges, amount, self)
     }
 
@@ -70,7 +70,7 @@ pub trait ViewExt: Sized {
     ///     .with_height(height)
     /// # ;
     /// ```
-    fn frame_sized(self, width: u16, height: u16) -> FixedFrame<Self> {
+    fn frame_sized(self, width: u32, height: u32) -> FixedFrame<Self> {
         FixedFrame::new(self).with_width(width).with_height(height)
     }
 
@@ -266,7 +266,7 @@ impl<T: crate::layout::Layout> RenderExtensions for T {}
     note = "`LayoutExtensions` has been replaced with `ViewExt`"
 )]
 pub trait LayoutExtensions: ViewExt {
-    fn padding(self, edges: padding::Edges, amount: u16) -> Padding<Self> {
+    fn padding(self, edges: padding::Edges, amount: u32) -> Padding<Self> {
         <Self as ViewExt>::padding(self, edges, amount)
     }
 
@@ -274,7 +274,7 @@ pub trait LayoutExtensions: ViewExt {
         <Self as ViewExt>::frame(self)
     }
 
-    fn frame_sized(self, width: u16, height: u16) -> FixedFrame<Self> {
+    fn frame_sized(self, width: u32, height: u32) -> FixedFrame<Self> {
         <Self as ViewExt>::frame_sized(self, width, height)
     }
 

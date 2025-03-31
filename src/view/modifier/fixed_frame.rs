@@ -7,8 +7,8 @@ use crate::{
 
 #[derive(Debug, Clone)]
 pub struct FixedFrame<T> {
-    width: Option<u16>,
-    height: Option<u16>,
+    width: Option<u32>,
+    height: Option<u32>,
     horizontal_alignment: HorizontalAlignment,
     vertical_alignment: VerticalAlignment,
     child: T,
@@ -26,19 +26,19 @@ impl<T> FixedFrame<T> {
     }
 
     /// Sets the width of the frame.
-    pub const fn with_width(mut self, width: u16) -> Self {
+    pub const fn with_width(mut self, width: u32) -> Self {
         self.width = Some(width);
         self
     }
 
     /// Sets the height of the frame.
-    pub const fn with_height(mut self, height: u16) -> Self {
+    pub const fn with_height(mut self, height: u32) -> Self {
         self.height = Some(height);
         self
     }
 
     /// Sets the size of the frame.
-    pub const fn with_size(mut self, width: u16, height: u16) -> Self {
+    pub const fn with_size(mut self, width: u32, height: u32) -> Self {
         self.width = Some(width);
         self.height = Some(height);
         self

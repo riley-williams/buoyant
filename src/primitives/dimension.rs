@@ -10,7 +10,7 @@ pub struct ProposedDimensions {
 
 impl ProposedDimensions {
     #[must_use]
-    pub fn resolve_most_flexible(self, minimum: u16, ideal: u16) -> Dimensions {
+    pub fn resolve_most_flexible(self, minimum: u32, ideal: u32) -> Dimensions {
         Dimensions {
             width: self.width.resolve_most_flexible(minimum, ideal),
             height: self.height.resolve_most_flexible(minimum, ideal),
@@ -34,10 +34,11 @@ impl ProposedDimensions {
                 })
     }
 }
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ProposedDimension {
     /// An exactly sized offer
-    Exact(u16),
+    Exact(u32),
     /// A request for the most compact size a view can manage
     Compact,
     /// An offer of infinite size
@@ -57,8 +58,8 @@ impl From<Size> for ProposedDimensions {
 impl From<embedded_graphics_core::geometry::Size> for ProposedDimensions {
     fn from(size: embedded_graphics_core::geometry::Size) -> Self {
         Self {
-            width: ProposedDimension::Exact(size.width as u16),
-            height: ProposedDimension::Exact(size.height as u16),
+            width: ProposedDimension::Exact(size.width),
+            height: ProposedDimension::Exact(size.height),
         }
     }
 }
@@ -67,7 +68,7 @@ impl ProposedDimension {
     /// Returns the most flexible dimension within the proposal
     /// Magic size of 10 points is applied to views that have no implicit size
     #[must_use]
-    pub fn resolve_most_flexible(self, minimum: u16, ideal: u16) -> Dimension {
+    pub fn resolve_most_flexible(self, minimum: u32, ideal: u32) -> Dimension {
         match self {
             Self::Compact => Dimension(ideal),
             Self::Exact(d) => Dimension(d.max(minimum)),
@@ -76,16 +77,16 @@ impl ProposedDimension {
     }
 }
 
-impl From<u16> for ProposedDimension {
-    fn from(value: u16) -> Self {
+impl From<u32> for ProposedDimension {
+    fn from(value: u32) -> Self {
         Self::Exact(value)
     }
 }
 
-impl core::ops::Add<u16> for ProposedDimension {
+impl core::ops::Add<u32> for ProposedDimension {
     type Output = Self;
 
-    fn add(self, rhs: u16) -> Self::Output {
+    fn add(self, rhs: u32) -> Self::Output {
         match self {
             Self::Compact => Self::Compact,
             Self::Exact(d) => Self::Exact(d + rhs),
@@ -94,10 +95,10 @@ impl core::ops::Add<u16> for ProposedDimension {
     }
 }
 
-impl core::ops::Sub<u16> for ProposedDimension {
+impl core::ops::Sub<u32> for ProposedDimension {
     type Output = Self;
 
-    fn sub(self, rhs: u16) -> Self::Output {
+    fn sub(self, rhs: u32) -> Self::Output {
         match self {
             Self::Compact => Self::Compact,
             Self::Exact(d) => Self::Exact(d.saturating_sub(rhs)),
@@ -106,10 +107,10 @@ impl core::ops::Sub<u16> for ProposedDimension {
     }
 }
 
-impl core::ops::Mul<u16> for ProposedDimension {
+impl core::ops::Mul<u32> for ProposedDimension {
     type Output = Self;
 
-    fn mul(self, rhs: u16) -> Self::Output {
+    fn mul(self, rhs: u32) -> Self::Output {
         match self {
             Self::Compact => Self::Compact,
             Self::Exact(d) => Self::Exact(d.saturating_mul(rhs)),
@@ -118,10 +119,10 @@ impl core::ops::Mul<u16> for ProposedDimension {
     }
 }
 
-impl core::ops::Div<u16> for ProposedDimension {
+impl core::ops::Div<u32> for ProposedDimension {
     type Output = Self;
 
-    fn div(self, rhs: u16) -> Self::Output {
+    fn div(self, rhs: u32) -> Self::Output {
         match self {
             Self::Compact => Self::Compact,
             Self::Exact(d) => Self::Exact(d.saturating_div(rhs)),
@@ -134,53 +135,59 @@ impl core::ops::Div<u16> for ProposedDimension {
 /// `u16::MAX` is treated as infinity, and this type mostly exists to prevent accidental panics from
 /// operations overflowing
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Dimension(pub u16);
+pub struct Dimension(pub u32);
 
 impl Dimension {
     #[must_use]
+    pub const fn new(value: u32) -> Self {
+        Self(value)
+    }
+
+    #[must_use]
     pub const fn infinite() -> Self {
-        Self(u16::MAX)
+        Self(u32::MAX)
     }
 
     #[must_use]
     pub const fn is_infinite(self) -> bool {
-        self.0 == u16::MAX
-    }
-}
-
-impl From<Dimension> for u16 {
-    fn from(value: Dimension) -> Self {
-        value.0
-    }
-}
-
-impl From<Dimension> for i16 {
-    fn from(value: Dimension) -> Self {
-        value.0.try_into().unwrap_or(Self::MAX)
+        self.0 == u32::MAX
     }
 }
 
 impl From<Dimension> for u32 {
     fn from(value: Dimension) -> Self {
-        Self::from(value.0)
+        value.0
     }
 }
 
 impl From<Dimension> for i32 {
     fn from(value: Dimension) -> Self {
-        Self::from(value.0)
+        value.0 as Self
     }
 }
 
 impl From<Dimension> for f32 {
+    #[expect(clippy::cast_precision_loss)]
     fn from(value: Dimension) -> Self {
-        Self::from(value.0)
+        value.0 as Self
     }
 }
 
 impl From<u16> for Dimension {
     fn from(value: u16) -> Self {
+        Self(value.into())
+    }
+}
+
+impl From<u32> for Dimension {
+    fn from(value: u32) -> Self {
         Self(value)
+    }
+}
+
+impl From<i32> for Dimension {
+    fn from(value: i32) -> Self {
+        Self(value as u32)
     }
 }
 
@@ -226,12 +233,11 @@ impl core::ops::SubAssign for Dimension {
         *self = *self - rhs;
     }
 }
-
 impl core::ops::Add<u16> for Dimension {
     type Output = Self;
 
     fn add(self, rhs: u16) -> Self::Output {
-        Self(self.0.saturating_add(rhs))
+        Self(self.0.saturating_add(rhs.into()))
     }
 }
 
@@ -239,14 +245,14 @@ impl core::ops::Sub<u16> for Dimension {
     type Output = Self;
 
     fn sub(self, rhs: u16) -> Self::Output {
-        Self(self.0.saturating_sub(rhs))
+        Self(self.0.saturating_sub(rhs.into()))
     }
 }
 
 impl core::ops::Mul<u16> for Dimension {
     type Output = Self;
     fn mul(self, rhs: u16) -> Self::Output {
-        Self(self.0.saturating_mul(rhs))
+        Self(self.0.saturating_mul(rhs.into()))
     }
 }
 
@@ -254,7 +260,7 @@ impl core::ops::Div<u16> for Dimension {
     type Output = Self;
 
     fn div(self, rhs: u16) -> Self::Output {
-        Self(self.0.saturating_div(rhs))
+        Self(self.0.saturating_div(rhs.into()))
     }
 }
 
@@ -270,6 +276,49 @@ impl core::ops::SubAssign<u16> for Dimension {
     }
 }
 
+impl core::ops::Add<u32> for Dimension {
+    type Output = Self;
+
+    fn add(self, rhs: u32) -> Self::Output {
+        Self(self.0.saturating_add(rhs))
+    }
+}
+
+impl core::ops::Sub<u32> for Dimension {
+    type Output = Self;
+
+    fn sub(self, rhs: u32) -> Self::Output {
+        Self(self.0.saturating_sub(rhs))
+    }
+}
+
+impl core::ops::Mul<u32> for Dimension {
+    type Output = Self;
+    fn mul(self, rhs: u32) -> Self::Output {
+        Self(self.0.saturating_mul(rhs))
+    }
+}
+
+impl core::ops::Div<u32> for Dimension {
+    type Output = Self;
+
+    fn div(self, rhs: u32) -> Self::Output {
+        Self(self.0.saturating_div(rhs))
+    }
+}
+
+impl core::ops::AddAssign<u32> for Dimension {
+    fn add_assign(&mut self, rhs: u32) {
+        *self = *self + rhs;
+    }
+}
+
+impl core::ops::SubAssign<u32> for Dimension {
+    fn sub_assign(&mut self, rhs: u32) {
+        *self = *self - rhs;
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Dimensions {
     pub width: Dimension,
@@ -278,7 +327,7 @@ pub struct Dimensions {
 
 impl Dimensions {
     #[must_use]
-    pub const fn new(width: u16, height: u16) -> Self {
+    pub const fn new(width: u32, height: u32) -> Self {
         Self {
             width: Dimension(width),
             height: Dimension(height),
@@ -324,7 +373,7 @@ impl Dimensions {
     }
 
     #[must_use]
-    pub fn area(self) -> u16 {
+    pub fn area(self) -> u32 {
         (self.width * self.height).0
     }
 }
@@ -373,8 +422,8 @@ impl From<Dimensions> for Size {
 impl From<embedded_graphics_core::geometry::Size> for Dimensions {
     fn from(value: embedded_graphics_core::geometry::Size) -> Self {
         Self {
-            width: Dimension(value.width.try_into().unwrap_or(u16::MAX - 1)),
-            height: Dimension(value.height.try_into().unwrap_or(u16::MAX - 1)),
+            width: Dimension(value.width),
+            height: Dimension(value.height),
         }
     }
 }
@@ -390,18 +439,14 @@ impl Interpolate for Dimensions {
 
 impl Interpolate for Dimension {
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
-        Self(
-            (((u32::from(amount) * u32::from(to.0))
-                + (u32::from(255 - amount) * u32::from(from.0)))
-                / 255) as u16,
-        )
+        Self(((u32::from(amount) * to.0) + (u32::from(255 - amount) * from.0)) / 255)
     }
 }
 
 #[cfg(feature = "embedded-graphics")]
 impl From<Dimensions> for embedded_graphics_core::geometry::Size {
     fn from(value: Dimensions) -> Self {
-        Self::new(u32::from(value.width.0), u32::from(value.height.0))
+        Self::new(value.width.0, value.height.0)
     }
 }
 
@@ -422,16 +467,16 @@ mod tests {
 
     #[test]
     fn interpolate_dimension_min() {
-        let from = Dimension::from(10);
-        let to = Dimension::from(30);
+        let from = Dimension::new(10);
+        let to = Dimension::new(30);
         let result = Dimension::interpolate(from, to, 0);
         assert_eq!(result.0, 10);
     }
 
     #[test]
     fn interpolate_dimension_max() {
-        let from = Dimension::from(10);
-        let to = Dimension::from(30);
+        let from = Dimension::new(10);
+        let to = Dimension::new(30);
         let result = Dimension::interpolate(from, to, 255);
         assert_eq!(result.0, 30);
     }
@@ -446,7 +491,7 @@ mod tests {
         assert!(ProposedDimension::Compact > ProposedDimension::Exact(100));
         assert!(ProposedDimension::Compact < ProposedDimension::Infinite);
         assert!(ProposedDimension::Exact(0) < ProposedDimension::Infinite);
-        assert!(ProposedDimension::Exact(u16::MAX) < ProposedDimension::Infinite);
+        assert!(ProposedDimension::Exact(u32::MAX) < ProposedDimension::Infinite);
     }
 
     #[test]

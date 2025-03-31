@@ -1,6 +1,9 @@
-use crate::render_target::{
-    geometry::{Circle, Line, Point, Rectangle, RoundedRectangle},
-    Brush, PathEl, RenderTarget, Shape,
+use crate::{
+    primitives::{
+        geometry::{Circle, Line, PathEl, Rectangle, RoundedRectangle},
+        Point,
+    },
+    render_target::{Brush, RenderTarget, Shape},
 };
 use embedded_graphics::{
     draw_target::DrawTarget,
@@ -162,7 +165,7 @@ where
                     pixel
                 }));
             } else {
-                //FIXME: for debugging, draw a rectangle
+                //FIXME: This only draws rectangles...support for these fonts is pending...
                 let width = font.character_width('x');
                 let height = font.line_height();
                 let style = PrimitiveStyleBuilder::new()
@@ -171,7 +174,7 @@ where
                     .build();
 
                 self.draw_rectangle(
-                    &Rectangle::new(offset, (u32::from(width), u32::from(height))),
+                    &Rectangle::new(offset, Size::new(width.into(), height.into()).into()),
                     offset,
                     &style,
                 );
@@ -195,9 +198,8 @@ where
 
     fn draw_rectangle(&mut self, rect: &Rectangle, offset: Point, style: &PrimitiveStyle<C>) {
         let top_left = EgPoint::new(rect.origin.x + offset.x, rect.origin.y + offset.y);
-        let size = Size::new(rect.size.0, rect.size.1);
 
-        let eg_rect = EgRectangle::new(top_left, size).into_styled(*style);
+        let eg_rect = EgRectangle::new(top_left, rect.size.into()).into_styled(*style);
         let _ = eg_rect.draw(&mut self.target);
     }
 
@@ -208,9 +210,8 @@ where
         style: &PrimitiveStyle<C>,
     ) {
         let top_left = EgPoint::new(rect.origin.x + offset.x, rect.origin.y + offset.y);
-        let size = Size::new(rect.size.0 as u32, rect.size.1 as u32);
-        let eg_rect = EgRectangle::new(top_left, size);
-        let corner_radius = rect.radius as u32;
+        let eg_rect = EgRectangle::new(top_left, rect.size.into());
+        let corner_radius = rect.radius;
 
         let eg_rounded_rect = EgRoundedRectangle::new(
             eg_rect,
@@ -223,7 +224,7 @@ where
     fn draw_circle(&mut self, circle: &Circle, offset: Point, style: &PrimitiveStyle<C>) {
         let top_left = EgPoint::new(circle.origin.x + offset.x, circle.origin.y + offset.y);
 
-        let eg_circle = EgCircle::new(top_left, circle.diameter as u32).into_styled(*style);
+        let eg_circle = EgCircle::new(top_left, circle.diameter).into_styled(*style);
         let _ = eg_circle.draw(&mut self.target);
     }
 

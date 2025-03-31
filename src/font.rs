@@ -1,6 +1,6 @@
 use core::iter::Empty;
 
-use crate::render_target::PathEl;
+use crate::primitives::geometry::PathEl;
 
 /// A font that renders individual characters at a time.
 /// Multi-character graphemes are not supported, making
@@ -108,7 +108,7 @@ mod embedded_graphics_fonts {
     use embedded_graphics::image::GetPixel;
     use embedded_graphics::prelude::Point;
 
-    use crate::render_target::PathEl;
+    use crate::primitives::geometry::PathEl;
 
     use super::{FontLayout, FontMetrics, FontRender, GlyphIndex, RasterGlyph};
 

@@ -2,7 +2,7 @@ use crate::{
     font::{FontMetrics, FontRender},
     primitives::{Interpolate, Point, Size},
     render::{AnimatedJoin, AnimationDomain, Render},
-    render_target::{self, Glyph, RenderTarget, SolidBrush},
+    render_target::{Glyph, RenderTarget, SolidBrush},
     view::{HorizontalTextAlignment, WhitespaceWrap},
 };
 
@@ -37,7 +37,7 @@ impl<C: Copy, T: AsRef<str>, F: FontRender> Render<C> for Text<'_, T, F> {
         let brush = SolidBrush::new(*style);
 
         let origin = self.origin + offset;
-        let line_height = self.font.line_height() as i16;
+        let line_height = self.font.line_height();
 
         let mut height = 0;
         let wrap = WhitespaceWrap::new(self.text.as_ref(), self.size.width, self.font);
@@ -48,11 +48,11 @@ impl<C: Copy, T: AsRef<str>, F: FontRender> Render<C> for Text<'_, T, F> {
             // TODO: WhitespaceWrap should also return the width of the line
             let width = self.font.str_width(line);
 
-            let line_x = self.alignment.align(self.size.width as i16, width as i16) + origin.x;
+            let line_x = self.alignment.align(self.size.width as i32, width.into()) + origin.x;
 
             let mut x = 0;
             render_target.draw_glyphs(
-                render_target::geometry::Point::new(line_x.into(), (origin.y + height).into()),
+                Point::new(line_x, origin.y + height),
                 &brush,
                 line.chars().map(|c| {
                     let index = self.font.glyph_index(c);
@@ -68,8 +68,8 @@ impl<C: Copy, T: AsRef<str>, F: FontRender> Render<C> for Text<'_, T, F> {
                 self.font,
             );
 
-            height += line_height;
-            if height >= self.size.height as i16 {
+            height += i32::from(line_height);
+            if height >= self.size.height as i32 {
                 break;
             }
         }

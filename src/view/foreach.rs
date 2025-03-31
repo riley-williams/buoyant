@@ -40,7 +40,7 @@ where
     items: &'a [I],
     build_view: F,
     alignment: HorizontalAlignment,
-    spacing: u16,
+    spacing: u32,
 }
 
 /// A homogeneous collection of views, arranged vertically. Up to N views
@@ -99,7 +99,7 @@ where
 
     /// Inserts spacing between child views
     #[must_use]
-    pub const fn with_spacing(mut self, spacing: u16) -> Self {
+    pub const fn with_spacing(mut self, spacing: u32) -> Self {
         self.spacing = spacing;
         self
     }
@@ -179,8 +179,8 @@ where
             assert!(item.is_ok());
 
             if !view.is_empty() {
-                let item_height: i16 = item_layout.resolved_size.height.into();
-                accumulated_height += item_height + self.spacing as i16;
+                let item_height: i32 = item_layout.resolved_size.height.into();
+                accumulated_height += item_height + self.spacing as i32;
             }
         }
 
@@ -191,14 +191,14 @@ where
 fn layout_n<const N: usize>(
     subviews: &heapless::Vec<(i8, bool), N>,
     offer: ProposedDimensions,
-    spacing: u16,
+    spacing: u32,
     mut layout_fn: impl FnMut(usize, ProposedDimensions) -> Dimensions,
 ) -> Dimensions {
     let ProposedDimension::Exact(height) = offer.height else {
         // Compact or infinite offer
-        let mut total_height: Dimension = 0.into();
-        let mut max_width: Dimension = 0.into();
-        let mut non_empty_views: u16 = 0;
+        let mut total_height: Dimension = 0u32.into();
+        let mut max_width: Dimension = 0u32.into();
+        let mut non_empty_views: u32 = 0;
         for (i, (_, is_empty)) in subviews.iter().enumerate() {
             // layout must be called at least once on every view to avoid panic unwrapping the
             // resolved layout.
@@ -220,7 +220,7 @@ fn layout_n<const N: usize>(
     // compute the "flexibility" of each view on the vertical axis and sort by decreasing
     // flexibility
     // Flexibility is defined as the difference between the responses to 0 and infinite height offers
-    let mut flexibilities: [Dimension; N] = [0.into(); N];
+    let mut flexibilities: [Dimension; N] = [0u32.into(); N];
     let mut num_empty_views = 0;
     let min_proposal = ProposedDimensions {
         width: offer.width,
@@ -244,9 +244,9 @@ fn layout_n<const N: usize>(
     }
 
     let mut remaining_height =
-        height.saturating_sub(spacing * (N.saturating_sub(num_empty_views + 1)) as u16);
+        height.saturating_sub(spacing * (N.saturating_sub(num_empty_views + 1)) as u32);
     let mut last_priority_group: Option<i8> = None;
-    let mut max_width: Dimension = 0.into();
+    let mut max_width: Dimension = 0u32.into();
     loop {
         // collect the unsized subviews with the max layout priority into a group
         let mut subviews_indices: [usize; N] = [0; N];
@@ -284,7 +284,7 @@ fn layout_n<const N: usize>(
         let group_indices = &mut subviews_indices[slice_start..slice_start + slice_len];
         group_indices.sort_unstable_by_key(|&i| flexibilities[i]);
 
-        let mut remaining_group_size = group_indices.len() as u16;
+        let mut remaining_group_size = group_indices.len() as u32;
 
         for index in group_indices {
             let height_fraction =

@@ -1,7 +1,7 @@
+use crate::primitives::geometry::Rectangle;
 use crate::primitives::Interpolate;
 use crate::primitives::{Point, Size};
 use crate::render::{AnimationDomain, Render, RenderTarget};
-use crate::render_target::geometry::Rectangle;
 use crate::render_target::SolidBrush;
 
 use super::AnimatedJoin;
@@ -36,13 +36,10 @@ impl<C: Copy> Render<C> for Rect {
     ) {
         let brush = SolidBrush::new(*style);
         render_target.fill(
-            offset.into(),
+            offset,
             &brush,
             None,
-            &Rectangle::new(
-                self.origin.into(),
-                (self.size.width.into(), self.size.height.into()),
-            ),
+            &Rectangle::new(self.origin, Size::new(self.size.width, self.size.height)),
         );
     }
 

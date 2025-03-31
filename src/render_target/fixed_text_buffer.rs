@@ -1,11 +1,8 @@
 use core::fmt::{Display, Formatter, Result};
 
-use crate::primitives::Size;
+use crate::primitives::{geometry::Rectangle, Point, Size};
 
-use super::{
-    geometry::{Point, Rectangle},
-    Brush, Glyph, RenderTarget, Shape, Stroke,
-};
+use super::{Brush, Glyph, RenderTarget, Shape, Stroke};
 
 /// A fixed size text buffer
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -18,7 +15,7 @@ impl<const W: usize, const H: usize> FixedTextBuffer<W, H> {
         self.text = [[' '; W]; H];
     }
 
-    fn draw_character(&mut self, point: Point, character: char) {
+    const fn draw_character(&mut self, point: Point, character: char) {
         #[allow(clippy::cast_sign_loss)]
         if point.x < W as i32 && point.y < H as i32 && point.x >= 0 && point.y >= 0 {
             self.text[point.y as usize][point.x as usize] = character;
@@ -27,7 +24,7 @@ impl<const W: usize, const H: usize> FixedTextBuffer<W, H> {
 
     #[must_use]
     pub const fn size(&self) -> Size {
-        Size::new(W as u16, H as u16)
+        Size::new(W as u32, H as u32)
     }
 }
 
@@ -79,8 +76,8 @@ impl<const W: usize, const H: usize> RenderTarget for FixedTextBuffer<W, H> {
                 return;
             };
             let color = color.into();
-            for y in transform_offset.y..(transform_offset.y + rect.size.1 as i32) {
-                for x in transform_offset.x..(transform_offset.x + rect.size.0 as i32) {
+            for y in transform_offset.y..(transform_offset.y + rect.size.height as i32) {
+                for x in transform_offset.x..(transform_offset.x + rect.size.width as i32) {
                     let point = Point::new(rect.origin.x + x, rect.origin.y + y);
                     self.draw_character(point, color);
                 }
@@ -106,17 +103,17 @@ impl<const W: usize, const H: usize> RenderTarget for FixedTextBuffer<W, H> {
                 return;
             };
             let color = color.into();
-            for y in 0..rect.size.1 {
-                if y == 0 || y == rect.size.1 {
-                    for x in 0..rect.size.0 {
-                        let point = Point::new(rect.origin.x + x as i32, rect.origin.y + y as i32);
+            for y in 0..rect.size.height as i32 {
+                if y == 0 || y == rect.size.height as i32 {
+                    for x in 0..rect.size.width as i32 {
+                        let point = Point::new(rect.origin.x + x, rect.origin.y + y);
                         self.draw_character(point, color);
                     }
                 } else {
-                    let point = Point::new(rect.origin.x, rect.origin.y + y as i32);
+                    let point = Point::new(rect.origin.x, rect.origin.y + y);
                     self.draw_character(point, color);
                     let point =
-                        Point::new(rect.origin.x + rect.size.0 as i32, rect.origin.y + y as i32);
+                        Point::new(rect.origin.x + rect.size.width as i32, rect.origin.y + y);
                     self.draw_character(point, color);
                 }
             }

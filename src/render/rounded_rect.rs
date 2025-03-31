@@ -1,7 +1,7 @@
 use crate::{
-    primitives::{Interpolate, Point, Size},
+    primitives::{geometry::RoundedRectangle, Interpolate, Point, Size},
     render::{AnimatedJoin, AnimationDomain},
-    render_target::{geometry::RoundedRectangle, RenderTarget, SolidBrush},
+    render_target::{RenderTarget, SolidBrush},
 };
 
 use super::Render;
@@ -36,13 +36,13 @@ impl<C: Copy> Render<C> for RoundedRect {
     ) {
         let brush = SolidBrush::new(*style);
         render_target.fill(
-            offset.into(),
+            offset,
             &brush,
             None,
             &RoundedRectangle::new(
-                self.origin.into(),
-                (self.size.width, self.size.height),
-                self.corner_radius,
+                self.origin,
+                Size::new(self.size.width, self.size.height),
+                self.corner_radius.into(),
             ),
         );
     }

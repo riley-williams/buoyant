@@ -1,4 +1,5 @@
-use crate::primitives::{Interpolate as _, Point};
+use crate::primitives::geometry::Rectangle;
+use crate::primitives::{Interpolate as _, Point, Size};
 use crate::render_target::{Image as DrawImage, ImageBrush, RenderTarget};
 
 use super::{AnimatedJoin, AnimationDomain, Render};
@@ -35,12 +36,12 @@ impl<C: From<<T as crate::render_target::Image>::ColorFormat>, T: DrawImage> Ren
         offset: crate::primitives::Point,
     ) {
         let origin = self.origin + offset;
-        let rectangle = crate::render_target::geometry::Rectangle::new(
-            crate::render_target::geometry::Point::new(0, 0),
-            (self.image.width(), self.image.height()),
+        let rectangle = Rectangle::new(
+            Point::new(0, 0),
+            Size::new(self.image.width(), self.image.height()),
         );
         let brush = ImageBrush::new(self.image);
-        render_target.fill(origin.into(), &brush, None, &rectangle);
+        render_target.fill(origin, &brush, None, &rectangle);
     }
 
     fn render_animated(
@@ -52,11 +53,11 @@ impl<C: From<<T as crate::render_target::Image>::ColorFormat>, T: DrawImage> Ren
         domain: &super::AnimationDomain,
     ) {
         let origin = offset + Point::interpolate(source.origin, target.origin, domain.factor);
-        let rectangle = crate::render_target::geometry::Rectangle::new(
-            crate::render_target::geometry::Point::new(0, 0),
-            (target.image.width(), target.image.height()),
+        let rectangle = Rectangle::new(
+            Point::new(0, 0),
+            Size::new(target.image.width(), target.image.height()),
         );
         let brush = ImageBrush::new(target.image);
-        render_target.fill(origin.into(), &brush, None, &rectangle);
+        render_target.fill(origin, &brush, None, &rectangle);
     }
 }

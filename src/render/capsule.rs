@@ -1,6 +1,7 @@
+use crate::primitives::geometry::RoundedRectangle;
 use crate::primitives::{Interpolate as _, Point, Size};
+use crate::render_target::RenderTarget;
 use crate::render_target::SolidBrush;
-use crate::render_target::{geometry::RoundedRectangle, RenderTarget};
 
 use super::{AnimatedJoin, AnimationDomain, Render};
 
@@ -36,12 +37,12 @@ impl<C: Copy> Render<C> for Capsule {
         let radius = self.size.height.min(self.size.width) / 2;
 
         render_target.fill(
-            offset.into(),
+            offset,
             &brush,
             None,
             &RoundedRectangle::new(
-                self.origin.into(),
-                (self.size.width, self.size.height),
+                self.origin,
+                Size::new(self.size.width, self.size.height),
                 radius,
             ),
         );
