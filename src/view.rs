@@ -28,15 +28,15 @@ pub use vstack::VStack;
 pub use zstack::ZStack;
 
 use modifier::{
-    Animated, BackgroundView, FixedFrame, FixedSize, FlexFrame, ForegroundStyle, GeometryGroup,
-    Hidden, Padding, Priority,
+    Animated, BackgroundView, CustomLayout, FixedFrame, FixedSize, FlexFrame, ForegroundStyle,
+    GeometryGroup, Hidden, Padding, Priority,
 };
 
 use crate::{
     animation::Animation,
     environment::DefaultEnvironment,
     layout::{Alignment, HorizontalAlignment, VerticalAlignment},
-    primitives::{Point, Size},
+    primitives::{Point, ProposedDimensions, Size},
     render::{Render, Renderable},
 };
 
@@ -238,6 +238,18 @@ pub trait ViewExt: Sized {
     /// memory or computation during rendering / animation.
     fn hidden(self) -> Hidden<Self> {
         Hidden::new(self)
+    }
+
+    /// Modifies the size proposed to the child view.
+    ///
+    /// While this gives you a lot of control over the size proposal, it does not prevent you
+    /// from doing things that don't make sense. You generally never want to modify the proposal
+    /// in a way that increases the size offered the the child view.
+    fn modify_layout<F: Fn(ProposedDimensions) -> ProposedDimensions>(
+        self,
+        layout_fn: F,
+    ) -> CustomLayout<Self, F> {
+        CustomLayout::new(self, layout_fn)
     }
 
     /// Sets the foreground color

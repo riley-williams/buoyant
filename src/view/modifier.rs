@@ -8,6 +8,7 @@ mod geometry_group;
 mod hidden;
 pub mod padding;
 mod priority;
+mod custom_layout;
 
 pub(crate) use animated::Animated;
 pub(crate) use background::BackgroundView;
@@ -19,3 +20,4 @@ pub(crate) use geometry_group::GeometryGroup;
 pub(crate) use hidden::Hidden;
 pub(crate) use padding::Padding;
 pub(crate) use priority::Priority;
+pub(crate) use custom_layout::CustomLayout;
