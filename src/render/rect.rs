@@ -1,6 +1,8 @@
+use crate::primitives::geometry::Rectangle;
 use crate::primitives::Interpolate;
 use crate::primitives::{Point, Size};
-use crate::render::{AnimationDomain, CharacterRender, CharacterRenderTarget};
+use crate::render::{AnimationDomain, Render, RenderTarget};
+use crate::render_target::SolidBrush;
 
 use super::AnimatedJoin;
 
@@ -25,23 +27,24 @@ impl AnimatedJoin for Rect {
     }
 }
 
-impl<C> CharacterRender<C> for Rect {
+impl<C: Copy> Render<C> for Rect {
     fn render(
         &self,
-        render_target: &mut impl CharacterRenderTarget<Color = C>,
+        render_target: &mut impl RenderTarget<ColorFormat = C>,
         style: &C,
         offset: Point,
     ) {
-        let origin = self.origin + offset;
-        for y in origin.y..origin.y + self.size.height as i16 {
-            for x in origin.x..origin.x + self.size.width as i16 {
-                render_target.draw_color(Point::new(x, y), style);
-            }
-        }
+        let brush = SolidBrush::new(*style);
+        render_target.fill(
+            offset,
+            &brush,
+            None,
+            &Rectangle::new(self.origin, Size::new(self.size.width, self.size.height)),
+        );
     }
 
     fn render_animated(
-        render_target: &mut impl CharacterRenderTarget<Color = C>,
+        render_target: &mut impl RenderTarget<ColorFormat = C>,
         source: &Self,
         target: &Self,
         style: &C,
@@ -49,47 +52,11 @@ impl<C> CharacterRender<C> for Rect {
         domain: &AnimationDomain,
     ) {
         // TODO: expecting these clones to be optimized away, check
-        AnimatedJoin::join(source.clone(), target.clone(), domain).render(
+        Render::render(
+            &AnimatedJoin::join(source.clone(), target.clone(), domain),
             render_target,
             style,
             offset,
         );
-    }
-}
-
-#[cfg(feature = "embedded-graphics")]
-mod embedded_graphics_impl {
-    use embedded_graphics::prelude::PixelColor;
-    use embedded_graphics::primitives::{PrimitiveStyle, StyledDrawable as _};
-    use embedded_graphics_core::draw_target::DrawTarget;
-
-    use crate::primitives::Point;
-    use crate::render::{AnimatedJoin, AnimationDomain, EmbeddedGraphicsRender};
-
-    use super::Rect;
-
-    impl<C: PixelColor> EmbeddedGraphicsRender<C> for Rect {
-        fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &C, offset: Point) {
-            let origin = self.origin + offset;
-            let eg_rect =
-                embedded_graphics::primitives::Rectangle::new(origin.into(), self.size.into());
-            _ = eg_rect.draw_styled(&PrimitiveStyle::with_fill(*style), render_target);
-        }
-
-        fn render_animated(
-            render_target: &mut impl DrawTarget<Color = C>,
-            source: &Self,
-            target: &Self,
-            style: &C,
-            offset: Point,
-            domain: &AnimationDomain,
-        ) {
-            // TODO: expecting these clones to be optimized away, check
-            AnimatedJoin::join(source.clone(), target.clone(), domain).render(
-                render_target,
-                style,
-                offset,
-            );
-        }
     }
 }

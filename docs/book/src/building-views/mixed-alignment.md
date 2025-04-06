@@ -22,7 +22,8 @@ I'll briefly indulge this misconception.
 # use buoyant::{
 #     environment::DefaultEnvironment,
 #     layout::Layout as _,
-#     render::{EmbeddedGraphicsRender as _, Renderable as _},
+#     render::{Render as _, Renderable as _},
+#     render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _},
 # };
 #
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::*};
@@ -33,30 +34,30 @@ I'll briefly indulge this misconception.
 # 
 # fn main() {
 #     let mut window = Window::new("Example", &OutputSettings::default());
-#     let mut display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(480, 320));
+#     let display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(480, 320));
+#     let mut target = EmbeddedGraphicsRenderTarget::new(display);
 # 
-#     display.clear(BACKGROUND_COLOR).unwrap();
+#     target.clear(BACKGROUND_COLOR);
 # 
 #     let environment = DefaultEnvironment::default();
 #     let origin = buoyant::primitives::Point::zero();
 # 
 #     let view = view();
-#     let layout = view.layout(&display.size().into(), &environment);
+#     let layout = view.layout(&target.display.size().into(), &environment);
 #     let render_tree = view.render_tree(&layout, origin, &environment);
 # 
-#     render_tree.render(&mut display, &DEFAULT_COLOR, origin);
+#     render_tree.render(&mut target, &DEFAULT_COLOR, origin);
 # 
-#     window.show_static(&display);
+#     window.show_static(&target.display);
 # }
 # 
 // No!
 use buoyant::layout::HorizontalAlignment;
 use buoyant::view::shape::Circle;
-use buoyant::view::ViewExt as _;
+use buoyant::view::{View, ViewExt as _};
 use buoyant::view::{HStack, Spacer, VStack};
-use buoyant::render::EmbeddedGraphicsView;
 
-fn view() -> impl EmbeddedGraphicsView<Rgb888> {
+fn view() -> impl View<Rgb888> {
     VStack::new((
         Circle.foreground_color(Rgb888::CSS_CORAL),
         HStack::new((
@@ -113,7 +114,8 @@ as the previous code.
 # use buoyant::{
 #     environment::DefaultEnvironment,
 #     layout::Layout as _,
-#     render::{EmbeddedGraphicsRender, Renderable},
+#     render::{Render, Renderable},
+#     render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _},
 # };
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::*};
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
@@ -123,30 +125,30 @@ as the previous code.
 # 
 # fn main() {
 #     let mut window = Window::new("Example", &OutputSettings::default());
-#     let mut display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(480, 320));
+#     let display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(480, 320));
+#     let mut target = EmbeddedGraphicsRenderTarget::new(display);
 # 
-#     display.clear(BACKGROUND_COLOR).unwrap();
+#     target.clear(BACKGROUND_COLOR);
 # 
 #     let environment = DefaultEnvironment::default();
 #     let origin = buoyant::primitives::Point::zero();
 # 
 #     let view = view();
-#     let layout = view.layout(&display.size().into(), &environment);
+#     let layout = view.layout(&target.display.size().into(), &environment);
 #     let render_tree = view.render_tree(&layout, origin, &environment);
 # 
-#     render_tree.render(&mut display, &DEFAULT_COLOR, origin);
+#     render_tree.render(&mut target, &DEFAULT_COLOR, origin);
 # 
-#     window.show_static(&display);
+#     window.show_static(&target.display);
 # }
 # 
 // Preferred
 use buoyant::layout::HorizontalAlignment;
 use buoyant::view::shape::Circle;
 use buoyant::view::VStack;
-use buoyant::view::ViewExt as _;
-use buoyant::render::EmbeddedGraphicsView;
+use buoyant::view::{View, ViewExt as _};
 
-fn view() -> impl EmbeddedGraphicsView<Rgb888> {
+fn view() -> impl View<Rgb888> {
     VStack::new((
         Circle.foreground_color(Rgb888::CSS_CORAL),
         Circle

@@ -7,7 +7,7 @@ use crate::{
 
 #[derive(Debug, Default, PartialEq, Eq)]
 pub struct Spacer {
-    min_length: u16,
+    min_length: u32,
 }
 
 impl Layout for Spacer {
@@ -21,10 +21,10 @@ impl Layout for Spacer {
         let size = match env.layout_direction() {
             LayoutDirection::Horizontal => Dimensions {
                 width: offer.width.resolve_most_flexible(0, self.min_length),
-                height: 0.into(),
+                height: 0u32.into(),
             },
             LayoutDirection::Vertical => Dimensions {
-                width: 0.into(),
+                width: 0u32.into(),
                 height: offer.height.resolve_most_flexible(0, self.min_length),
             },
         };

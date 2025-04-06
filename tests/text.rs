@@ -1,5 +1,4 @@
-use buoyant::render::CharacterRender;
-use buoyant::render::CharacterRenderTarget;
+use buoyant::render::Render;
 use std::iter::zip;
 
 use buoyant::{

@@ -4,11 +4,11 @@ use buoyant::environment::DefaultEnvironment;
 use buoyant::font::CharacterBufferFont;
 use buoyant::layout::{Layout, VerticalAlignment};
 use buoyant::primitives::{Dimensions, Point, ProposedDimension, ProposedDimensions, Size};
-use buoyant::render::{CharacterRender, Renderable};
-use buoyant::render::{CharacterRenderTarget, CharacterView};
+use buoyant::render::{Render, Renderable};
 use buoyant::render_target::FixedTextBuffer;
 use buoyant::view::make_render_tree;
 use buoyant::view::padding::Edges;
+use buoyant::view::View;
 use buoyant::view::{shape::Rectangle, Divider, EmptyView, HStack, Spacer, Text, ViewExt};
 
 #[test]
@@ -348,7 +348,7 @@ fn test_layout_3_extra_space_allocation() {
     assert_eq!(buffer.text[2].iter().collect::<String>(), "xxxx ++++");
 }
 
-fn view(max_width_1: u16, max_width_2: u16, max_width_3: u16) -> impl CharacterView<char> {
+fn view(max_width_1: u16, max_width_2: u16, max_width_3: u16) -> impl View<char> {
     HStack::new((
         Rectangle
             .foreground_color('x')

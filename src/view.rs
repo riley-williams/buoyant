@@ -37,13 +37,16 @@ use crate::{
     environment::DefaultEnvironment,
     layout::{Alignment, HorizontalAlignment, VerticalAlignment},
     primitives::{Point, Size},
-    render::{CharacterRender, Renderable},
+    render::{Render, Renderable},
 };
+
+pub trait View<C>: Renderable<Renderables: Render<C>> {}
+impl<C, T: Renderable<Renderables: Render<C>>> View<C> for T {}
 
 /// Modifiers that extend the functionality of views.
 pub trait ViewExt: Sized {
     /// Applies padding to the specified edges
-    fn padding(self, edges: padding::Edges, amount: u16) -> Padding<Self> {
+    fn padding(self, edges: padding::Edges, amount: u32) -> Padding<Self> {
         Padding::new(edges, amount, self)
     }
 
@@ -67,7 +70,7 @@ pub trait ViewExt: Sized {
     ///     .with_height(height)
     /// # ;
     /// ```
-    fn frame_sized(self, width: u16, height: u16) -> FixedFrame<Self> {
+    fn frame_sized(self, width: u32, height: u32) -> FixedFrame<Self> {
         FixedFrame::new(self).with_width(width).with_height(height)
     }
 
@@ -166,14 +169,14 @@ pub trait ViewExt: Sized {
     ///
     /// ```
     /// use core::time::Duration;
-    /// use buoyant::view::{shape::{Circle, Capsule}, ZStack, padding, ViewExt as _};
+    /// use buoyant::view::{shape::{Circle, Capsule}, ZStack, padding::Edges, View, ViewExt as _};
     /// use buoyant::animation::Animation;
     /// use buoyant::layout::HorizontalAlignment;
-    /// use buoyant::render::{EmbeddedGraphicsView, Renderable};
+    /// use buoyant::render::Renderable;
     /// use embedded_graphics::pixelcolor::Rgb565;
     /// use embedded_graphics::prelude::*;
     ///
-    /// fn toggle_button(is_on: bool) -> impl EmbeddedGraphicsView<Rgb565> {
+    /// fn toggle_button(is_on: bool) -> impl View<Rgb565> {
     ///     let (color, alignment) = if is_on {
     ///         (Rgb565::GREEN, HorizontalAlignment::Trailing)
     ///     } else {
@@ -184,7 +187,7 @@ pub trait ViewExt: Sized {
     ///         Capsule.foreground_color(color),
     ///         Circle
     ///             .foreground_color(Rgb565::WHITE)
-    ///             .padding(padding::Edges::All, 2)
+    ///             .padding(Edges::All, 2)
     ///             .animated(Animation::ease_in_out(Duration::from_millis(120)), is_on),
     ///     ))
     ///     .with_horizontal_alignment(alignment)
@@ -202,12 +205,11 @@ pub trait ViewExt: Sized {
     /// Example:
     ///
     /// ```
-    /// use buoyant::view::{padding::Edges, shape::RoundedRectangle, Text, ViewExt as _};
+    /// use buoyant::view::{padding::Edges, shape::RoundedRectangle, Text, View, ViewExt as _};
     /// use buoyant::layout::Alignment;
-    /// use buoyant::render::{EmbeddedGraphicsView};
     /// use embedded_graphics::{prelude::*, pixelcolor::Rgb565, mono_font::ascii::FONT_9X15_BOLD};
     ///
-    /// fn bordered_button() -> impl EmbeddedGraphicsView<Rgb565> {
+    /// fn bordered_button() -> impl View<Rgb565> {
     ///     Text::new("Press me", &FONT_9X15_BOLD)
     ///         .foreground_color(Rgb565::WHITE)
     ///         .padding(Edges::All, 10)
@@ -264,7 +266,7 @@ impl<T: crate::layout::Layout> RenderExtensions for T {}
     note = "`LayoutExtensions` has been replaced with `ViewExt`"
 )]
 pub trait LayoutExtensions: ViewExt {
-    fn padding(self, edges: padding::Edges, amount: u16) -> Padding<Self> {
+    fn padding(self, edges: padding::Edges, amount: u32) -> Padding<Self> {
         <Self as ViewExt>::padding(self, edges, amount)
     }
 
@@ -272,7 +274,7 @@ pub trait LayoutExtensions: ViewExt {
         <Self as ViewExt>::frame(self)
     }
 
-    fn frame_sized(self, width: u16, height: u16) -> FixedFrame<Self> {
+    fn frame_sized(self, width: u32, height: u32) -> FixedFrame<Self> {
         <Self as ViewExt>::frame_sized(self, width, height)
     }
 
@@ -324,7 +326,7 @@ impl<T: crate::layout::Layout> LayoutExtensions for T {}
 pub fn make_render_tree<C, V>(view: &V, size: Size) -> V::Renderables
 where
     V: Renderable,
-    V::Renderables: CharacterRender<C>,
+    V::Renderables: Render<C>,
 {
     let env = DefaultEnvironment::default();
     let layout = view.layout(&size.into(), &env);

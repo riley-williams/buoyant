@@ -8,6 +8,8 @@
 
 use std::time::{Duration, Instant};
 
+use buoyant::render_target::EmbeddedGraphicsRenderTarget;
+use buoyant::view::View;
 use buoyant::{
     animation::Animation,
     environment::DefaultEnvironment,
@@ -15,10 +17,7 @@ use buoyant::{
     layout::{HorizontalAlignment, Layout},
     match_view,
     primitives::ProposedDimensions,
-    render::{
-        AnimatedJoin, AnimationDomain, EmbeddedGraphicsRender, EmbeddedGraphicsView,
-        Renderable as _,
-    },
+    render::{AnimatedJoin, AnimationDomain, Render, Renderable as _},
     view::{
         padding::Edges,
         shape::{Circle, Rectangle},
@@ -33,13 +32,13 @@ use embedded_graphics_simulator::{
 #[allow(unused)]
 mod spacing {
     /// Spacing between sections / groups
-    pub const SECTION: u16 = 24;
+    pub const SECTION: u32 = 24;
     /// Outer padding to the edge of the screen
-    pub const SECTION_MARGIN: u16 = 16;
+    pub const SECTION_MARGIN: u32 = 16;
     /// Spacing between distinct visual components in a section / group
-    pub const COMPONENT: u16 = 16;
+    pub const COMPONENT: u32 = 16;
     /// Spacing between elements within a component
-    pub const ELEMENT: u16 = 8;
+    pub const ELEMENT: u32 = 8;
 }
 
 #[allow(unused)]
@@ -69,14 +68,16 @@ mod color {
 }
 
 fn main() {
-    let mut display: SimulatorDisplay<color::Space> = SimulatorDisplay::new(Size::new(480, 320));
+    let size = Size::new(480, 320);
+    let display: SimulatorDisplay<color::Space> = SimulatorDisplay::new(size);
+    let mut target = EmbeddedGraphicsRenderTarget::new(display);
     let mut window = Window::new("Coffeeeee", &OutputSettings::default());
     let app_start = Instant::now();
 
     let mut app = App::default();
 
-    let mut source_tree = app.tree(display.size(), app_start.elapsed());
-    let mut target_tree = app.tree(display.size(), app_start.elapsed());
+    let mut source_tree = app.tree(size, app_start.elapsed());
+    let mut target_tree = app.tree(size, app_start.elapsed());
 
     'running: loop {
         // Create a new target tree if the state changes
@@ -86,14 +87,14 @@ fn main() {
                 target_tree,
                 &AnimationDomain::top_level(app_start.elapsed()),
             );
-            target_tree = app.tree(display.size(), app_start.elapsed());
+            target_tree = app.tree(size, app_start.elapsed());
         }
 
-        display.clear(color::BACKGROUND).unwrap();
+        target.display.clear(color::BACKGROUND).unwrap();
 
         // Render frame
-        EmbeddedGraphicsRender::render_animated(
-            &mut display,
+        Render::render_animated(
+            &mut target,
             &source_tree,
             &target_tree,
             &color::Space::WHITE,
@@ -102,7 +103,7 @@ fn main() {
         );
 
         // Flush to window
-        window.update(&display);
+        window.update(&target.display);
 
         for event in window.events() {
             match event {
@@ -177,14 +178,14 @@ impl App {
         &self,
         dimensions: impl Into<ProposedDimensions>,
         app_time: Duration,
-    ) -> impl EmbeddedGraphicsRender<color::Space> {
+    ) -> impl Render<color::Space> {
         let env = DefaultEnvironment::new(app_time);
         let view = Self::view(&self.state);
         let layout = view.layout(&dimensions.into(), &env);
         view.render_tree(&layout, buoyant::primitives::Point::zero(), &env)
     }
 
-    fn view(state: &AppState) -> impl EmbeddedGraphicsView<color::Space> {
+    fn view(state: &AppState) -> impl View<color::Space> {
         VStack::new((
             Self::tab_bar(state.tab),
             match_view!(state.tab => {
@@ -202,9 +203,7 @@ impl App {
         ))
     }
 
-    fn tab_bar(
-        tab: Tab,
-    ) -> impl buoyant::render::Renderable<Renderables: EmbeddedGraphicsRender<color::Space>> {
+    fn tab_bar(tab: Tab) -> impl View<color::Space> {
         HStack::new((
             Self::tab_item("Brew", tab == Tab::Brew),
             Self::tab_item("Clean", tab == Tab::Clean),
@@ -214,11 +213,7 @@ impl App {
         .animated(Animation::linear(Duration::from_millis(125)), tab)
     }
 
-    fn tab_item(
-        name: &str,
-        is_selected: bool,
-    ) -> impl buoyant::render::Renderable<Renderables: EmbeddedGraphicsRender<color::Space>> + use<'_>
-    {
+    fn tab_item(name: &str, is_selected: bool) -> impl View<color::Space> + use<'_> {
         let (text_color, bar_height) = if is_selected {
             (color::ACCENT, 4)
         } else {
@@ -244,9 +239,7 @@ impl App {
         .with_min_width(100)
     }
 
-    fn brew_tab(
-        _state: &AppState,
-    ) -> impl buoyant::render::Renderable<Renderables: EmbeddedGraphicsRender<color::Space>> {
+    fn brew_tab(_state: &AppState) -> impl View<color::Space> {
         VStack::new((
             Text::new("Good morning", &font::BODY),
             Text::new(
@@ -262,9 +255,7 @@ impl App {
         .foreground_color(color::Space::WHITE)
     }
 
-    fn settings_tab(
-        state: &AppState,
-    ) -> impl buoyant::render::Renderable<Renderables: EmbeddedGraphicsRender<color::Space>> {
+    fn settings_tab(state: &AppState) -> impl View<color::Space> {
         VStack::new((
             toggle_text(
                 "Auto (b)rew",
@@ -297,7 +288,7 @@ fn toggle_text<'a>(
     is_on: bool,
     description: &'a str,
     hides_description: bool,
-) -> impl EmbeddedGraphicsView<color::Space> + use<'a> {
+) -> impl View<color::Space> + use<'a> {
     VStack::new((
         HStack::new((
             Text::new(label, &font::BODY).foreground_color(color::Space::WHITE),
@@ -315,7 +306,7 @@ fn toggle_text<'a>(
     .flex_infinite_width(HorizontalAlignment::Trailing)
 }
 
-fn toggle_button(is_on: bool) -> impl EmbeddedGraphicsView<color::Space> {
+fn toggle_button(is_on: bool) -> impl View<color::Space> {
     let (color, alignment) = if is_on {
         (color::ACCENT, HorizontalAlignment::Trailing)
     } else {

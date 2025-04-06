@@ -1,6 +1,9 @@
+use crate::primitives::geometry::RoundedRectangle;
 use crate::primitives::{Interpolate as _, Point, Size};
+use crate::render_target::RenderTarget;
+use crate::render_target::SolidBrush;
 
-use super::{AnimatedJoin, AnimationDomain};
+use super::{AnimatedJoin, AnimationDomain, Render};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Capsule {
@@ -23,51 +26,41 @@ impl AnimatedJoin for Capsule {
     }
 }
 
-#[cfg(feature = "embedded-graphics")]
-mod embedded_graphics_impl {
-    use crate::{primitives::Point, render::AnimatedJoin};
-    use embedded_graphics::{
-        prelude::PixelColor,
-        primitives::{PrimitiveStyle, StyledDrawable as _},
-    };
-    use embedded_graphics_core::draw_target::DrawTarget;
+impl<C: Copy> Render<C> for Capsule {
+    fn render(
+        &self,
+        render_target: &mut impl RenderTarget<ColorFormat = C>,
+        style: &C,
+        offset: Point,
+    ) {
+        let brush = SolidBrush::new(*style);
+        let radius = self.size.height.min(self.size.width) / 2;
 
-    use crate::render::{AnimationDomain, EmbeddedGraphicsRender};
+        render_target.fill(
+            offset,
+            &brush,
+            None,
+            &RoundedRectangle::new(
+                self.origin,
+                Size::new(self.size.width, self.size.height),
+                radius,
+            ),
+        );
+    }
 
-    use super::Capsule;
-    impl<C: PixelColor> EmbeddedGraphicsRender<C> for Capsule {
-        fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &C, offset: Point) {
-            let top_left = (self.origin + offset).into();
-            let radius = self.size.height.min(self.size.width) / 2;
-            let rectangle = embedded_graphics::primitives::Rectangle {
-                top_left,
-                size: self.size.into(),
-            };
-
-            _ = embedded_graphics::primitives::RoundedRectangle::with_equal_corners(
-                rectangle,
-                embedded_graphics::prelude::Size {
-                    width: radius.into(),
-                    height: radius.into(),
-                },
-            )
-            .draw_styled(&PrimitiveStyle::with_fill(*style), render_target);
-        }
-
-        fn render_animated(
-            render_target: &mut impl DrawTarget<Color = C>,
-            source: &Self,
-            target: &Self,
-            style: &C,
-            offset: Point,
-            domain: &AnimationDomain,
-        ) {
-            // TODO: expecting these clones to be optimized away, check
-            AnimatedJoin::join(source.clone(), target.clone(), domain).render(
-                render_target,
-                style,
-                offset,
-            );
-        }
+    fn render_animated(
+        render_target: &mut impl RenderTarget<ColorFormat = C>,
+        source: &Self,
+        target: &Self,
+        style: &C,
+        offset: Point,
+        domain: &AnimationDomain,
+    ) {
+        // TODO: expecting these clones to be optimized away, check
+        AnimatedJoin::join(source.clone(), target.clone(), domain).render(
+            render_target,
+            style,
+            offset,
+        );
     }
 }

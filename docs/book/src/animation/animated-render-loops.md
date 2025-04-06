@@ -14,14 +14,16 @@ To animate between two render trees, you can use the `render_animated()` method:
 #     layout::Layout as _,
 #     primitives::{Point, Size},
 #     render::{
-#         AnimatedJoin, AnimationDomain, EmbeddedGraphicsRender, EmbeddedGraphicsView,
+#         AnimatedJoin, AnimationDomain, Render,
 #         Renderable as _,
 #     },
-#     view::EmptyView,
+#     render_target::EmbeddedGraphicsRenderTarget,
+#     view::{EmptyView, View},
 # };
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::RgbColor};
 # 
-# let mut render_target = embedded_graphics::mock_display::MockDisplay::new();
+# let display = embedded_graphics::mock_display::MockDisplay::new();
+# let mut target = EmbeddedGraphicsRenderTarget::new(display);
 # let app_time = Duration::from_secs(0);
 # 
 # let environment = DefaultEnvironment::new(app_time);
@@ -34,8 +36,8 @@ let source_render_tree = source_view.render_tree(&source_layout, Point::zero(), 
 # let target_layout = target_view.layout(&Size::new(200, 100).into(), &environment);
 let target_render_tree = target_view.render_tree(&target_layout, Point::zero(), &environment);
 
-EmbeddedGraphicsRender::render_animated(
-    &mut render_target,
+Render::render_animated(
+    &mut target,
     &source_render_tree,
     &target_render_tree,
     &Rgb888::BLACK,
@@ -43,7 +45,7 @@ EmbeddedGraphicsRender::render_animated(
     &AnimationDomain::top_level(app_time),
 );
 # 
-# fn view() -> impl EmbeddedGraphicsView<Rgb888> {
+# fn view() -> impl View<Rgb888> {
 #     EmptyView
 # }
 ```
@@ -68,14 +70,16 @@ is the same as rendering the two trees with `render_animated()`.
 #     layout::Layout as _,
 #     primitives::{Point, Size},
 #     render::{
-#         AnimatedJoin, AnimationDomain, EmbeddedGraphicsRender, EmbeddedGraphicsView,
+#         AnimatedJoin, AnimationDomain, Render,
 #         Renderable as _,
 #     },
-#     view::EmptyView,
+#     render_target::EmbeddedGraphicsRenderTarget,
+#     view::{EmptyView, View},
 # };
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::RgbColor};
 # 
-# let mut render_target = embedded_graphics::mock_display::MockDisplay::new();
+# let display = embedded_graphics::mock_display::MockDisplay::new();
+# let mut target = EmbeddedGraphicsRenderTarget::new(display);
 # let app_time = Duration::from_secs(0);
 # 
 # let environment = DefaultEnvironment::new(app_time);
@@ -97,9 +101,9 @@ let joined_tree = AnimatedJoin::join(
 
 // Calling render on the joined tree produces the same result as
 // the render_animated call above
-joined_tree.render(&mut render_target, &Rgb888::BLACK, Point::zero());
+joined_tree.render(&mut target, &Rgb888::BLACK, Point::zero());
 # 
-# fn view() -> impl EmbeddedGraphicsView<Rgb888> {
+# fn view() -> impl View<Rgb888> {
 #     EmptyView
 # }
 ```
@@ -116,7 +120,7 @@ Here's a rough outline of what a that might look like:
 
 ```rust,ignore
 /// Produce a render tree for a given state, time, and size
-fn make_tree(state: &State, time: Duration, size: &Size) -> impl EmbeddedGraphicsRender<Rgb888> {
+fn make_tree(state: &State, time: Duration, size: &Size) -> impl Render<Rgb888> {
     let view = /* ... */;
     let layout = /* ... */;
     view.render_tree(/* ... */)
@@ -135,7 +139,7 @@ fn main() {
         display.clear(Rgb888::BLACK);
 
         // Render, animating between the source and target trees
-        EmbeddedGraphicsRender::render_animated(
+        Render::render_animated(
             &mut display,
             &source_tree,
             &target_tree,

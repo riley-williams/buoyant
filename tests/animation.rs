@@ -7,20 +7,17 @@ use buoyant::{
     if_view,
     layout::{HorizontalAlignment, Layout as _, VerticalAlignment},
     primitives::Point,
-    render::{
-        AnimatedJoin, AnimationDomain, CharacterRender, CharacterRenderTarget, CharacterView,
-        Renderable,
-    },
+    render::{AnimatedJoin, AnimationDomain, Render, Renderable},
     render_target::FixedTextBuffer,
     view::{
         make_render_tree, shape::Rectangle, Divider, EmptyView, HorizontalTextAlignment, Text,
-        VStack, ViewExt, ZStack,
+        VStack, View, ViewExt, ZStack,
     },
 };
 
 const FONT: CharacterBufferFont = CharacterBufferFont;
 
-fn x_bar(alignment: HorizontalAlignment) -> impl CharacterView<char> {
+fn x_bar(alignment: HorizontalAlignment) -> impl View<char> {
     Text::new("X", &FONT)
         .flex_infinite_width(alignment)
         .animated(Animation::linear(Duration::from_secs(1)), alignment)
@@ -42,7 +39,7 @@ fn sanity_animation_wipe() {
 
     // render 101 steps, 10 ms increments
     for i in 0..101u64 {
-        CharacterRender::render_animated(
+        Render::render_animated(
             &mut buffer,
             &source_tree,
             &target_tree,
@@ -67,7 +64,7 @@ fn sanity_animation_wipe_leading_half() {
     let target_tree = make_render_tree(&view, buffer.size());
 
     for i in 0..50u64 {
-        CharacterRender::render_animated(
+        Render::render_animated(
             &mut buffer,
             &source_tree,
             &target_tree,
@@ -93,7 +90,7 @@ fn sanity_animation_wipe_trailing_half() {
 
     // The first frame detects the changed value and sets the animation end time in
     // the target tree.
-    CharacterRender::render_animated(
+    Render::render_animated(
         &mut buffer,
         &source_tree,
         &target_tree,
@@ -105,7 +102,7 @@ fn sanity_animation_wipe_trailing_half() {
     buffer.clear();
 
     for i in 60..101u64 {
-        CharacterRender::render_animated(
+        Render::render_animated(
             &mut buffer,
             &source_tree,
             &target_tree,
@@ -117,7 +114,7 @@ fn sanity_animation_wipe_trailing_half() {
     assert_eq!(buffer.text[0].iter().collect::<String>(), "     XXXXX");
 }
 
-fn stacked_bars(alignment: HorizontalAlignment) -> impl CharacterView<char> {
+fn stacked_bars(alignment: HorizontalAlignment) -> impl View<char> {
     VStack::new((
         Text::new("X", &FONT).animated(Animation::linear(Duration::from_secs(1)), alignment),
         Text::new("Y", &FONT),
@@ -138,7 +135,7 @@ fn animation_only_occurs_on_animated_subtrees() {
 
     let target_tree = make_render_tree(&view, buffer.size());
 
-    CharacterRender::render_animated(
+    Render::render_animated(
         &mut buffer,
         &source_tree,
         &target_tree,
@@ -155,7 +152,7 @@ fn animation_only_occurs_on_animated_subtrees() {
     buffer.clear();
 
     for i in 1..101u64 {
-        CharacterRender::render_animated(
+        Render::render_animated(
             &mut buffer,
             &source_tree,
             &target_tree,
@@ -170,11 +167,7 @@ fn animation_only_occurs_on_animated_subtrees() {
 
 /// Value is used to trigger the top text to animate.
 /// Changing alignment should not trigger animation.
-fn stacked_bars_value(
-    x_value: u8,
-    y_value: u8,
-    alignment: HorizontalAlignment,
-) -> impl CharacterView<char> {
+fn stacked_bars_value(x_value: u8, y_value: u8, alignment: HorizontalAlignment) -> impl View<char> {
     VStack::new((
         Text::new("X", &FONT).animated(Animation::linear(Duration::from_secs(1)), x_value),
         Text::new("Y", &FONT).animated(Animation::linear(Duration::from_secs(2)), y_value),
@@ -196,7 +189,7 @@ fn no_animation_when_value_doesnt_change() {
 
     let target_tree = make_render_tree(&view, buffer.size());
 
-    CharacterRender::render_animated(
+    Render::render_animated(
         &mut buffer,
         &source_tree,
         &target_tree,
@@ -209,7 +202,7 @@ fn no_animation_when_value_doesnt_change() {
     buffer.clear();
 
     for i in 1..101u64 {
-        CharacterRender::render_animated(
+        Render::render_animated(
             &mut buffer,
             &source_tree,
             &target_tree,
@@ -229,7 +222,7 @@ fn stacked_bars_3_value(
     y_value: u8,
     z_value: u8,
     alignment: HorizontalAlignment,
-) -> impl CharacterView<char> {
+) -> impl View<char> {
     VStack::new((
         Text::new("X", &FONT).animated(Animation::linear(Duration::from_secs(1)), x_value),
         Text::new("Y", &FONT).animated(Animation::linear(Duration::from_secs(2)), y_value),
@@ -256,7 +249,7 @@ fn partial_animation_join() {
     let mut target_tree = view.render_tree(&layout, Point::default(), &env);
 
     // initial render sets target animation times
-    CharacterRender::render_animated(
+    Render::render_animated(
         &mut buffer,
         &source_tree,
         &target_tree,
@@ -270,7 +263,7 @@ fn partial_animation_join() {
     buffer.clear();
 
     // first real interpolated frame, at .5s
-    CharacterRender::render_animated(
+    Render::render_animated(
         &mut buffer,
         &source_tree,
         &target_tree,
@@ -309,7 +302,7 @@ fn partial_animation_join() {
 
     // No time elapsed since the join, so Y shouldn't have moved, but X jumps
     // Z value didn't change, so it should continue the old animation
-    CharacterRender::render_animated(
+    Render::render_animated(
         &mut buffer,
         &source_tree,
         &target_tree,
@@ -325,7 +318,7 @@ fn partial_animation_join() {
 
     // Y changed, so the animation duration is reset and it takes 2s to move from the middle
     // to the left
-    CharacterRender::render_animated(
+    Render::render_animated(
         &mut buffer,
         &source_tree,
         &target_tree,
@@ -339,7 +332,7 @@ fn partial_animation_join() {
     assert_eq!(buffer.text[2].iter().collect::<String>(), "Z          ");
     buffer.clear();
 
-    CharacterRender::render_animated(
+    Render::render_animated(
         &mut buffer,
         &source_tree,
         &target_tree,
@@ -364,7 +357,7 @@ fn partial_animation_join() {
 /// #____
 ///
 /// Only the toggle is animated, not the text
-fn toggle_switch(is_on: bool, subtext: &str) -> impl CharacterView<char> + use<'_> {
+fn toggle_switch(is_on: bool, subtext: &str) -> impl View<char> + use<'_> {
     let alignment = if is_on {
         HorizontalAlignment::Trailing
     } else {
@@ -387,7 +380,7 @@ fn toggle_switch(is_on: bool, subtext: &str) -> impl CharacterView<char> + use<'
     .with_alignment(HorizontalAlignment::Trailing)
 }
 
-fn toggle_move(is_on: bool, alignment: HorizontalAlignment) -> impl CharacterView<char> {
+fn toggle_move(is_on: bool, alignment: HorizontalAlignment) -> impl View<char> {
     toggle_switch(is_on, "xxx")
         .flex_frame()
         .with_infinite_max_width()
@@ -411,7 +404,7 @@ fn jump_toggle_animation() {
     let mut target_tree = view.render_tree(&layout, Point::default(), &env);
 
     // initial render sets target animation times
-    CharacterRender::render_animated(
+    Render::render_animated(
         &mut buffer,
         &source_tree,
         &target_tree,
@@ -425,7 +418,7 @@ fn jump_toggle_animation() {
     buffer.clear();
 
     // first real interpolated frame, at .5s
-    CharacterRender::render_animated(
+    Render::render_animated(
         &mut buffer,
         &source_tree,
         &target_tree,
@@ -455,7 +448,7 @@ fn jump_toggle_animation() {
     let layout = view.layout(&buffer.size().into(), &env);
     target_tree = view.render_tree(&layout, Point::default(), &env);
 
-    CharacterRender::render_animated(
+    Render::render_animated(
         &mut buffer,
         &source_tree,
         &target_tree,
@@ -470,7 +463,7 @@ fn jump_toggle_animation() {
     assert_eq!(buffer.text[2].iter().collect::<String>(), "           ");
     buffer.clear();
 
-    CharacterRender::render_animated(
+    Render::render_animated(
         &mut buffer,
         &source_tree,
         &target_tree,
@@ -485,7 +478,7 @@ fn jump_toggle_animation() {
     assert_eq!(buffer.text[2].iter().collect::<String>(), "           ");
 }
 
-fn toggle_stack(is_on: bool) -> impl CharacterView<char> {
+fn toggle_stack(is_on: bool) -> impl View<char> {
     VStack::new((
         toggle_switch(is_on, "123456\n123"),
         toggle_switch(is_on, "xxx"),
@@ -516,7 +509,7 @@ fn nested_toggle_animation() {
     let mut target_tree = view.render_tree(&layout, Point::default(), &env);
 
     // initial render sets target animation times
-    CharacterRender::render_animated(
+    Render::render_animated(
         &mut buffer,
         &source_tree,
         &target_tree,
@@ -534,7 +527,7 @@ fn nested_toggle_animation() {
     buffer.clear();
 
     // first real interpolated frame, at .5s
-    CharacterRender::render_animated(
+    Render::render_animated(
         &mut buffer,
         &source_tree,
         &target_tree,
@@ -570,7 +563,7 @@ fn nested_toggle_animation() {
     let layout = view.layout(&buffer.size().into(), &env);
     target_tree = view.render_tree(&layout, Point::default(), &env);
 
-    CharacterRender::render_animated(
+    Render::render_animated(
         &mut buffer,
         &source_tree,
         &target_tree,
@@ -587,7 +580,7 @@ fn nested_toggle_animation() {
 
     buffer.clear();
 
-    CharacterRender::render_animated(
+    Render::render_animated(
         &mut buffer,
         &source_tree,
         &target_tree,

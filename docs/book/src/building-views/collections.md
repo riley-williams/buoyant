@@ -13,7 +13,8 @@ better choice. Use ForEach when you want to display a collection of like views.
 # use buoyant::{
 #     environment::DefaultEnvironment,
 #     layout::Layout,
-#     render::{EmbeddedGraphicsRender, EmbeddedGraphicsView, Renderable},
+#     render::{Render, Renderable},
+#     render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _},
 # };
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
 #
@@ -22,25 +23,26 @@ better choice. Use ForEach when you want to display a collection of like views.
 #
 # fn main() {
 #     let mut window = Window::new("Example", &OutputSettings::default());
-#     let mut display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(480, 320));
+#     let display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(480, 320));
+#     let mut target = EmbeddedGraphicsRenderTarget::new(display);
 #
-#     display.clear(BACKGROUND_COLOR).unwrap();
+#     target.clear(BACKGROUND_COLOR);
 #
 #     let environment = DefaultEnvironment::default();
 #     let origin = buoyant::primitives::Point::zero();
 #
 #     let view = view(&SWATCHES);
-#     let layout = view.layout(&display.size().into(), &environment);
+#     let layout = view.layout(&target.display.size().into(), &environment);
 #     let render_tree = view.render_tree(&layout, origin, &environment);
 #
-#     render_tree.render(&mut display, &DEFAULT_COLOR, origin);
+#     render_tree.render(&mut target, &DEFAULT_COLOR, origin);
 #
-#     window.show_static(&display);
+#     window.show_static(&target.display);
 # }
 #
 # mod spacing {
-#     pub const ELEMENT: u16 = 6;
-#     pub const COMPONENT: u16 = 12;
+#     pub const ELEMENT: u32 = 6;
+#     pub const COMPONENT: u32 = 12;
 # }
 #
 # struct Swatch {
@@ -51,7 +53,7 @@ better choice. Use ForEach when you want to display a collection of like views.
 use buoyant::layout::HorizontalAlignment;
 use buoyant::view::padding::Edges;
 use buoyant::view::{shape::RoundedRectangle, ForEach, HStack, Text};
-use buoyant::view::{ViewExt as _};
+use buoyant::view::{View, ViewExt as _};
 use embedded_graphics::{mono_font::ascii::FONT_9X15, pixelcolor::Rgb888, prelude::*};
 
 static SWATCHES: [Swatch; 4] = [
@@ -73,7 +75,7 @@ static SWATCHES: [Swatch; 4] = [
     },
 ];
 
-fn view(swatches: &[Swatch]) -> impl EmbeddedGraphicsView<Rgb888> + use<'_> {
+fn view(swatches: &[Swatch]) -> impl View<Rgb888> + use<'_> {
     ForEach::<10>::new(swatches, |swatch| {
         HStack::new((
             RoundedRectangle::new(8)

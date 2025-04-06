@@ -30,7 +30,7 @@ pub enum HorizontalTextAlignment {
 }
 
 impl HorizontalTextAlignment {
-    pub(crate) const fn align(self, available: i16, content: i16) -> i16 {
+    pub(crate) const fn align(self, available: i32, content: i32) -> i32 {
         match self {
             Self::Leading => 0,
             Self::Center => (available - content) / 2,
@@ -77,8 +77,8 @@ impl<T: AsRef<str>, F: FontLayout> Layout for Text<'_, T, F> {
         let wrap = WhitespaceWrap::new(self.text.as_ref(), offer.width, self.font);
         let mut size = Size::zero();
         for line in wrap {
-            size.width = core::cmp::max(size.width, self.font.str_width(line));
-            size.height += line_height;
+            size.width = core::cmp::max(size.width, self.font.str_width(line).into());
+            size.height += u32::from(line_height);
             if ProposedDimension::Exact(size.height) >= offer.height {
                 break;
             }

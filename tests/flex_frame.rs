@@ -1,7 +1,6 @@
 use buoyant::layout::Alignment;
 use buoyant::primitives::Point;
-use buoyant::render::CharacterRender;
-use buoyant::render::CharacterRenderTarget;
+use buoyant::render::Render;
 use buoyant::view::HStack;
 use buoyant::view::Spacer;
 use buoyant::view::VStack;

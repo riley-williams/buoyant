@@ -12,7 +12,7 @@ use crate::{
 pub struct HStack<T> {
     items: T,
     alignment: VerticalAlignment,
-    spacing: u16,
+    spacing: u32,
 }
 
 struct HorizontalEnvironment<'a, T> {
@@ -38,7 +38,7 @@ impl<'a, T: LayoutEnvironment> From<&'a T> for HorizontalEnvironment<'a, T> {
 
 impl<T> HStack<T> {
     #[must_use]
-    pub fn with_spacing(self, spacing: u16) -> Self {
+    pub fn with_spacing(self, spacing: u32) -> Self {
         Self { spacing, ..self }
     }
 
@@ -69,12 +69,12 @@ type LayoutFn<'a> = &'a mut dyn FnMut(ProposedDimensions) -> Dimensions;
 fn layout_n<const N: usize>(
     subviews: &mut [(LayoutFn, i8, bool); N],
     offer: ProposedDimensions,
-    spacing: u16,
+    spacing: u32,
 ) -> Dimensions {
     let ProposedDimension::Exact(width) = offer.width else {
-        let mut total_width: Dimension = 0.into();
-        let mut max_height: Dimension = 0.into();
-        let mut non_empty_views: u16 = 0;
+        let mut total_width: Dimension = 0u32.into();
+        let mut max_height: Dimension = 0u32.into();
+        let mut non_empty_views: u32 = 0;
         for (layout_fn, _, is_empty) in subviews {
             // layout must be called at least once on every view to avoid panic unwrapping the
             // resolved layout.
@@ -99,7 +99,7 @@ fn layout_n<const N: usize>(
     // compute the "flexibility" of each view on the horizontal axis and sort by increasing
     // flexibility
     // Flexibility is defined as the difference between the responses to 0 and infinite width offers
-    let mut flexibilities: [Dimension; N] = [0.into(); N];
+    let mut flexibilities: [Dimension; N] = [0u32.into(); N];
     let mut num_empty_views = 0;
 
     let min_proposal = ProposedDimensions {
@@ -124,9 +124,9 @@ fn layout_n<const N: usize>(
     }
 
     let mut remaining_width =
-        width.saturating_sub(spacing * (N.saturating_sub(num_empty_views + 1)) as u16);
+        width.saturating_sub(spacing * (N.saturating_sub(num_empty_views + 1)) as u32);
     let mut last_priority_group: Option<i8> = None;
-    let mut max_height: Dimension = 0.into();
+    let mut max_height: Dimension = 0u32.into();
 
     loop {
         // collect the unsized subviews with the max layout priority into a group
@@ -167,7 +167,7 @@ fn layout_n<const N: usize>(
         // frame animation...
         group_indices.sort_unstable_by_key(|&i| flexibilities[i]);
 
-        let mut remaining_group_size = group_indices.len() as u16;
+        let mut remaining_group_size = group_indices.len() as u32;
 
         for index in group_indices {
             let width_fraction =
@@ -266,8 +266,8 @@ macro_rules! impl_layout_for_hstack {
                     );
 
                     if !self.items.$n.is_empty() {
-                        let child_width: u16 = layout.sublayouts.$n.resolved_size.width.into();
-                        width_offset += (child_width + self.spacing) as i16;
+                        let child_width: u32 = layout.sublayouts.$n.resolved_size.width.into();
+                        width_offset += (child_width + self.spacing) as i32;
                     }
                 )+
 

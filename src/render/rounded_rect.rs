@@ -1,7 +1,10 @@
 use crate::{
-    primitives::{Interpolate, Point, Size},
+    primitives::{geometry::RoundedRectangle, Interpolate, Point, Size},
     render::{AnimatedJoin, AnimationDomain},
+    render_target::{RenderTarget, SolidBrush},
 };
+
+use super::Render;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
@@ -24,47 +27,39 @@ impl AnimatedJoin for RoundedRect {
     }
 }
 
-#[cfg(feature = "embedded-graphics")]
-mod embedded_graphics_impl {
-    use embedded_graphics::{
-        prelude::PixelColor,
-        primitives::{PrimitiveStyle, StyledDrawable as _},
-    };
-    use embedded_graphics_core::draw_target::DrawTarget;
+impl<C: Copy> Render<C> for RoundedRect {
+    fn render(
+        &self,
+        render_target: &mut impl RenderTarget<ColorFormat = C>,
+        style: &C,
+        offset: Point,
+    ) {
+        let brush = SolidBrush::new(*style);
+        render_target.fill(
+            offset,
+            &brush,
+            None,
+            &RoundedRectangle::new(
+                self.origin,
+                Size::new(self.size.width, self.size.height),
+                self.corner_radius.into(),
+            ),
+        );
+    }
 
-    use crate::render::{AnimatedJoin, EmbeddedGraphicsRender};
-
-    use super::{Point, RoundedRect};
-
-    impl<C: PixelColor> EmbeddedGraphicsRender<C> for RoundedRect {
-        fn render(&self, render_target: &mut impl DrawTarget<Color = C>, style: &C, offset: Point) {
-            let top_left = (self.origin + offset).into();
-            _ = embedded_graphics::primitives::RoundedRectangle::new(
-                embedded_graphics::primitives::Rectangle {
-                    top_left,
-                    size: self.size.into(),
-                },
-                embedded_graphics::primitives::CornerRadii::new(
-                    (u32::from(self.corner_radius), u32::from(self.corner_radius)).into(),
-                ),
-            )
-            .draw_styled(&PrimitiveStyle::with_fill(*style), render_target);
-        }
-
-        fn render_animated(
-            render_target: &mut impl DrawTarget<Color = C>,
-            source: &Self,
-            target: &Self,
-            style: &C,
-            offset: Point,
-            domain: &crate::render::AnimationDomain,
-        ) {
-            // TODO: expecting these clones to be optimized away, check
-            AnimatedJoin::join(source.clone(), target.clone(), domain).render(
-                render_target,
-                style,
-                offset,
-            );
-        }
+    fn render_animated(
+        render_target: &mut impl RenderTarget<ColorFormat = C>,
+        source: &Self,
+        target: &Self,
+        style: &C,
+        offset: Point,
+        domain: &crate::render::AnimationDomain,
+    ) {
+        // TODO: expecting these clones to be optimized away, check
+        AnimatedJoin::join(source.clone(), target.clone(), domain).render(
+            render_target,
+            style,
+            offset,
+        );
     }
 }
