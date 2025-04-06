@@ -15,7 +15,8 @@ You can configure the spacing between child views using `.with_spacing`.
 # use buoyant::{
 #     environment::DefaultEnvironment,
 #     layout::Layout,
-#     render::{EmbeddedGraphicsRender as _, Renderable as _},
+#     render::{Render as _, Renderable as _},
+#     render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _},
 # };
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::*};
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
@@ -25,29 +26,29 @@ You can configure the spacing between child views using `.with_spacing`.
 # 
 # fn main() {
 #     let mut window = Window::new("Example", &OutputSettings::default());
-#     let mut display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(480, 320));
+#     let display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(480, 320));
+#     let mut target = EmbeddedGraphicsRenderTarget::new(display);
 # 
-#     display.clear(BACKGROUND_COLOR).unwrap();
+#     target.clear(BACKGROUND_COLOR);
 # 
 #     let environment = DefaultEnvironment::default();
 #     let origin = buoyant::primitives::Point::zero();
 # 
 #     let view = view();
-#     let layout = view.layout(&display.size().into(), &environment);
+#     let layout = view.layout(&target.display.size().into(), &environment);
 #     let render_tree = view.render_tree(&layout, origin, &environment);
 # 
-#     render_tree.render(&mut display, &DEFAULT_COLOR, origin);
+#     render_tree.render(&mut target, &DEFAULT_COLOR, origin);
 # 
-#     window.show_static(&display);
+#     window.show_static(&target.display);
 # }
 # 
 use buoyant::layout::HorizontalAlignment;
 use buoyant::view::shape::{Capsule, Circle, Rectangle};
-use buoyant::view::ViewExt as _;
+use buoyant::view::{View, ViewExt as _};
 use buoyant::view::VStack;
-use buoyant::render::EmbeddedGraphicsView;
 
-fn view() -> impl EmbeddedGraphicsView<Rgb888> {
+fn view() -> impl View<Rgb888> {
     VStack::new((
         Circle.foreground_color(Rgb888::CSS_CORAL),
         Rectangle
@@ -75,7 +76,8 @@ incrementally larger values for each class of separation.
 # use buoyant::{
 #     environment::DefaultEnvironment,
 #     layout::Layout,
-#     render::{EmbeddedGraphicsRender as _, Renderable as _},
+#     render::{Render as _, Renderable as _},
+#     render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _},
 # };
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
 # 
@@ -84,28 +86,28 @@ incrementally larger values for each class of separation.
 # 
 # fn main() {
 #     let mut window = Window::new("Example", &OutputSettings::default());
-#     let mut display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(480, 320));
+#     let display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(480, 320));
+#     let mut target = EmbeddedGraphicsRenderTarget::new(display);
 # 
-#     display.clear(BACKGROUND_COLOR).unwrap();
+#     target.clear(BACKGROUND_COLOR);
 # 
 #     let environment = DefaultEnvironment::default();
 #     let origin = buoyant::primitives::Point::zero();
 # 
 #     let view = view();
-#     let layout = view.layout(&display.size().into(), &environment);
+#     let layout = view.layout(&target.display.size().into(), &environment);
 #     let render_tree = view.render_tree(&layout, origin, &environment);
 # 
-#     render_tree.render(&mut display, &DEFAULT_COLOR, origin);
+#     render_tree.render(&mut target, &DEFAULT_COLOR, origin);
 # 
-#     window.show_static(&display);
+#     window.show_static(&target.display);
 # }
 # 
 use buoyant::layout::{HorizontalAlignment, VerticalAlignment};
 use buoyant::view::padding::Edges;
 use buoyant::view::shape::Circle;
 use buoyant::view::{HStack, Text, VStack};
-use buoyant::view::ViewExt as _;
-use buoyant::render::EmbeddedGraphicsView;
+use buoyant::view::{View, ViewExt as _};
 use embedded_graphics::{
     mono_font::ascii::{FONT_7X13, FONT_9X15, FONT_9X15_BOLD},
     pixelcolor::Rgb888,
@@ -113,12 +115,12 @@ use embedded_graphics::{
 };
 
 mod spacing {
-    pub const ELEMENT: u16 = 6;
-    pub const COMPONENT: u16 = 12;
-    pub const SECTION: u16 = 18;
+    pub const ELEMENT: u32 = 6;
+    pub const COMPONENT: u32 = 12;
+    pub const SECTION: u32 = 18;
 }
 
-fn view() -> impl EmbeddedGraphicsView<Rgb888> {
+fn view() -> impl View<Rgb888> {
     VStack::new((
         VStack::new((
             Text::new("Parents", &FONT_9X15_BOLD),
@@ -145,7 +147,7 @@ fn contact_row<'a>(
     color: Rgb888,
     name: &'a str,
     relationship: &'a str,
-) -> impl EmbeddedGraphicsView<Rgb888> + use<'a> {
+) -> impl View<Rgb888> + use<'a> {
     HStack::new((
         Circle.foreground_color(color).frame().with_width(40),
         VStack::new((

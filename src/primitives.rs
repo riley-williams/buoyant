@@ -1,4 +1,5 @@
 mod dimension;
+pub mod geometry;
 pub use dimension::*;
 mod interpolate;
 pub use interpolate::Interpolate;
@@ -7,13 +8,13 @@ use core::cmp::max;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct Size {
-    pub width: u16,
-    pub height: u16,
+    pub width: u32,
+    pub height: u32,
 }
 
 impl Size {
     #[must_use]
-    pub const fn new(width: u16, height: u16) -> Self {
+    pub const fn new(width: u32, height: u32) -> Self {
         Self { width, height }
     }
 
@@ -46,12 +47,12 @@ impl Size {
     /// Returns true if the point is non-negative and within the bounds of the size.
     #[must_use]
     pub const fn contains(&self, point: Point) -> bool {
-        point.x >= 0 && point.y >= 0 && point.x < self.width as i16 && point.y < self.height as i16
+        point.x >= 0 && point.y >= 0 && point.x < self.width as i32 && point.y < self.height as i32
     }
 
     #[inline]
     #[must_use]
-    pub const fn area(&self) -> u16 {
+    pub const fn area(&self) -> u32 {
         self.width * self.height
     }
 }
@@ -70,8 +71,8 @@ impl core::ops::Add for Size {
 impl From<embedded_graphics_core::geometry::Size> for Size {
     fn from(value: embedded_graphics_core::geometry::Size) -> Self {
         Self {
-            width: value.width as u16,
-            height: value.height as u16,
+            width: value.width,
+            height: value.height,
         }
     }
 }
@@ -79,7 +80,7 @@ impl From<embedded_graphics_core::geometry::Size> for Size {
 #[cfg(feature = "embedded-graphics")]
 impl From<Size> for embedded_graphics_core::geometry::Size {
     fn from(value: Size) -> Self {
-        Self::new(u32::from(value.width), u32::from(value.height))
+        Self::new(value.width, value.height)
     }
 }
 
@@ -94,8 +95,8 @@ impl Interpolate for Size {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct Point {
-    pub x: i16,
-    pub y: i16,
+    pub x: i32,
+    pub y: i32,
 }
 
 impl core::ops::Add for Point {
@@ -120,7 +121,7 @@ impl core::ops::Sub for Point {
 
 impl Point {
     #[must_use]
-    pub const fn new(x: i16, y: i16) -> Self {
+    pub const fn new(x: i32, y: i32) -> Self {
         Self { x, y }
     }
 
@@ -133,12 +134,8 @@ impl Point {
 impl Interpolate for Point {
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
         Self {
-            x: (((i32::from(amount) * i32::from(to.x))
-                + (i32::from(255 - amount) * i32::from(from.x)))
-                / 255) as i16,
-            y: (((i32::from(amount) * i32::from(to.y))
-                + (i32::from(255 - amount) * i32::from(from.y)))
-                / 255) as i16,
+            x: ((i32::from(amount) * to.x) + (i32::from(255 - amount) * from.x)) / 255,
+            y: ((i32::from(amount) * to.y) + (i32::from(255 - amount) * from.y)) / 255,
         }
     }
 }
@@ -146,7 +143,7 @@ impl Interpolate for Point {
 #[cfg(feature = "embedded-graphics")]
 impl From<Point> for embedded_graphics_core::geometry::Point {
     fn from(value: Point) -> Self {
-        Self::new(i32::from(value.x), i32::from(value.y))
+        Self::new(value.x, value.y)
     }
 }
 
@@ -154,8 +151,8 @@ impl From<Point> for embedded_graphics_core::geometry::Point {
 impl From<embedded_graphics_core::geometry::Point> for Point {
     fn from(value: embedded_graphics_core::geometry::Point) -> Self {
         Self {
-            x: value.x as i16,
-            y: value.y as i16,
+            x: value.x,
+            y: value.y,
         }
     }
 }

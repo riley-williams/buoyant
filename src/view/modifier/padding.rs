@@ -22,12 +22,12 @@ pub enum Edges {
 #[derive(Debug, Clone)]
 pub struct Padding<T> {
     edges: Edges,
-    padding: u16,
+    padding: u32,
     inner: T,
 }
 
 impl<T> Padding<T> {
-    pub const fn new(edges: Edges, padding: u16, inner: T) -> Self {
+    pub const fn new(edges: Edges, padding: u32, inner: T) -> Self {
         Self {
             edges,
             padding,
@@ -95,7 +95,7 @@ impl<T: Renderable> Renderable for Padding<T> {
         };
         self.inner.render_tree(
             &layout.sublayouts,
-            origin + Point::new(leading as i16, top as i16),
+            origin + Point::new(leading as i32, top as i32),
             env,
         )
     }

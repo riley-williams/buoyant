@@ -1,6 +1,5 @@
 use buoyant::primitives::Point;
-use buoyant::render::CharacterRender;
-use buoyant::render::CharacterRenderTarget;
+use buoyant::render::Render;
 use buoyant::view::ForEach;
 use buoyant::view::ViewExt as _;
 use buoyant::{

@@ -3,7 +3,8 @@ use core::time::Duration;
 use crate::{
     environment::LayoutEnvironment,
     layout::{Layout, ResolvedLayout},
-    primitives::{Point, Size},
+    primitives::Point,
+    render_target::RenderTarget,
 };
 
 mod animate;
@@ -48,13 +49,6 @@ pub trait Renderable: Layout {
     ) -> Self::Renderables;
 }
 
-/// A view that can be rendered to a ``buoyant::render::CharacterRenderTarget``
-///
-/// This trait primarily serves as a shorthand for the more verbose ``Renderable<C, Renderables:
-/// CharacterRender<C>>`` bound
-pub trait CharacterView<C>: Renderable<Renderables: CharacterRender<C>> {}
-impl<C, T: Renderable<Renderables: CharacterRender<C>>> CharacterView<C> for T {}
-
 /// A type that does not render, produces no side effects, and has no children.
 pub trait NullRender {}
 
@@ -75,54 +69,27 @@ pub trait AnimatedJoin {
     fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self;
 }
 
-#[cfg(feature = "embedded-graphics")]
-pub use embedded_graphics_rendering::{EmbeddedGraphicsRender, EmbeddedGraphicsView};
+pub trait Render<Color>: AnimatedJoin + Sized {
+    /// Render the view to the screen
+    fn render(
+        &self,
+        render_target: &mut impl RenderTarget<ColorFormat = Color>,
+        style: &Color,
+        offset: Point,
+    );
 
-#[cfg(feature = "embedded-graphics")]
-mod embedded_graphics_rendering {
-    use crate::primitives::Point;
-    use embedded_graphics::prelude::PixelColor;
-    use embedded_graphics_core::draw_target::DrawTarget;
-
-    use super::{AnimatedJoin, AnimationDomain, Renderable};
-
-    /// A view that can be rendered to an ``embedded_graphics::DrawTarget``
-    pub trait EmbeddedGraphicsRender<Color: PixelColor>: AnimatedJoin + Sized {
-        /// Render the view to the screen
-        fn render(
-            &self,
-            render_target: &mut impl DrawTarget<Color = Color>,
-            style: &Color,
-            offset: Point,
-        );
-
-        /// Render view and all subviews, animating from a source view to a target view
-        ///
-        /// The implementation of this method should match the implementation of
-        /// ``AnimatedJoin::join`` to get smooth continuous animations
-        fn render_animated(
-            render_target: &mut impl DrawTarget<Color = Color>,
-            source: &Self,
-            target: &Self,
-            style: &Color,
-            offset: Point,
-            domain: &AnimationDomain,
-        );
-    }
-
-    /// A view that can be rendered to an `embedded_graphics` target
+    /// Render view and all subviews, animating from a source view to a target view
     ///
-    /// This trait serves as a shorthand for the more verbose `Renderable<C, Renderables:
-    /// EmbeddedGraphicsRender<C>>` bound
-    pub trait EmbeddedGraphicsView<C: PixelColor>:
-        Renderable<Renderables: EmbeddedGraphicsRender<C>>
-    {
-    }
-
-    impl<C: PixelColor, T: Renderable<Renderables: EmbeddedGraphicsRender<C>>>
-        EmbeddedGraphicsView<C> for T
-    {
-    }
+    /// The implementation of this method should match the implementation of
+    /// ``AnimatedJoin::join`` to get smooth continuous animations
+    fn render_animated(
+        render_target: &mut impl RenderTarget<ColorFormat = Color>,
+        source: &Self,
+        target: &Self,
+        style: &Color,
+        offset: Point,
+        domain: &AnimationDomain,
+    );
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -153,43 +120,4 @@ impl AnimationDomain {
     pub const fn is_complete(&self) -> bool {
         self.factor == 255
     }
-}
-
-/// A draw target for rendering characters
-pub trait CharacterRenderTarget {
-    type Color;
-    fn draw_character(&mut self, point: Point, character: char, color: &Self::Color);
-    fn draw_string(&mut self, point: Point, string: &str, color: &Self::Color) {
-        string.chars().enumerate().for_each(|(i, c)| {
-            self.draw_character(point + Point::new(i as i16, 0), c, color);
-        });
-    }
-    fn draw_color(&mut self, point: Point, color: &Self::Color);
-
-    /// The bounds of the target
-    fn size(&self) -> Size;
-}
-
-/// A view that can be rendered to an `embedded_graphics` target
-pub trait CharacterRender<Color>: AnimatedJoin + Sized {
-    /// Render the view to the screen
-    fn render(
-        &self,
-        render_target: &mut impl CharacterRenderTarget<Color = Color>,
-        style: &Color,
-        offset: Point,
-    );
-
-    /// Render view and all subviews, animating from a source view to a target view
-    ///
-    /// The implementation of this method should match the implementation of
-    /// ``AnimatedJoin::join`` to get smooth continuous animations
-    fn render_animated(
-        render_target: &mut impl CharacterRenderTarget<Color = Color>,
-        source: &Self,
-        target: &Self,
-        style: &Color,
-        offset: Point,
-        domain: &AnimationDomain,
-    );
 }
