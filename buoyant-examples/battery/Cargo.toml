@@ -1,0 +1,14 @@
+[package]
+edition = "2021"
+name = "battery"
+version = "0.1.0"
+description = "A one-button battery charger interface"
+
+[dependencies]
+buoyant = { path = "../.." }
+embedded-graphics = { workspace = true }
+embedded-graphics-simulator = { workspace = true }
+heapless = { workspace = true }
+
+[lints]
+workspace = true
