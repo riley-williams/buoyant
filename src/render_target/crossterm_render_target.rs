@@ -131,11 +131,11 @@ impl RenderTarget for CrosstermRenderTarget {
     }
 
     fn push_layer(&mut self) -> Self::Layer {
-        /// FIXME: unused, but should be replaced with frame/clipping
+        // FIXME: unused, but should be replaced with frame/clipping
     }
 
     fn pop_layer(&mut self, _layer: Self::Layer) {
-        /// FIXME: unused, but should be replaced with frame/clipping
+        // FIXME: unused, but should be replaced with frame/clipping
     }
 
     fn fill<C: Into<Self::ColorFormat>>(
