@@ -126,7 +126,8 @@ impl RenderTarget for CrosstermRenderTarget {
 
     type ColorFormat = Colors;
 
-    fn reset(&mut self) {
+    fn clear(&mut self, _color: Self::ColorFormat) {
+        // FIXME: use the color provided
         self.clear();
     }
 

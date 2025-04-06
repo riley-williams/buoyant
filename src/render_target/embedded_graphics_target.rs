@@ -1,3 +1,5 @@
+use core::marker::PhantomData;
+
 use crate::{
     primitives::{
         geometry::{Circle, Line, PathEl, Rectangle, RoundedRectangle},
@@ -25,8 +27,8 @@ where
     D: DrawTarget<Color = C>,
     C: PixelColor,
 {
-    pub target: D,
-    clear_color: C,
+    pub display: D,
+    color: PhantomData<C>,
     frame: Rectangle,
 }
 
@@ -36,11 +38,11 @@ where
     C: PixelColor,
 {
     #[must_use]
-    pub fn new(target: D, clear_color: C) -> Self {
+    pub fn new(target: D) -> Self {
         let frame = target.bounding_box().into();
         Self {
-            target,
-            clear_color,
+            display: target,
+            color: PhantomData,
             frame,
         }
     }
@@ -55,9 +57,9 @@ where
     type Layer = Rectangle;
     type ColorFormat = C;
 
-    fn reset(&mut self) {
+    fn clear(&mut self, color: Self::ColorFormat) {
         // FIXME: Reset clip area?
-        let _ = self.target.clear(self.clear_color);
+        let _ = self.display.clear(color);
     }
 
     fn push_layer(&mut self) -> Self::Layer {
@@ -151,7 +153,7 @@ where
                 let x_max: i32 = render_offset.x + i32::from(mask.width);
                 let mut x = render_offset.x;
                 let mut y = render_offset.y;
-                _ = self.target.draw_iter(mask.iter.filter_map(|p| {
+                _ = self.display.draw_iter(mask.iter.filter_map(|p| {
                     let pixel = if p {
                         Some(Pixel(EgPoint::new(x, y), color))
                     } else {
@@ -193,14 +195,14 @@ where
         let end = EgPoint::new(line.end.x + offset.x, line.end.y + offset.y);
 
         let eg_line = EgLine::new(start, end).into_styled(*style);
-        let _ = eg_line.draw(&mut self.target);
+        let _ = eg_line.draw(&mut self.display);
     }
 
     fn draw_rectangle(&mut self, rect: &Rectangle, offset: Point, style: &PrimitiveStyle<C>) {
         let top_left = EgPoint::new(rect.origin.x + offset.x, rect.origin.y + offset.y);
 
         let eg_rect = EgRectangle::new(top_left, rect.size.into()).into_styled(*style);
-        let _ = eg_rect.draw(&mut self.target);
+        let _ = eg_rect.draw(&mut self.display);
     }
 
     fn draw_rounded_rectangle(
@@ -218,14 +220,14 @@ where
             embedded_graphics::primitives::CornerRadii::new((corner_radius, corner_radius).into()),
         )
         .into_styled(*style);
-        let _ = eg_rounded_rect.draw(&mut self.target);
+        let _ = eg_rounded_rect.draw(&mut self.display);
     }
 
     fn draw_circle(&mut self, circle: &Circle, offset: Point, style: &PrimitiveStyle<C>) {
         let top_left = EgPoint::new(circle.origin.x + offset.x, circle.origin.y + offset.y);
 
         let eg_circle = EgCircle::new(top_left, circle.diameter).into_styled(*style);
-        let _ = eg_circle.draw(&mut self.target);
+        let _ = eg_circle.draw(&mut self.display);
     }
 
     fn draw_path_shape(&mut self, shape: &impl Shape, offset: Point, style: &PrimitiveStyle<C>) {
@@ -245,7 +247,7 @@ where
                         let end_eg = EgPoint::new(end.x, end.y);
 
                         let eg_line = EgLine::new(start_eg, end_eg).into_styled(*style);
-                        let _ = eg_line.draw(&mut self.target);
+                        let _ = eg_line.draw(&mut self.display);
 
                         last_point = Some(end);
                     }
@@ -259,7 +261,7 @@ where
                         let end_eg = EgPoint::new(end.x, end.y);
 
                         let eg_line = EgLine::new(start_eg, end_eg).into_styled(*style);
-                        let _ = eg_line.draw(&mut self.target);
+                        let _ = eg_line.draw(&mut self.display);
 
                         last_point = Some(end);
                     }
@@ -273,7 +275,7 @@ where
                         let end_eg = EgPoint::new(end.x, end.y);
 
                         let eg_line = EgLine::new(start_eg, end_eg).into_styled(*style);
-                        let _ = eg_line.draw(&mut self.target);
+                        let _ = eg_line.draw(&mut self.display);
 
                         last_point = Some(end);
                     }
@@ -285,7 +287,7 @@ where
                         let end_eg = EgPoint::new(first.x, first.y);
 
                         let eg_line = EgLine::new(start_eg, end_eg).into_styled(*style);
-                        let _ = eg_line.draw(&mut self.target);
+                        let _ = eg_line.draw(&mut self.display);
                     }
                 }
             }

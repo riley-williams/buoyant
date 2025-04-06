@@ -36,6 +36,7 @@ The `if_view!` macro allows you to write views as if you were writing a plain `i
 #     environment::DefaultEnvironment,
 #     layout::Layout,
 #     render::{Render, Renderable},
+#     render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _},
 # };
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
 #
@@ -44,20 +45,21 @@ The `if_view!` macro allows you to write views as if you were writing a plain `i
 #
 # fn main() {
 #     let mut window = Window::new("Example", &OutputSettings::default());
-#     let mut display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(480, 320));
+#     let display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(480, 320));
+#     let mut target = EmbeddedGraphicsRenderTarget::new(display);
 #
-#     display.clear(BACKGROUND_COLOR).unwrap();
+#     target.clear(BACKGROUND_COLOR);
 #
 #     let environment = DefaultEnvironment::default();
 #     let origin = buoyant::primitives::Point::zero();
 #
 #     let view = view();
-#     let layout = view.layout(&display.size().into(), &environment);
+#     let layout = view.layout(&target.display.size().into(), &environment);
 #     let render_tree = view.render_tree(&layout, origin, &environment);
 #
-#     render_tree.render(&mut display, &DEFAULT_COLOR, origin);
+#     render_tree.render(&mut target, &DEFAULT_COLOR, origin);
 #
-#     window.show_static(&display);
+#     window.show_static(&target.display);
 # }
 #
 use buoyant::if_view;
@@ -68,7 +70,7 @@ fn secret_message(message: &str, is_redacted: bool) -> impl View<Rgb888> + use<'
     if_view!((is_redacted) {
         RoundedRectangle::new(4)
             .frame()
-            .with_width(9 * message.len() as u16) // yeah yeah ignoring UTF8
+            .with_width(9 * message.len() as u32) // yeah yeah ignoring UTF8
             .with_height(15)
     } else {
         Text::new(message, &FONT_9X15)
@@ -103,6 +105,7 @@ variables in the match arms.
 #     environment::DefaultEnvironment,
 #     layout::Layout,
 #     render::{Render, Renderable},
+#     render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _},
 #     view::EmptyView,
 # };
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
@@ -112,20 +115,21 @@ variables in the match arms.
 #
 # fn main() {
 #     let mut window = Window::new("Example", &OutputSettings::default());
-#     let mut display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(480, 320));
+#     let display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(480, 320));
+#     let mut target = EmbeddedGraphicsRenderTarget::new(display);
 #
-#     display.clear(BACKGROUND_COLOR).unwrap();
+#     target.clear(BACKGROUND_COLOR);
 #
 #     let environment = DefaultEnvironment::default();
 #     let origin = buoyant::primitives::Point::zero();
 #
 #     let view = view();
-#     let layout = view.layout(&display.size().into(), &environment);
+#     let layout = view.layout(&target.display.size().into(), &environment);
 #     let render_tree = view.render_tree(&layout, origin, &environment);
 #
-#     render_tree.render(&mut display, &DEFAULT_COLOR, origin);
+#     render_tree.render(&mut target, &DEFAULT_COLOR, origin);
 #
-#     window.show_static(&display);
+#     window.show_static(&target.display);
 # }
 #
 use buoyant::match_view;

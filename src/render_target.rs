@@ -18,12 +18,13 @@ use crate::{
     font::{self, FontMetrics as _, GlyphIndex},
     primitives::{geometry::Shape, Point},
 };
+
 pub trait RenderTarget {
     type Layer;
     type ColorFormat;
 
     /// clears the target
-    fn reset(&mut self);
+    fn clear(&mut self, color: Self::ColorFormat);
 
     fn push_layer(&mut self) -> Self::Layer;
 

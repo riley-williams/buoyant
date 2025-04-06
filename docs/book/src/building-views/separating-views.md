@@ -14,6 +14,7 @@ Here, `Spacer` is used to push the two `Circle`s to either side.
 #     environment::DefaultEnvironment,
 #     layout::Layout,
 #     render::{Render as _, Renderable as _},
+#     render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _},
 # };
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::*};
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
@@ -23,20 +24,21 @@ Here, `Spacer` is used to push the two `Circle`s to either side.
 # 
 # fn main() {
 #     let mut window = Window::new("Example", &OutputSettings::default());
-#     let mut display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(480, 320));
+#     let display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(480, 320));
+#     let mut target = EmbeddedGraphicsRenderTarget::new(display);
 # 
-#     display.clear(BACKGROUND_COLOR).unwrap();
+#     target.clear(BACKGROUND_COLOR);
 # 
 #     let environment = DefaultEnvironment::default();
 #     let origin = buoyant::primitives::Point::zero();
 # 
 #     let view = view();
-#     let layout = view.layout(&display.size().into(), &environment);
+#     let layout = view.layout(&target.display.size().into(), &environment);
 #     let render_tree = view.render_tree(&layout, origin, &environment);
 # 
-#     render_tree.render(&mut display, &DEFAULT_COLOR, origin);
+#     render_tree.render(&mut target, &DEFAULT_COLOR, origin);
 # 
-#     window.show_static(&display);
+#     window.show_static(&target.display);
 # }
 # 
 use buoyant::layout::HorizontalAlignment;

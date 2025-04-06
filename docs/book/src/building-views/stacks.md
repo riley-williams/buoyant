@@ -15,6 +15,7 @@ Both stacks can contain a heterogeneous set of views and can be nested inside ot
 #     environment::DefaultEnvironment,
 #     layout::Layout as _,
 #     render::{Render as _, Renderable as _},
+#     render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _},
 # };
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::*};
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
@@ -24,20 +25,21 @@ Both stacks can contain a heterogeneous set of views and can be nested inside ot
 # 
 # fn main() {
 #     let mut window = Window::new("Example", &OutputSettings::default());
-#     let mut display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(480, 320));
+#     let display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(480, 320));
+#     let mut target = EmbeddedGraphicsRenderTarget::new(display);
 # 
-#     display.clear(BACKGROUND_COLOR).unwrap();
+#     target.clear(BACKGROUND_COLOR);
 # 
 #     let environment = DefaultEnvironment::default();
 #     let origin = buoyant::primitives::Point::zero();
 # 
 #     let view = view();
-#     let layout = view.layout(&display.size().into(), &environment);
+#     let layout = view.layout(&target.display.size().into(), &environment);
 #     let render_tree = view.render_tree(&layout, origin, &environment);
 # 
-#     render_tree.render(&mut display, &DEFAULT_COLOR, origin);
+#     render_tree.render(&mut target, &DEFAULT_COLOR, origin);
 # 
-#     window.show_static(&display);
+#     window.show_static(&target.display);
 # }
 # 
 use buoyant::view::shape::{Circle, Rectangle};
@@ -73,6 +75,7 @@ it can contain a heterogeneous set of views.
 #     environment::DefaultEnvironment,
 #     layout::Layout as _,
 #     render::{Render as _, Renderable as _},
+#     render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _},
 # };
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::*};
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
@@ -82,27 +85,27 @@ it can contain a heterogeneous set of views.
 # 
 # fn main() {
 #     let mut window = Window::new("Example", &OutputSettings::default());
-#     let mut display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(480, 320));
+#     let display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(480, 320));
+#     let mut target = EmbeddedGraphicsRenderTarget::new(display);
 # 
-#     display.clear(BACKGROUND_COLOR).unwrap();
+#     target.clear(BACKGROUND_COLOR);
 # 
 #     let environment = DefaultEnvironment::default();
 #     let origin = buoyant::primitives::Point::zero();
 # 
 #     let view = view();
-#     let layout = view.layout(&display.size().into(), &environment);
+#     let layout = view.layout(&target.display.size().into(), &environment);
 #     let render_tree = view.render_tree(&layout, origin, &environment);
 # 
-#     render_tree.render(&mut display, &DEFAULT_COLOR, origin);
+#     render_tree.render(&mut target, &DEFAULT_COLOR, origin);
 # 
-#     window.show_static(&display);
+#     window.show_static(&target.display);
 # }
 # 
 use buoyant::view::padding::Edges;
 use buoyant::view::shape::{Circle, Rectangle};
 use buoyant::view::{View, ViewExt as _};
 use buoyant::view::ZStack;
-use buoyant::render::EmbeddedGraphicsView;
 
 fn view() -> impl View<Rgb888> {
     ZStack::new((
@@ -133,6 +136,7 @@ Stacks can be nested to create complex layouts.
 #     environment::DefaultEnvironment,
 #     layout::Layout as _,
 #     render::{Render as _, Renderable as _},
+#     render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _},
 # };
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::*};
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
@@ -142,20 +146,21 @@ Stacks can be nested to create complex layouts.
 # 
 # fn main() {
 #     let mut window = Window::new("Example", &OutputSettings::default());
-#     let mut display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(480, 320));
+#     let display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(480, 320));
+#     let mut target = EmbeddedGraphicsRenderTarget::new(display);
 # 
-#     display.clear(BACKGROUND_COLOR).unwrap();
+#     target.clear(BACKGROUND_COLOR);
 # 
 #     let environment = DefaultEnvironment::default();
 #     let origin = buoyant::primitives::Point::zero();
 # 
 #     let view = view();
-#     let layout = view.layout(&display.size().into(), &environment);
+#     let layout = view.layout(&target.display.size().into(), &environment);
 #     let render_tree = view.render_tree(&layout, origin, &environment);
 # 
-#     render_tree.render(&mut display, &DEFAULT_COLOR, origin);
+#     render_tree.render(&mut target, &DEFAULT_COLOR, origin);
 # 
-#     window.show_static(&display);
+#     window.show_static(&target.display);
 # }
 # 
 use buoyant::view::padding::Edges;

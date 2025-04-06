@@ -17,11 +17,13 @@ To animate between two render trees, you can use the `render_animated()` method:
 #         AnimatedJoin, AnimationDomain, Render,
 #         Renderable as _,
 #     },
+#     render_target::EmbeddedGraphicsRenderTarget,
 #     view::{EmptyView, View},
 # };
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::RgbColor};
 # 
-# let mut render_target = embedded_graphics::mock_display::MockDisplay::new();
+# let display = embedded_graphics::mock_display::MockDisplay::new();
+# let mut target = EmbeddedGraphicsRenderTarget::new(display);
 # let app_time = Duration::from_secs(0);
 # 
 # let environment = DefaultEnvironment::new(app_time);
@@ -35,7 +37,7 @@ let source_render_tree = source_view.render_tree(&source_layout, Point::zero(), 
 let target_render_tree = target_view.render_tree(&target_layout, Point::zero(), &environment);
 
 Render::render_animated(
-    &mut render_target,
+    &mut target,
     &source_render_tree,
     &target_render_tree,
     &Rgb888::BLACK,
@@ -71,11 +73,13 @@ is the same as rendering the two trees with `render_animated()`.
 #         AnimatedJoin, AnimationDomain, Render,
 #         Renderable as _,
 #     },
+#     render_target::EmbeddedGraphicsRenderTarget,
 #     view::{EmptyView, View},
 # };
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::RgbColor};
 # 
-# let mut render_target = embedded_graphics::mock_display::MockDisplay::new();
+# let display = embedded_graphics::mock_display::MockDisplay::new();
+# let mut target = EmbeddedGraphicsRenderTarget::new(display);
 # let app_time = Duration::from_secs(0);
 # 
 # let environment = DefaultEnvironment::new(app_time);
@@ -97,7 +101,7 @@ let joined_tree = AnimatedJoin::join(
 
 // Calling render on the joined tree produces the same result as
 // the render_animated call above
-joined_tree.render(&mut render_target, &Rgb888::BLACK, Point::zero());
+joined_tree.render(&mut target, &Rgb888::BLACK, Point::zero());
 # 
 # fn view() -> impl View<Rgb888> {
 #     EmptyView
@@ -114,7 +118,7 @@ for managing the view and render tree lifecycle in response to state changes.
 
 Here's a rough outline of what a that might look like:
 
-```rust
+```rust,ignore
 /// Produce a render tree for a given state, time, and size
 fn make_tree(state: &State, time: Duration, size: &Size) -> impl Render<Rgb888> {
     let view = /* ... */;

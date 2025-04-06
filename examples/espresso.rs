@@ -70,7 +70,7 @@ mod color {
 fn main() {
     let size = Size::new(480, 320);
     let display: SimulatorDisplay<color::Space> = SimulatorDisplay::new(size);
-    let mut target = EmbeddedGraphicsRenderTarget::new(display, color::BACKGROUND);
+    let mut target = EmbeddedGraphicsRenderTarget::new(display);
     let mut window = Window::new("Coffeeeee", &OutputSettings::default());
     let app_start = Instant::now();
 
@@ -90,7 +90,7 @@ fn main() {
             target_tree = app.tree(size, app_start.elapsed());
         }
 
-        target.target.clear(color::BACKGROUND).unwrap();
+        target.display.clear(color::BACKGROUND).unwrap();
 
         // Render frame
         Render::render_animated(
@@ -103,7 +103,7 @@ fn main() {
         );
 
         // Flush to window
-        window.update(&target.target);
+        window.update(&target.display);
 
         for event in window.events() {
             match event {
