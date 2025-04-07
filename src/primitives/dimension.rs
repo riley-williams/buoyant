@@ -10,6 +10,32 @@ pub struct ProposedDimensions {
 
 impl ProposedDimensions {
     #[must_use]
+    pub fn new(width: impl Into<ProposedDimension>, height: impl Into<ProposedDimension>) -> Self {
+        Self {
+            width: width.into(),
+            height: height.into(),
+        }
+    }
+
+    /// A proposal with compact width and height
+    #[must_use]
+    pub const fn compact() -> Self {
+        Self {
+            width: ProposedDimension::Compact,
+            height: ProposedDimension::Compact,
+        }
+    }
+
+    /// A proposal with infinite width and height
+    #[must_use]
+    pub const fn infinite() -> Self {
+        Self {
+            width: ProposedDimension::Infinite,
+            height: ProposedDimension::Infinite,
+        }
+    }
+
+    #[must_use]
     pub fn resolve_most_flexible(self, minimum: u32, ideal: u32) -> Dimensions {
         Dimensions {
             width: self.width.resolve_most_flexible(minimum, ideal),
@@ -339,6 +365,14 @@ impl Dimensions {
         Self {
             width: Dimension(0),
             height: Dimension(0),
+        }
+    }
+
+    #[must_use]
+    pub const fn infinite() -> Self {
+        Self {
+            width: Dimension::infinite(),
+            height: Dimension::infinite(),
         }
     }
 

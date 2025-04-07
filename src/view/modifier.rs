@@ -1,4 +1,5 @@
 mod animated;
+pub mod aspect_ratio;
 mod background;
 mod fixed_frame;
 mod fixed_size;
@@ -10,6 +11,7 @@ pub mod padding;
 mod priority;
 
 pub(crate) use animated::Animated;
+pub(crate) use aspect_ratio::AspectRatio;
 pub(crate) use background::BackgroundView;
 pub(crate) use fixed_frame::FixedFrame;
 pub(crate) use fixed_size::FixedSize;
