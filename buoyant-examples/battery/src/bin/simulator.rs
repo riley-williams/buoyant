@@ -5,8 +5,8 @@
 //!
 //! The 1, 2, and 3 keys can be used to cycle between charge/discharge states on each port.
 //!
-//! This example is not intended to be a recommendation on Buoyant app architecture.
-//!
+//! This example is not intended to be a recommendation on Buoyant app architecture. I hacked it
+//! together in an afternoon.
 
 use std::time::Instant;
 

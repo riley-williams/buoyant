@@ -10,5 +10,12 @@ embedded-graphics = { workspace = true }
 embedded-graphics-simulator = { workspace = true }
 heapless = { workspace = true }
 
+# Change the library color format by building with
+# `--features rgb565 --no-default-features`
+[features]
+default = ["rgb888"]
+rgb888 = []
+rgb565 = []
+
 [lints]
 workspace = true
