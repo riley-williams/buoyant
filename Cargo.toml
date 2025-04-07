@@ -38,6 +38,10 @@ debug = true
 [lints]
 workspace = true
 
+[[example]]
+name = "crossterm"
+required-features = ["crossterm"]
+
 [workspace]
 members = ["buoyant-examples/battery"]
 
