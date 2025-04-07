@@ -20,16 +20,10 @@ use crate::{
 };
 
 pub trait RenderTarget {
-    type Layer;
     type ColorFormat;
 
-    /// clears the target
+    /// Clears the target using the provided color
     fn clear(&mut self, color: Self::ColorFormat);
-
-    fn push_layer(&mut self) -> Self::Layer;
-
-    /// Pops the current layer.
-    fn pop_layer(&mut self, layer: Self::Layer);
 
     /// Fills a shape using the specified style and brush.
     fn fill<C: Into<Self::ColorFormat>>(

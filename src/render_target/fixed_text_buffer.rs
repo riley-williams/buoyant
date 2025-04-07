@@ -50,18 +50,9 @@ impl<const W: usize, const H: usize> Default for FixedTextBuffer<W, H> {
 
 impl<const W: usize, const H: usize> RenderTarget for FixedTextBuffer<W, H> {
     type ColorFormat = char;
-    type Layer = ();
 
     fn clear(&mut self, _color: Self::ColorFormat) {
         self.clear();
-    }
-
-    fn push_layer(&mut self) -> Self::Layer {
-        todo!()
-    }
-
-    fn pop_layer(&mut self, _layer: Self::Layer) {
-        todo!()
     }
 
     fn fill<C: Into<Self::ColorFormat>>(

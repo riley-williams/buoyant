@@ -330,5 +330,5 @@ where
 {
     let env = DefaultEnvironment::default();
     let layout = view.layout(&size.into(), &env);
-    view.render_tree(&layout, Point::default(), &env)
+    view.render_tree(&layout, Point::zero(), &env)
 }

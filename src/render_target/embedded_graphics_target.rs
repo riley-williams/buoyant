@@ -29,7 +29,6 @@ where
 {
     pub display: D,
     color: PhantomData<C>,
-    frame: Rectangle,
 }
 
 impl<D, C> EmbeddedGraphicsRenderTarget<D, C>
@@ -39,11 +38,9 @@ where
 {
     #[must_use]
     pub fn new(target: D) -> Self {
-        let frame = target.bounding_box().into();
         Self {
             display: target,
             color: PhantomData,
-            frame,
         }
     }
 }
@@ -53,23 +50,10 @@ where
     D: DrawTarget<Color = C>,
     C: PixelColor,
 {
-    // Layer is just a Rectangle that defines the clip area
-    type Layer = Rectangle;
     type ColorFormat = C;
 
     fn clear(&mut self, color: Self::ColorFormat) {
-        // FIXME: Reset clip area?
         let _ = self.display.clear(color);
-    }
-
-    fn push_layer(&mut self) -> Self::Layer {
-        // Return a layer that represents the entire drawing area
-        // This could be extended to actually implement clipping in the future
-        self.frame.clone()
-    }
-
-    fn pop_layer(&mut self, layer: Self::Layer) {
-        self.frame = layer;
     }
 
     fn fill<T: Into<Self::ColorFormat>>(
@@ -85,8 +69,6 @@ where
         };
 
         let style = PrimitiveStyleBuilder::new().fill_color(color).build();
-
-        // FIXME: Does frame offset replace the need for passing offset everywhere?
 
         // Handle different shape types
         if let Some(line) = shape.as_line() {
@@ -111,7 +93,8 @@ where
         _brush_offset: Option<Point>,
         shape: &impl Shape,
     ) {
-        // Convert the brush to the embedded_graphics color
+        // Convert the brush to the embedded_graphics color.
+        // Only solid strokes are implemented
         let Some(color) = brush.as_solid().map(Into::into) else {
             return;
         };
@@ -120,8 +103,6 @@ where
             .stroke_width(stroke.width)
             .stroke_color(color)
             .build();
-
-        // FIXME: Does layer offset replace the need for passing offset everywhere?
 
         if let Some(line) = shape.as_line() {
             self.draw_line(&line, transform_offset, &style);
@@ -132,7 +113,6 @@ where
         } else if let Some(rounded_rect) = shape.as_rounded_rect() {
             self.draw_rounded_rectangle(&rounded_rect, transform_offset, &style);
         } else {
-            // For generic shapes, convert the path elements to lines
             self.draw_path_shape(shape, transform_offset, &style);
         }
     }
@@ -167,7 +147,7 @@ where
                     pixel
                 }));
             } else {
-                //FIXME: This only draws rectangles...support for these fonts is pending...
+                //FIXME: This only draws rectangles...support for other fonts is pending...
                 let width = font.character_width('x');
                 let height = font.line_height();
                 let style = PrimitiveStyleBuilder::new()
