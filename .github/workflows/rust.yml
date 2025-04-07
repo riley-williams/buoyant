@@ -18,9 +18,9 @@ jobs:
       - name: Install SDL2
         run: sudo apt-get update && sudo apt-get install libsdl2-dev
       - name: Build
-        run: cargo build --verbose
+        run: cargo build --verbose --all --all-features
       - name: Run tests
-        run: cargo test --verbose --all-features
+        run: cargo test --verbose --all --all-features
   check-features:
     runs-on: ubuntu-latest
 
@@ -32,8 +32,8 @@ jobs:
         run: cargo check --no-default-features --features "crossterm"
       - name: Check Embedded Graphics
         run: cargo check --no-default-features --features "embedded-graphics"
-      - name: Check all features
-        run: cargo check --all-features
+      - name: Check all features and examples
+        run: cargo check --all --all-features
 
   clippy:
     runs-on: ubuntu-latest
@@ -41,7 +41,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Clippy
-        run: cargo clippy --all-features -- -D warnings
+        run: cargo clippy --all --all-features -- -D warnings
 
   lint-markdown:
     runs-on: ubuntu-latest

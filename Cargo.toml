@@ -35,10 +35,27 @@ embedded-graphics-simulator = { version = "0.7.0", default-features = false, fea
 [profile.release]
 debug = true
 
-[lints.rust]
+[lints]
+workspace = true
+
+[[example]]
+name = "crossterm"
+required-features = ["crossterm"]
+
+[workspace]
+members = ["buoyant-examples/battery"]
+
+[workspace.dependencies]
+embedded-graphics = "0.8.1"
+embedded-graphics-simulator = { version = "0.7.0", default-features = false, features = [
+  "with-sdl",
+] }
+heapless = "0.8.0"
+
+[workspace.lints.rust]
 unsafe_code = "forbid"
 
-[lints.clippy]
+[workspace.lints.clippy]
 pedantic = { level = "deny", priority = -1 }
 
 useless_let_if_seq = "warn"
