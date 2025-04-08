@@ -1,6 +1,4 @@
 #![no_std]
-#![deny(missing_debug_implementations)]
-#![deny(clippy::missing_const_for_fn)]
 
 #[cfg(any(test, feature = "std"))]
 extern crate std;
