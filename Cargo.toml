@@ -54,10 +54,13 @@ heapless = "0.8.0"
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
+missing_debug_implementations = "deny"
 
 [workspace.lints.clippy]
 pedantic = { level = "deny", priority = -1 }
 
+absolute_paths = "allow"
+missing_const_for_fn = "allow"
 useless_let_if_seq = "warn"
 missing_panics_doc = "warn"
 too_long_first_doc_paragraph = "warn"
@@ -67,11 +70,9 @@ derive_partial_eq_without_eq = "deny"
 type_repetition_in_bounds = "deny"
 option_if_let_else = "deny"
 
-# TODO: Disabled for now, desired fix
+# Disabled for now, may be worth turning on in the future
 cast_possible_wrap = "allow"
 cast_possible_truncation = "allow"
-exhaustive_structs = "allow"                # warn in 0.5.0
-exhaustive_enums = "allow"                  # warn in 0.5.0
 field_scoped_visibility_modifiers = "allow"
 shadow_unrelated = "allow"
 ref_patterns = "allow"
@@ -81,7 +82,6 @@ renamed_function_params = "allow"
 float_arithmetic = "allow"
 indexing_slicing = "allow"
 as_conversions = "allow"
-absolute_paths = "allow"                    # might not make sense...
 
 [package.metadata.typos]
 default.extend-ignore-re = [

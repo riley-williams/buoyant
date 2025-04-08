@@ -6,6 +6,7 @@ use buoyant::{
     render_target::FixedTextBuffer,
 };
 
+#[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub struct TestEnv {
     pub direction: LayoutDirection,
