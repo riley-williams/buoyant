@@ -122,21 +122,11 @@ impl Drop for CrosstermRenderTarget {
 }
 
 impl RenderTarget for CrosstermRenderTarget {
-    type Layer = ();
-
     type ColorFormat = Colors;
 
     fn clear(&mut self, _color: Self::ColorFormat) {
         // FIXME: use the color provided
         self.clear();
-    }
-
-    fn push_layer(&mut self) -> Self::Layer {
-        // FIXME: unused, but should be replaced with frame/clipping
-    }
-
-    fn pop_layer(&mut self, _layer: Self::Layer) {
-        // FIXME: unused, but should be replaced with frame/clipping
     }
 
     fn fill<C: Into<Self::ColorFormat>>(

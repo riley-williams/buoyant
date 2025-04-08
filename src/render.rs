@@ -49,21 +49,6 @@ pub trait Renderable: Layout {
     ) -> Self::Renderables;
 }
 
-/// A type that does not render, produces no side effects, and has no children.
-pub trait NullRender {}
-
-impl<T: NullRender + Layout> Renderable for T {
-    type Renderables = ();
-
-    fn render_tree(
-        &self,
-        _layout: &ResolvedLayout<Self::Sublayout>,
-        _origin: Point,
-        _env: &impl LayoutEnvironment,
-    ) {
-    }
-}
-
 pub trait AnimatedJoin {
     /// Produces a new tree by consuming and interpolating between two partially animated trees
     fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self;
