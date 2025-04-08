@@ -7,17 +7,19 @@ use buoyant::{
     view::{
         padding::Edges,
         shape::{Capsule, Circle, Rectangle, RoundedRectangle},
-        HStack, Text, VStack, View, ViewExt,
+        HStack, Image, Text, VStack, View, ViewExt,
     },
 };
 use embedded_graphics::{
     geometry::{OriginDimensions, Point as EgPoint, Size as EgSize},
+    image::Image as EgImage,
     mono_font::{ascii::FONT_7X13, MonoTextStyle},
     prelude::{Drawable, Primitive, RgbColor, WebColors},
     primitives::{PrimitiveStyleBuilder, Rectangle as EgRectangle},
     text::Text as EgText,
 };
 use embedded_graphics::{mock_display::MockDisplay, pixelcolor::Rgb888};
+use tinytga::Tga;
 
 const MOCK_SIZE: u32 = 64;
 
@@ -91,6 +93,26 @@ fn embedded_graphics_mono_font() {
     let mut display_2 = MockDisplay::new();
     let style = MonoTextStyle::new(&FONT_7X13, Rgb888::CSS_OLD_LACE);
     EgText::new("Test.\n12 3", EgPoint::new(0, 10), style)
+        .draw(&mut display_2)
+        .unwrap();
+    display.assert_eq(&display_2);
+}
+
+#[test]
+fn embedded_graphics_image() {
+    // Include an image from a local path as bytes
+    let data = include_bytes!("./assets/rhombic-dodecahedron.tga");
+
+    // Create a TGA instance from a byte slice.
+    // The color type is set by defining the type of the `img` variable.
+    let img: Tga<Rgb888> = Tga::from_slice(data).unwrap();
+
+    let view = Image::new(&img);
+
+    let display = render_to_mock(&view);
+
+    let mut display_2 = MockDisplay::new();
+    EgImage::new(&img, EgPoint::zero())
         .draw(&mut display_2)
         .unwrap();
     display.assert_eq(&display_2);

@@ -17,13 +17,18 @@ maintenance = { status = "experimental" }
 [features]
 default = ["embedded-graphics"]
 std = []
-embedded-graphics = ["dep:embedded-graphics", "dep:embedded-graphics-core"]
+embedded-graphics = [
+  "dep:embedded-graphics",
+  "dep:embedded-graphics-core",
+  "dep:tinytga",
+]
 crossterm = ["dep:crossterm", "std"]
 
 [dependencies]
 crossterm = { version = "^0.28", optional = true }
 embedded-graphics-core = { version = "^0.4", optional = true }
 embedded-graphics = { version = "^0.8", optional = true }
+tinytga = { version = "^0.5", optional = true }
 heapless = "^0.8"
 paste = "1.0.15"
 

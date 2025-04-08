@@ -99,6 +99,16 @@ impl From<embedded_graphics_core::primitives::Rectangle> for Rectangle {
     }
 }
 
+#[cfg(feature = "embedded-graphics")]
+impl From<Rectangle> for embedded_graphics_core::primitives::Rectangle {
+    fn from(value: Rectangle) -> Self {
+        Self {
+            top_left: value.origin.into(),
+            size: value.size.into(),
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct RoundedRectangle {
     pub origin: Point,

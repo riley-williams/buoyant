@@ -19,7 +19,7 @@ use embedded_graphics::{
     Drawable, Pixel,
 };
 
-use super::{Glyph, Stroke};
+use super::{Glyph, ImageBrush, Stroke};
 
 #[derive(Debug)]
 pub struct EmbeddedGraphicsRenderTarget<D, C>
@@ -64,24 +64,31 @@ where
         shape: &impl Shape,
     ) {
         // Convert the brush to the embedded_graphics color
-        let Some(color) = brush.as_solid().map(Into::into) else {
-            return;
-        };
+        if let Some(color) = brush.as_solid().map(Into::into) {
+            let style = PrimitiveStyleBuilder::new().fill_color(color).build();
 
-        let style = PrimitiveStyleBuilder::new().fill_color(color).build();
-
-        // Handle different shape types
-        if let Some(line) = shape.as_line() {
-            self.draw_line(&line, transform_offset, &style);
-        } else if let Some(rect) = shape.as_rect() {
-            self.draw_rectangle(&rect, transform_offset, &style);
-        } else if let Some(circle) = shape.as_circle() {
-            self.draw_circle(&circle, transform_offset, &style);
-        } else if let Some(rounded_rect) = shape.as_rounded_rect() {
-            self.draw_rounded_rectangle(&rounded_rect, transform_offset, &style);
+            // Handle different shape types
+            if let Some(line) = shape.as_line() {
+                self.draw_line(&line, transform_offset, &style);
+            } else if let Some(rect) = shape.as_rect() {
+                self.draw_rectangle(&rect, transform_offset, &style);
+            } else if let Some(circle) = shape.as_circle() {
+                self.draw_circle(&circle, transform_offset, &style);
+            } else if let Some(rounded_rect) = shape.as_rounded_rect() {
+                self.draw_rounded_rectangle(&rounded_rect, transform_offset, &style);
+            } else {
+                // For generic shapes, convert the path elements to lines
+                self.draw_path_shape(shape, transform_offset, &style);
+            }
+        } else if let Some(image) = brush.as_image() {
+            // only support rectangles for now
+            let Some(rect) = shape.as_rect() else { return };
+            // FIXME: Apply brush transform and clip to shape bounds
+            _ = self
+                .display
+                .fill_contiguous(&rect.into(), image.pixel_iter().map(Into::into));
         } else {
-            // For generic shapes, convert the path elements to lines
-            self.draw_path_shape(shape, transform_offset, &style);
+            // no support for custom brushes yet
         }
     }
 

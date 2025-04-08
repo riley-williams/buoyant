@@ -16,7 +16,7 @@ pub use fixed_text_buffer::FixedTextBuffer;
 
 use crate::{
     font::{self, FontMetrics as _, GlyphIndex},
-    primitives::{geometry::Shape, Point},
+    primitives::{geometry::Shape, Point, Size},
 };
 
 pub trait RenderTarget {
@@ -107,17 +107,13 @@ pub struct Glyph {
     pub y: i32,
 }
 
-pub trait Image {
-    type ColorFormat;
+pub trait ImageBrush: Brush {
     /// Blob containing the image data.
     fn data(&self) -> &[u8];
-    /// Width of the image.
-    fn width(&self) -> u32;
-    /// Height of the image.
-    fn height(&self) -> u32;
+    /// Dimensions of the image.
+    fn size(&self) -> Size;
     /// Iterator over the pixels of the image.
     fn pixel_iter(&self) -> impl Iterator<Item = Self::ColorFormat>;
-    fn color_at(&self, point: Point) -> Option<Self::ColorFormat>;
 }
 
 /// Describes the color content of a filled or stroked shape.
@@ -130,7 +126,7 @@ pub trait Brush {
     fn as_solid(&self) -> Option<Self::ColorFormat>;
 
     /// Image brush.
-    fn as_image(&self) -> Option<&impl Image<ColorFormat = Self::ColorFormat>>;
+    fn as_image(&self) -> Option<&impl ImageBrush<ColorFormat = Self::ColorFormat>>;
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -156,7 +152,7 @@ impl<C: Copy> Brush for SolidBrush<C> {
         Some(self.color)
     }
 
-    fn as_image(&self) -> Option<&impl Image<ColorFormat = Self::ColorFormat>> {
+    fn as_image(&self) -> Option<&impl ImageBrush<ColorFormat = Self::ColorFormat>> {
         Option::<&EmptyImage<Self::ColorFormat>>::None
     }
 }
@@ -166,55 +162,33 @@ struct EmptyImage<C> {
     _marker: PhantomData<C>,
 }
 
-impl<C> Image for EmptyImage<C> {
+impl<C> Brush for EmptyImage<C> {
     type ColorFormat = C;
 
-    fn data(&self) -> &[u8] {
-        &[]
-    }
-
-    fn width(&self) -> u32 {
-        0
-    }
-
-    fn height(&self) -> u32 {
-        0
-    }
-
-    fn pixel_iter(&self) -> impl Iterator<Item = Self::ColorFormat> {
-        core::iter::empty()
-    }
-
-    fn color_at(&self, _: Point) -> Option<Self::ColorFormat> {
+    fn color_at(&self, _point: Point) -> Option<Self::ColorFormat> {
         None
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct ImageBrush<'a, I: Image> {
-    image: &'a I,
-}
-
-impl<'a, I: Image> ImageBrush<'a, I> {
-    #[must_use]
-    pub const fn new(image: &'a I) -> Self {
-        Self { image }
-    }
-}
-
-impl<I: Image> Brush for ImageBrush<'_, I> {
-    type ColorFormat = I::ColorFormat;
-
-    fn color_at(&self, point: Point) -> Option<Self::ColorFormat> {
-        self.image.color_at(point)
     }
 
     fn as_solid(&self) -> Option<Self::ColorFormat> {
         None
     }
 
-    fn as_image(&self) -> Option<&impl Image<ColorFormat = Self::ColorFormat>> {
-        Some(self.image)
+    fn as_image(&self) -> Option<&impl ImageBrush<ColorFormat = Self::ColorFormat>> {
+        Some(self)
+    }
+}
+
+impl<C> ImageBrush for EmptyImage<C> {
+    fn data(&self) -> &[u8] {
+        &[]
+    }
+
+    fn size(&self) -> Size {
+        Size::zero()
+    }
+
+    fn pixel_iter(&self) -> impl Iterator<Item = Self::ColorFormat> {
+        core::iter::empty()
     }
 }
 
@@ -229,5 +203,54 @@ impl Stroke {
     #[must_use]
     pub const fn new(width: u32) -> Self {
         Self { width }
+    }
+}
+
+// TODO: Move me
+// #[cfg(feature = "embedded_graphics")]
+mod image_impl {
+    use embedded_graphics::{
+        pixelcolor::{Gray8, Rgb555, Rgb888},
+        prelude::PixelColor,
+    };
+    use tinytga::Tga;
+
+    use super::{Brush, ImageBrush};
+
+    impl<C> Brush for Tga<'_, C>
+    where
+        C: PixelColor + From<Rgb888> + From<Rgb555> + From<Gray8>,
+    {
+        type ColorFormat = C;
+
+        fn color_at(&self, _point: crate::primitives::Point) -> Option<Self::ColorFormat> {
+            // FIXME: I don't see any Tga API to do this...
+            None
+        }
+
+        fn as_solid(&self) -> Option<Self::ColorFormat> {
+            None
+        }
+
+        fn as_image(&self) -> Option<&'_ impl super::ImageBrush<ColorFormat = Self::ColorFormat>> {
+            Some(self)
+        }
+    }
+
+    impl<C> ImageBrush for Tga<'_, C>
+    where
+        C: PixelColor + From<Rgb888> + From<Rgb555> + From<Gray8>,
+    {
+        fn data(&self) -> &[u8] {
+            self.as_raw().image_data()
+        }
+
+        fn size(&self) -> crate::primitives::Size {
+            self.as_raw().size().into()
+        }
+
+        fn pixel_iter(&self) -> impl Iterator<Item = Self::ColorFormat> {
+            self.pixels().map(|p| p.1)
+        }
     }
 }
