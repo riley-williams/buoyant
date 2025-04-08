@@ -8,10 +8,10 @@ use buoyant::{
     },
 };
 use core::fmt::Write;
-use embedded_graphics::mono_font::ascii::{FONT_10X20, FONT_6X13, FONT_6X9, FONT_8X13_BOLD};
 
 use crate::{
     color::{self, ColorFormat},
+    font,
     state::{BatteryStatus, ChargeEstimate, PortState},
 };
 
@@ -23,7 +23,8 @@ pub fn view(battery: &BatteryStatus) -> impl View<ColorFormat> {
         VStack::new((
             VStack::new((
                 charge_gauge(battery.state_of_charge()),
-                Text::new(format_charge_time(battery), &FONT_6X13).padding(Edges::Bottom, SPACING),
+                Text::new(format_charge_time(battery), &font::FOOTNOTE)
+                    .padding(Edges::Bottom, SPACING),
             ))
             .with_spacing(SPACING),
             port_power_view(&battery.ports),
@@ -34,7 +35,8 @@ pub fn view(battery: &BatteryStatus) -> impl View<ColorFormat> {
         HStack::new((
             VStack::new((
                 charge_gauge(battery.state_of_charge()),
-                Text::new(format_charge_time(battery), &FONT_6X13).padding(Edges::Bottom, SPACING),
+                Text::new(format_charge_time(battery), &font::FOOTNOTE)
+                    .padding(Edges::Bottom, SPACING),
             ))
             .with_spacing(SPACING),
             port_power_view(&battery.ports),
@@ -52,8 +54,8 @@ fn charge_gauge(charge: f32) -> impl View<ColorFormat> {
             .foreground_color(color::BACKGROUND)
             .padding(Edges::All, 8),
         VStack::new((
-            Text::new(formatted_charge, &FONT_10X20),
-            Text::new("%", &FONT_6X9),
+            Text::new(formatted_charge, &font::TITLE),
+            Text::new("%", &font::FOOTNOTE),
         ))
         .with_spacing(2)
         .foreground_color(color::CONTENT),
@@ -75,19 +77,19 @@ fn port_power_row(port_name: &str, power: i32) -> impl View<ColorFormat> + use<'
     // save a few thousand cycles by not being lazy with fp
     _ = write!(formatted_power, "{:.1}w", power.abs() as f32); // ignore write failure
     HStack::new((
-        Text::new(port_name, &FONT_6X13)
+        Text::new(port_name, &font::BODY)
             .foreground_color(color::CONTENT)
             .flex_frame()
             .with_min_width(6 * 2)
             .padding(Edges::Vertical, 5)
             .padding(Edges::Leading, 5),
         match power {
-            p if p > 0 => Text::new("^", &FONT_6X13),
-            p if p < 0 => Text::new("*", &FONT_6X13),
-            _ => Text::new("-", &FONT_6X13),
+            p if p > 0 => Text::new("^", &font::BODY),
+            p if p < 0 => Text::new("*", &font::BODY),
+            _ => Text::new("-", &font::BODY),
         },
         Spacer::default(),
-        Text::new(formatted_power, &FONT_8X13_BOLD)
+        Text::new(formatted_power, &font::BODY_BOLD)
             .multiline_text_alignment(HorizontalTextAlignment::Trailing)
             .foreground_color(if power == 0 {
                 color::GREY

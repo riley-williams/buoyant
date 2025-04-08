@@ -1,4 +1,4 @@
-use crate::{font::FontLayout, primitives::ProposedDimension};
+use crate::{font::FontMetrics, primitives::ProposedDimension};
 
 #[derive(Debug, Clone)]
 pub struct WhitespaceWrap<'a, F> {
@@ -8,7 +8,7 @@ pub struct WhitespaceWrap<'a, F> {
     font: &'a F,
 }
 
-impl<'a, F: FontLayout> WhitespaceWrap<'a, F> {
+impl<'a, F: FontMetrics> WhitespaceWrap<'a, F> {
     pub fn new(text: &'a str, available_width: impl Into<ProposedDimension>, font: &'a F) -> Self {
         Self {
             remaining: text,
@@ -22,8 +22,8 @@ impl<'a, F: FontLayout> WhitespaceWrap<'a, F> {
     fn find_split_pos(&self, text: &str) -> Option<usize> {
         let mut width = 0;
         for (pos, ch) in text.char_indices() {
-            width += self.font.character_width(ch);
-            if ProposedDimension::Exact(width.into()) > self.available_width {
+            width += self.font.advance(ch);
+            if ProposedDimension::Exact(width) > self.available_width {
                 return Some(if pos > 0 { pos } else { 1 });
             }
         }
@@ -31,7 +31,7 @@ impl<'a, F: FontLayout> WhitespaceWrap<'a, F> {
     }
 }
 
-impl<'a, F: FontLayout> Iterator for WhitespaceWrap<'a, F> {
+impl<'a, F: FontMetrics + 'a> Iterator for WhitespaceWrap<'a, F> {
     type Item = &'a str;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -78,14 +78,14 @@ impl<'a, F: FontLayout> Iterator for WhitespaceWrap<'a, F> {
                 return Some(line.trim_end());
             }
 
-            width += self.font.character_width(ch);
+            width += self.font.advance(ch);
 
             if ch.is_whitespace() {
                 last_space = Some(pos);
             }
 
             // Check for force split
-            if ProposedDimension::Exact(width.into()) > self.available_width {
+            if ProposedDimension::Exact(width) > self.available_width {
                 if let Some(space_pos) = last_space {
                     // Split at last space
                     let (result, rest) = self.remaining.split_at(space_pos);
@@ -105,8 +105,8 @@ impl<'a, F: FontLayout> Iterator for WhitespaceWrap<'a, F> {
             let mut end = self.remaining.len();
             let mut width = 0;
             for (pos, ch) in self.remaining.char_indices() {
-                width += self.font.character_width(ch);
-                if ProposedDimension::Exact(width.into()) > self.available_width {
+                width += self.font.advance(ch);
+                if ProposedDimension::Exact(width) > self.available_width {
                     end = pos;
                     break;
                 }
@@ -125,6 +125,9 @@ impl<'a, F: FontLayout> Iterator for WhitespaceWrap<'a, F> {
 
 #[cfg(test)]
 mod tests {
+    use crate::font::{Font, FontMetrics, FontRender};
+    use crate::primitives::Size;
+    use crate::surface::Surface;
     use crate::{font::CharacterBufferFont, primitives::ProposedDimension};
     use std::vec;
     use std::vec::Vec;
@@ -133,87 +136,99 @@ mod tests {
 
     #[test]
     fn empty_text() {
-        let wrap = super::WhitespaceWrap::new("", 10, &FONT);
+        let metrics = &FONT.metrics();
+        let wrap = super::WhitespaceWrap::new("", 10, metrics);
         assert_eq!(wrap.collect::<Vec<&str>>(), Vec::<&str>::new());
     }
 
     #[ignore = "Not sure how much I care about this behavior"]
     #[test]
     fn only_whitespace_lines_are_retained_up_to_wrapping_width() {
-        let wrap = super::WhitespaceWrap::new(" ", 5, &FONT);
+        let metrics = &FONT.metrics();
+        let wrap = super::WhitespaceWrap::new(" ", 5, metrics);
         assert_eq!(wrap.collect::<Vec<_>>(), vec![" "]);
-        let wrap = super::WhitespaceWrap::new("    ", 5, &FONT);
+        let wrap = super::WhitespaceWrap::new("    ", 5, metrics);
         assert_eq!(wrap.collect::<Vec<_>>(), vec!["    "]);
-        let wrap = super::WhitespaceWrap::new("     ", 5, &FONT);
+        let wrap = super::WhitespaceWrap::new("     ", 5, metrics);
         assert_eq!(wrap.collect::<Vec<_>>(), vec!["     "]);
-        let wrap = super::WhitespaceWrap::new("      ", 5, &FONT);
+        let wrap = super::WhitespaceWrap::new("      ", 5, metrics);
         assert_eq!(wrap.collect::<Vec<_>>(), vec!["     "]);
-        let wrap = super::WhitespaceWrap::new("       ", 5, &FONT);
+        let wrap = super::WhitespaceWrap::new("       ", 5, metrics);
         assert_eq!(wrap.collect::<Vec<_>>(), vec!["     "]);
     }
 
     #[ignore = "Not sure how much I care about this behavior"]
     #[test]
     fn only_whitespace_lines_are_retained_up_to_wrapping_width_after_newline() {
-        let wrap = super::WhitespaceWrap::new("hello\n ", 5, &FONT);
+        let metrics = &FONT.metrics();
+        let wrap = super::WhitespaceWrap::new("hello\n ", 5, metrics);
         assert_eq!(wrap.collect::<Vec<_>>(), vec!["hello", " "]);
-        let wrap = super::WhitespaceWrap::new("hello\n    ", 5, &FONT);
+        let wrap = super::WhitespaceWrap::new("hello\n    ", 5, metrics);
         assert_eq!(wrap.collect::<Vec<_>>(), vec!["hello", "    "]);
-        let wrap = super::WhitespaceWrap::new("hello\n     ", 5, &FONT);
+        let wrap = super::WhitespaceWrap::new("hello\n     ", 5, metrics);
         assert_eq!(wrap.collect::<Vec<_>>(), vec!["hello", "     "]);
-        let wrap = super::WhitespaceWrap::new("hello\n      ", 5, &FONT);
+        let wrap = super::WhitespaceWrap::new("hello\n      ", 5, metrics);
         assert_eq!(wrap.collect::<Vec<_>>(), vec!["hello", "     "]);
-        let wrap = super::WhitespaceWrap::new("hello\n       ", 5, &FONT);
+        let wrap = super::WhitespaceWrap::new("hello\n       ", 5, metrics);
         assert_eq!(wrap.collect::<Vec<_>>(), vec!["hello", "     "]);
     }
 
     #[test]
     fn single_word() {
-        let wrap = super::WhitespaceWrap::new("hello", 10, &FONT);
+        let metrics = &FONT.metrics();
+
+        let wrap = super::WhitespaceWrap::new("hello", 10, metrics);
         assert_eq!(wrap.collect::<Vec<_>>(), vec!["hello"]);
     }
 
     #[test]
     fn multiple_words_fit() {
-        let wrap = super::WhitespaceWrap::new("hello world", 11, &FONT);
+        let metrics = &FONT.metrics();
+        let wrap = super::WhitespaceWrap::new("hello world", 11, metrics);
         assert_eq!(wrap.collect::<Vec<_>>(), vec!["hello world"]);
     }
 
     #[test]
     fn multiple_words_wrap() {
-        let wrap = super::WhitespaceWrap::new("hello world", 10, &FONT);
+        let metrics = &FONT.metrics();
+        let wrap = super::WhitespaceWrap::new("hello world", 10, metrics);
         assert_eq!(wrap.collect::<Vec<_>>(), vec!["hello", "world"]);
     }
 
     #[test]
     fn leading_whitespace_is_retained() {
-        let wrap = super::WhitespaceWrap::new("  hello", 10, &FONT);
+        let metrics = &FONT.metrics();
+        let wrap = super::WhitespaceWrap::new("  hello", 10, metrics);
         assert_eq!(wrap.collect::<Vec<_>>(), vec!["  hello"]);
     }
 
     #[test]
     fn trailing_whitespace_is_dropped_even_when_it_fits() {
-        let wrap = super::WhitespaceWrap::new("hello  ", 10, &FONT);
+        let metrics = &FONT.metrics();
+        let wrap = super::WhitespaceWrap::new("hello  ", 10, metrics);
         assert_eq!(wrap.collect::<Vec<_>>(), vec!["hello"]);
     }
 
     #[test]
     fn trailing_whitespace_is_dropped_instead_of_wrapped() {
-        let wrap = super::WhitespaceWrap::new("hello  ", 6, &FONT);
+        let metrics = &FONT.metrics();
+        let wrap = super::WhitespaceWrap::new("hello  ", 6, metrics);
         assert_eq!(wrap.collect::<Vec<_>>(), vec!["hello"]);
     }
 
     #[test]
     fn multiple_whitespace_is_dropped_when_wrapped() {
+        let metrics = &FONT.metrics();
         (5..=12).for_each(|available_width| {
-            let wrap = super::WhitespaceWrap::new("hello   world", available_width, &FONT);
+            let wrap = super::WhitespaceWrap::new("hello   world", available_width, metrics);
             assert_eq!(wrap.collect::<Vec<_>>(), vec!["hello", "world"]);
         });
     }
 
     #[test]
     fn partial_words_are_wrapped_1() {
-        let wrap = super::WhitespaceWrap::new("hello world", 1, &FONT);
+        let metrics = &FONT.metrics();
+        let wrap = super::WhitespaceWrap::new("hello world", 1, metrics);
         assert_eq!(
             wrap.collect::<Vec<_>>(),
             vec!["h", "e", "l", "l", "o", "w", "o", "r", "l", "d"]
@@ -222,7 +237,8 @@ mod tests {
 
     #[test]
     fn partial_words_are_wrapped_2() {
-        let wrap = super::WhitespaceWrap::new("hello world", 2, &FONT);
+        let metrics = &FONT.metrics();
+        let wrap = super::WhitespaceWrap::new("hello world", 2, metrics);
         assert_eq!(
             wrap.collect::<Vec<_>>(),
             vec!["he", "ll", "o", "wo", "rl", "d"]
@@ -231,38 +247,44 @@ mod tests {
 
     #[test]
     fn partial_words_are_wrapped_3() {
-        let wrap = super::WhitespaceWrap::new("hello world", 3, &FONT);
+        let metrics = &FONT.metrics();
+        let wrap = super::WhitespaceWrap::new("hello world", 3, metrics);
         // @typos-ignore
         assert_eq!(wrap.collect::<Vec<_>>(), vec!["hel", "lo", "wor", "ld"]);
     }
 
     #[test]
     fn newlines_are_always_wrapped() {
-        let wrap = super::WhitespaceWrap::new("hello\nworld", 10, &FONT);
+        let metrics = &FONT.metrics();
+        let wrap = super::WhitespaceWrap::new("hello\nworld", 10, metrics);
         assert_eq!(wrap.collect::<Vec<_>>(), vec!["hello", "world"]);
     }
 
     #[test]
     fn multiple_consecutive_newlines_produce_empty_lines() {
-        let wrap = super::WhitespaceWrap::new("hello\n\nworld", 10, &FONT);
+        let metrics = &FONT.metrics();
+        let wrap = super::WhitespaceWrap::new("hello\n\nworld", 10, metrics);
         assert_eq!(wrap.collect::<Vec<_>>(), vec!["hello", "", "world"]);
     }
 
     #[test]
     fn spaces_after_newlines_are_retained() {
-        let wrap = super::WhitespaceWrap::new("hello \n world", 10, &FONT);
+        let metrics = &FONT.metrics();
+        let wrap = super::WhitespaceWrap::new("hello \n world", 10, metrics);
         assert_eq!(wrap.collect::<Vec<_>>(), vec!["hello", " world"]);
     }
 
     #[test]
     fn newlines_on_wrap_boundary_do_not_produce_empty_lines() {
-        let wrap = super::WhitespaceWrap::new("hello\nworld", 5, &FONT);
+        let metrics = &FONT.metrics();
+        let wrap = super::WhitespaceWrap::new("hello\nworld", 5, metrics);
         assert_eq!(wrap.collect::<Vec<_>>(), vec!["hello", "world"]);
     }
 
     #[test]
     fn newlines_wrap_after_forced_overflow() {
-        let wrap = super::WhitespaceWrap::new("hello\nworld", 4, &FONT);
+        let metrics = &FONT.metrics();
+        let wrap = super::WhitespaceWrap::new("hello\nworld", 4, metrics);
         // @typos-ignore
         assert_eq!(wrap.collect::<Vec<_>>(), vec!["hell", "o", "worl", "d"]);
     }
@@ -270,56 +292,83 @@ mod tests {
     #[ignore = "This test is correct, fix later"]
     #[test]
     fn multi_byte_unicode_wraps_correctly() {
-        let wrap = super::WhitespaceWrap::new("y̆y̆y̆y̆y̆ y̆y̆y̆ y̆y̆ y̆", 4, &FONT);
+        let metrics = &FONT.metrics();
+        let wrap = super::WhitespaceWrap::new("y̆y̆y̆y̆y̆ y̆y̆y̆ y̆y̆ y̆", 4, metrics);
         assert_eq!(wrap.collect::<Vec<_>>(), vec!["y̆y̆y̆y̆", "y̆", "y̆y̆y̆", "y̆y̆ y̆"]);
     }
 
     /// Characters are 1 unit, whitespace is 2 units, and digits are the width of the digit value
     struct VariableWidthFont;
+    struct VariableWidthFontMetrics;
 
-    impl crate::font::FontLayout for VariableWidthFont {
-        fn character_width(&self, ch: char) -> u16 {
-            if ch.is_whitespace() {
+    impl FontMetrics for VariableWidthFontMetrics {
+        fn rendered_size(&self, c: char) -> crate::primitives::Size {
+            Size::new(self.advance(c), 1)
+        }
+
+        fn default_line_height(&self) -> u32 {
+            1
+        }
+
+        fn advance(&self, character: char) -> u32 {
+            if character.is_whitespace() {
                 2
-            } else if ch.is_ascii_digit() {
-                ch.to_digit(10).unwrap_or(1) as u16
+            } else if character.is_ascii_digit() {
+                character.to_digit(10).unwrap_or(1)
             } else {
                 1
             }
         }
 
-        fn line_height(&self) -> u16 {
+        fn baseline(&self) -> u32 {
             1
         }
     }
 
+    impl Font for VariableWidthFont {
+        fn metrics(&self) -> impl crate::font::FontMetrics {
+            VariableWidthFontMetrics
+        }
+    }
+
+    impl crate::font::Sealed for VariableWidthFont {}
+
+    impl<C> FontRender<C> for VariableWidthFont {
+        fn draw(&self, _: char, _: C, _: &mut impl Surface<Color = C>) {}
+    }
+
     #[test]
     fn variable_width_wrapping() {
-        let wrap = super::WhitespaceWrap::new("1 2 3 4 5 6", 5, &VariableWidthFont);
+        let metrics = &VariableWidthFont.metrics();
+        let wrap = super::WhitespaceWrap::new("1 2 3 4 5 6", 5, metrics);
         assert_eq!(wrap.collect::<Vec<_>>(), vec!["1 2", "3", "4", "5", "6"]);
     }
 
     #[test]
     fn compact_width_offer_never_wraps() {
-        let wrap = super::WhitespaceWrap::new("hello world", ProposedDimension::Compact, &FONT);
+        let metrics = &FONT.metrics();
+        let wrap = super::WhitespaceWrap::new("hello world", ProposedDimension::Compact, metrics);
         assert_eq!(wrap.collect::<Vec<_>>(), vec!["hello world"]);
     }
 
     #[test]
     fn infinite_width_offer_never_wraps() {
-        let wrap = super::WhitespaceWrap::new("hello world", ProposedDimension::Infinite, &FONT);
+        let metrics = &FONT.metrics();
+        let wrap = super::WhitespaceWrap::new("hello world", ProposedDimension::Infinite, metrics);
         assert_eq!(wrap.collect::<Vec<_>>(), vec!["hello world"]);
     }
 
     #[test]
     fn compact_width_offer_only_wraps_explicit_newlines() {
-        let wrap = super::WhitespaceWrap::new("hello\nworld", ProposedDimension::Compact, &FONT);
+        let metrics = &FONT.metrics();
+        let wrap = super::WhitespaceWrap::new("hello\nworld", ProposedDimension::Compact, metrics);
         assert_eq!(wrap.collect::<Vec<_>>(), vec!["hello", "world"]);
     }
 
     #[test]
     fn infinite_width_offer_only_wraps_explicit_newlines() {
-        let wrap = super::WhitespaceWrap::new("hello\nworld", ProposedDimension::Infinite, &FONT);
+        let metrics = &FONT.metrics();
+        let wrap = super::WhitespaceWrap::new("hello\nworld", ProposedDimension::Infinite, metrics);
         assert_eq!(wrap.collect::<Vec<_>>(), vec!["hello", "world"]);
     }
 }

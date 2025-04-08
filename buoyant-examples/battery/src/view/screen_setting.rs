@@ -10,16 +10,18 @@ use buoyant::{
         HStack, HorizontalTextAlignment, Text, VStack, View, ViewExt, ZStack,
     },
 };
-use embedded_graphics::mono_font::ascii::{FONT_10X20, FONT_6X10, FONT_9X15_BOLD};
 
-use crate::color::{self, ColorFormat};
+use crate::{
+    color::{self, ColorFormat},
+    font,
+};
 
 #[must_use]
 pub fn view(auto_off: bool) -> impl View<ColorFormat> {
     VStack::new((
-        Text::new("Auto Screen Off", &FONT_9X15_BOLD)
+        Text::new("Auto Screen Off", &font::SUBTITLE)
             .multiline_text_alignment(HorizontalTextAlignment::Center),
-        Text::new("Long press for 1s to switch", &FONT_6X10)
+        Text::new("Long press for 1s to switch", &font::BODY)
             .multiline_text_alignment(HorizontalTextAlignment::Center),
         toggle(auto_off),
     ))
@@ -48,12 +50,12 @@ fn toggle(is_on: bool) -> impl View<ColorFormat> {
             }),
         )),
         HStack::new((
-            Text::new("On", &FONT_10X20)
+            Text::new("On", &font::TITLE_BOLD)
                 .foreground_color(txt_lhs)
                 .flex_frame()
                 .with_infinite_max_width()
                 .with_infinite_max_height(),
-            Text::new("Off", &FONT_10X20)
+            Text::new("Off", &font::TITLE_BOLD)
                 .foreground_color(txt_rhs)
                 .flex_frame()
                 .with_infinite_max_width()

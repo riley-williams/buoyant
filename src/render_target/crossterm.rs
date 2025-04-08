@@ -8,7 +8,10 @@ use crossterm::{
 #[cfg(feature = "std")]
 use std::io::{stdout, Stdout, Write};
 
-use crate::primitives::{geometry::Rectangle, Point, Size};
+use crate::{
+    primitives::{geometry::Rectangle, Pixel, Point, Size},
+    surface::Surface,
+};
 
 use super::{Brush, Glyph, RenderTarget, Shape, Stroke};
 
@@ -124,6 +127,10 @@ impl Drop for CrosstermRenderTarget {
 impl RenderTarget for CrosstermRenderTarget {
     type ColorFormat = Colors;
 
+    fn size(&self) -> Size {
+        self.size()
+    }
+
     fn clear(&mut self, _color: Self::ColorFormat) {
         // FIXME: use the color provided
         self.clear();
@@ -192,18 +199,37 @@ impl RenderTarget for CrosstermRenderTarget {
 
     fn draw_glyphs<C: Into<Self::ColorFormat>>(
         &mut self,
-        mut offset: Point,
+        offset: Point,
         brush: &impl Brush<ColorFormat = C>,
         glyphs: impl Iterator<Item = Glyph>,
-        _font: &impl crate::font::FontRender,
+        _font: &impl crate::font::FontRender<Self::ColorFormat>,
     ) {
         let Some(color) = brush.as_solid().map(Into::into) else {
             return;
         };
-        for c in glyphs.map(|g| g.character) {
-            let point = Point::new(offset.x, offset.y);
-            self.draw_character(point, c, color);
-            offset.x += 1;
+        for glyph in glyphs {
+            self.draw_character(offset + glyph.offset, glyph.character, color);
         }
+    }
+
+    fn raw_surface(&mut self) -> &mut impl Surface<Color = Self::ColorFormat> {
+        self
+    }
+}
+
+impl Surface for CrosstermRenderTarget {
+    type Color = Colors;
+
+    fn size(&self) -> Size {
+        self.size()
+    }
+
+    fn draw_iter<I>(&mut self, pixels: I)
+    where
+        I: IntoIterator<Item = Pixel<Self::Color>>,
+    {
+        pixels
+            .into_iter()
+            .for_each(|p| self.draw_color(p.point, p.color));
     }
 }

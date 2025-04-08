@@ -10,7 +10,11 @@
 
 use std::time::Instant;
 
-use battery::{app::{App, ButtonState}, charge_simulator::ChargeSim, color};
+use battery::{
+    app::{App, ButtonState},
+    charge_simulator::ChargeSim,
+    color,
+};
 use buoyant::{
     render::{AnimatedJoin, AnimationDomain, Render},
     render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _},
@@ -32,8 +36,8 @@ fn main() {
     let simulator = ChargeSim::new(1.0);
     let mut app = App::new(simulator);
 
-    let mut source_tree = app.tree(target.display.size().into(), app_start.elapsed());
-    let mut target_tree = app.tree(target.display.size().into(), app_start.elapsed());
+    let mut source_tree = app.tree(target.size().into(), app_start.elapsed());
+    let mut target_tree = app.tree(target.size().into(), app_start.elapsed());
 
     let mut button_down = ButtonState::Unpressed;
 
@@ -55,7 +59,7 @@ fn main() {
                 target_tree,
                 &AnimationDomain::top_level(app_start.elapsed()),
             );
-            target_tree = app.tree(target.display.size().into(), app_start.elapsed());
+            target_tree = app.tree(target.size().into(), app_start.elapsed());
         }
 
         target.clear(color::BACKGROUND);
@@ -71,7 +75,7 @@ fn main() {
         );
 
         // Flush to window
-        window.update(&target.display);
+        window.update(target.display());
 
         for event in window.events() {
             match event {

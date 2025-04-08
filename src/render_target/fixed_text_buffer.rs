@@ -1,8 +1,8 @@
 use core::fmt::{Display, Formatter, Result};
 
-use crate::primitives::{geometry::Rectangle, Point, Size};
+use crate::primitives::{geometry::Rectangle, Pixel, Point, Size};
 
-use super::{Brush, Glyph, RenderTarget, Shape, Stroke};
+use super::{Brush, Glyph, RenderTarget, Shape, Stroke, Surface};
 
 /// A fixed size text buffer
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -50,6 +50,10 @@ impl<const W: usize, const H: usize> Default for FixedTextBuffer<W, H> {
 
 impl<const W: usize, const H: usize> RenderTarget for FixedTextBuffer<W, H> {
     type ColorFormat = char;
+
+    fn size(&self) -> Size {
+        self.size()
+    }
 
     fn clear(&mut self, _color: Self::ColorFormat) {
         self.clear();
@@ -113,15 +117,34 @@ impl<const W: usize, const H: usize> RenderTarget for FixedTextBuffer<W, H> {
 
     fn draw_glyphs<C: Into<Self::ColorFormat>>(
         &mut self,
-        mut offset: Point,
+        offset: Point,
         _brush: &impl Brush<ColorFormat = C>,
         glyphs: impl Iterator<Item = Glyph>,
-        _font: &impl crate::font::FontRender,
+        _font: &impl crate::font::FontRender<Self::ColorFormat>,
     ) {
-        for c in glyphs.map(|g| g.character) {
-            let point = Point::new(offset.x, offset.y);
-            self.draw_character(point, c);
-            offset.x += 1;
+        for glyph in glyphs {
+            self.draw_character(offset + glyph.offset, glyph.character);
         }
+    }
+
+    fn raw_surface(&mut self) -> &mut impl Surface<Color = Self::ColorFormat> {
+        self
+    }
+}
+
+impl<const W: usize, const H: usize> Surface for FixedTextBuffer<W, H> {
+    type Color = char;
+
+    fn size(&self) -> Size {
+        self.size()
+    }
+
+    fn draw_iter<I>(&mut self, pixels: I)
+    where
+        I: IntoIterator<Item = Pixel<Self::Color>>,
+    {
+        pixels
+            .into_iter()
+            .for_each(|p| self.draw_character(p.point, p.color));
     }
 }

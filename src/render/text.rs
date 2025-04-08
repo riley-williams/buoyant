@@ -23,7 +23,7 @@ impl<T: AsRef<str>, F> AnimatedJoin for Text<'_, T, F> {
     }
 }
 
-impl<C: Copy, T: AsRef<str>, F: FontRender> Render<C> for Text<'_, T, F> {
+impl<C: Copy, T: AsRef<str>, F: FontRender<C>> Render<C> for Text<'_, T, F> {
     fn render(
         &self,
         render_target: &mut impl RenderTarget<ColorFormat = C>,
@@ -34,41 +34,40 @@ impl<C: Copy, T: AsRef<str>, F: FontRender> Render<C> for Text<'_, T, F> {
             return;
         }
 
+        let metrics = self.font.metrics();
+
         let brush = SolidBrush::new(*style);
 
         let origin = self.origin + offset;
-        let line_height = self.font.line_height();
+        let line_height = metrics.default_line_height();
 
         let mut height = 0;
-        let wrap = WhitespaceWrap::new(self.text.as_ref(), self.size.width, self.font);
+        let wrap = WhitespaceWrap::new(self.text.as_ref(), self.size.width, &metrics);
 
         let metrics = self.font.metrics();
 
         for line in wrap {
             // TODO: WhitespaceWrap should also return the width of the line
-            let width = self.font.str_width(line);
+            let width = metrics.str_width(line);
 
-            let line_x = self.alignment.align(self.size.width as i32, width.into()) + origin.x;
+            let line_x = self.alignment.align(self.size.width as i32, width as i32) + origin.x;
 
             let mut x = 0;
             render_target.draw_glyphs(
                 Point::new(line_x, origin.y + height),
                 &brush,
                 line.chars().map(|c| {
-                    let index = self.font.glyph_index(c);
                     let glyph = Glyph {
-                        id: index,
                         character: c,
-                        x: x.into(),
-                        y: 0,
+                        offset: Point::new(x, 0),
                     };
-                    x += metrics.advance(glyph.id) as i16;
+                    x += metrics.advance(glyph.character) as i32;
                     glyph
                 }),
                 self.font,
             );
 
-            height += i32::from(line_height);
+            height += line_height as i32;
             if height >= self.size.height as i32 {
                 break;
             }

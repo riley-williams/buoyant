@@ -3,7 +3,8 @@ use buoyant::{
     layout::Alignment,
     primitives::Point,
     render::Render,
-    render_target::EmbeddedGraphicsRenderTarget,
+    render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _},
+    surface::AsDrawTarget,
     view::{
         padding::Edges,
         shape::{Capsule, Circle, Rectangle, RoundedRectangle},
@@ -20,21 +21,22 @@ use embedded_graphics::{
 };
 use embedded_graphics::{mock_display::MockDisplay, pixelcolor::Rgb888};
 use tinytga::Tga;
+use u8g2_fonts::{fonts, types::FontColor, FontRenderer};
 
 const MOCK_SIZE: u32 = 64;
 
-fn render_to_mock(view: &impl View<Rgb888>) -> MockDisplay<Rgb888> {
+fn render_to_mock(view: &impl View<Rgb888>, allow_overdraw: bool) -> MockDisplay<Rgb888> {
     let mut display = MockDisplay::<Rgb888>::new();
-    display.set_allow_overdraw(false);
+    display.set_allow_overdraw(allow_overdraw);
     display.set_allow_out_of_bounds_drawing(false);
     let mut target = EmbeddedGraphicsRenderTarget::new(display);
 
     let env = DefaultEnvironment::default();
-    let layout = view.layout(&target.display.size().into(), &env);
+    let layout = view.layout(&target.size().into(), &env);
     let tree = view.render_tree(&layout, Point::zero(), &env);
     tree.render(&mut target, &Rgb888::WHITE, Point::zero());
 
-    target.display
+    target.into_inner()
 }
 
 #[test]
@@ -55,7 +57,7 @@ fn sanity_shapes() {
     .with_infinite_max_height()
     .with_alignment(Alignment::BottomTrailing);
 
-    let display = render_to_mock(&view);
+    let display = render_to_mock(&view, false);
 
     assert_eq!(
         display.affected_area(),
@@ -69,7 +71,7 @@ fn rectangle() {
         .padding(Edges::All, 4)
         .foreground_color(Rgb888::CSS_SPRING_GREEN);
 
-    let display = render_to_mock(&view);
+    let display = render_to_mock(&view, false);
 
     let mut display_2 = MockDisplay::new();
 
@@ -85,16 +87,65 @@ fn rectangle() {
 }
 
 #[test]
+fn as_draw() {
+    let mut display = MockDisplay::<Rgb888>::new();
+    display.set_allow_overdraw(false);
+    display.set_allow_out_of_bounds_drawing(false);
+
+    let rectangle = EgRectangle::new(EgPoint::new(4, 4), display.size() - EgSize::new(8, 8))
+        .into_styled(
+            PrimitiveStyleBuilder::new()
+                .fill_color(Rgb888::CSS_SPRING_GREEN)
+                .build(),
+        );
+
+    let mut target = EmbeddedGraphicsRenderTarget::new(display);
+    // target as surface -> surface as target
+    rectangle
+        .draw(&mut target.raw_surface().draw_target())
+        .unwrap();
+
+    let mut display_2 = MockDisplay::new();
+    rectangle.draw(&mut display_2).unwrap();
+
+    target.display().assert_eq(&display_2);
+}
+
+#[test]
 fn embedded_graphics_mono_font() {
     let view = Text::new("Test.\n12 3", &FONT_7X13).foreground_color(Rgb888::CSS_OLD_LACE);
 
-    let display = render_to_mock(&view);
+    let display = render_to_mock(&view, false);
 
     let mut display_2 = MockDisplay::new();
     let style = MonoTextStyle::new(&FONT_7X13, Rgb888::CSS_OLD_LACE);
     EgText::new("Test.\n12 3", EgPoint::new(0, 10), style)
         .draw(&mut display_2)
         .unwrap();
+    display.assert_eq(&display_2);
+}
+
+#[test]
+fn u8g2_font() {
+    let text = "Test.\n12 3";
+    let font = FontRenderer::new::<fonts::u8g2_font_haxrcorp4089_t_cyrillic>();
+    let view = Text::new(text, &font)
+        .foreground_color(Rgb888::CSS_SPRING_GREEN)
+        .padding(Edges::All, 1);
+
+    let display = render_to_mock(&view, true);
+
+    let mut display_2 = MockDisplay::new();
+    display_2.set_allow_overdraw(true);
+    font.render(
+        text,
+        Point::new(1, 1).into(),
+        u8g2_fonts::types::VerticalPosition::Top,
+        FontColor::Transparent(Rgb888::CSS_SPRING_GREEN),
+        &mut display_2,
+    )
+    .unwrap();
+
     display.assert_eq(&display_2);
 }
 
@@ -109,7 +160,7 @@ fn embedded_graphics_image() {
 
     let view = Image::new(&img);
 
-    let display = render_to_mock(&view);
+    let display = render_to_mock(&view, false);
 
     let mut display_2 = MockDisplay::new();
     EgImage::new(&img, EgPoint::zero())
