@@ -35,12 +35,12 @@ You can configure the spacing between child views using `.with_spacing`.
 #     let origin = buoyant::primitives::Point::zero();
 # 
 #     let view = view();
-#     let layout = view.layout(&target.display.size().into(), &environment);
+#     let layout = view.layout(&target.size().into(), &environment);
 #     let render_tree = view.render_tree(&layout, origin, &environment);
 # 
 #     render_tree.render(&mut target, &DEFAULT_COLOR, origin);
 # 
-#     window.show_static(&target.display);
+#     window.show_static(&target.display());
 # }
 # 
 use buoyant::layout::HorizontalAlignment;
@@ -95,12 +95,12 @@ incrementally larger values for each class of separation.
 #     let origin = buoyant::primitives::Point::zero();
 # 
 #     let view = view();
-#     let layout = view.layout(&target.display.size().into(), &environment);
+#     let layout = view.layout(&target.size().into(), &environment);
 #     let render_tree = view.render_tree(&layout, origin, &environment);
 # 
 #     render_tree.render(&mut target, &DEFAULT_COLOR, origin);
 # 
-#     window.show_static(&target.display);
+#     window.show_static(&target.display());
 # }
 # 
 use buoyant::layout::{HorizontalAlignment, VerticalAlignment};

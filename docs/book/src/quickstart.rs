@@ -26,13 +26,13 @@ fn main() {
     // ANCHOR_END: environment
 
     let view = hello_view();
-    let layout = view.layout(&target.display.size().into(), &environment);
+    let layout = view.layout(&target.size().into(), &environment);
     let render_tree = view.render_tree(&layout, origin, &environment);
 
     render_tree.render(&mut target, &DEFAULT_COLOR, origin);
     // ANCHOR: simulator2
 
-    window.show_static(&target.display);
+    window.show_static(&target.display());
 }
 
 // ANCHOR_END: simulator2

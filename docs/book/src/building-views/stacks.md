@@ -34,12 +34,12 @@ Both stacks can contain a heterogeneous set of views and can be nested inside ot
 #     let origin = buoyant::primitives::Point::zero();
 # 
 #     let view = view();
-#     let layout = view.layout(&target.display.size().into(), &environment);
+#     let layout = view.layout(&target.size().into(), &environment);
 #     let render_tree = view.render_tree(&layout, origin, &environment);
 # 
 #     render_tree.render(&mut target, &DEFAULT_COLOR, origin);
 # 
-#     window.show_static(&target.display);
+#     window.show_static(&target.display());
 # }
 # 
 use buoyant::view::shape::{Circle, Rectangle};
@@ -94,12 +94,12 @@ it can contain a heterogeneous set of views.
 #     let origin = buoyant::primitives::Point::zero();
 # 
 #     let view = view();
-#     let layout = view.layout(&target.display.size().into(), &environment);
+#     let layout = view.layout(&target.size().into(), &environment);
 #     let render_tree = view.render_tree(&layout, origin, &environment);
 # 
 #     render_tree.render(&mut target, &DEFAULT_COLOR, origin);
 # 
-#     window.show_static(&target.display);
+#     window.show_static(&target.display());
 # }
 # 
 use buoyant::view::padding::Edges;
@@ -155,12 +155,12 @@ Stacks can be nested to create complex layouts.
 #     let origin = buoyant::primitives::Point::zero();
 # 
 #     let view = view();
-#     let layout = view.layout(&target.display.size().into(), &environment);
+#     let layout = view.layout(&target.size().into(), &environment);
 #     let render_tree = view.render_tree(&layout, origin, &environment);
 # 
 #     render_tree.render(&mut target, &DEFAULT_COLOR, origin);
 # 
-#     window.show_static(&target.display);
+#     window.show_static(&target.display());
 # }
 # 
 use buoyant::view::padding::Edges;
