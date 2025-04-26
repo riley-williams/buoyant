@@ -1,6 +1,6 @@
 [package]
 name = "buoyant"
-version = "0.5.0-alpha.2"
+version = "0.5.0-alpha.3"
 authors = ["Riley Williams"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
@@ -17,13 +17,24 @@ maintenance = { status = "experimental" }
 [features]
 default = ["embedded-graphics"]
 std = []
-embedded-graphics = ["dep:embedded-graphics", "dep:embedded-graphics-core"]
+embedded-graphics = [
+  "dep:embedded-graphics",
+  "dep:embedded-graphics-core",
+  "dep:tinytga",
+  "dep:u8g2-fonts",
+  "dep:embedded-text",
+]
 crossterm = ["dep:crossterm", "std"]
 
 [dependencies]
 crossterm = { version = "^0.28", optional = true }
 embedded-graphics-core = { version = "^0.4", optional = true }
 embedded-graphics = { version = "^0.8", optional = true }
+embedded-text = { version = "^0.7", optional = true }
+tinytga = { version = "^0.5", optional = true }
+u8g2-fonts = { version = "0.6.0", optional = true, features = [
+  "embedded_graphics_textstyle",
+] }
 heapless = "^0.8"
 paste = "1.0.15"
 

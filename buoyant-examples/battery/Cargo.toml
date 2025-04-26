@@ -9,6 +9,7 @@ buoyant = { path = "../.." }
 embedded-graphics = { workspace = true }
 embedded-graphics-simulator = { workspace = true }
 heapless = { workspace = true }
+u8g2-fonts = { version = "0.6.0" }
 
 # Change the library color format by building with
 # `--features rgb565 --no-default-features`

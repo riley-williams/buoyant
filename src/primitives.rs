@@ -119,6 +119,13 @@ impl core::ops::Sub for Point {
     }
 }
 
+impl core::ops::AddAssign for Point {
+    fn add_assign(&mut self, rhs: Self) {
+        self.x += rhs.x;
+        self.y += rhs.y;
+    }
+}
+
 impl Point {
     #[must_use]
     pub const fn new(x: i32, y: i32) -> Self {
@@ -184,6 +191,29 @@ impl From<embedded_graphics_core::primitives::Rectangle> for Frame {
             origin: value.top_left.into(),
             size: value.size.into(),
         }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Pixel<C> {
+    pub color: C,
+    pub point: Point,
+}
+
+#[cfg(feature = "embedded-graphics")]
+impl<C: embedded_graphics::pixelcolor::PixelColor> From<embedded_graphics::Pixel<C>> for Pixel<C> {
+    fn from(value: embedded_graphics::Pixel<C>) -> Self {
+        Self {
+            color: value.1,
+            point: value.0.into(),
+        }
+    }
+}
+
+#[cfg(feature = "embedded-graphics")]
+impl<C: embedded_graphics::pixelcolor::PixelColor> From<Pixel<C>> for embedded_graphics::Pixel<C> {
+    fn from(value: Pixel<C>) -> Self {
+        Self(value.point.into(), value.color)
     }
 }
 

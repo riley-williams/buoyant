@@ -1,5 +1,6 @@
-use core::marker::PhantomData;
-
+use crate::font::FontRender;
+use crate::primitives::{Interpolate, Pixel};
+use crate::surface::{AsDrawTarget, OffsetSurface};
 use crate::{
     primitives::{
         geometry::{Circle, Line, PathEl, Rectangle, RoundedRectangle},
@@ -9,67 +10,92 @@ use crate::{
 };
 use embedded_graphics::{
     draw_target::DrawTarget,
-    geometry::{Point as EgPoint, Size},
+    geometry::Point as EgPoint,
     pixelcolor::PixelColor,
     prelude::Primitive as _,
     primitives::{
         Circle as EgCircle, Line as EgLine, PrimitiveStyle, PrimitiveStyleBuilder,
         Rectangle as EgRectangle, RoundedRectangle as EgRoundedRectangle,
     },
-    Drawable, Pixel,
+    Drawable,
 };
 
-use super::{Glyph, Stroke};
+use super::{Glyph, ImageBrush, Stroke, Surface};
 
 #[derive(Debug)]
-pub struct EmbeddedGraphicsRenderTarget<D, C>
-where
-    D: DrawTarget<Color = C>,
-    C: PixelColor,
-{
-    pub display: D,
-    color: PhantomData<C>,
-    frame: Rectangle,
+pub struct EmbeddedGraphicsRenderTarget<D> {
+    display: D,
 }
 
-impl<D, C> EmbeddedGraphicsRenderTarget<D, C>
+#[derive(Debug)]
+pub struct DrawTargetSurface<D: DrawTarget>(D);
+
+impl<D: DrawTarget> Surface for DrawTargetSurface<D> {
+    type Color = D::Color;
+
+    fn size(&self) -> crate::primitives::Size {
+        self.0.bounding_box().size.into()
+    }
+
+    fn draw_iter<I>(&mut self, pixels: I)
+    where
+        I: IntoIterator<Item = Pixel<Self::Color>>,
+    {
+        _ = self.0.draw_iter(pixels.into_iter().map(Into::into));
+    }
+
+    fn fill_contiguous<I>(&mut self, area: &Rectangle, colors: I)
+    where
+        I: IntoIterator<Item = Self::Color>,
+    {
+        _ = self.0.fill_contiguous(&area.clone().into(), colors);
+    }
+
+    fn fill_solid(&mut self, area: &Rectangle, color: Self::Color) {
+        _ = self.0.fill_solid(&area.clone().into(), color);
+    }
+}
+
+impl<D, C> EmbeddedGraphicsRenderTarget<DrawTargetSurface<D>>
 where
     D: DrawTarget<Color = C>,
-    C: PixelColor,
+    C: PixelColor + Interpolate,
 {
+    /// Initialize an `EmbeddedGraphicsRenderTarget` from a `DrawTarget`
     #[must_use]
-    pub fn new(target: D) -> Self {
-        let frame = target.bounding_box().into();
+    pub fn new(display: D) -> Self {
         Self {
-            display: target,
-            color: PhantomData,
-            frame,
+            display: DrawTargetSurface(display),
         }
     }
+
+    /// Returns the original draw target, consuming self
+    pub fn into_inner(self) -> D {
+        self.display.0
+    }
+
+    pub fn display(&self) -> &D {
+        &self.display.0
+    }
+
+    pub fn display_mut(&mut self) -> &mut D {
+        &mut self.display.0
+    }
 }
 
-impl<D, C> RenderTarget for EmbeddedGraphicsRenderTarget<D, C>
+impl<D, C> RenderTarget for EmbeddedGraphicsRenderTarget<D>
 where
-    D: DrawTarget<Color = C>,
-    C: PixelColor,
+    D: Surface<Color = C>,
+    C: PixelColor + Interpolate,
 {
-    // Layer is just a Rectangle that defines the clip area
-    type Layer = Rectangle;
     type ColorFormat = C;
 
+    fn size(&self) -> crate::primitives::Size {
+        self.display.size()
+    }
+
     fn clear(&mut self, color: Self::ColorFormat) {
-        // FIXME: Reset clip area?
-        let _ = self.display.clear(color);
-    }
-
-    fn push_layer(&mut self) -> Self::Layer {
-        // Return a layer that represents the entire drawing area
-        // This could be extended to actually implement clipping in the future
-        self.frame.clone()
-    }
-
-    fn pop_layer(&mut self, layer: Self::Layer) {
-        self.frame = layer;
+        let _ = self.display.draw_target().clear(color);
     }
 
     fn fill<T: Into<Self::ColorFormat>>(
@@ -80,26 +106,30 @@ where
         shape: &impl Shape,
     ) {
         // Convert the brush to the embedded_graphics color
-        let Some(color) = brush.as_solid().map(Into::into) else {
-            return;
-        };
+        if let Some(color) = brush.as_solid().map(Into::into) {
+            let style = PrimitiveStyleBuilder::new().fill_color(color).build();
 
-        let style = PrimitiveStyleBuilder::new().fill_color(color).build();
-
-        // FIXME: Does frame offset replace the need for passing offset everywhere?
-
-        // Handle different shape types
-        if let Some(line) = shape.as_line() {
-            self.draw_line(&line, transform_offset, &style);
-        } else if let Some(rect) = shape.as_rect() {
-            self.draw_rectangle(&rect, transform_offset, &style);
-        } else if let Some(circle) = shape.as_circle() {
-            self.draw_circle(&circle, transform_offset, &style);
-        } else if let Some(rounded_rect) = shape.as_rounded_rect() {
-            self.draw_rounded_rectangle(&rounded_rect, transform_offset, &style);
+            // Handle different shape types
+            if let Some(line) = shape.as_line() {
+                self.draw_line(&line, transform_offset, &style);
+            } else if let Some(rect) = shape.as_rect() {
+                self.draw_rectangle(&rect, transform_offset, &style);
+            } else if let Some(circle) = shape.as_circle() {
+                self.draw_circle(&circle, transform_offset, &style);
+            } else if let Some(rounded_rect) = shape.as_rounded_rect() {
+                self.draw_rounded_rectangle(&rounded_rect, transform_offset, &style);
+            } else {
+                // For generic shapes, convert the path elements to lines
+                self.draw_path_shape(shape, transform_offset, &style);
+            }
+        } else if let Some(image) = brush.as_image() {
+            // only support rectangles for now
+            let Some(rect) = shape.as_rect() else { return };
+            // FIXME: Apply brush transform and clip to shape bounds
+            self.display
+                .fill_contiguous(&rect, image.color_iter().map(Into::into));
         } else {
-            // For generic shapes, convert the path elements to lines
-            self.draw_path_shape(shape, transform_offset, &style);
+            // no support for custom brushes yet
         }
     }
 
@@ -111,7 +141,8 @@ where
         _brush_offset: Option<Point>,
         shape: &impl Shape,
     ) {
-        // Convert the brush to the embedded_graphics color
+        // Convert the brush to the embedded_graphics color.
+        // Only solid strokes are implemented
         let Some(color) = brush.as_solid().map(Into::into) else {
             return;
         };
@@ -120,8 +151,6 @@ where
             .stroke_width(stroke.width)
             .stroke_color(color)
             .build();
-
-        // FIXME: Does layer offset replace the need for passing offset everywhere?
 
         if let Some(line) = shape.as_line() {
             self.draw_line(&line, transform_offset, &style);
@@ -132,7 +161,6 @@ where
         } else if let Some(rounded_rect) = shape.as_rounded_rect() {
             self.draw_rounded_rectangle(&rounded_rect, transform_offset, &style);
         } else {
-            // For generic shapes, convert the path elements to lines
             self.draw_path_shape(shape, transform_offset, &style);
         }
     }
@@ -142,52 +170,25 @@ where
         offset: Point,
         brush: &impl Brush<ColorFormat = T>,
         glyphs: impl Iterator<Item = Glyph>,
-        font: &impl crate::font::FontRender,
+        font: &impl FontRender<Self::ColorFormat>,
     ) {
         let Some(color) = brush.as_solid().map(Into::into) else {
             return;
         };
         for glyph in glyphs {
-            if let Some(mask) = font.as_mask(glyph.id) {
-                let render_offset = offset + Point::new(glyph.x, glyph.y);
-                let x_max: i32 = render_offset.x + i32::from(mask.width);
-                let mut x = render_offset.x;
-                let mut y = render_offset.y;
-                _ = self.display.draw_iter(mask.iter.filter_map(|p| {
-                    let pixel = if p {
-                        Some(Pixel(EgPoint::new(x, y), color))
-                    } else {
-                        None
-                    };
-                    x += 1;
-                    if x >= x_max {
-                        x = render_offset.x;
-                        y += 1;
-                    }
-                    pixel
-                }));
-            } else {
-                //FIXME: This only draws rectangles...support for these fonts is pending...
-                let width = font.character_width('x');
-                let height = font.line_height();
-                let style = PrimitiveStyleBuilder::new()
-                    .stroke_width(1)
-                    .stroke_color(color)
-                    .build();
-
-                self.draw_rectangle(
-                    &Rectangle::new(offset, Size::new(width.into(), height.into()).into()),
-                    offset,
-                    &style,
-                );
-            }
+            let mut surface = OffsetSurface::new(&mut self.display, offset + glyph.offset);
+            font.draw(glyph.character, color, &mut surface);
         }
+    }
+
+    fn raw_surface(&mut self) -> &mut impl Surface<Color = Self::ColorFormat> {
+        &mut self.display
     }
 }
 
-impl<D, C> EmbeddedGraphicsRenderTarget<D, C>
+impl<D, C> EmbeddedGraphicsRenderTarget<D>
 where
-    D: DrawTarget<Color = C>,
+    D: Surface<Color = C>,
     C: PixelColor,
 {
     fn draw_line(&mut self, line: &Line, offset: Point, style: &PrimitiveStyle<C>) {
@@ -195,14 +196,14 @@ where
         let end = EgPoint::new(line.end.x + offset.x, line.end.y + offset.y);
 
         let eg_line = EgLine::new(start, end).into_styled(*style);
-        let _ = eg_line.draw(&mut self.display);
+        let _ = eg_line.draw(&mut self.display.draw_target());
     }
 
     fn draw_rectangle(&mut self, rect: &Rectangle, offset: Point, style: &PrimitiveStyle<C>) {
         let top_left = EgPoint::new(rect.origin.x + offset.x, rect.origin.y + offset.y);
 
         let eg_rect = EgRectangle::new(top_left, rect.size.into()).into_styled(*style);
-        let _ = eg_rect.draw(&mut self.display);
+        let _ = eg_rect.draw(&mut self.display.draw_target());
     }
 
     fn draw_rounded_rectangle(
@@ -220,14 +221,14 @@ where
             embedded_graphics::primitives::CornerRadii::new((corner_radius, corner_radius).into()),
         )
         .into_styled(*style);
-        let _ = eg_rounded_rect.draw(&mut self.display);
+        let _ = eg_rounded_rect.draw(&mut self.display.draw_target());
     }
 
     fn draw_circle(&mut self, circle: &Circle, offset: Point, style: &PrimitiveStyle<C>) {
         let top_left = EgPoint::new(circle.origin.x + offset.x, circle.origin.y + offset.y);
 
         let eg_circle = EgCircle::new(top_left, circle.diameter).into_styled(*style);
-        let _ = eg_circle.draw(&mut self.display);
+        let _ = eg_circle.draw(&mut self.display.draw_target());
     }
 
     fn draw_path_shape(&mut self, shape: &impl Shape, offset: Point, style: &PrimitiveStyle<C>) {
@@ -247,7 +248,7 @@ where
                         let end_eg = EgPoint::new(end.x, end.y);
 
                         let eg_line = EgLine::new(start_eg, end_eg).into_styled(*style);
-                        let _ = eg_line.draw(&mut self.display);
+                        let _ = eg_line.draw(&mut self.display.draw_target());
 
                         last_point = Some(end);
                     }
@@ -261,7 +262,7 @@ where
                         let end_eg = EgPoint::new(end.x, end.y);
 
                         let eg_line = EgLine::new(start_eg, end_eg).into_styled(*style);
-                        let _ = eg_line.draw(&mut self.display);
+                        let _ = eg_line.draw(&mut self.display.draw_target());
 
                         last_point = Some(end);
                     }
@@ -275,7 +276,7 @@ where
                         let end_eg = EgPoint::new(end.x, end.y);
 
                         let eg_line = EgLine::new(start_eg, end_eg).into_styled(*style);
-                        let _ = eg_line.draw(&mut self.display);
+                        let _ = eg_line.draw(&mut self.display.draw_target());
 
                         last_point = Some(end);
                     }
@@ -287,7 +288,7 @@ where
                         let end_eg = EgPoint::new(first.x, first.y);
 
                         let eg_line = EgLine::new(start_eg, end_eg).into_styled(*style);
-                        let _ = eg_line.draw(&mut self.display);
+                        let _ = eg_line.draw(&mut self.display.draw_target());
                     }
                 }
             }
