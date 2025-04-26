@@ -84,7 +84,30 @@ pub trait RenderTarget {
         );
     }
 
-    /// Obtain the raw surface to directly write pixels
+    /// Obtain a raw surface to directly write pixels.
+    ///
+    /// This is most often useful for bridging `embedded_graphics` types
+    /// that are designed to render to a `DrawTarget`.
+    ///
+    /// ```
+    /// # use buoyant::primitives::Size;
+    /// # use buoyant::render_target::RenderTarget;
+    /// # use buoyant::render_target::EmbeddedGraphicsRenderTarget;
+    /// # use embedded_graphics::prelude::*;
+    /// # use embedded_graphics::pixelcolor::Rgb888;
+    /// # use embedded_graphics::mock_display::MockDisplay;
+    /// use tinytga::Tga;
+    /// use crate::buoyant::surface::AsDrawTarget;
+    ///
+    /// # let mut display = MockDisplay::<Rgb888>::new();
+    /// # let mut target = EmbeddedGraphicsRenderTarget::new(display);
+    /// // let mut target = EmbeddedGraphicsRenderTarget::new(...);
+    /// # let data = include_bytes!("../tests/assets/rhombic-dodecahedron.tga");
+    ///
+    /// let img: Tga<Rgb888> = Tga::from_slice(data).unwrap();
+    ///
+    /// img.draw(&mut target.raw_surface().draw_target());
+    /// ```
     fn raw_surface(&mut self) -> &mut impl Surface<Color = Self::ColorFormat>;
 }
 

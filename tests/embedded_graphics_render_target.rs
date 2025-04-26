@@ -1,7 +1,7 @@
 use buoyant::{
     environment::DefaultEnvironment,
     layout::Alignment,
-    primitives::Point,
+    primitives::{Point, Size},
     render::Render,
     render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _},
     surface::AsDrawTarget,
@@ -13,13 +13,14 @@ use buoyant::{
 };
 use embedded_graphics::{
     geometry::{OriginDimensions, Point as EgPoint, Size as EgSize},
-    image::Image as EgImage,
+    image::{Image as EgImage, ImageDrawableExt},
+    mock_display::MockDisplay,
     mono_font::{ascii::FONT_7X13, MonoTextStyle},
-    prelude::{Drawable, Primitive, RgbColor, WebColors},
+    pixelcolor::Rgb888,
+    prelude::{DrawTargetExt, Drawable, Primitive, RgbColor, WebColors},
     primitives::{PrimitiveStyleBuilder, Rectangle as EgRectangle},
     text::Text as EgText,
 };
-use embedded_graphics::{mock_display::MockDisplay, pixelcolor::Rgb888};
 use tinytga::Tga;
 use u8g2_fonts::{fonts, types::FontColor, FontRenderer};
 
@@ -165,6 +166,29 @@ fn embedded_graphics_image() {
     let mut display_2 = MockDisplay::new();
     EgImage::new(&img, EgPoint::zero())
         .draw(&mut display_2)
+        .unwrap();
+    display.assert_eq(&display_2);
+}
+
+#[test]
+fn embedded_graphics_offset_image_slice() {
+    // Include an image from a local path as bytes
+    let data = include_bytes!("./assets/rhombic-dodecahedron.tga");
+
+    // Create a TGA instance from a byte slice.
+    // The color type is set by defining the type of the `img` variable.
+    let binding = Tga::from_slice(data).unwrap();
+    let img = binding.sub_image(
+        &buoyant::primitives::geometry::Rectangle::new(Point::new(5, 5), Size::new(25, 25)).into(),
+    );
+
+    let view = Image::new(&img).padding(Edges::Leading, 1);
+
+    let display = render_to_mock(&view, false);
+
+    let mut display_2 = MockDisplay::new();
+    EgImage::new(&img, EgPoint::zero())
+        .draw(&mut display_2.translated(Point::new(1, 0).into()))
         .unwrap();
     display.assert_eq(&display_2);
 }
