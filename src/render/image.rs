@@ -1,8 +1,6 @@
-use crate::primitives::geometry::Rectangle;
 use crate::primitives::{Interpolate as _, Point};
-use crate::render_target::{Brush, ImageBrush, RenderTarget};
 
-use super::{AnimatedJoin, AnimationDomain, Render};
+use super::{AnimatedJoin, AnimationDomain};
 
 #[non_exhaustive]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -26,28 +24,79 @@ impl<T> AnimatedJoin for Image<'_, T> {
     }
 }
 
-impl<C: From<<I as Brush>::ColorFormat>, I: ImageBrush> Render<C> for Image<'_, I> {
-    fn render(
-        &self,
-        render_target: &mut impl RenderTarget<ColorFormat = C>,
-        _style: &C,
-        offset: crate::primitives::Point,
-    ) {
-        let origin = self.origin + offset;
-        let rectangle = Rectangle::new(Point::new(0, 0), self.image.size());
-        render_target.fill(origin, self.image, None, &rectangle);
-    }
+// This is an implementation that uses the more generic brush
+//
+// use crate::primitives::geometry::Rectangle;
+// use crate::render_target::{Brush, ImageBrush, RenderTarget};
+// impl<C: From<<I as Brush>::ColorFormat>, I: ImageBrush> Render<C> for Image<'_, I> {
+//     fn render(
+//         &self,
+//         render_target: &mut impl RenderTarget<ColorFormat = C>,
+//         _style: &C,
+//         offset: crate::primitives::Point,
+//     ) {
+//         let origin = self.origin + offset;
+//         let rectangle = Rectangle::new(Point::new(0, 0), self.image.size());
+//         render_target.fill(origin, self.image, None, &rectangle);
+//     }
+//
+//     fn render_animated(
+//         render_target: &mut impl RenderTarget<ColorFormat = C>,
+//         source: &Self,
+//         target: &Self,
+//         _style: &C,
+//         offset: crate::primitives::Point,
+//         domain: &super::AnimationDomain,
+//     ) {
+//         let origin = offset + Point::interpolate(source.origin, target.origin, domain.factor);
+//         let rectangle = Rectangle::new(Point::new(0, 0), target.image.size());
+//         render_target.fill(origin, target.image, None, &rectangle);
+//     }
+// }
 
-    fn render_animated(
-        render_target: &mut impl RenderTarget<ColorFormat = C>,
-        source: &Self,
-        target: &Self,
-        _style: &C,
-        offset: crate::primitives::Point,
-        domain: &super::AnimationDomain,
-    ) {
-        let origin = offset + Point::interpolate(source.origin, target.origin, domain.factor);
-        let rectangle = Rectangle::new(Point::new(0, 0), target.image.size());
-        render_target.fill(origin, target.image, None, &rectangle);
+#[cfg(feature = "embedded-graphics")]
+mod embedded_graphics {
+    use embedded_graphics::{draw_target::DrawTargetExt, image::ImageDrawable};
+
+    use crate::{
+        primitives::{Interpolate as _, Point},
+        render::Render,
+        render_target::RenderTarget,
+        surface::AsDrawTarget,
+    };
+
+    use super::Image;
+    impl<I: ImageDrawable> Render<I::Color> for Image<'_, I> {
+        fn render(
+            &self,
+            render_target: &mut impl RenderTarget<ColorFormat = I::Color>,
+            _style: &I::Color,
+            offset: crate::primitives::Point,
+        ) {
+            // TODO: Only render a sub-image if the image is clipped?
+            let origin = self.origin + offset;
+            _ = self.image.draw(
+                &mut render_target
+                    .raw_surface()
+                    .draw_target()
+                    .translated(origin.into()),
+            );
+        }
+
+        fn render_animated(
+            render_target: &mut impl RenderTarget<ColorFormat = I::Color>,
+            source: &Self,
+            target: &Self,
+            style: &I::Color,
+            offset: crate::primitives::Point,
+            domain: &super::AnimationDomain,
+        ) {
+            let origin = offset + Point::interpolate(source.origin, target.origin, domain.factor);
+            if domain.factor == 0 {
+                source.render(render_target, style, origin);
+            } else {
+                target.render(render_target, style, origin);
+            }
+        }
     }
 }

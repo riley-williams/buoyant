@@ -254,7 +254,7 @@ where
                     }
                 }
                 PathEl::QuadTo(_control, point) => {
-                    // Simplify quadratic curves to straight lines for now
+                    // FIXME: Simplify quadratic curves to straight lines for now
                     if let Some(start) = last_point {
                         let end = Point::new(point.x + offset.x, point.y + offset.y);
 
@@ -268,7 +268,7 @@ where
                     }
                 }
                 PathEl::CurveTo(_control1, _control2, point) => {
-                    // Simplify cubic curves to straight lines for now
+                    // FIXME: Simplify cubic curves to straight lines for now
                     if let Some(start) = last_point {
                         let end = Point::new(point.x + offset.x, point.y + offset.y);
 
