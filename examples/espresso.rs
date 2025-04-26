@@ -90,7 +90,7 @@ fn main() {
             target_tree = app.tree(size, app_start.elapsed());
         }
 
-        target.display.clear(color::BACKGROUND).unwrap();
+        target.display_mut().clear(color::BACKGROUND).unwrap();
 
         // Render frame
         Render::render_animated(
@@ -103,7 +103,7 @@ fn main() {
         );
 
         // Flush to window
-        window.update(&target.display);
+        window.update(target.display());
 
         for event in window.events() {
             match event {

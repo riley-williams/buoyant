@@ -24,7 +24,7 @@ fn main() {
     let display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(size);
     let mut target = EmbeddedGraphicsRenderTarget::new(display);
 
-    target.display.clear(BACKGROUND_COLOR).unwrap();
+    target.display_mut().clear(BACKGROUND_COLOR).unwrap();
 
     let environment = DefaultEnvironment::default();
     let origin = buoyant::primitives::Point::zero();
@@ -35,7 +35,7 @@ fn main() {
 
     render_tree.render(&mut target, &DEFAULT_COLOR, origin);
 
-    window.show_static(&target.display);
+    window.show_static(target.display());
 }
 
 fn hello_view() -> impl View<Rgb888> {

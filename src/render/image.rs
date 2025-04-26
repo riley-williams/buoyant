@@ -1,6 +1,6 @@
 use crate::primitives::geometry::Rectangle;
-use crate::primitives::{Interpolate as _, Point, Size};
-use crate::render_target::{Image as DrawImage, ImageBrush, RenderTarget};
+use crate::primitives::{Interpolate as _, Point};
+use crate::render_target::{Brush, ImageBrush, RenderTarget};
 
 use super::{AnimatedJoin, AnimationDomain, Render};
 
@@ -25,10 +25,8 @@ impl<T> AnimatedJoin for Image<'_, T> {
         }
     }
 }
-// FIXME: Implement Render for Image
-impl<C: From<<T as crate::render_target::Image>::ColorFormat>, T: DrawImage> Render<C>
-    for Image<'_, T>
-{
+
+impl<C: From<<I as Brush>::ColorFormat>, I: ImageBrush> Render<C> for Image<'_, I> {
     fn render(
         &self,
         render_target: &mut impl RenderTarget<ColorFormat = C>,
@@ -36,12 +34,8 @@ impl<C: From<<T as crate::render_target::Image>::ColorFormat>, T: DrawImage> Ren
         offset: crate::primitives::Point,
     ) {
         let origin = self.origin + offset;
-        let rectangle = Rectangle::new(
-            Point::new(0, 0),
-            Size::new(self.image.width(), self.image.height()),
-        );
-        let brush = ImageBrush::new(self.image);
-        render_target.fill(origin, &brush, None, &rectangle);
+        let rectangle = Rectangle::new(Point::new(0, 0), self.image.size());
+        render_target.fill(origin, self.image, None, &rectangle);
     }
 
     fn render_animated(
@@ -53,11 +47,7 @@ impl<C: From<<T as crate::render_target::Image>::ColorFormat>, T: DrawImage> Ren
         domain: &super::AnimationDomain,
     ) {
         let origin = offset + Point::interpolate(source.origin, target.origin, domain.factor);
-        let rectangle = Rectangle::new(
-            Point::new(0, 0),
-            Size::new(target.image.width(), target.image.height()),
-        );
-        let brush = ImageBrush::new(target.image);
-        render_target.fill(origin, &brush, None, &rectangle);
+        let rectangle = Rectangle::new(Point::new(0, 0), target.image.size());
+        render_target.fill(origin, target.image, None, &rectangle);
     }
 }

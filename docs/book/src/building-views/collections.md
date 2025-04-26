@@ -32,12 +32,12 @@ better choice. Use ForEach when you want to display a collection of like views.
 #     let origin = buoyant::primitives::Point::zero();
 #
 #     let view = view(&SWATCHES);
-#     let layout = view.layout(&target.display.size().into(), &environment);
+#     let layout = view.layout(&target.size().into(), &environment);
 #     let render_tree = view.render_tree(&layout, origin, &environment);
 #
 #     render_tree.render(&mut target, &DEFAULT_COLOR, origin);
 #
-#     window.show_static(&target.display);
+#     window.show_static(&target.display());
 # }
 #
 # mod spacing {

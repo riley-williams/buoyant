@@ -2,10 +2,10 @@ use buoyant::{
     layout::HorizontalAlignment,
     view::{FitAxis, HStack, Text, VStack, View, ViewExt, ViewThatFits},
 };
-use embedded_graphics::mono_font::ascii::{FONT_7X13, FONT_9X18_BOLD};
 
 use crate::{
     color::{self, ColorFormat},
+    font,
     state::BatteryStatus,
 };
 
@@ -46,8 +46,8 @@ pub fn labeled_pair<'a>(
     alignment: HorizontalAlignment,
 ) -> impl View<ColorFormat> + use<'a> {
     VStack::new((
-        Text::new(value, &FONT_9X18_BOLD).foreground_color(color::CONTENT),
-        Text::new(label, &FONT_7X13).foreground_color(color::SECONDARY_CONTENT),
+        Text::new(value, &font::BODY_BOLD).foreground_color(color::CONTENT),
+        Text::new(label, &font::FOOTNOTE).foreground_color(color::SECONDARY_CONTENT),
     ))
     .with_alignment(alignment)
     .flex_infinite_width(alignment)
