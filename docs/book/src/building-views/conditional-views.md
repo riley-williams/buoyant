@@ -6,7 +6,7 @@ If you try something like this:
 # extern crate buoyant;
 # extern crate embedded_graphics;
 # use buoyant::view::{Text, shape::Rectangle, View};
-# use embedded_graphics::{mono_font::ascii::FONT_9X15, pixelcolor::Rgb888, prelude::*};
+# use embedded_graphics::{mono_font::ascii::FONT_9X15, pixelcolor::Rgb888};
 #
 fn view(is_redacted: bool) -> impl View<Rgb888> {
     if is_redacted {
@@ -32,12 +32,7 @@ The `if_view!` macro allows you to write views as if you were writing a plain `i
 # extern crate buoyant;
 # extern crate embedded_graphics;
 # extern crate embedded_graphics_simulator;
-# use buoyant::{
-#     environment::DefaultEnvironment,
-#     layout::Layout,
-#     render::{Render, Renderable},
-#     render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _},
-# };
+# use buoyant::view::AsDrawable as _;
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
 #
 # const BACKGROUND_COLOR: Rgb888 = Rgb888::CSS_DARK_SLATE_GRAY;
@@ -45,21 +40,16 @@ The `if_view!` macro allows you to write views as if you were writing a plain `i
 #
 # fn main() {
 #     let mut window = Window::new("Example", &OutputSettings::default());
-#     let display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(480, 320));
-#     let mut target = EmbeddedGraphicsRenderTarget::new(display);
+#     let mut display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(480, 320));
 #
-#     target.clear(BACKGROUND_COLOR);
+#     display.clear(BACKGROUND_COLOR).unwrap();
 #
-#     let environment = DefaultEnvironment::default();
-#     let origin = buoyant::primitives::Point::zero();
+#     view()
+#         .as_drawable(display.size(), DEFAULT_COLOR)
+#         .draw(&mut display)
+#         .unwrap();
 #
-#     let view = view();
-#     let layout = view.layout(&target.size().into(), &environment);
-#     let render_tree = view.render_tree(&layout, origin, &environment);
-#
-#     render_tree.render(&mut target, &DEFAULT_COLOR, origin);
-#
-#     window.show_static(&target.display());
+#     window.show_static(&display);
 # }
 #
 use buoyant::if_view;
@@ -101,13 +91,7 @@ variables in the match arms.
 # extern crate buoyant;
 # extern crate embedded_graphics;
 # extern crate embedded_graphics_simulator;
-# use buoyant::{
-#     environment::DefaultEnvironment,
-#     layout::Layout,
-#     render::{Render, Renderable},
-#     render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _},
-#     view::EmptyView,
-# };
+# use buoyant::view::AsDrawable as _;
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
 #
 # const BACKGROUND_COLOR: Rgb888 = Rgb888::CSS_DARK_SLATE_GRAY;
@@ -115,26 +99,21 @@ variables in the match arms.
 #
 # fn main() {
 #     let mut window = Window::new("Example", &OutputSettings::default());
-#     let display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(480, 320));
-#     let mut target = EmbeddedGraphicsRenderTarget::new(display);
+#     let mut display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(480, 320));
 #
-#     target.clear(BACKGROUND_COLOR);
+#     display.clear(BACKGROUND_COLOR).unwrap();
 #
-#     let environment = DefaultEnvironment::default();
-#     let origin = buoyant::primitives::Point::zero();
+#     view()
+#         .as_drawable(display.size(), DEFAULT_COLOR)
+#         .draw(&mut display)
+#         .unwrap();
 #
-#     let view = view();
-#     let layout = view.layout(&target.size().into(), &environment);
-#     let render_tree = view.render_tree(&layout, origin, &environment);
-#
-#     render_tree.render(&mut target, &DEFAULT_COLOR, origin);
-#
-#     window.show_static(&target.display());
+#     window.show_static(&display);
 # }
 #
 use buoyant::match_view;
 use buoyant::view::shape::{Rectangle, RoundedRectangle};
-use buoyant::view::{padding::Edges, View, ViewExt as _, VStack};
+use buoyant::view::{padding::Edges, EmptyView, View, ViewExt as _, VStack};
 use embedded_graphics::{pixelcolor::Rgb888, prelude::*};
 
 #[derive(Debug, Clone, Copy)]
