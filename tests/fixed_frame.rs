@@ -4,9 +4,10 @@ use buoyant::{
     primitives::{Dimensions, Point, ProposedDimension, ProposedDimensions, Size},
     render::Render,
     render_target::FixedTextBuffer,
-    view::{make_render_tree, Text, ViewExt},
+    view::{Text, ViewExt},
 };
 mod common;
+use common::make_render_tree;
 
 #[test]
 fn test_fixed_width() {

@@ -1,9 +1,10 @@
+use buoyant::environment::DefaultEnvironment;
 use buoyant::font::CharacterBufferFont;
 use buoyant::primitives::Point;
 use buoyant::render::Render;
 use buoyant::view::padding::Edges;
 use buoyant::view::View;
-use buoyant::view::{make_render_tree, ViewExt};
+use buoyant::view::ViewExt;
 use buoyant::{
     layout::VerticalAlignment,
     render_target::CrosstermRenderTarget,
@@ -114,7 +115,9 @@ fn main() {
 fn render_view(target: &mut CrosstermRenderTarget, view: &impl View<Colors>) {
     target.clear();
     let size = target.size();
-    let tree = make_render_tree(view, size);
+    let env = DefaultEnvironment::default();
+    let layout = view.layout(&size.into(), &env);
+    let tree = view.render_tree(&layout, Point::zero(), &env);
     tree.render(
         target,
         &Colors {

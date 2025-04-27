@@ -5,10 +5,11 @@ use buoyant::{
     render::Render as _,
     render_target::FixedTextBuffer,
     view::{
-        make_render_tree, padding::Edges, shape::Rectangle, EmptyView, HorizontalTextAlignment,
-        Text, ViewExt as _,
+        padding::Edges, shape::Rectangle, EmptyView, HorizontalTextAlignment, Text, ViewExt as _,
     },
 };
+mod common;
+use common::make_render_tree;
 
 #[test]
 fn background_inherits_foreground_size() {

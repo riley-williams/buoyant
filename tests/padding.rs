@@ -9,11 +9,10 @@ use buoyant::{
     layout::Layout,
     primitives::{Dimensions, Size},
     render_target::FixedTextBuffer,
-    view::{
-        make_render_tree, shape::Rectangle, Divider, HorizontalTextAlignment, Spacer, Text, VStack,
-        ViewExt,
-    },
+    view::{shape::Rectangle, Divider, HorizontalTextAlignment, Spacer, Text, VStack, ViewExt},
 };
+mod common;
+use common::make_render_tree;
 
 #[test]
 fn test_clipped_text_trails_correctly() {

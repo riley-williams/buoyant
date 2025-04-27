@@ -8,7 +8,7 @@ use buoyant::{
     view::{
         padding::Edges,
         shape::{Capsule, Circle, Rectangle, RoundedRectangle},
-        HStack, Image, Text, VStack, View, ViewExt,
+        AsDrawable as _, HStack, Image, Text, VStack, View, ViewExt,
     },
 };
 use embedded_graphics::{
@@ -30,14 +30,14 @@ fn render_to_mock(view: &impl View<Rgb888>, allow_overdraw: bool) -> MockDisplay
     let mut display = MockDisplay::<Rgb888>::new();
     display.set_allow_overdraw(allow_overdraw);
     display.set_allow_out_of_bounds_drawing(false);
-    let mut target = EmbeddedGraphicsRenderTarget::new(display);
+    let mut target = EmbeddedGraphicsRenderTarget::new(&mut display);
 
     let env = DefaultEnvironment::default();
     let layout = view.layout(&target.size().into(), &env);
     let tree = view.render_tree(&layout, Point::zero(), &env);
     tree.render(&mut target, &Rgb888::WHITE, Point::zero());
 
-    target.into_inner()
+    display
 }
 
 #[test]
@@ -88,7 +88,7 @@ fn rectangle() {
 }
 
 #[test]
-fn as_draw() {
+fn raw_surface_draw_target() {
     let mut display = MockDisplay::<Rgb888>::new();
     display.set_allow_overdraw(false);
     display.set_allow_out_of_bounds_drawing(false);
@@ -100,7 +100,7 @@ fn as_draw() {
                 .build(),
         );
 
-    let mut target = EmbeddedGraphicsRenderTarget::new(display);
+    let mut target = EmbeddedGraphicsRenderTarget::new(&mut display);
     // target as surface -> surface as target
     rectangle
         .draw(&mut target.raw_surface().draw_target())
@@ -110,6 +110,30 @@ fn as_draw() {
     rectangle.draw(&mut display_2).unwrap();
 
     target.display().assert_eq(&display_2);
+}
+
+#[test]
+fn as_drawable() {
+    let mut display = MockDisplay::new();
+
+    Rectangle
+        .padding(Edges::All, 4)
+        .foreground_color(Rgb888::CSS_SPRING_GREEN)
+        .as_drawable(display.size(), Rgb888::WHITE)
+        .draw(&mut display)
+        .unwrap();
+
+    let mut display_2 = MockDisplay::new();
+
+    EgRectangle::new(EgPoint::new(4, 4), display.size() - EgSize::new(8, 8))
+        .into_styled(
+            PrimitiveStyleBuilder::new()
+                .fill_color(Rgb888::CSS_SPRING_GREEN)
+                .build(),
+        )
+        .draw(&mut display_2)
+        .unwrap();
+    display.assert_eq(&display_2);
 }
 
 #[test]

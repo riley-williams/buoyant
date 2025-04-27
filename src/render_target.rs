@@ -100,7 +100,7 @@ pub trait RenderTarget {
     /// use crate::buoyant::surface::AsDrawTarget;
     ///
     /// # let mut display = MockDisplay::<Rgb888>::new();
-    /// # let mut target = EmbeddedGraphicsRenderTarget::new(display);
+    /// # let mut target = EmbeddedGraphicsRenderTarget::new(&mut display);
     /// // let mut target = EmbeddedGraphicsRenderTarget::new(...);
     /// # let data = include_bytes!("../tests/assets/rhombic-dodecahedron.tga");
     ///
