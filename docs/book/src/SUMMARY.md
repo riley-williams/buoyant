@@ -10,6 +10,7 @@
   - [Mixed Alignment](./building-views/mixed-alignment.md)
   - [Collections](./building-views/collections.md)
   - [Conditional Views](./building-views/conditional-views.md)
+  - [Fonts](./building-views/fonts.md)
   - [Manual View Lifecycle](./building-views/manual-view-lifecycle.md)
 - [Animation](./animation.md)
   - [Render Trees](./animation/render-trees.md)
