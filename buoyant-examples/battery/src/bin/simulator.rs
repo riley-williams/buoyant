@@ -29,8 +29,9 @@ fn main() {
     // Some display sizes to try:
     // Size::new(210, 110)
     // Size::new(110, 310)
-    let display: SimulatorDisplay<color::ColorFormat> = SimulatorDisplay::new(Size::new(210, 110));
-    let mut target = EmbeddedGraphicsRenderTarget::new(display);
+    let mut display: SimulatorDisplay<color::ColorFormat> =
+        SimulatorDisplay::new(Size::new(210, 110));
+    let mut target = EmbeddedGraphicsRenderTarget::new(&mut display);
     let app_start = Instant::now();
 
     let simulator = ChargeSim::new(1.0);

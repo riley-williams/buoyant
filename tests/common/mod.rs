@@ -1,9 +1,11 @@
 use std::time::Duration;
 
 use buoyant::{
-    environment::LayoutEnvironment,
+    environment::{DefaultEnvironment, LayoutEnvironment},
     layout::{Alignment, LayoutDirection},
+    primitives::{Point, Size},
     render_target::FixedTextBuffer,
+    view::View,
 };
 
 #[derive(Debug, Clone)]
@@ -59,4 +61,15 @@ pub fn collect_text<const W: usize, const H: usize>(buffer: &FixedTextBuffer<W, 
         .iter()
         .map(|chars| chars.iter().collect::<String>())
         .collect::<String>()
+}
+
+#[allow(dead_code)]
+#[must_use]
+pub fn make_render_tree<C, V>(view: &V, size: Size) -> V::Renderables
+where
+    V: View<C>,
+{
+    let env = DefaultEnvironment::default();
+    let layout = view.layout(&size.into(), &env);
+    view.render_tree(&layout, Point::zero(), &env)
 }

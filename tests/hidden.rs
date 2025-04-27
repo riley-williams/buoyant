@@ -6,8 +6,10 @@ use buoyant::{
     primitives::Point,
     render::Render as _,
     render_target::FixedTextBuffer,
-    view::{make_render_tree, HStack, Text, ViewExt as _},
+    view::{HStack, Text, ViewExt as _},
 };
+mod common;
+use common::make_render_tree;
 
 #[test]
 fn background_renders_on_hidden_view() {

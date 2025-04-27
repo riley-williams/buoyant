@@ -4,7 +4,6 @@ use buoyant::layout::{HorizontalAlignment, Layout, VerticalAlignment};
 use buoyant::primitives::{Dimensions, Point, ProposedDimension, ProposedDimensions, Size};
 use buoyant::render::Render;
 use buoyant::render_target::FixedTextBuffer;
-use buoyant::view::make_render_tree;
 use buoyant::view::padding::Edges;
 use buoyant::view::{
     shape::Rectangle, Divider, EmptyView, HStack, HorizontalTextAlignment, Spacer, Text, VStack,
@@ -12,7 +11,7 @@ use buoyant::view::{
 };
 
 mod common;
-use common::collect_text;
+use common::{collect_text, make_render_tree};
 
 #[test]
 fn test_greedy_layout_2() {

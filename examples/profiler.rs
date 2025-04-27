@@ -1,5 +1,5 @@
 use buoyant::primitives::Point;
-use buoyant::render::Render;
+use buoyant::render::{Render, Renderable as _};
 use buoyant::view::padding::Edges;
 use buoyant::{
     environment::DefaultEnvironment,
@@ -7,9 +7,7 @@ use buoyant::{
     layout::{Layout, VerticalAlignment},
     primitives::Size,
     render_target::FixedTextBuffer,
-    view::{
-        make_render_tree, Divider, HStack, HorizontalTextAlignment, Spacer, Text, VStack, ViewExt,
-    },
+    view::{Divider, HStack, HorizontalTextAlignment, Spacer, Text, VStack, ViewExt},
 };
 
 fn main() {
@@ -60,7 +58,8 @@ fn main() {
     for width in 1..100 {
         for height in 1..100 {
             size = Size::new(width, height);
-            let tree = make_render_tree(&stack, size);
+            let layout = stack.layout(&size.into(), &env);
+            let tree = stack.render_tree(&layout, Point::zero(), &env);
             tree.render(&mut target, &' ', Point::zero());
         }
     }

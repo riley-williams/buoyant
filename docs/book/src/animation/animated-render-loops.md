@@ -22,8 +22,8 @@ To animate between two render trees, you can use the `render_animated()` method:
 # };
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::RgbColor};
 # 
-# let display = embedded_graphics::mock_display::MockDisplay::new();
-# let mut target = EmbeddedGraphicsRenderTarget::new(display);
+# let mut display = embedded_graphics::mock_display::MockDisplay::new();
+# let mut target = EmbeddedGraphicsRenderTarget::new(&mut display);
 # let app_time = Duration::from_secs(0);
 # 
 # let environment = DefaultEnvironment::new(app_time);
@@ -78,8 +78,8 @@ is the same as rendering the two trees with `render_animated()`.
 # };
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::RgbColor};
 # 
-# let display = embedded_graphics::mock_display::MockDisplay::new();
-# let mut target = EmbeddedGraphicsRenderTarget::new(display);
+# let mut display = embedded_graphics::mock_display::MockDisplay::new();
+# let mut target = EmbeddedGraphicsRenderTarget::new(&mut display);
 # let app_time = Duration::from_secs(0);
 # 
 # let environment = DefaultEnvironment::new(app_time);

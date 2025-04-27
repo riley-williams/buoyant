@@ -10,12 +10,7 @@ better choice. Use ForEach when you want to display a collection of like views.
 # extern crate buoyant;
 # extern crate embedded_graphics;
 # extern crate embedded_graphics_simulator;
-# use buoyant::{
-#     environment::DefaultEnvironment,
-#     layout::Layout,
-#     render::{Render, Renderable},
-#     render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _},
-# };
+# use buoyant::view::AsDrawable as _;
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
 #
 # const BACKGROUND_COLOR: Rgb888 = Rgb888::CSS_DARK_SLATE_GRAY;
@@ -23,21 +18,16 @@ better choice. Use ForEach when you want to display a collection of like views.
 #
 # fn main() {
 #     let mut window = Window::new("Example", &OutputSettings::default());
-#     let display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(480, 320));
-#     let mut target = EmbeddedGraphicsRenderTarget::new(display);
+#     let mut display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(480, 320));
 #
-#     target.clear(BACKGROUND_COLOR);
+#     display.clear(BACKGROUND_COLOR).unwrap();
 #
-#     let environment = DefaultEnvironment::default();
-#     let origin = buoyant::primitives::Point::zero();
+#     view(&SWATCHES)
+#         .as_drawable(display.size(), DEFAULT_COLOR)
+#         .draw(&mut display)
+#         .unwrap();
 #
-#     let view = view(&SWATCHES);
-#     let layout = view.layout(&target.size().into(), &environment);
-#     let render_tree = view.render_tree(&layout, origin, &environment);
-#
-#     render_tree.render(&mut target, &DEFAULT_COLOR, origin);
-#
-#     window.show_static(&target.display());
+#     window.show_static(&display);
 # }
 #
 # mod spacing {

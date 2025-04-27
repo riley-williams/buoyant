@@ -23,14 +23,9 @@ use embedded_graphics::{
 use super::{Glyph, ImageBrush, Stroke, Surface};
 
 #[derive(Debug)]
-pub struct EmbeddedGraphicsRenderTarget<D> {
-    display: D,
-}
+pub struct DrawTargetSurface<'a, D: DrawTarget>(&'a mut D);
 
-#[derive(Debug)]
-pub struct DrawTargetSurface<D: DrawTarget>(D);
-
-impl<D: DrawTarget> Surface for DrawTargetSurface<D> {
+impl<D: DrawTarget> Surface for DrawTargetSurface<'_, D> {
     type Color = D::Color;
 
     fn size(&self) -> crate::primitives::Size {
@@ -56,30 +51,32 @@ impl<D: DrawTarget> Surface for DrawTargetSurface<D> {
     }
 }
 
-impl<D, C> EmbeddedGraphicsRenderTarget<DrawTargetSurface<D>>
+#[derive(Debug)]
+pub struct EmbeddedGraphicsRenderTarget<D> {
+    surface: D,
+}
+
+impl<'a, D> EmbeddedGraphicsRenderTarget<DrawTargetSurface<'a, D>>
 where
-    D: DrawTarget<Color = C>,
-    C: PixelColor + Interpolate,
+    D: DrawTarget,
+    D::Color: PixelColor + Interpolate,
 {
     /// Initialize an `EmbeddedGraphicsRenderTarget` from a `DrawTarget`
     #[must_use]
-    pub fn new(display: D) -> Self {
+    pub fn new(display: &'a mut D) -> Self {
         Self {
-            display: DrawTargetSurface(display),
+            surface: DrawTargetSurface(display),
         }
     }
 
-    /// Returns the original draw target, consuming self
-    pub fn into_inner(self) -> D {
-        self.display.0
-    }
-
+    #[must_use]
     pub fn display(&self) -> &D {
-        &self.display.0
+        self.surface.0
     }
 
+    #[must_use]
     pub fn display_mut(&mut self) -> &mut D {
-        &mut self.display.0
+        self.surface.0
     }
 }
 
@@ -91,11 +88,11 @@ where
     type ColorFormat = C;
 
     fn size(&self) -> crate::primitives::Size {
-        self.display.size()
+        self.surface.size()
     }
 
     fn clear(&mut self, color: Self::ColorFormat) {
-        let _ = self.display.draw_target().clear(color);
+        let _ = self.surface.draw_target().clear(color);
     }
 
     fn fill<T: Into<Self::ColorFormat>>(
@@ -126,7 +123,7 @@ where
             // only support rectangles for now
             let Some(rect) = shape.as_rect() else { return };
             // FIXME: Apply brush transform and clip to shape bounds
-            self.display
+            self.surface
                 .fill_contiguous(&rect, image.color_iter().map(Into::into));
         } else {
             // no support for custom brushes yet
@@ -176,13 +173,13 @@ where
             return;
         };
         for glyph in glyphs {
-            let mut surface = OffsetSurface::new(&mut self.display, offset + glyph.offset);
+            let mut surface = OffsetSurface::new(&mut self.surface, offset + glyph.offset);
             font.draw(glyph.character, color, &mut surface);
         }
     }
 
     fn raw_surface(&mut self) -> &mut impl Surface<Color = Self::ColorFormat> {
-        &mut self.display
+        &mut self.surface
     }
 }
 
@@ -196,14 +193,14 @@ where
         let end = EgPoint::new(line.end.x + offset.x, line.end.y + offset.y);
 
         let eg_line = EgLine::new(start, end).into_styled(*style);
-        let _ = eg_line.draw(&mut self.display.draw_target());
+        let _ = eg_line.draw(&mut self.surface.draw_target());
     }
 
     fn draw_rectangle(&mut self, rect: &Rectangle, offset: Point, style: &PrimitiveStyle<C>) {
         let top_left = EgPoint::new(rect.origin.x + offset.x, rect.origin.y + offset.y);
 
         let eg_rect = EgRectangle::new(top_left, rect.size.into()).into_styled(*style);
-        let _ = eg_rect.draw(&mut self.display.draw_target());
+        let _ = eg_rect.draw(&mut self.surface.draw_target());
     }
 
     fn draw_rounded_rectangle(
@@ -221,14 +218,14 @@ where
             embedded_graphics::primitives::CornerRadii::new((corner_radius, corner_radius).into()),
         )
         .into_styled(*style);
-        let _ = eg_rounded_rect.draw(&mut self.display.draw_target());
+        let _ = eg_rounded_rect.draw(&mut self.surface.draw_target());
     }
 
     fn draw_circle(&mut self, circle: &Circle, offset: Point, style: &PrimitiveStyle<C>) {
         let top_left = EgPoint::new(circle.origin.x + offset.x, circle.origin.y + offset.y);
 
         let eg_circle = EgCircle::new(top_left, circle.diameter).into_styled(*style);
-        let _ = eg_circle.draw(&mut self.display.draw_target());
+        let _ = eg_circle.draw(&mut self.surface.draw_target());
     }
 
     fn draw_path_shape(&mut self, shape: &impl Shape, offset: Point, style: &PrimitiveStyle<C>) {
@@ -248,7 +245,7 @@ where
                         let end_eg = EgPoint::new(end.x, end.y);
 
                         let eg_line = EgLine::new(start_eg, end_eg).into_styled(*style);
-                        let _ = eg_line.draw(&mut self.display.draw_target());
+                        let _ = eg_line.draw(&mut self.surface.draw_target());
 
                         last_point = Some(end);
                     }
@@ -262,7 +259,7 @@ where
                         let end_eg = EgPoint::new(end.x, end.y);
 
                         let eg_line = EgLine::new(start_eg, end_eg).into_styled(*style);
-                        let _ = eg_line.draw(&mut self.display.draw_target());
+                        let _ = eg_line.draw(&mut self.surface.draw_target());
 
                         last_point = Some(end);
                     }
@@ -276,7 +273,7 @@ where
                         let end_eg = EgPoint::new(end.x, end.y);
 
                         let eg_line = EgLine::new(start_eg, end_eg).into_styled(*style);
-                        let _ = eg_line.draw(&mut self.display.draw_target());
+                        let _ = eg_line.draw(&mut self.surface.draw_target());
 
                         last_point = Some(end);
                     }
@@ -288,7 +285,7 @@ where
                         let end_eg = EgPoint::new(first.x, first.y);
 
                         let eg_line = EgLine::new(start_eg, end_eg).into_styled(*style);
-                        let _ = eg_line.draw(&mut self.display.draw_target());
+                        let _ = eg_line.draw(&mut self.surface.draw_target());
                     }
                 }
             }

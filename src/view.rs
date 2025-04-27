@@ -4,7 +4,8 @@ mod divider;
 mod empty_view;
 mod foreach;
 mod hstack;
-pub mod image;
+#[cfg(feature = "embedded-graphics")]
+mod image;
 pub mod match_view;
 mod modifier;
 pub mod shape;
@@ -18,6 +19,7 @@ pub use divider::Divider;
 pub use empty_view::EmptyView;
 pub use foreach::ForEach;
 pub use hstack::HStack;
+#[cfg(feature = "embedded-graphics")]
 pub use image::Image;
 pub use modifier::padding;
 pub use spacer::Spacer;
@@ -34,10 +36,14 @@ use modifier::{
 
 use crate::{
     animation::Animation,
-    environment::DefaultEnvironment,
     layout::{Alignment, HorizontalAlignment, VerticalAlignment},
-    primitives::{Point, Size},
     render::{Render, Renderable},
+};
+
+#[cfg(feature = "embedded-graphics")]
+use crate::{
+    environment::DefaultEnvironment,
+    primitives::{Interpolate, Point, ProposedDimensions},
 };
 
 pub trait View<C>: Renderable<Renderables: Render<C>> {}
@@ -322,13 +328,78 @@ pub trait LayoutExtensions: ViewExt {
 #[allow(deprecated)]
 impl<T: crate::layout::Layout> LayoutExtensions for T {}
 
-// TODO: Remove this
-pub fn make_render_tree<C, V>(view: &V, size: Size) -> V::Renderables
-where
-    V: Renderable,
-    V::Renderables: Render<C>,
+/// Convert a view into an object that can be drawn with embedded-graphics.
+///
+/// This trait provides a convenient way to draw Buoyant views directly using the embedded-graphics
+/// drawing API, without manually handling layout and rendering stages.
+///
+/// # Example
+///
+/// ```rust
+/// # use buoyant::view::{AsDrawable as _, Text, ViewExt as _};
+/// # use embedded_graphics::{mono_font::ascii::FONT_10X20, pixelcolor::Rgb888, prelude::*};
+/// # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
+///
+/// let mut display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(480, 320));
+///
+/// // Create a simple view
+/// let view = Text::new("Hello Buoyant!", &FONT_10X20)
+///     .foreground_color(Rgb888::GREEN);
+///
+/// // Draw the view directly to the display using AsDrawable
+/// view.as_drawable(display.size(), Rgb888::BLACK)
+///     .draw(&mut display)
+///     .unwrap();
+/// ```
+#[cfg(feature = "embedded-graphics")]
+pub trait AsDrawable<Color> {
+    fn as_drawable(
+        &self,
+        size: impl Into<ProposedDimensions>,
+        default_color: Color,
+    ) -> impl embedded_graphics_core::Drawable<Color = Color, Output = ()>;
+}
+
+#[cfg(feature = "embedded-graphics")]
+impl<C: embedded_graphics_core::pixelcolor::PixelColor + Interpolate, T: View<C>> AsDrawable<C>
+    for T
 {
-    let env = DefaultEnvironment::default();
-    let layout = view.layout(&size.into(), &env);
-    view.render_tree(&layout, Point::zero(), &env)
+    fn as_drawable(
+        &self,
+        size: impl Into<ProposedDimensions>,
+        default_color: C,
+    ) -> impl embedded_graphics_core::Drawable<Color = C, Output = ()> {
+        let env = DefaultEnvironment::non_animated();
+        let layout = self.layout(&size.into(), &env);
+        let render_tree = self.render_tree(&layout, Point::zero(), &env);
+        DrawableView {
+            render_tree,
+            default_color,
+        }
+    }
+}
+
+#[cfg(feature = "embedded-graphics")]
+struct DrawableView<T: Render<C>, C> {
+    render_tree: T,
+    default_color: C,
+}
+
+#[cfg(feature = "embedded-graphics")]
+impl<T: Render<C>, C: embedded_graphics_core::pixelcolor::PixelColor + Interpolate>
+    embedded_graphics_core::Drawable for DrawableView<T, C>
+{
+    type Color = C;
+    type Output = ();
+
+    fn draw<D>(&self, target: &mut D) -> Result<Self::Output, D::Error>
+    where
+        D: embedded_graphics_core::draw_target::DrawTarget<Color = Self::Color>,
+    {
+        // create a temporary embedded graphics render target
+        let mut embedded_target = crate::render_target::EmbeddedGraphicsRenderTarget::new(target);
+        self.render_tree
+            .render(&mut embedded_target, &self.default_color, Point::zero());
+        Ok(())
+    }
 }

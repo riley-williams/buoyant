@@ -12,6 +12,9 @@ Get started with the [Book](https://riley-williams.github.io/buoyant/).
 
 ## Available render targets
 
+While this crate is primarily intended for use with embedded-graphics `DrawTarget`s, it
+can also be used to layout and render views to the terminal.
+
 - `DrawTarget`: `embedded-graphics` displays.
 - `TextBuffer`: A basic fixed-size `char` buffer. Does not respect graphemes.
   This is primarily useful for testing and debugging.
@@ -20,7 +23,7 @@ Get started with the [Book](https://riley-williams.github.io/buoyant/).
 
 ## Example
 
-Here's what an animated toggle button component could look like, implemented with Buoyant:
+Here's an animated toggle component, implemented with Buoyant:
 
 ![Toggle](./docs/images/toggle.gif)
 
@@ -54,28 +57,28 @@ fn toggle_button(is_on: bool) -> impl EmbeddedGraphicsView<Rgb565> {
 Static layout and animation between layouts are relatively feature-complete, aside from
 transitions. You should be able to construct most desired layouts and animations.
 
-- [x] Stacks of heterogeneous views (VStack, HStack, ZStack)
-- [x] Stacks of homogeneous views (ForEach) - partial, vertical only
-- [x] Common SwiftUI primitives (Spacer, Divider)
-- [x] Conditional views, with match variable binding
-- [x] Monospaced Text (whitespace-based line breaking)
-- [x] Images (fixed size)
-- [x] Interruptible Animations + Curves
-- [x] Common embedded-graphics shape primitives
-- [ ] Simulated alpha and antialiasing
-- [ ] Transitions
-- [ ] Shape stroke/fill
-- [ ] Shape styles (e.g. gradients)
-- [ ] Canvas for arbitrary path/shape/raster drawing
+- ✅ Stacks of heterogeneous views (VStack, HStack, ZStack)
+- ✅ Stacks of homogeneous views (ForEach) - partial, vertical only
+- ✅ Common SwiftUI primitives (Spacer, Divider)
+- ✅ Conditional views, with match variable binding
+- ✅ Text (embedded-graphics Monospace and [u8g2](https://crates.io/crates/u8g2-fonts) fonts)
+- ✅ Images (fixed size)
+- ✅ Interruptible Animations + Curves
+- ✅ Common embedded-graphics shape primitives
+- 🚧 Shape stroke+fill
+- 🚧 Canvas for arbitrary path/shape/raster drawing
+- 💤 Simulated alpha and antialiasing
+- 💤 Transitions
+- 💤 Shape styles (e.g. gradients)
 
 ### Interactivity
 
-No interactivity or state management currently exists, but it is the next major
+No native interactivity or state management currently exists, but it is the next major
 planned feature.
 
-- [ ] State management
-- [ ] Click/tap routing
-- [ ] Focus management + keyboard input (Text input view)
+- 💤 State management
+- 💤 Click/tap routing
+- 💤 Focus management + keyboard input (Text input view)
 
 ## Who should use this?
 
