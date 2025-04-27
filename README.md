@@ -28,7 +28,7 @@ Here's an animated toggle component, implemented with Buoyant:
 ![Toggle](./docs/images/toggle.gif)
 
 ```rust
-fn toggle_button(is_on: bool) -> impl EmbeddedGraphicsView<Rgb565> {
+fn toggle_button(is_on: bool) -> impl View<Rgb565> {
     let alignment = if is_on {
         HorizontalAlignment::Trailing
     } else {
