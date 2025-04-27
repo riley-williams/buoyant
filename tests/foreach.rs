@@ -6,8 +6,10 @@ use buoyant::{
     font::CharacterBufferFont,
     layout::{HorizontalAlignment, VerticalAlignment},
     render_target::FixedTextBuffer,
-    view::{make_render_tree, HStack, Spacer, Text},
+    view::{HStack, Spacer, Text},
 };
+mod common;
+use common::make_render_tree;
 
 static FONT: CharacterBufferFont = CharacterBufferFont {};
 

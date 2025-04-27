@@ -6,7 +6,9 @@ use buoyant::render::Render;
 use buoyant::render_target::FixedTextBuffer;
 use buoyant::view::padding::Edges;
 use buoyant::view::shape::Rectangle;
-use buoyant::view::{make_render_tree, Divider, Spacer, Text, ViewExt, ZStack};
+use buoyant::view::{Divider, Spacer, Text, ViewExt, ZStack};
+mod common;
+use common::make_render_tree;
 
 #[test]
 fn test_layout_fills_two() {

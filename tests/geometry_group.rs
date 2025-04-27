@@ -3,8 +3,10 @@ use buoyant::{
     primitives::Point,
     render::Render as _,
     render_target::FixedTextBuffer,
-    view::{make_render_tree, shape::Rectangle, Text, VStack, ViewExt as _},
+    view::{shape::Rectangle, Text, VStack, ViewExt as _},
 };
+mod common;
+use common::make_render_tree;
 
 #[test]
 fn geometry_group_retains_text_offset() {

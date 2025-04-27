@@ -1,4 +1,3 @@
-#[cfg(feature = "embedded-graphics")]
 use embedded_graphics::{image::ImageDrawable, prelude::OriginDimensions};
 
 use crate::{
@@ -15,7 +14,6 @@ pub struct Image<'a, T> {
     image: &'a T,
 }
 
-#[cfg(feature = "embedded-graphics")]
 impl<'a, T: ImageDrawable> Image<'a, T> {
     #[must_use]
     pub const fn new(image: &'a T) -> Self {
@@ -23,7 +21,6 @@ impl<'a, T: ImageDrawable> Image<'a, T> {
     }
 }
 
-#[cfg(feature = "embedded-graphics")]
 impl<T: OriginDimensions> Layout for Image<'_, T> {
     type Sublayout = ();
 
@@ -40,7 +37,6 @@ impl<T: OriginDimensions> Layout for Image<'_, T> {
     }
 }
 
-#[cfg(feature = "embedded-graphics")]
 impl<'a, T: ImageDrawable> Renderable for Image<'a, T> {
     type Renderables = render::Image<'a, T>;
 

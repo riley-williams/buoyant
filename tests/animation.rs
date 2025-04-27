@@ -10,10 +10,12 @@ use buoyant::{
     render::{AnimatedJoin, AnimationDomain, Render, Renderable},
     render_target::FixedTextBuffer,
     view::{
-        make_render_tree, shape::Rectangle, Divider, EmptyView, HorizontalTextAlignment, Text,
-        VStack, View, ViewExt, ZStack,
+        shape::Rectangle, Divider, EmptyView, HorizontalTextAlignment, Text, VStack, View, ViewExt,
+        ZStack,
     },
 };
+mod common;
+use common::make_render_tree;
 
 const FONT: CharacterBufferFont = CharacterBufferFont;
 

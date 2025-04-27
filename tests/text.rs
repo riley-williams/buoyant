@@ -8,8 +8,10 @@ use buoyant::{
     primitives::{Dimensions, Point},
     render::Renderable as _,
     render_target::FixedTextBuffer,
-    view::{make_render_tree, HorizontalTextAlignment, Text, ViewExt as _},
+    view::{HorizontalTextAlignment, Text, ViewExt as _},
 };
+mod common;
+use common::make_render_tree;
 
 #[test]
 fn test_render_wrapping_leading() {

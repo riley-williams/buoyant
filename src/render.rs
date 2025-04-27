@@ -1,3 +1,7 @@
+//! Render primitives.
+//!
+//! If you are constructing views, this is probably not the module you want. Use ``View`` instead.
+
 use core::time::Duration;
 
 use crate::{

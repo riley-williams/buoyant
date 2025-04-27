@@ -10,8 +10,10 @@ use buoyant::{
     layout::{HorizontalAlignment, Layout, VerticalAlignment},
     primitives::{ProposedDimension, ProposedDimensions, Size},
     render_target::FixedTextBuffer,
-    view::{make_render_tree, shape::Rectangle, Text, ViewExt},
+    view::{shape::Rectangle, Text, ViewExt},
 };
+mod common;
+use common::make_render_tree;
 
 #[test]
 fn test_min() {

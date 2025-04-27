@@ -5,13 +5,7 @@
 //! To run this example using the ``embedded_graphics_simulator``, you must have the `sdl2` package installed.
 //! See [SDL2](https://github.com/Rust-SDL2/rust-sdl2) for installation instructions.
 
-use buoyant::{
-    environment::DefaultEnvironment,
-    layout::Layout,
-    render::{Render as _, Renderable as _},
-    render_target::EmbeddedGraphicsRenderTarget,
-    view::{padding::Edges, HStack, Spacer, Text, View, ViewExt as _},
-};
+use buoyant::view::{padding::Edges, AsDrawable, HStack, Spacer, Text, View, ViewExt as _};
 use embedded_graphics::{mono_font::ascii::FONT_10X20, pixelcolor::Rgb888, prelude::*};
 use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
 
@@ -21,21 +15,15 @@ const DEFAULT_COLOR: Rgb888 = Rgb888::WHITE;
 fn main() {
     let size = Size::new(480, 320);
     let mut window = Window::new("Hello World", &OutputSettings::default());
-    let display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(size);
-    let mut target = EmbeddedGraphicsRenderTarget::new(display);
+    let mut display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(size);
+    display.clear(BACKGROUND_COLOR).unwrap();
 
-    target.display_mut().clear(BACKGROUND_COLOR).unwrap();
+    hello_view()
+        .as_drawable(display.size(), DEFAULT_COLOR)
+        .draw(&mut display)
+        .unwrap();
 
-    let environment = DefaultEnvironment::default();
-    let origin = buoyant::primitives::Point::zero();
-
-    let view = hello_view();
-    let layout = view.layout(&size.into(), &environment);
-    let render_tree = view.render_tree(&layout, origin, &environment);
-
-    render_tree.render(&mut target, &DEFAULT_COLOR, origin);
-
-    window.show_static(target.display());
+    window.show_static(&display);
 }
 
 fn hello_view() -> impl View<Rgb888> {
