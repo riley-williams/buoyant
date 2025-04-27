@@ -1,0 +1,96 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'crossterm'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=crossterm",
+                    "--package=buoyant",
+                    "--features=crossterm"
+                ],
+                "filter": {
+                    "name": "crossterm",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'espresso'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=espresso",
+                    "--package=buoyant"
+                ],
+                "filter": {
+                    "name": "espresso",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'profiler'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=profiler",
+                    "--package=buoyant"
+                ],
+                "filter": {
+                    "name": "profiler",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'quickstart'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=quickstart",
+                    "--package=buoyant"
+                ],
+                "filter": {
+                    "name": "quickstart",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug battery simulator example",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=simulator",
+                    "--package=battery"
+                ],
+                "filter": {
+                    "name": "simulator",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+    ]
+}
