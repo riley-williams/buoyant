@@ -49,7 +49,7 @@ impl<V: Layout> Layout for Priority<V> {
     }
 }
 
-impl<T: Renderable, > Renderable for Priority<T> {
+impl<T: Renderable> Renderable for Priority<T> {
     type Renderables = T::Renderables;
 
     fn render_tree(

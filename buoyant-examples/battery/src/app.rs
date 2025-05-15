@@ -1,10 +1,13 @@
 use std::time::{Duration, Instant};
 
-use buoyant::{environment::DefaultEnvironment, layout::Layout as _, primitives::ProposedDimensions, render::{Render, Renderable as _}};
+use buoyant::{
+    environment::DefaultEnvironment,
+    layout::Layout as _,
+    primitives::ProposedDimensions,
+    render::{Render, Renderable as _},
+};
 
 use crate::{charge_simulator::ChargeSim, color, view::Screen};
-
-
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ButtonState {

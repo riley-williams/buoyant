@@ -36,7 +36,7 @@ impl<T: Layout> Layout for GeometryGroup<T> {
     }
 }
 
-impl<T: Renderable, > Renderable for GeometryGroup<T> {
+impl<T: Renderable> Renderable for GeometryGroup<T> {
     type Renderables = Offset<T::Renderables>;
 
     fn render_tree(
