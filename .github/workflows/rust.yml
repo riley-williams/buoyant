@@ -43,6 +43,14 @@ jobs:
       - name: Clippy
         run: cargo clippy --all --all-features -- -D warnings
 
+  rustfmt:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rustfmt
+        run: rustfmt **/*.rs --check
+
   lint-markdown:
     runs-on: ubuntu-latest
 
