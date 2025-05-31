@@ -14,15 +14,15 @@ jobs:
       id-token: write # To update the deployment status
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - uses: Swatinem/rust-cache@v2
       - name: Install latest mdbook
         run: |
           tag=$(curl 'https://api.github.com/repos/rust-lang/mdbook/releases/latest' | jq -r '.tag_name')
           url="https://github.com/rust-lang/mdbook/releases/download/${tag}/mdbook-${tag}-x86_64-unknown-linux-gnu.tar.gz"
-          mkdir mdbook
-          curl -sSL $url | tar -xz --directory=./mdbook
-          echo `pwd`/mdbook >> $GITHUB_PATH
+          mkdir bin
+          curl -sSL $url | tar -xz --directory=bin
+          echo "$(pwd)/bin" >> $GITHUB_PATH
       - name: Build Book
         run: |
           cd docs/book
