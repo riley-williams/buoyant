@@ -15,6 +15,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - uses: Swatinem/rust-cache@v2
       - name: Install SDL2
         run: sudo apt-get update && sudo apt-get install libsdl2-dev
       - name: Build
@@ -26,6 +28,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - uses: Swatinem/rust-cache@v2
       - name: Check No Features
         run: cargo check --no-default-features
       - name: Check Crossterm
@@ -40,6 +44,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - uses: Swatinem/rust-cache@v2
       - name: Clippy
         run: cargo clippy --all --all-features -- -D warnings
 
@@ -48,6 +54,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - uses: Swatinem/rust-cache@v2
       - name: Rustfmt
         run: rustfmt **/*.rs --check
 
@@ -56,8 +64,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Markdown lint # v19.1.0
-        uses: DavidAnson/markdownlint-cli2-action@05f32210e84442804257b2a6f20b273450ec8265
+      - name: Markdown lint
+        uses: DavidAnson/markdownlint-cli2-action@v20
         with:
           globs: "**/*.md"
 
@@ -66,6 +74,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - uses: Swatinem/rust-cache@v2
       - name: Install latest mdbook
         run: |
           tag=$(curl 'https://api.github.com/repos/rust-lang/mdbook/releases/latest' | jq -r '.tag_name')
@@ -86,8 +96,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Check semver # v2.6
-        uses: obi1kenobi/cargo-semver-checks-action@7272cc2caa468d3e009a2b0a9cc366839348237b
+      - name: Check semver
+        uses: obi1kenobi/cargo-semver-checks-action@v2
 
   typos:
     runs-on: ubuntu-latest
@@ -95,5 +105,5 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Check for typos # v1.30.2
-        uses: crate-ci/typos@7bc041cbb7ca9167c9e0e4ccbb26f48eb0f9d4e0
+      - name: Check for typos
+        uses: crate-ci/typos@v1.33.1
