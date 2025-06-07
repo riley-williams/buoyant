@@ -122,3 +122,119 @@ impl<Color, T: Render<Color>, const N: usize> Render<Color> for heapless::Vec<T,
             });
     }
 }
+
+/// Make sure tuples render in the correct order
+#[cfg(test)]
+mod render_order_tests {
+    use crate::{
+        primitives::Point,
+        render::{AnimationDomain, Render},
+    };
+    use std;
+    use std::vec;
+    use std::{cell::RefCell, rc::Rc, vec::Vec};
+
+    #[derive(Debug, Clone)]
+    struct OrderTracker {
+        order: Rc<RefCell<Vec<usize>>>,
+        id: usize,
+    }
+
+    impl OrderTracker {
+        fn new(id: usize, order: Rc<RefCell<Vec<usize>>>) -> Self {
+            Self { order, id }
+        }
+    }
+
+    impl super::AnimatedJoin for OrderTracker {
+        fn join(source: Self, _target: Self, _domain: &AnimationDomain) -> Self {
+            source
+        }
+    }
+
+    impl Render<char> for OrderTracker {
+        fn render(
+            &self,
+            _render_target: &mut impl crate::render_target::RenderTarget<ColorFormat = char>,
+            _style: &char,
+            _offset: Point,
+        ) {
+            self.order.borrow_mut().push(self.id);
+        }
+
+        fn render_animated(
+            _render_target: &mut impl crate::render_target::RenderTarget<ColorFormat = char>,
+            source: &Self,
+            target: &Self,
+            _style: &char,
+            _offset: Point,
+            _domain: &AnimationDomain,
+        ) {
+            source.order.borrow_mut().push(source.id);
+            target.order.borrow_mut().push(target.id);
+        }
+    }
+
+    macro_rules! test_tuple_render_order {
+        ($($n:tt),+) => {
+            paste::paste! {
+                #[test]
+                fn [<tuple_render_order_$($n)*>]() {
+                    let order = Rc::new(RefCell::new(Vec::new()));
+                    let tuple = (
+                        $(
+                            OrderTracker::new($n, order.clone()),
+                        )+
+                    );
+
+                    let mut mock_target = crate::render_target::FixedTextBuffer::<10, 10>::default();
+                    tuple.render(&mut mock_target, &'x', Point::zero());
+
+                    let expected_order: Vec<usize> = vec![$($n),+];
+                    assert_eq!(*order.borrow(), expected_order);
+                }
+
+                #[test]
+                fn [<tuple_animated_render_order_$($n)*>]() {
+                    let order = Rc::new(RefCell::new(Vec::new()));
+
+                    let mut mock_target = crate::render_target::FixedTextBuffer::<10, 10>::default();
+
+                    let source_tuple = (
+                        $(
+                            OrderTracker::new($n, order.clone()),
+                        )+
+                    );
+                    let target_tuple = (
+                        $(
+                            OrderTracker::new($n + 100, order.clone()),
+                        )+
+                    );
+
+                    let domain = AnimationDomain::new(128, std::time::Duration::from_secs(1));
+                    Render::render_animated(
+                        &mut mock_target,
+                        &source_tuple,
+                        &target_tuple,
+                        &'x',
+                        Point::zero(),
+                        &domain,
+                    );
+
+                    let expected_order: Vec<usize> = vec![$($n, $n + 100),+];
+                    assert_eq!(*order.borrow(), expected_order);
+                }
+            }
+        };
+    }
+
+    test_tuple_render_order!(0, 1);
+    test_tuple_render_order!(0, 1, 2);
+    test_tuple_render_order!(0, 1, 2, 3);
+    test_tuple_render_order!(0, 1, 2, 3, 4);
+    test_tuple_render_order!(0, 1, 2, 3, 4, 5);
+    test_tuple_render_order!(0, 1, 2, 3, 4, 5, 6);
+    test_tuple_render_order!(0, 1, 2, 3, 4, 5, 6, 7);
+    test_tuple_render_order!(0, 1, 2, 3, 4, 5, 6, 7, 8);
+    test_tuple_render_order!(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+}
