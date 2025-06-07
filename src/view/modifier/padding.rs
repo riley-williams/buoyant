@@ -22,6 +22,7 @@ pub enum Edges {
 #[derive(Debug, Clone)]
 pub struct Padding<T> {
     edges: Edges,
+    #[allow(clippy::struct_field_names)]
     padding: u32,
     inner: T,
 }
