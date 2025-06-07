@@ -51,12 +51,43 @@ impl<C: Copy> Render<C> for Rect {
         offset: Point,
         domain: &AnimationDomain,
     ) {
-        // TODO: expecting these clones to be optimized away, check
         Render::render(
             &AnimatedJoin::join(source.clone(), target.clone(), domain),
             render_target,
             style,
             offset,
         );
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use core::time::Duration;
+
+    fn animation_domain(factor: u8) -> AnimationDomain {
+        AnimationDomain::new(factor, Duration::from_millis(100))
+    }
+
+    #[test]
+    fn animated_join_at_start() {
+        let source = Rect::new(Point::new(0, 0), Size::new(10, 20));
+        let target = Rect::new(Point::new(50, 30), Size::new(40, 60));
+
+        let result = AnimatedJoin::join(source.clone(), target.clone(), &animation_domain(0));
+
+        assert_eq!(result.origin, source.origin);
+        assert_eq!(result.size, source.size);
+    }
+
+    #[test]
+    fn animated_join_at_end() {
+        let source = Rect::new(Point::new(0, 0), Size::new(10, 20));
+        let target = Rect::new(Point::new(50, 30), Size::new(40, 60));
+
+        let result = AnimatedJoin::join(source.clone(), target.clone(), &animation_domain(255));
+
+        assert_eq!(result.origin, target.origin);
+        assert_eq!(result.size, target.size);
     }
 }

@@ -17,9 +17,12 @@ impl<'a, T> Image<'a, T> {
 
 impl<T> AnimatedJoin for Image<'_, T> {
     fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
+        if domain.factor == 0 {
+            return source;
+        }
         Self {
             origin: Point::interpolate(source.origin, target.origin, domain.factor),
-            image: source.image,
+            image: target.image,
         }
     }
 }
@@ -98,5 +101,46 @@ mod embedded_graphics {
                 target.render(render_target, style, origin);
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use core::time::Duration;
+
+    fn animation_domain(factor: u8) -> AnimationDomain {
+        AnimationDomain::new(factor, Duration::from_millis(100))
+    }
+
+    // Mock image data for testing
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    struct MockImageData {
+        width: u32,
+        height: u32,
+    }
+
+    #[test]
+    fn animated_join_extremities() {
+        let source_image_data = MockImageData {
+            width: 10,
+            height: 15,
+        };
+
+        let target_image_data = MockImageData {
+            width: 20,
+            height: 20,
+        };
+
+        let source = Image::new(Point::new(0, 0), &source_image_data);
+        let target = Image::new(Point::new(50, 25), &target_image_data);
+
+        let result = AnimatedJoin::join(source.clone(), target.clone(), &animation_domain(0));
+        assert_eq!(result.origin, source.origin);
+        assert_eq!(result.image, source.image);
+
+        let result = AnimatedJoin::join(source.clone(), target.clone(), &animation_domain(255));
+        assert_eq!(result.origin, target.origin);
+        assert_eq!(result.image, target.image);
     }
 }

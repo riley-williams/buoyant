@@ -56,11 +56,42 @@ impl<C: Copy> Render<C> for Capsule {
         offset: Point,
         domain: &AnimationDomain,
     ) {
-        // TODO: expecting these clones to be optimized away, check
         AnimatedJoin::join(source.clone(), target.clone(), domain).render(
             render_target,
             style,
             offset,
         );
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use core::time::Duration;
+
+    fn animation_domain(factor: u8) -> AnimationDomain {
+        AnimationDomain::new(factor, Duration::from_millis(100))
+    }
+
+    #[test]
+    fn animated_join_at_start() {
+        let source = Capsule::new(Point::new(5, 10), Size::new(20, 30));
+        let target = Capsule::new(Point::new(15, 25), Size::new(40, 50));
+
+        let result = AnimatedJoin::join(source.clone(), target.clone(), &animation_domain(0));
+
+        assert_eq!(result.origin, source.origin);
+        assert_eq!(result.size, source.size);
+    }
+
+    #[test]
+    fn animated_join_at_end() {
+        let source = Capsule::new(Point::new(5, 10), Size::new(20, 30));
+        let target = Capsule::new(Point::new(15, 25), Size::new(40, 50));
+
+        let result = AnimatedJoin::join(source.clone(), target.clone(), &animation_domain(255));
+
+        assert_eq!(result.origin, target.origin);
+        assert_eq!(result.size, target.size);
     }
 }
