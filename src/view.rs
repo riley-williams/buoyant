@@ -29,6 +29,17 @@ pub use view_that_fits::{FitAxis, ViewThatFits};
 pub use vstack::VStack;
 pub use zstack::ZStack;
 
+pub mod prelude {
+    pub use super::{padding::Edges, FitAxis, HorizontalTextAlignment};
+    pub use super::{
+        shape::*, Divider, EmptyView, ForEach, HStack, Spacer, Text, VStack, View, ViewExt,
+        ViewThatFits, ZStack,
+    };
+    #[cfg(feature = "embedded-graphics")]
+    pub use super::{AsDrawable, Image};
+    pub use crate::layout::{Alignment, HorizontalAlignment, VerticalAlignment};
+}
+
 use modifier::{
     Animated, BackgroundView, FixedFrame, FixedSize, FlexFrame, ForegroundStyle, GeometryGroup,
     Hidden, Padding, Priority,
