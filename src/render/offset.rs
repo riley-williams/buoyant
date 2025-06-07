@@ -57,3 +57,47 @@ impl<T: Render<C>, C> Render<C> for Offset<T> {
         );
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use core::time::Duration;
+
+    fn animation_domain(factor: u8) -> AnimationDomain {
+        AnimationDomain::new(factor, Duration::from_millis(100))
+    }
+
+    #[test]
+    fn animated_join_at_start() {
+        let source = Offset::new(Point::new(0, 0), ());
+        let target = Offset::new(Point::new(100, 50), ());
+
+        let result = AnimatedJoin::join(source.clone(), target.clone(), &animation_domain(0));
+
+        // At factor 0, should have source's offset
+        assert_eq!(result.offset, source.offset);
+    }
+
+    #[test]
+    fn animated_join_at_end() {
+        let source = Offset::new(Point::new(0, 0), ());
+        let target = Offset::new(Point::new(100, 50), ());
+
+        let result = AnimatedJoin::join(source.clone(), target.clone(), &animation_domain(255));
+
+        // At factor 255, should have target's offset
+        assert_eq!(result.offset, target.offset);
+    }
+
+    #[test]
+    fn animated_join_interpolates_offset() {
+        let source = Offset::new(Point::new(0, 0), ());
+        let target = Offset::new(Point::new(100, 50), ());
+
+        let result = AnimatedJoin::join(source.clone(), target.clone(), &animation_domain(128));
+
+        // At factor 128 (~50%), offset should be interpolated
+        assert!(result.offset.x > source.offset.x && result.offset.x < target.offset.x);
+        assert!(result.offset.y > source.offset.y && result.offset.y < target.offset.y);
+    }
+}
