@@ -15,6 +15,7 @@ mod wrap;
 
 #[derive(Debug, Clone)]
 pub struct Text<'a, T, F, W = WhitespaceWrap<'a, F>> {
+    #[allow(clippy::struct_field_names)]
     pub(crate) text: T,
     pub(crate) font: &'a F,
     pub(crate) alignment: HorizontalTextAlignment,
