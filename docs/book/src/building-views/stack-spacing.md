@@ -12,7 +12,6 @@ You can configure the spacing between child views using `.with_spacing`.
 # extern crate buoyant;
 # extern crate embedded_graphics;
 # extern crate embedded_graphics_simulator;
-# use buoyant::view::AsDrawable as _;
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::*};
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
 # 
@@ -33,10 +32,7 @@ You can configure the spacing between child views using `.with_spacing`.
 #     window.show_static(&display);
 # }
 # 
-use buoyant::layout::HorizontalAlignment;
-use buoyant::view::shape::{Capsule, Circle, Rectangle};
-use buoyant::view::{View, ViewExt as _};
-use buoyant::view::VStack;
+use buoyant::view::prelude::*;
 
 fn view() -> impl View<Rgb888> {
     VStack::new((
@@ -63,7 +59,6 @@ incrementally larger values for each class of separation.
 # extern crate buoyant;
 # extern crate embedded_graphics;
 # extern crate embedded_graphics_simulator;
-# use buoyant::view::AsDrawable as _;
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
 # 
 # const BACKGROUND_COLOR: Rgb888 = Rgb888::CSS_DARK_SLATE_GRAY;
@@ -83,11 +78,7 @@ incrementally larger values for each class of separation.
 #     window.show_static(&display);
 # }
 # 
-use buoyant::layout::{HorizontalAlignment, VerticalAlignment};
-use buoyant::view::padding::Edges;
-use buoyant::view::shape::Circle;
-use buoyant::view::{HStack, Text, VStack};
-use buoyant::view::{View, ViewExt as _};
+use buoyant::view::prelude::*;
 use embedded_graphics::{
     mono_font::ascii::{FONT_7X13, FONT_9X15, FONT_9X15_BOLD},
     pixelcolor::Rgb888,

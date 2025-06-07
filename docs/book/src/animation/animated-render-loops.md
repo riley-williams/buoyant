@@ -18,7 +18,7 @@ To animate between two render trees, you can use the `render_animated()` method:
 #         Renderable as _,
 #     },
 #     render_target::EmbeddedGraphicsRenderTarget,
-#     view::{EmptyView, View},
+#     view::prelude::*,
 # };
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::RgbColor};
 # 
@@ -74,7 +74,7 @@ is the same as rendering the two trees with `render_animated()`.
 #         Renderable as _,
 #     },
 #     render_target::EmbeddedGraphicsRenderTarget,
-#     view::{EmptyView, View},
+#     view::prelude::*,
 # };
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::RgbColor};
 # 

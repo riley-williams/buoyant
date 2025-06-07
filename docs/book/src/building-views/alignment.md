@@ -21,7 +21,6 @@ you could set ``VerticalAlignment::Top``.
 # extern crate buoyant;
 # extern crate embedded_graphics;
 # extern crate embedded_graphics_simulator;
-# use buoyant::view::AsDrawable as _;
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::*};
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
 # 
@@ -42,10 +41,7 @@ you could set ``VerticalAlignment::Top``.
 #     window.show_static(&display);
 # }
 # 
-use buoyant::layout::VerticalAlignment;
-use buoyant::view::shape::{Circle, Rectangle};
-use buoyant::view::HStack;
-use buoyant::view::{View, ViewExt as _};
+use buoyant::view::prelude::*;
 
 fn view() -> impl View<Rgb888> {
     HStack::new((

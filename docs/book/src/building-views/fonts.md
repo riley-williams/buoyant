@@ -20,7 +20,6 @@ text in animation-heavy applications.
 # extern crate buoyant;
 # extern crate embedded_graphics;
 # extern crate embedded_graphics_simulator;
-# use buoyant::view::AsDrawable as _;
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::*};
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
 # 
@@ -41,8 +40,7 @@ text in animation-heavy applications.
 #     window.show_static(&display);
 # }
 # 
-use buoyant::layout::HorizontalAlignment;
-use buoyant::view::{padding::Edges, Text, VStack, View, ViewExt as _};
+use buoyant::view::prelude::*;
 use embedded_graphics::mono_font::ascii::{FONT_10X20, FONT_6X10, FONT_9X15};
 
 fn view() -> impl View<Rgb888> {
@@ -77,7 +75,6 @@ is the best catalog to search for specific u8g2 fonts.
 # extern crate embedded_graphics;
 # extern crate embedded_graphics_simulator;
 # extern crate u8g2_fonts;
-# use buoyant::view::AsDrawable as _;
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::*};
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
 # 
@@ -98,8 +95,7 @@ is the best catalog to search for specific u8g2 fonts.
 #     window.show_static(&display);
 # }
 # 
-use buoyant::layout::HorizontalAlignment;
-use buoyant::view::{padding::Edges, Text, VStack, View, ViewExt as _};
+use buoyant::view::prelude::*;
 use u8g2_fonts::{fonts, FontRenderer};
 
 static HELVETICA: FontRenderer = FontRenderer::new::<fonts::u8g2_font_helvR12_tr>();

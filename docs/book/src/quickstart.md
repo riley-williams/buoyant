@@ -48,7 +48,7 @@ framebuffer is displayed.
 # extern crate buoyant;
 # extern crate embedded_graphics;
 #
-# use buoyant::view::{padding::Edges, HStack,  Spacer, Text, View, ViewExt as _,};
+# use buoyant::view::prelude::*;
 # use embedded_graphics::{mono_font::ascii::FONT_10X20, pixelcolor::Rgb888, prelude::*};
 #
 {{#include quickstart.rs:view}}
