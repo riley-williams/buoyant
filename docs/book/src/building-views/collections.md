@@ -10,7 +10,6 @@ better choice. Use ForEach when you want to display a collection of like views.
 # extern crate buoyant;
 # extern crate embedded_graphics;
 # extern crate embedded_graphics_simulator;
-# use buoyant::view::AsDrawable as _;
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
 #
 # const BACKGROUND_COLOR: Rgb888 = Rgb888::CSS_DARK_SLATE_GRAY;
@@ -40,10 +39,7 @@ better choice. Use ForEach when you want to display a collection of like views.
 #     color: Rgb888,
 # }
 #
-use buoyant::layout::HorizontalAlignment;
-use buoyant::view::padding::Edges;
-use buoyant::view::{shape::RoundedRectangle, ForEach, HStack, Text};
-use buoyant::view::{View, ViewExt as _};
+use buoyant::view::prelude::*;
 use embedded_graphics::{mono_font::ascii::FONT_9X15, pixelcolor::Rgb888, prelude::*};
 
 static SWATCHES: [Swatch; 4] = [
@@ -86,7 +82,7 @@ many items. As with `VStack`, the alignment and spacing of its subviews can be c
 
 ```rust
 # extern crate buoyant;
-# use buoyant::view::{shape::RoundedRectangle, ForEach};
+# use buoyant::view::prelude::*;
 let radii = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
 ForEach::<10>::new(&radii, |radius| {

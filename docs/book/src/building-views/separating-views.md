@@ -10,7 +10,6 @@ Here, `Spacer` is used to push the two `Circle`s to either side.
 # extern crate buoyant;
 # extern crate embedded_graphics;
 # extern crate embedded_graphics_simulator;
-# use buoyant::view::AsDrawable as _;
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::*};
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
 # 
@@ -31,10 +30,7 @@ Here, `Spacer` is used to push the two `Circle`s to either side.
 #     window.show_static(&display);
 # }
 # 
-use buoyant::layout::HorizontalAlignment;
-use buoyant::view::shape::{Capsule, Circle, Rectangle};
-use buoyant::view::{View, ViewExt as _};
-use buoyant::view::{HStack, Spacer, VStack};
+use buoyant::view::prelude::*;
 
 fn view() -> impl View<Rgb888> {
     VStack::new((

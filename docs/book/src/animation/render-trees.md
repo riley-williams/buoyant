@@ -14,11 +14,7 @@ This tree is what is actually rendered.
 # use buoyant::{
 #     animation::Animation,
 #     layout::Alignment::{Leading, Trailing},
-#     view::{
-#         padding::Edges,
-#         shape::{Capsule, Circle},
-#         View, ViewExt as _, ZStack,
-#     },
+#     view::prelude::*,
 # };
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::RgbColor as _};
 # 

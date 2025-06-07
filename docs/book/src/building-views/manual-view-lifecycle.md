@@ -15,7 +15,7 @@ use buoyant::{
     layout::Layout,
     render::{Render as _, Renderable as _},
     render_target::EmbeddedGraphicsRenderTarget,
-    view::{padding::Edges, HStack, Spacer, Text, View, ViewExt as _},
+    view::prelude::*,
 };
 use embedded_graphics::{mono_font::ascii::FONT_10X20, pixelcolor::Rgb888, prelude::*};
 use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};

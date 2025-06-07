@@ -11,7 +11,6 @@ Both stacks can contain a heterogeneous set of views and can be nested inside ot
 # extern crate buoyant;
 # extern crate embedded_graphics;
 # extern crate embedded_graphics_simulator;
-# use buoyant::view::AsDrawable as _;
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::*};
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
 # 
@@ -32,9 +31,7 @@ Both stacks can contain a heterogeneous set of views and can be nested inside ot
 #     window.show_static(&display);
 # }
 # 
-use buoyant::view::shape::{Circle, Rectangle};
-use buoyant::view::HStack;
-use buoyant::view::{View, ViewExt as _};
+use buoyant::view::prelude::*;
 
 fn view() -> impl View<Rgb888> {
     HStack::new((
@@ -61,7 +58,6 @@ it can contain a heterogeneous set of views.
 # extern crate buoyant;
 # extern crate embedded_graphics;
 # extern crate embedded_graphics_simulator;
-# use buoyant::view::AsDrawable as _;
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::*};
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
 # 
@@ -82,10 +78,7 @@ it can contain a heterogeneous set of views.
 #     window.show_static(&display);
 # }
 # 
-use buoyant::view::padding::Edges;
-use buoyant::view::shape::{Circle, Rectangle};
-use buoyant::view::{View, ViewExt as _};
-use buoyant::view::ZStack;
+use buoyant::view::prelude::*;
 
 fn view() -> impl View<Rgb888> {
     ZStack::new((
@@ -112,7 +105,6 @@ Stacks can be nested to create complex layouts.
 # extern crate buoyant;
 # extern crate embedded_graphics;
 # extern crate embedded_graphics_simulator;
-# use buoyant::view::AsDrawable as _;
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::*};
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
 # 
@@ -133,10 +125,7 @@ Stacks can be nested to create complex layouts.
 #     window.show_static(&display);
 # }
 # 
-use buoyant::view::padding::Edges;
-use buoyant::view::shape::{Circle, Rectangle};
-use buoyant::view::{View, ViewExt as _};
-use buoyant::view::{HStack, VStack, ZStack};
+use buoyant::view::prelude::*;
 
 fn view() -> impl View<Rgb888> {
     HStack::new((

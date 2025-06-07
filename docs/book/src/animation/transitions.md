@@ -16,7 +16,7 @@ views when all the branches are the same type:
 # extern crate embedded_graphics;
 # use buoyant::{
 #     if_view,
-#     view::{shape::Rectangle, View, ViewExt as _},
+#     view::prelude::*,
 # };
 # use embedded_graphics::pixelcolor::Rgb888;
 # 

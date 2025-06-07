@@ -5,7 +5,7 @@ If you try something like this:
 ```rust,compile_fail
 # extern crate buoyant;
 # extern crate embedded_graphics;
-# use buoyant::view::{Text, shape::Rectangle, View};
+# use buoyant::view::prelude::*;
 # use embedded_graphics::{mono_font::ascii::FONT_9X15, pixelcolor::Rgb888};
 #
 fn view(is_redacted: bool) -> impl View<Rgb888> {
@@ -32,7 +32,6 @@ The `if_view!` macro allows you to write views as if you were writing a plain `i
 # extern crate buoyant;
 # extern crate embedded_graphics;
 # extern crate embedded_graphics_simulator;
-# use buoyant::view::AsDrawable as _;
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
 #
 # const BACKGROUND_COLOR: Rgb888 = Rgb888::CSS_DARK_SLATE_GRAY;
@@ -53,7 +52,7 @@ The `if_view!` macro allows you to write views as if you were writing a plain `i
 # }
 #
 use buoyant::if_view;
-use buoyant::view::{padding::Edges, shape::RoundedRectangle, View, ViewExt as _, Text, VStack};
+use buoyant::view::prelude::*;
 use embedded_graphics::{mono_font::ascii::FONT_9X15, pixelcolor::Rgb888, prelude::*};
 
 fn secret_message(message: &str, is_redacted: bool) -> impl View<Rgb888> + use<'_> {
@@ -91,7 +90,6 @@ variables in the match arms.
 # extern crate buoyant;
 # extern crate embedded_graphics;
 # extern crate embedded_graphics_simulator;
-# use buoyant::view::AsDrawable as _;
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
 #
 # const BACKGROUND_COLOR: Rgb888 = Rgb888::CSS_DARK_SLATE_GRAY;
@@ -112,8 +110,7 @@ variables in the match arms.
 # }
 #
 use buoyant::match_view;
-use buoyant::view::shape::{Rectangle, RoundedRectangle};
-use buoyant::view::{padding::Edges, EmptyView, View, ViewExt as _, VStack};
+use buoyant::view::prelude::*;
 use embedded_graphics::{pixelcolor::Rgb888, prelude::*};
 
 #[derive(Debug, Clone, Copy)]
@@ -168,7 +165,7 @@ When an `if_view!` does not specify an else, `EmptyView` is implied for the else
 # extern crate embedded_graphics;
 # use embedded_graphics::pixelcolor::Rgb888;
 # use embedded_graphics::mono_font::ascii::FONT_9X15;
-use buoyant::view::{Text, shape::Rectangle, View};
+use buoyant::view::prelude::*;
 use buoyant::if_view;
 
 /// A rectangle if not hidden, otherwise implicit `EmptyView`

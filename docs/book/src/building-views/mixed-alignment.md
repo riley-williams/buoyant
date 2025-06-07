@@ -19,7 +19,6 @@ I'll briefly indulge this misconception.
 # extern crate buoyant;
 # extern crate embedded_graphics;
 # extern crate embedded_graphics_simulator;
-# use buoyant::view::AsDrawable as _;
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::*};
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
 # 
@@ -41,10 +40,7 @@ I'll briefly indulge this misconception.
 # }
 # 
 // No!
-use buoyant::layout::HorizontalAlignment;
-use buoyant::view::shape::Circle;
-use buoyant::view::{View, ViewExt as _};
-use buoyant::view::{HStack, Spacer, VStack};
+use buoyant::view::prelude::*;
 
 fn view() -> impl View<Rgb888> {
     VStack::new((
@@ -99,7 +95,6 @@ as the previous code.
 # extern crate buoyant;
 # extern crate embedded_graphics;
 # extern crate embedded_graphics_simulator;
-# use buoyant::view::AsDrawable as _;
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::*};
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
 # 
@@ -121,10 +116,7 @@ as the previous code.
 # }
 # 
 // Preferred
-use buoyant::layout::HorizontalAlignment;
-use buoyant::view::shape::Circle;
-use buoyant::view::VStack;
-use buoyant::view::{View, ViewExt as _};
+use buoyant::view::prelude::*;
 
 fn view() -> impl View<Rgb888> {
     VStack::new((
@@ -152,9 +144,7 @@ the alignment in one call.
 
 ```rust
 # extern crate buoyant;
-# use buoyant::layout::HorizontalAlignment;
-# use buoyant::view::ViewExt as _;
-# use buoyant::view::{shape::Circle, HStack, Spacer};
+# use buoyant::view::prelude::*;
 # let content = Circle;
 // Avoid:
 HStack::new((
@@ -180,9 +170,7 @@ content
 
 ```rust
 # extern crate buoyant;
-# use buoyant::layout::VerticalAlignment;
-# use buoyant::view::ViewExt as _;
-# use buoyant::view::{shape::Circle, VStack, Spacer};
+# use buoyant::view::prelude::*;
 # let content = Circle;
 // Avoid:
 VStack::new((
