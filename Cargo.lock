@@ -57,7 +57,7 @@ checksum = "5c8214115b7bf84099f1309324e63141d4c5d7cc26862f97a0a857dbefe165bd"
 
 [[package]]
 name = "buoyant"
-version = "0.5.2"
+version = "0.5.3"
 dependencies = [
  "crossterm",
  "embedded-graphics",
@@ -603,9 +603,9 @@ dependencies = [
 
 [[package]]
 name = "u8g2-fonts"
-version = "0.6.0"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a356264f326cc2a2d0c4e11cfe6b46388a58e2835888aed7f58e43ea25a9e228"
+checksum = "5d47e4dc46a1db0427f302d49c8428fa483b202117bc2097e006b9214a391b71"
 dependencies = [
  "embedded-graphics",
  "embedded-graphics-core",
