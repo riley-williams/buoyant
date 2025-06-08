@@ -59,13 +59,14 @@ transitions. You should be able to construct most desired layouts and animations
 
 - ✅ Stacks of heterogeneous views (VStack, HStack, ZStack)
 - ✅ Stacks of homogeneous views (ForEach) - partial, vertical only
-- ✅ Common SwiftUI primitives (Spacer, Divider)
+- ✅ Common SwiftUI-like primitives (Spacer, Divider, ...)
+- ✅ Common SwiftUI-like modifiers (.frame, .padding, ...)
 - ✅ Conditional views, with match variable binding
 - ✅ Text (embedded-graphics Monospace and [u8g2](https://crates.io/crates/u8g2-fonts) fonts)
 - ✅ Images (fixed size)
 - ✅ Interruptible Animations + Curves
 - ✅ Common embedded-graphics shape primitives
-- 🚧 Shape stroke+fill
+- ✅ Shape stroke+fill
 - 🚧 Canvas for arbitrary path/shape/raster drawing
 - 💤 Simulated alpha and antialiasing
 - 💤 Transitions

@@ -1,9 +1,7 @@
-use crate::{
-    primitives::{geometry, Interpolate, Point},
-    render_target::{RenderTarget, SolidBrush},
-};
+use crate::primitives::{Interpolate, Point};
+use crate::render::shape::{AsShapePrimitive, Inset};
 
-use super::{AnimatedJoin, AnimationDomain, Render};
+use super::{AnimatedJoin, AnimationDomain};
 
 /// A circle with the origin at the top-left corner
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -12,43 +10,27 @@ pub struct Circle {
     pub diameter: u32,
 }
 
+impl Inset for Circle {
+    fn inset(mut self, amount: i32) -> Self {
+        self.diameter = self.diameter.saturating_add_signed(-2 * amount);
+        self.origin.x += amount;
+        self.origin.y += amount;
+        self
+    }
+}
+
+impl AsShapePrimitive for Circle {
+    type Primitive = crate::primitives::geometry::Circle;
+    fn as_shape(&self) -> Self::Primitive {
+        Self::Primitive::new(self.origin, self.diameter)
+    }
+}
+
 impl AnimatedJoin for Circle {
     fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
         let origin = Point::interpolate(source.origin, target.origin, domain.factor);
         let diameter = u32::interpolate(source.diameter, target.diameter, domain.factor);
         Self { origin, diameter }
-    }
-}
-
-impl<C: Copy> Render<C> for Circle {
-    fn render(
-        &self,
-        render_target: &mut impl RenderTarget<ColorFormat = C>,
-        style: &C,
-        offset: Point,
-    ) {
-        let brush = SolidBrush::new(*style);
-        render_target.fill(
-            offset,
-            &brush,
-            None,
-            &geometry::Circle::new(self.origin, self.diameter),
-        );
-    }
-
-    fn render_animated(
-        render_target: &mut impl RenderTarget<ColorFormat = C>,
-        source: &Self,
-        target: &Self,
-        style: &C,
-        offset: Point,
-        domain: &AnimationDomain,
-    ) {
-        AnimatedJoin::join(source.clone(), target.clone(), domain).render(
-            render_target,
-            style,
-            offset,
-        );
     }
 }
 
@@ -95,5 +77,42 @@ mod tests {
         // At factor 255, should be identical to target
         assert_eq!(result.origin, target.origin);
         assert_eq!(result.diameter, target.diameter);
+    }
+
+    #[test]
+    fn positive_inset_shrinks() {
+        let circle = Circle {
+            origin: Point::new(10, 20),
+            diameter: 100,
+        };
+        let inset_circle = circle.inset(10);
+
+        assert_eq!(inset_circle.origin, Point::new(20, 30));
+        assert_eq!(inset_circle.diameter, 80);
+    }
+
+    #[test]
+    fn negative_inset_grows() {
+        let circle = Circle {
+            origin: Point::new(10, 20),
+            diameter: 100,
+        };
+        let inset_circle = circle.inset(-10);
+
+        assert_eq!(inset_circle.origin, Point::new(0, 10));
+        assert_eq!(inset_circle.diameter, 120);
+    }
+
+    #[test]
+    fn overflowing_inset_saturates() {
+        let circle = Circle {
+            origin: Point::new(10, 20),
+            diameter: 100,
+        };
+        let inset_circle = circle.inset(200);
+
+        // Inset larger than diameter should not result in negative diameter
+        assert_eq!(inset_circle.origin, Point::new(210, 220));
+        assert_eq!(inset_circle.diameter, 0);
     }
 }

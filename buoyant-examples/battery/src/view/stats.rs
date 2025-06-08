@@ -1,7 +1,4 @@
-use buoyant::{
-    layout::HorizontalAlignment,
-    view::{FitAxis, HStack, Text, VStack, View, ViewExt, ViewThatFits},
-};
+use buoyant::view::prelude::*;
 
 use crate::{
     color::{self, ColorFormat},
