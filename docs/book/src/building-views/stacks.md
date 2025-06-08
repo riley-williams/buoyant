@@ -35,7 +35,9 @@ use buoyant::view::prelude::*;
 
 fn view() -> impl View<Rgb888> {
     HStack::new((
-        Circle.foreground_color(Rgb888::CSS_CORAL),
+        Circle
+            .stroked(15)
+            .foreground_color(Rgb888::CSS_CORAL),
         Rectangle
             .corner_radius(25)
             .foreground_color(Rgb888::CSS_DARK_ORCHID),

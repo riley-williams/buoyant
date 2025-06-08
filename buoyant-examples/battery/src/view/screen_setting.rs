@@ -1,15 +1,6 @@
 use std::time::Duration;
 
-use buoyant::{
-    animation::Animation,
-    if_view,
-    layout::Alignment,
-    view::{
-        padding::Edges,
-        shape::{Rectangle, RoundedRectangle},
-        HStack, HorizontalTextAlignment, Text, VStack, View, ViewExt, ZStack,
-    },
-};
+use buoyant::{animation::Animation, if_view, view::prelude::*};
 
 use crate::{
     color::{self, ColorFormat},

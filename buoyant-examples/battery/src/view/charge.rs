@@ -1,12 +1,4 @@
-use buoyant::{
-    layout::{Alignment, HorizontalAlignment},
-    view::{
-        padding::Edges,
-        shape::{Circle, RoundedRectangle},
-        FitAxis, HStack, HorizontalTextAlignment, Spacer, Text, VStack, View, ViewExt,
-        ViewThatFits, ZStack,
-    },
-};
+use buoyant::view::prelude::*;
 use core::fmt::Write;
 
 use crate::{
@@ -49,10 +41,7 @@ fn charge_gauge(charge: f32) -> impl View<ColorFormat> {
     let mut formatted_charge = heapless::String::<8>::new();
     _ = write!(formatted_charge, "{charge:.0}"); // ignore write failure
     ZStack::new((
-        Circle.foreground_color(color::GREEN),
-        Circle
-            .foreground_color(color::BACKGROUND)
-            .padding(Edges::All, 8),
+        Circle.stroked(8).foreground_color(color::GREEN),
         VStack::new((
             Text::new(formatted_charge, &font::TITLE),
             Text::new("%", &font::FOOTNOTE),
