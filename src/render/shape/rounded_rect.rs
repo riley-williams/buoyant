@@ -1,10 +1,10 @@
 use crate::{
     primitives::{geometry::RoundedRectangle, Interpolate, Point, Size},
-    render::{AnimatedJoin, AnimationDomain},
-    render_target::{RenderTarget, SolidBrush},
+    render::{
+        shape::{AsShapePrimitive, Inset},
+        AnimatedJoin, AnimationDomain,
+    },
 };
-
-use super::Render;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
@@ -12,6 +12,28 @@ pub struct RoundedRect {
     pub origin: Point,
     pub size: Size,
     pub corner_radius: u16,
+}
+
+impl Inset for RoundedRect {
+    fn inset(mut self, amount: i32) -> Self {
+        self.size.width = self.size.width.saturating_add_signed(-2 * amount);
+        self.size.height = self.size.height.saturating_add_signed(-2 * amount);
+        self.corner_radius = self.corner_radius.saturating_add_signed(-amount as i16);
+        self.origin.x += amount;
+        self.origin.y += amount;
+        self
+    }
+}
+
+impl AsShapePrimitive for RoundedRect {
+    type Primitive = RoundedRectangle;
+    fn as_shape(&self) -> Self::Primitive {
+        RoundedRectangle::new(
+            self.origin,
+            Size::new(self.size.width, self.size.height),
+            self.corner_radius.into(),
+        )
+    }
 }
 
 impl AnimatedJoin for RoundedRect {
@@ -24,42 +46,6 @@ impl AnimatedJoin for RoundedRect {
             size,
             corner_radius: r,
         }
-    }
-}
-
-impl<C: Copy> Render<C> for RoundedRect {
-    fn render(
-        &self,
-        render_target: &mut impl RenderTarget<ColorFormat = C>,
-        style: &C,
-        offset: Point,
-    ) {
-        let brush = SolidBrush::new(*style);
-        render_target.fill(
-            offset,
-            &brush,
-            None,
-            &RoundedRectangle::new(
-                self.origin,
-                Size::new(self.size.width, self.size.height),
-                self.corner_radius.into(),
-            ),
-        );
-    }
-
-    fn render_animated(
-        render_target: &mut impl RenderTarget<ColorFormat = C>,
-        source: &Self,
-        target: &Self,
-        style: &C,
-        offset: Point,
-        domain: &crate::render::AnimationDomain,
-    ) {
-        AnimatedJoin::join(source.clone(), target.clone(), domain).render(
-            render_target,
-            style,
-            offset,
-        );
     }
 }
 
@@ -110,5 +96,48 @@ mod tests {
         assert_eq!(result.origin, target.origin);
         assert_eq!(result.size, target.size);
         assert_eq!(result.corner_radius, target.corner_radius);
+    }
+
+    #[test]
+    fn positive_inset_shrinks() {
+        let rect = RoundedRect {
+            origin: Point::new(10, 20),
+            size: Size::new(100, 200),
+            corner_radius: 30,
+        };
+        let inset_rect = rect.inset(10);
+
+        assert_eq!(inset_rect.origin, Point::new(20, 30));
+        assert_eq!(inset_rect.size, Size::new(80, 180));
+        assert_eq!(inset_rect.corner_radius, 20);
+    }
+
+    #[test]
+    fn negative_inset_grows() {
+        let rect = RoundedRect {
+            origin: Point::new(10, 20),
+            size: Size::new(100, 200),
+            corner_radius: 30,
+        };
+        let inset_rect = rect.inset(-10);
+
+        assert_eq!(inset_rect.origin, Point::new(0, 10));
+        assert_eq!(inset_rect.size, Size::new(120, 220));
+        assert_eq!(inset_rect.corner_radius, 40);
+    }
+
+    #[test]
+    fn overflowing_inset_saturates() {
+        let rect = RoundedRect {
+            origin: Point::new(10, 20),
+            size: Size::new(100, 200),
+            corner_radius: 30,
+        };
+        let inset_rect = rect.inset(200);
+
+        // Inset larger than size should not result in negative dimensions
+        assert_eq!(inset_rect.origin, Point::new(210, 220));
+        assert_eq!(inset_rect.size, Size::new(0, 0));
+        assert_eq!(inset_rect.corner_radius, 0);
     }
 }

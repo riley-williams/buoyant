@@ -12,29 +12,27 @@ use crate::{
 };
 
 mod animate;
-mod capsule;
-mod circle;
 pub mod collections;
 mod empty;
 #[cfg(feature = "embedded-graphics")]
 mod image;
 mod offset;
 mod one_of;
-mod rect;
-mod rounded_rect;
 mod shade_subtree;
+pub mod shape;
 mod text;
 
 pub use animate::Animate;
-pub use capsule::Capsule;
-pub use circle::Circle;
 #[cfg(feature = "embedded-graphics")]
 pub use image::Image;
 pub use offset::Offset;
 pub use one_of::{OneOf2, OneOf3, OneOf4};
-pub use rect::Rect;
-pub use rounded_rect::RoundedRect;
 pub use shade_subtree::ShadeSubtree;
+pub use shape::Capsule;
+pub use shape::Circle;
+pub use shape::Rect;
+pub use shape::RoundedRect;
+pub use shape::StrokedShape;
 pub use text::Text;
 
 /// A type that can produce a render tree.
