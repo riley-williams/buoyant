@@ -21,6 +21,7 @@ pub use foreach::ForEach;
 pub use hstack::HStack;
 #[cfg(feature = "embedded-graphics")]
 pub use image::Image;
+pub use modifier::aspect_ratio;
 pub use modifier::padding;
 pub use spacer::Spacer;
 pub(crate) use text::WhitespaceWrap;
@@ -30,6 +31,7 @@ pub use vstack::VStack;
 pub use zstack::ZStack;
 
 pub mod prelude {
+    pub use super::aspect_ratio::{ContentMode, Ratio};
     pub use super::{padding::Edges, FitAxis, HorizontalTextAlignment};
     pub use super::{
         shape::*, Divider, EmptyView, ForEach, HStack, Spacer, Text, VStack, View, ViewExt,
@@ -41,8 +43,8 @@ pub mod prelude {
 }
 
 use modifier::{
-    Animated, BackgroundView, FixedFrame, FixedSize, FlexFrame, ForegroundStyle, GeometryGroup,
-    Hidden, Padding, Priority,
+    Animated, AspectRatio, BackgroundView, FixedFrame, FixedSize, FlexFrame, ForegroundStyle,
+    GeometryGroup, Hidden, Padding, Priority,
 };
 
 use crate::{
@@ -62,6 +64,50 @@ impl<C, T: Renderable<Renderables: Render<C>>> View<C> for T {}
 
 /// Modifiers that extend the functionality of views.
 pub trait ViewExt: Sized {
+    /// Constrains the dimensions to the specified aspect ratio.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use buoyant::view::prelude::*;
+    /// # use embedded_graphics::pixelcolor::Rgb565;
+    /// # use embedded_graphics::prelude::RgbColor;
+    ///
+    /// // A 16:9 aspect ratio rectangle that will scale to fit the available space
+    /// fn widescreen_rectangle() -> impl View<Rgb565> {
+    ///     Rectangle
+    ///         .aspect_ratio(
+    ///             Ratio::Fixed(16, 9),
+    ///             ContentMode::Fit
+    ///         )
+    /// }
+    ///
+    /// // Ideal aspect ratio maintains the child's ideal aspect ratio
+    ///
+    /// /// An icon that maintains its aspect ratio while fitting within a 100x100 area
+    /// fn profile_icon() -> impl View<Rgb565> {
+    ///     image()
+    ///         .aspect_ratio(Ratio::Ideal, ContentMode::Fit)
+    ///         .flex_frame()
+    ///         .with_max_size(100, 100)
+    /// }
+    ///
+    /// /// (Equivalent to) A flexible 2:3 ratio image
+    /// fn image() -> impl View<Rgb565> {
+    ///     Rectangle
+    ///         .flex_frame()
+    ///         .with_ideal_size(40, 60)
+    /// }
+    ///
+    /// ```
+    fn aspect_ratio(
+        self,
+        aspect_ratio: aspect_ratio::Ratio,
+        content_mode: aspect_ratio::ContentMode,
+    ) -> AspectRatio<Self> {
+        AspectRatio::new(self, aspect_ratio, content_mode)
+    }
+
     /// Applies padding to the specified edges
     fn padding(self, edges: padding::Edges, amount: u32) -> Padding<Self> {
         Padding::new(edges, amount, self)
