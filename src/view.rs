@@ -44,7 +44,7 @@ pub mod prelude {
 
 use modifier::{
     Animated, AspectRatio, BackgroundView, FixedFrame, FixedSize, FlexFrame, ForegroundStyle,
-    GeometryGroup, Hidden, Padding, Priority,
+    GeometryGroup, Hidden, OverlayView, Padding, Priority,
 };
 
 use crate::{
@@ -288,6 +288,31 @@ pub trait ViewExt: Sized {
         background: impl FnOnce() -> U,
     ) -> BackgroundView<Self, U> {
         BackgroundView::new(self, background(), alignment)
+    }
+
+    /// Overlay uses the modified view to compute bounds, and renders the overlay
+    /// on top.
+    ///
+    /// Example:
+    ///
+    /// ```
+    /// use buoyant::view::prelude::*;
+    /// use embedded_graphics::{prelude::*, pixelcolor::Rgb565, mono_font::ascii::FONT_9X15_BOLD};
+    ///
+    /// fn notification_badge() -> impl View<Rgb565> {
+    ///     Text::new("Content", &FONT_9X15_BOLD)
+    ///         .overlay(
+    ///             Alignment::TopTrailing,
+    ///             Text::new("!", &FONT_9X15_BOLD)
+    ///                 .foreground_color(Rgb888::WHITE)
+    ///                 .padding(Edges::All, 4)
+    ///                 .background(Alignment::Center, || Circle.foreground_color(Rgb888::RED))
+    ///                 .offset(4, -4)
+    ///         )
+    /// }
+    /// ```
+    fn overlay<U>(self, alignment: Alignment, overlay: U) -> OverlayView<Self, U> {
+        OverlayView::new(self, overlay, alignment)
     }
 
     /// Lays out the view, but does not render it.

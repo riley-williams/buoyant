@@ -1,27 +1,20 @@
 use buoyant::{
-    font::CharacterBufferFont,
-    layout::Alignment,
-    primitives::Point,
-    render::Render as _,
-    render_target::FixedTextBuffer,
-    view::{
-        padding::Edges, shape::Rectangle, EmptyView, HorizontalTextAlignment, Text, ViewExt as _,
-    },
+    font::CharacterBufferFont, primitives::Point, render::Render as _,
+    render_target::FixedTextBuffer, view::prelude::*,
 };
 mod common;
 use common::make_render_tree;
 
 #[test]
-fn background_inherits_foreground_size() {
+fn overlay_inherits_foreground_size() {
     let font = CharacterBufferFont {};
-    let view = Text::new("This is on\ntop", &font)
+    let view = Text::new("This is\n!visible", &font)
         .multiline_text_alignment(HorizontalTextAlignment::Center)
         .padding(Edges::All, 1)
-        .background(Alignment::default(), || Rectangle)
+        .overlay(Alignment::default(), Rectangle.foreground_color('-'))
         .flex_frame()
         .with_infinite_max_width()
-        .with_infinite_max_height()
-        .foreground_color('-');
+        .with_infinite_max_height();
 
     let mut buffer = FixedTextBuffer::<14, 7>::default();
 
@@ -29,17 +22,39 @@ fn background_inherits_foreground_size() {
 
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "              ");
-    assert_eq!(buffer.text[1].iter().collect::<String>(), " ------------ ");
-    assert_eq!(buffer.text[2].iter().collect::<String>(), " -This is on- ");
-    assert_eq!(buffer.text[3].iter().collect::<String>(), " ----top----- ");
-    assert_eq!(buffer.text[4].iter().collect::<String>(), " ------------ ");
+    assert_eq!(buffer.text[1].iter().collect::<String>(), "  ----------  ");
+    assert_eq!(buffer.text[2].iter().collect::<String>(), "  ----------  ");
+    assert_eq!(buffer.text[3].iter().collect::<String>(), "  ----------  ");
+    assert_eq!(buffer.text[4].iter().collect::<String>(), "  ----------  ");
     assert_eq!(buffer.text[5].iter().collect::<String>(), "              ");
+    assert_eq!(buffer.text[6].iter().collect::<String>(), "              ");
 }
 
 #[test]
-fn background_alignment_coverage() {
+fn overlay_renders_on_top() {
+    let font = CharacterBufferFont {};
+    // Create a base view with text
+    let view = Text::new("BASE", &font)
+        .padding(Edges::All, 1)
+        .foreground_color('B')
+        .overlay(Alignment::default(), Rectangle.foreground_color('O'));
+
+    let mut buffer = FixedTextBuffer::<6, 3>::default();
+
+    let tree = make_render_tree(&view, buffer.size());
+
+    tree.render(&mut buffer, &' ', Point::zero());
+
+    // The overlay character 'O' should appear on top of the base content 'B'
+    assert_eq!(buffer.text[0].iter().collect::<String>(), "OOOOOO");
+    assert_eq!(buffer.text[1].iter().collect::<String>(), "OOOOOO");
+    assert_eq!(buffer.text[2].iter().collect::<String>(), "OOOOOO");
+}
+
+#[test]
+fn overlay_alignment_variations() {
     let view_fn = |alignment: Alignment| {
-        EmptyView.frame_sized(3, 3).background(alignment, || {
+        EmptyView.frame_sized(3, 3).overlay(alignment, {
             Rectangle.foreground_color('X').frame_sized(1, 1)
         })
     };
@@ -126,4 +141,27 @@ fn background_alignment_coverage() {
     assert_eq!(buffer.text[0].iter().collect::<String>(), "   ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "   ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "  X");
+}
+
+#[test]
+fn multiple_overlay_layering() {
+    // Test multiple overlays to ensure proper layering
+    let view = EmptyView
+        .frame_sized(3, 3)
+        .overlay(Alignment::TopLeading, {
+            Rectangle.foreground_color('1').frame_sized(2, 2)
+        })
+        .overlay(Alignment::BottomTrailing, {
+            Rectangle.foreground_color('2').frame_sized(2, 2)
+        });
+
+    let mut buffer = FixedTextBuffer::<3, 3>::default();
+
+    let tree = make_render_tree(&view, buffer.size());
+    tree.render(&mut buffer, &' ', Point::zero());
+
+    // The second overlay should be on top where they overlap
+    assert_eq!(buffer.text[0].iter().collect::<String>(), "11 ");
+    assert_eq!(buffer.text[1].iter().collect::<String>(), "122");
+    assert_eq!(buffer.text[2].iter().collect::<String>(), " 22");
 }
