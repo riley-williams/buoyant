@@ -44,19 +44,20 @@ pub mod prelude {
 
 use modifier::{
     Animated, AspectRatio, BackgroundView, FixedFrame, FixedSize, FlexFrame, ForegroundStyle,
-    GeometryGroup, Hidden, OverlayView, Padding, Priority,
+    GeometryGroup, Hidden, Offset, OverlayView, Padding, Priority,
 };
 
 use crate::{
     animation::Animation,
     layout::{Alignment, HorizontalAlignment, VerticalAlignment},
+    primitives::Point,
     render::{Render, Renderable},
 };
 
 #[cfg(feature = "embedded-graphics")]
 use crate::{
     environment::DefaultEnvironment,
-    primitives::{Interpolate, Point, ProposedDimensions},
+    primitives::{Interpolate, ProposedDimensions},
 };
 
 pub trait View<C>: Renderable<Renderables: Render<C>> {}
@@ -297,9 +298,9 @@ pub trait ViewExt: Sized {
     ///
     /// ```
     /// use buoyant::view::prelude::*;
-    /// use embedded_graphics::{prelude::*, pixelcolor::Rgb565, mono_font::ascii::FONT_9X15_BOLD};
+    /// use embedded_graphics::{prelude::*, pixelcolor::Rgb888, mono_font::ascii::FONT_9X15_BOLD};
     ///
-    /// fn notification_badge() -> impl View<Rgb565> {
+    /// fn notification_badge() -> impl View<Rgb888> {
     ///     Text::new("Content", &FONT_9X15_BOLD)
     ///         .overlay(
     ///             Alignment::TopTrailing,
@@ -313,6 +314,13 @@ pub trait ViewExt: Sized {
     /// ```
     fn overlay<U>(self, alignment: Alignment, overlay: U) -> OverlayView<Self, U> {
         OverlayView::new(self, overlay, alignment)
+    }
+
+    /// Offsets a view by the specified values.
+    ///
+    /// This does not affect size calculations, and is only applied when rendering the view.
+    fn offset(self, x: i32, y: i32) -> Offset<Self> {
+        Offset::new(self, Point::new(x, y))
     }
 
     /// Lays out the view, but does not render it.

@@ -145,7 +145,6 @@ fn overlay_alignment_variations() {
 
 #[test]
 fn multiple_overlay_layering() {
-    // Test multiple overlays to ensure proper layering
     let view = EmptyView
         .frame_sized(3, 3)
         .overlay(Alignment::TopLeading, {
@@ -164,4 +163,31 @@ fn multiple_overlay_layering() {
     assert_eq!(buffer.text[0].iter().collect::<String>(), "11 ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "122");
     assert_eq!(buffer.text[2].iter().collect::<String>(), " 22");
+}
+
+#[test]
+fn overlay_offset_order() {
+    // Overlay is only relative. The second item in the HStack is drawn last and should
+    // be on top of the overlaied view
+    let view = HStack::new((
+        Rectangle
+            .foreground_color('1')
+            .overlay(Alignment::Trailing, {
+                Rectangle
+                    .foreground_color('2')
+                    .frame_sized(2, 1)
+                    .offset(1, 0)
+            }),
+        Rectangle.foreground_color('3'),
+    ));
+
+    let mut buffer = FixedTextBuffer::<4, 3>::default();
+
+    let tree = make_render_tree(&view, buffer.size());
+    tree.render(&mut buffer, &' ', Point::zero());
+
+    // The second overlay should be on top where they overlap
+    assert_eq!(buffer.text[0].iter().collect::<String>(), "1133");
+    assert_eq!(buffer.text[1].iter().collect::<String>(), "1233");
+    assert_eq!(buffer.text[2].iter().collect::<String>(), "1133");
 }
