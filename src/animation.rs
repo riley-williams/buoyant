@@ -17,6 +17,8 @@ pub enum Curve {
     EaseOut,
     /// Quadratic ease in and out
     EaseInOut,
+    /// Ease out with a bounce effect
+    EaseOutBounce,
 }
 
 impl Animation {
@@ -59,6 +61,17 @@ impl Animation {
         Self {
             duration,
             curve: Curve::EaseInOut,
+        }
+    }
+
+    /// Constructs a new animation with a bouncy ease-out curve.
+    ///
+    /// The animation will bounce at the end, staying within the bounds of the start and end points.
+    #[must_use]
+    pub const fn ease_out_bounce(duration: Duration) -> Self {
+        Self {
+            duration,
+            curve: Curve::EaseOutBounce,
         }
     }
 
@@ -108,13 +121,56 @@ impl Curve {
                         .unwrap_or(255)
                 }
             }
+            Self::EaseOutBounce => {
+                // Use 1024-scale (4x) for better precision
+                let x = (time.as_millis() * 1024)
+                    .checked_div(duration.as_millis())
+                    .unwrap_or(1024)
+                    .min(1024) as i32;
+
+                // n1 = 7.5625, d1 = 2.75
+                // Boundaries scaled to 1024
+                // 1/d1 = 1/2.75 = 0.364 -> 372
+                // 2/d1 = 2/2.75 = 0.727 -> 745
+                // 2.5/d1 = 2.5/2.75 = 0.909 -> 931
+
+                let result = if x < 372 {
+                    // x < 1/d1
+                    // n1 * x * x where n1 = 7.5625
+                    // n1 in 1024-scale: 7.5625 * 1024 = 7744
+                    let x_sq = (x * x) >> 10; // x^2 / 1024 to normalize
+                    ((7744 * x_sq) >> 10) >> 2 // Apply n1, then convert from 1024 to 256 scale
+                } else if x < 745 {
+                    // x < 2/d1
+                    // n1 * (x - 1.5/d1)^2 + 0.75
+                    let offset = 559; // 1.5/d1 * 1024 = 559
+                    let adjusted_x = x - offset;
+                    let x_sq = (adjusted_x * adjusted_x) >> 10;
+                    192 + (((7744 * x_sq) >> 10) >> 2) // 0.75 * 256 = 192
+                } else if x < 931 {
+                    // x < 2.5/d1
+                    // n1 * (x - 2.25/d1)^2 + 0.9375
+                    let offset = 838; // 2.25/d1 * 1024 = 838
+                    let adjusted_x = x - offset;
+                    let x_sq = (adjusted_x * adjusted_x) >> 10;
+                    240 + (((7744 * x_sq) >> 10) >> 2) // 0.9375 * 256 = 240
+                } else {
+                    // n1 * (x - 2.625/d1)^2 + 0.984375
+                    let offset = 977; // 2.625/d1 * 1024 = 977
+                    let adjusted_x = x - offset;
+                    let x_sq = (adjusted_x * adjusted_x) >> 10;
+                    252 + (((7744 * x_sq) >> 10) >> 2) // 0.984375 * 256 = 252
+                };
+
+                result.clamp(0, 255) as u8
+            }
         }
     }
 
     /// Computes the animation factor for a given time offset.
     ///
-    /// This calculation is expected occur only once per animation node
-    /// in the view rendering, and thus has considerable compute headroom
+    /// This calculation is expected to occur only once per animation node
+    /// in the view rendering, and thus has considerable compute headroom.
     #[must_use]
     #[allow(dead_code)]
     fn factor_f32(self, time: Duration, duration: Duration) -> f32 {
@@ -135,6 +191,24 @@ impl Curve {
                 } else {
                     let y = -2.0 * x + 2.0;
                     1.0 - y * y / 2.0
+                }
+            }
+            Self::EaseOutBounce => {
+                let x = time.as_secs_f32() / duration.as_secs_f32();
+                let n1 = 7.5625;
+                let d1 = 2.75;
+
+                if x < 1.0 / d1 {
+                    n1 * x * x
+                } else if x < 2.0 / d1 {
+                    let adjusted_x = x - 1.5 / d1;
+                    n1 * adjusted_x * adjusted_x + 0.75
+                } else if x < 2.5 / d1 {
+                    let adjusted_x = x - 2.25 / d1;
+                    n1 * adjusted_x * adjusted_x + 0.9375
+                } else {
+                    let adjusted_x = x - 2.625 / d1;
+                    n1 * adjusted_x * adjusted_x + 0.984_375
                 }
             }
         }
@@ -224,6 +298,28 @@ mod tests {
     #[test]
     fn ease_out_animation_factor_bounds() {
         let animation = Animation::ease_out(Duration::from_millis(100));
+        assert_eq!(factor(&animation, 0), 0);
+        assert_eq!(factor(&animation, 100), 255);
+        assert_eq!(factor(&animation, 101), 255);
+        assert_eq!(factor(&animation, 1500), 255);
+    }
+
+    #[test]
+    fn ease_out_bounce_factor_approximates_f32() {
+        let animation = Animation::ease_out_bounce(Duration::from_millis(500));
+        for time in 0..512 {
+            let f32_factor = factor_f32(&animation, time);
+            let u8_factor = factor(&animation, time);
+            assert!(
+                f32_factor.abs_diff(u8_factor) <= 3,
+                "Expected {u8_factor} to be nearly {f32_factor} at t={time}"
+            );
+        }
+    }
+
+    #[test]
+    fn ease_out_bounce_animation_factor_bounds() {
+        let animation = Animation::ease_out_bounce(Duration::from_millis(100));
         assert_eq!(factor(&animation, 0), 0);
         assert_eq!(factor(&animation, 100), 255);
         assert_eq!(factor(&animation, 101), 255);
