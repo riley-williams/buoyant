@@ -1,12 +1,6 @@
 use buoyant::{
-    font::CharacterBufferFont,
-    layout::Alignment,
-    primitives::Point,
-    render::Render as _,
-    render_target::FixedTextBuffer,
-    view::{
-        padding::Edges, shape::Rectangle, EmptyView, HorizontalTextAlignment, Text, ViewExt as _,
-    },
+    font::CharacterBufferFont, primitives::Point, render::Render as _,
+    render_target::FixedTextBuffer, view::prelude::*,
 };
 mod common;
 use common::make_render_tree;
@@ -25,7 +19,7 @@ fn background_inherits_foreground_size() {
 
     let mut buffer = FixedTextBuffer::<14, 7>::default();
 
-    let tree = make_render_tree(&view, buffer.size());
+    let tree = make_render_tree(&view, buffer.size(), &mut ());
 
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "              ");
@@ -47,7 +41,7 @@ fn background_alignment_coverage() {
     let mut buffer = FixedTextBuffer::<3, 3>::default();
 
     let view = view_fn(Alignment::TopLeading);
-    let tree = make_render_tree(&view, buffer.size());
+    let tree = make_render_tree(&view, buffer.size(), &mut ());
     buffer.clear();
     tree.render(&mut buffer, &' ', Point::zero());
 
@@ -56,7 +50,7 @@ fn background_alignment_coverage() {
     assert_eq!(buffer.text[2].iter().collect::<String>(), "   ");
 
     let view = view_fn(Alignment::Top);
-    let tree = make_render_tree(&view, buffer.size());
+    let tree = make_render_tree(&view, buffer.size(), &mut ());
     buffer.clear();
     tree.render(&mut buffer, &' ', Point::zero());
 
@@ -65,7 +59,7 @@ fn background_alignment_coverage() {
     assert_eq!(buffer.text[2].iter().collect::<String>(), "   ");
 
     let view = view_fn(Alignment::TopTrailing);
-    let tree = make_render_tree(&view, buffer.size());
+    let tree = make_render_tree(&view, buffer.size(), &mut ());
     buffer.clear();
     tree.render(&mut buffer, &' ', Point::zero());
 
@@ -74,7 +68,7 @@ fn background_alignment_coverage() {
     assert_eq!(buffer.text[2].iter().collect::<String>(), "   ");
 
     let view = view_fn(Alignment::Leading);
-    let tree = make_render_tree(&view, buffer.size());
+    let tree = make_render_tree(&view, buffer.size(), &mut ());
     buffer.clear();
     tree.render(&mut buffer, &' ', Point::zero());
 
@@ -83,7 +77,7 @@ fn background_alignment_coverage() {
     assert_eq!(buffer.text[2].iter().collect::<String>(), "   ");
 
     let view = view_fn(Alignment::default());
-    let tree = make_render_tree(&view, buffer.size());
+    let tree = make_render_tree(&view, buffer.size(), &mut ());
     buffer.clear();
     tree.render(&mut buffer, &' ', Point::zero());
 
@@ -92,7 +86,7 @@ fn background_alignment_coverage() {
     assert_eq!(buffer.text[2].iter().collect::<String>(), "   ");
 
     let view = view_fn(Alignment::Trailing);
-    let tree = make_render_tree(&view, buffer.size());
+    let tree = make_render_tree(&view, buffer.size(), &mut ());
     buffer.clear();
     tree.render(&mut buffer, &' ', Point::zero());
 
@@ -101,7 +95,7 @@ fn background_alignment_coverage() {
     assert_eq!(buffer.text[2].iter().collect::<String>(), "   ");
 
     let view = view_fn(Alignment::BottomLeading);
-    let tree = make_render_tree(&view, buffer.size());
+    let tree = make_render_tree(&view, buffer.size(), &mut ());
     buffer.clear();
     tree.render(&mut buffer, &' ', Point::zero());
 
@@ -110,7 +104,7 @@ fn background_alignment_coverage() {
     assert_eq!(buffer.text[2].iter().collect::<String>(), "X  ");
 
     let view = view_fn(Alignment::Bottom);
-    let tree = make_render_tree(&view, buffer.size());
+    let tree = make_render_tree(&view, buffer.size(), &mut ());
     buffer.clear();
     tree.render(&mut buffer, &' ', Point::zero());
 
@@ -119,7 +113,7 @@ fn background_alignment_coverage() {
     assert_eq!(buffer.text[2].iter().collect::<String>(), " X ");
 
     let view = view_fn(Alignment::BottomTrailing);
-    let tree = make_render_tree(&view, buffer.size());
+    let tree = make_render_tree(&view, buffer.size(), &mut ());
     buffer.clear();
     tree.render(&mut buffer, &' ', Point::zero());
 

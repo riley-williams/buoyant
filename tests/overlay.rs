@@ -18,7 +18,7 @@ fn overlay_inherits_foreground_size() {
 
     let mut buffer = FixedTextBuffer::<14, 7>::default();
 
-    let tree = make_render_tree(&view, buffer.size());
+    let tree = make_render_tree(&view, buffer.size(), &mut ());
 
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "              ");
@@ -41,7 +41,7 @@ fn overlay_renders_on_top() {
 
     let mut buffer = FixedTextBuffer::<6, 3>::default();
 
-    let tree = make_render_tree(&view, buffer.size());
+    let tree = make_render_tree(&view, buffer.size(), &mut ());
 
     tree.render(&mut buffer, &' ', Point::zero());
 
@@ -62,7 +62,7 @@ fn overlay_alignment_variations() {
     let mut buffer = FixedTextBuffer::<3, 3>::default();
 
     let view = view_fn(Alignment::TopLeading);
-    let tree = make_render_tree(&view, buffer.size());
+    let tree = make_render_tree(&view, buffer.size(), &mut ());
     buffer.clear();
     tree.render(&mut buffer, &' ', Point::zero());
 
@@ -71,7 +71,7 @@ fn overlay_alignment_variations() {
     assert_eq!(buffer.text[2].iter().collect::<String>(), "   ");
 
     let view = view_fn(Alignment::Top);
-    let tree = make_render_tree(&view, buffer.size());
+    let tree = make_render_tree(&view, buffer.size(), &mut ());
     buffer.clear();
     tree.render(&mut buffer, &' ', Point::zero());
 
@@ -80,7 +80,7 @@ fn overlay_alignment_variations() {
     assert_eq!(buffer.text[2].iter().collect::<String>(), "   ");
 
     let view = view_fn(Alignment::TopTrailing);
-    let tree = make_render_tree(&view, buffer.size());
+    let tree = make_render_tree(&view, buffer.size(), &mut ());
     buffer.clear();
     tree.render(&mut buffer, &' ', Point::zero());
 
@@ -89,7 +89,7 @@ fn overlay_alignment_variations() {
     assert_eq!(buffer.text[2].iter().collect::<String>(), "   ");
 
     let view = view_fn(Alignment::Leading);
-    let tree = make_render_tree(&view, buffer.size());
+    let tree = make_render_tree(&view, buffer.size(), &mut ());
     buffer.clear();
     tree.render(&mut buffer, &' ', Point::zero());
 
@@ -98,7 +98,7 @@ fn overlay_alignment_variations() {
     assert_eq!(buffer.text[2].iter().collect::<String>(), "   ");
 
     let view = view_fn(Alignment::default());
-    let tree = make_render_tree(&view, buffer.size());
+    let tree = make_render_tree(&view, buffer.size(), &mut ());
     buffer.clear();
     tree.render(&mut buffer, &' ', Point::zero());
 
@@ -107,7 +107,7 @@ fn overlay_alignment_variations() {
     assert_eq!(buffer.text[2].iter().collect::<String>(), "   ");
 
     let view = view_fn(Alignment::Trailing);
-    let tree = make_render_tree(&view, buffer.size());
+    let tree = make_render_tree(&view, buffer.size(), &mut ());
     buffer.clear();
     tree.render(&mut buffer, &' ', Point::zero());
 
@@ -116,7 +116,7 @@ fn overlay_alignment_variations() {
     assert_eq!(buffer.text[2].iter().collect::<String>(), "   ");
 
     let view = view_fn(Alignment::BottomLeading);
-    let tree = make_render_tree(&view, buffer.size());
+    let tree = make_render_tree(&view, buffer.size(), &mut ());
     buffer.clear();
     tree.render(&mut buffer, &' ', Point::zero());
 
@@ -125,7 +125,7 @@ fn overlay_alignment_variations() {
     assert_eq!(buffer.text[2].iter().collect::<String>(), "X  ");
 
     let view = view_fn(Alignment::Bottom);
-    let tree = make_render_tree(&view, buffer.size());
+    let tree = make_render_tree(&view, buffer.size(), &mut ());
     buffer.clear();
     tree.render(&mut buffer, &' ', Point::zero());
 
@@ -134,7 +134,7 @@ fn overlay_alignment_variations() {
     assert_eq!(buffer.text[2].iter().collect::<String>(), " X ");
 
     let view = view_fn(Alignment::BottomTrailing);
-    let tree = make_render_tree(&view, buffer.size());
+    let tree = make_render_tree(&view, buffer.size(), &mut ());
     buffer.clear();
     tree.render(&mut buffer, &' ', Point::zero());
 
@@ -156,7 +156,7 @@ fn multiple_overlay_layering() {
 
     let mut buffer = FixedTextBuffer::<3, 3>::default();
 
-    let tree = make_render_tree(&view, buffer.size());
+    let tree = make_render_tree(&view, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
 
     // The second overlay should be on top where they overlap
@@ -183,7 +183,7 @@ fn overlay_offset_order() {
 
     let mut buffer = FixedTextBuffer::<4, 3>::default();
 
-    let tree = make_render_tree(&view, buffer.size());
+    let tree = make_render_tree(&view, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
 
     // The second overlay should be on top where they overlap

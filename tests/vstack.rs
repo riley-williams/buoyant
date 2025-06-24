@@ -1,34 +1,33 @@
 use buoyant::environment::DefaultEnvironment;
 use buoyant::font::CharacterBufferFont;
-use buoyant::layout::{HorizontalAlignment, Layout, VerticalAlignment};
 use buoyant::primitives::{Dimensions, Point, ProposedDimension, ProposedDimensions, Size};
 use buoyant::render::Render;
 use buoyant::render_target::FixedTextBuffer;
 use buoyant::view::padding::Edges;
-use buoyant::view::{
-    shape::Rectangle, Divider, EmptyView, HStack, HorizontalTextAlignment, Spacer, Text, VStack,
-    ViewExt,
-};
+use buoyant::view::{prelude::*,  };
 
 mod common;
 use common::{collect_text, make_render_tree};
 
 #[test]
 fn test_greedy_layout_2() {
-    let vstack = VStack::new((Spacer::default(), Spacer::default()));
+    let vstack = VStack::new((Spacer::default(), Spacer::default())).foreground_color(());
     let offer = Size::new(100, 100);
     let env = DefaultEnvironment::non_animated();
-    let layout = vstack.layout(&offer.into(), &env);
+    let mut state = vstack.build_state(&mut ());
+    let layout = vstack.layout(&offer.into(), &env, &mut (), &mut state);
     assert_eq!(layout.resolved_size, Dimensions::new(0, 100));
 }
 
 /// The Stack should never exceed the offer size.
 #[test]
 fn test_oversized_layout_2() {
-    let vstack = VStack::new((Divider::default().padding(Edges::All, 2), Spacer::default()));
+    let vstack = VStack::new((Divider::default().padding(Edges::All, 2), Spacer::default()))
+        .foreground_color(());
     let offer = Size::new(0, 10);
     let env = DefaultEnvironment::non_animated();
-    let layout = vstack.layout(&offer.into(), &env);
+    let mut state = vstack.build_state(&mut ());
+    let layout = vstack.layout(&offer.into(), &env, &mut (), &mut state);
     assert_eq!(layout.resolved_size, Dimensions::new(0, 10));
 }
 
@@ -38,10 +37,12 @@ fn test_oversized_layout_3() {
         Divider::default(),
         Divider::default().padding(Edges::All, 2),
         Spacer::default(),
-    ));
+    ))
+    .foreground_color(());
     let offer = Size::new(0, 10);
     let env = DefaultEnvironment::non_animated();
-    let layout = vstack.layout(&offer.into(), &env);
+    let mut state = vstack.build_state(&mut ());
+    let layout = vstack.layout(&offer.into(), &env, &mut (), &mut state);
     assert_eq!(layout.resolved_size, Dimensions::new(0, 10));
 }
 
@@ -52,13 +53,15 @@ fn infinite_height_offer_results_in_sum_of_subview_heights() {
         Rectangle.frame_sized(1, 40),
         Rectangle.frame_sized(8, 200),
     ))
-    .with_spacing(1);
+    .with_spacing(1)
+    .foreground_color(());
     let offer = ProposedDimensions {
         width: ProposedDimension::Exact(10),
         height: ProposedDimension::Infinite,
     };
     let env = DefaultEnvironment::non_animated();
-    let layout = vstack.layout(&offer, &env);
+    let mut state = vstack.build_state(&mut ());
+    let layout = vstack.layout(&offer, &env, &mut (), &mut state);
     assert_eq!(layout.resolved_size, Dimensions::new(8, 248 + 2));
 }
 
@@ -69,13 +72,15 @@ fn compact_height_offer_results_in_sum_of_subview_heights() {
         Rectangle.frame_sized(1, 40),
         Rectangle.frame_sized(8, 200),
     ))
-    .with_spacing(1);
+    .with_spacing(1)
+    .foreground_color(());
     let offer = ProposedDimensions {
         width: ProposedDimension::Exact(10),
         height: ProposedDimension::Compact,
     };
     let env = DefaultEnvironment::non_animated();
-    let layout = vstack.layout(&offer, &env);
+    let mut state = vstack.build_state(&mut ());
+    let layout = vstack.layout(&offer, &env, &mut (), &mut state);
     assert_eq!(layout.resolved_size, Dimensions::new(8, 248 + 2));
 }
 
@@ -86,13 +91,15 @@ fn infinite_height_offer_results_in_sum_of_subview_heights_minus_empties() {
         EmptyView,
         Rectangle.frame_sized(8, 200),
     ))
-    .with_spacing(1);
+    .with_spacing(1)
+    .foreground_color(());
     let offer = ProposedDimensions {
         width: ProposedDimension::Exact(10),
         height: ProposedDimension::Infinite,
     };
     let env = DefaultEnvironment::non_animated();
-    let layout = vstack.layout(&offer, &env);
+    let mut state = vstack.build_state(&mut ());
+    let layout = vstack.layout(&offer, &env, &mut (), &mut state);
     assert_eq!(layout.resolved_size, Dimensions::new(8, 208 + 1));
 }
 
@@ -103,13 +110,15 @@ fn compact_height_offer_results_in_sum_of_subview_heights_minus_empties() {
         EmptyView,
         Rectangle.frame_sized(8, 200),
     ))
-    .with_spacing(1);
+    .with_spacing(1)
+    .foreground_color(());
     let offer = ProposedDimensions {
         width: ProposedDimension::Exact(10),
         height: ProposedDimension::Compact,
     };
     let env = DefaultEnvironment::non_animated();
-    let layout = vstack.layout(&offer, &env);
+    let mut state = vstack.build_state(&mut ());
+    let layout = vstack.layout(&offer, &env, &mut (), &mut state);
     assert_eq!(layout.resolved_size, Dimensions::new(8, 208 + 1));
 }
 
@@ -124,10 +133,11 @@ fn test_undersized_layout_3_bottom_pad() {
     .foreground_color(' ');
     let offer = Size::new(1, 10);
     let env = DefaultEnvironment::non_animated();
-    let layout = vstack.layout(&offer.into(), &env);
+    let mut state = vstack.build_state(&mut ());
+    let layout = vstack.layout(&offer.into(), &env, &mut (), &mut state);
     assert_eq!(layout.resolved_size, Dimensions::new(1, 10));
     let mut buffer = FixedTextBuffer::<1, 10>::default();
-    let tree = make_render_tree(&vstack, buffer.size());
+    let tree = make_render_tree(&vstack, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "1");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "2");
@@ -153,10 +163,11 @@ fn test_undersized_layout_3_right_pad_space() {
     .foreground_color(' ');
     let offer = Size::new(1, 10);
     let env = DefaultEnvironment::non_animated();
-    let layout = vstack.layout(&offer.into(), &env);
+    let mut state = vstack.build_state(&mut ());
+    let layout = vstack.layout(&offer.into(), &env, &mut (), &mut state);
     assert_eq!(layout.resolved_size, Dimensions::new(1, 10));
     let mut buffer = FixedTextBuffer::<1, 10>::default();
-    let tree = make_render_tree(&vstack, buffer.size());
+    let tree = make_render_tree(&vstack, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(collect_text(&buffer), "  234 5678");
 }
@@ -174,10 +185,11 @@ fn test_oversized_layout_3_right_pad_space() {
     .foreground_color(' ');
     let offer = Size::new(1, 10);
     let env = DefaultEnvironment::non_animated();
-    let layout = vstack.layout(&offer.into(), &env);
+    let mut state = vstack.build_state(&mut ());
+    let layout = vstack.layout(&offer.into(), &env, &mut (), &mut state);
     assert_eq!(layout.resolved_size, Dimensions::new(1, 10));
     let mut buffer = FixedTextBuffer::<1, 10>::default();
-    let tree = make_render_tree(&vstack, buffer.size());
+    let tree = make_render_tree(&vstack, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(collect_text(&buffer), " 234 56789");
 }
@@ -195,10 +207,11 @@ fn test_oversized_layout_3_middle_pad_space() {
     .foreground_color(' ');
     let offer = Size::new(1, 10);
     let env = DefaultEnvironment::non_animated();
-    let layout = vstack.layout(&offer.into(), &env);
+    let mut state = vstack.build_state(&mut ());
+    let layout = vstack.layout(&offer.into(), &env, &mut (), &mut state);
     assert_eq!(layout.resolved_size, Dimensions::new(1, 10));
     let mut buffer = FixedTextBuffer::<1, 10>::default();
-    let tree = make_render_tree(&vstack, buffer.size());
+    let tree = make_render_tree(&vstack, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(collect_text(&buffer), "234  56789");
 }
@@ -216,10 +229,11 @@ fn test_oversized_layout_3_trailing_pad_space() {
     .foreground_color(' ');
     let offer = Size::new(1, 10);
     let env = DefaultEnvironment::non_animated();
-    let layout = vstack.layout(&offer.into(), &env);
+    let mut state = vstack.build_state(&mut ());
+    let layout = vstack.layout(&offer.into(), &env, &mut (), &mut state);
     assert_eq!(layout.resolved_size, Dimensions::new(1, 10));
     let mut buffer = FixedTextBuffer::<1, 10>::default();
-    let tree = make_render_tree(&vstack, buffer.size());
+    let tree = make_render_tree(&vstack, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(collect_text(&buffer), "234 56789 ");
 }
@@ -235,10 +249,11 @@ fn test_undersized_layout_3_middle_pad() {
     .foreground_color(' ');
     let offer = Size::new(1, 10);
     let env = DefaultEnvironment::non_animated();
-    let layout = vstack.layout(&offer.into(), &env);
+    let mut state = vstack.build_state(&mut ());
+    let layout = vstack.layout(&offer.into(), &env, &mut (), &mut state);
     assert_eq!(layout.resolved_size, Dimensions::new(1, 10));
     let mut buffer = FixedTextBuffer::<1, 10>::default();
-    let tree = make_render_tree(&vstack, buffer.size());
+    let tree = make_render_tree(&vstack, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(collect_text(&buffer), "234   5678");
 }
@@ -256,22 +271,22 @@ fn test_layout_3_remainder_allocation() {
     .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<1, 10>::default();
     let offer = Size::new(1, 7);
-    let tree = make_render_tree(&vstack, offer);
+    let tree = make_render_tree(&vstack, offer, &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(collect_text(&buffer), "aaabbcc   ");
 
     let offer = Size::new(1, 8);
-    let tree = make_render_tree(&vstack, offer);
+    let tree = make_render_tree(&vstack, offer, &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(collect_text(&buffer), "aaabbbcc  ");
 
     let offer = Size::new(1, 9);
-    let tree = make_render_tree(&vstack, offer);
+    let tree = make_render_tree(&vstack, offer, &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(collect_text(&buffer), "aaabbbccc ");
 
     let offer = Size::new(1, 10);
-    let tree = make_render_tree(&vstack, offer);
+    let tree = make_render_tree(&vstack, offer, &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(collect_text(&buffer), "aaabbbccc ");
 }
@@ -284,11 +299,13 @@ fn test_layout_3_remainder_allocation_sizing_only() {
         Text::new("aaa", &font),
         Text::new("bbb", &font),
         Text::new("ccc", &font),
-    ));
+    ))
+    .foreground_color(());
     let env = DefaultEnvironment::non_animated();
     for height in 1..9 {
         let offer = Size::new(1, height);
-        let layout = vstack.layout(&offer.into(), &env);
+        let mut state = vstack.build_state(&mut ());
+        let layout = vstack.layout(&offer.into(), &env, &mut (), &mut state);
         assert_eq!(layout.resolved_size, Dimensions::new(1, height));
     }
 }
@@ -305,7 +322,7 @@ fn test_layout_3_horizontal_alignment_trailing() {
     .with_alignment(HorizontalAlignment::Trailing)
     .with_spacing(1);
     let mut buffer = FixedTextBuffer::<6, 7>::default();
-    let tree = make_render_tree(&vstack, buffer.size());
+    let tree = make_render_tree(&vstack, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "   aaa");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "      ");
@@ -328,7 +345,7 @@ fn test_layout_3_alignment_center() {
     ))
     .with_alignment(HorizontalAlignment::Center);
     let mut buffer = FixedTextBuffer::<7, 5>::default();
-    let tree = make_render_tree(&vstack, buffer.size());
+    let tree = make_render_tree(&vstack, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "  aaa  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "-------");
@@ -349,7 +366,7 @@ fn test_layout_3_alignment_leading() {
     .with_alignment(HorizontalAlignment::Leading)
     .with_spacing(1);
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let tree = make_render_tree(&vstack, buffer.size());
+    let tree = make_render_tree(&vstack, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aaa   ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "      ");
@@ -368,7 +385,7 @@ fn test_layout_direction_is_set_inner_hstack() {
         Divider::default().foreground_color('-'),
     ));
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let tree = make_render_tree(&vstack, buffer.size());
+    let tree = make_render_tree(&vstack, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "------");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "|     ");
@@ -385,7 +402,7 @@ fn test_layout_direction_is_set_inner_vstack() {
         Divider::default().foreground_color('|'),
     ));
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let tree = make_render_tree(&hstack, buffer.size());
+    let tree = make_render_tree(&hstack, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "|----|");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "|    |");
@@ -424,14 +441,15 @@ fn test_flexible_layout_fills_frame_10k() {
             .padding(Edges::All, 2),
         Divider::default(),
         )),
-    ));
+    )).foreground_color(());
 
     let env = DefaultEnvironment::non_animated();
     // The spacers in this view should always cause the stack size to equal the offer size
     for width in 1..100 {
         for height in 1..100 {
             let size = Size::new(width, height);
-            let layout = stack.layout(&size.into(), &env);
+            let mut state = stack.build_state(&mut ());
+            let layout = stack.layout(&size.into(), &env, &mut (), &mut state);
             assert_eq!(size, layout.resolved_size.into());
         }
     }
@@ -448,7 +466,7 @@ fn test_layout_3_extra_space_allocation() {
     ))
     .with_spacing(0);
     let mut buffer = FixedTextBuffer::<6, 10>::default();
-    let tree = make_render_tree(&vstack, buffer.size());
+    let tree = make_render_tree(&vstack, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "xxxxxx");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "xxxxxx");
@@ -472,7 +490,7 @@ fn empty_view_does_not_receive_spacing() {
         .with_spacing(1)
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<7, 5>::default();
-    let tree = make_render_tree(&vstack, buffer.size());
+    let tree = make_render_tree(&vstack, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "a      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "       ");

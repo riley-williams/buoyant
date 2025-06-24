@@ -1,26 +1,20 @@
 use crate::{
     environment::LayoutEnvironment,
-    layout::{Layout, ResolvedLayout},
+    layout::ResolvedLayout,
     primitives::{Dimensions, Point, ProposedDimensions},
-    render::Renderable,
+    view::{ViewLayout, ViewMarker},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EmptyView;
 
-impl Layout for EmptyView {
-    type Sublayout = ();
+impl ViewMarker for EmptyView {
+    type Renderables = ();
+}
 
-    fn layout(
-        &self,
-        _: &ProposedDimensions,
-        _: &impl crate::environment::LayoutEnvironment,
-    ) -> ResolvedLayout<Self::Sublayout> {
-        ResolvedLayout {
-            sublayouts: (),
-            resolved_size: Dimensions::zero(),
-        }
-    }
+impl<Captures: ?Sized> ViewLayout<Captures> for EmptyView {
+    type State = ();
+    type Sublayout = ();
 
     fn priority(&self) -> i8 {
         i8::MIN
@@ -29,35 +23,42 @@ impl Layout for EmptyView {
     fn is_empty(&self) -> bool {
         true
     }
-}
 
-impl Renderable for EmptyView {
-    type Renderables = ();
+    fn build_state(&self, _captures: &mut Captures) -> Self::State {}
+
+    fn layout(
+        &self,
+        _: &ProposedDimensions,
+        _: &impl crate::environment::LayoutEnvironment,
+        _captures: &mut Captures,
+        _state: &mut Self::State,
+    ) -> ResolvedLayout<Self::Sublayout> {
+        ResolvedLayout {
+            sublayouts: (),
+            resolved_size: Dimensions::zero(),
+        }
+    }
 
     fn render_tree(
         &self,
         _layout: &ResolvedLayout<Self::Sublayout>,
         _origin: Point,
         _env: &impl LayoutEnvironment,
-    ) {
+        _captures: &mut Captures,
+        _state: &mut Self::State,
+    ) -> Self::Renderables {
     }
 }
 
 // The empty tuple can be used as an equivalent to empty view
 
-impl Layout for () {
-    type Sublayout = ();
+impl ViewMarker for () {
+    type Renderables = ();
+}
 
-    fn layout(
-        &self,
-        _: &ProposedDimensions,
-        _: &impl crate::environment::LayoutEnvironment,
-    ) -> ResolvedLayout<Self::Sublayout> {
-        ResolvedLayout {
-            sublayouts: (),
-            resolved_size: Dimensions::zero(),
-        }
-    }
+impl<Captures: ?Sized> ViewLayout<Captures> for () {
+    type State = ();
+    type Sublayout = ();
 
     fn priority(&self) -> i8 {
         i8::MIN
@@ -66,16 +67,29 @@ impl Layout for () {
     fn is_empty(&self) -> bool {
         true
     }
-}
 
-impl Renderable for () {
-    type Renderables = ();
+    fn build_state(&self, _captures: &mut Captures) -> Self::State {}
+
+    fn layout(
+        &self,
+        _: &ProposedDimensions,
+        _: &impl crate::environment::LayoutEnvironment,
+        _captures: &mut Captures,
+        _state: &mut Self::State,
+    ) -> ResolvedLayout<Self::Sublayout> {
+        ResolvedLayout {
+            sublayouts: (),
+            resolved_size: Dimensions::zero(),
+        }
+    }
 
     fn render_tree(
         &self,
         _layout: &ResolvedLayout<Self::Sublayout>,
         _origin: Point,
         _env: &impl LayoutEnvironment,
-    ) {
+        _captures: &mut Captures,
+        _state: &mut Self::State,
+    ) -> Self::Renderables {
     }
 }

@@ -1,12 +1,6 @@
-use buoyant::layout::Alignment;
-use buoyant::view::padding::Edges;
-use buoyant::view::shape::Rectangle;
 use buoyant::{
-    font::CharacterBufferFont,
-    primitives::Point,
-    render::Render as _,
-    render_target::FixedTextBuffer,
-    view::{HStack, Text, ViewExt as _},
+    font::CharacterBufferFont, primitives::Point, render::Render as _,
+    render_target::FixedTextBuffer, view::prelude::*,
 };
 mod common;
 use common::make_render_tree;
@@ -26,7 +20,7 @@ fn background_renders_on_hidden_view() {
     ))
     .foreground_color('-');
     let mut buffer = FixedTextBuffer::<9, 1>::default();
-    let tree = make_render_tree(&hstack, buffer.size());
+    let tree = make_render_tree(&hstack, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), " ++ -----");

@@ -1,9 +1,8 @@
 use buoyant::{
     environment::DefaultEnvironment,
     font::CharacterBufferFont,
-    layout::Layout as _,
     primitives::{Dimensions, Size},
-    view::{shape::Rectangle, HStack, Text, VStack, ViewExt},
+    view::{prelude::*,  },
 };
 
 /// The greedy lower priority view with a non-zero min size results in a layout overflow
@@ -14,10 +13,12 @@ fn oversized_layout_vstack() {
         Text::new("12345", &CharacterBufferFont),
         Rectangle.frame().with_height(2).priority(-1),
         Rectangle,
-    ));
+    ))
+    .foreground_color(());
     let offer = Size::new(10, 10);
     let env = DefaultEnvironment::default();
-    let layout = view.layout(&offer.into(), &env);
+    let mut state = view.build_state(&mut ());
+    let layout = view.layout(&offer.into(), &env, &mut (), &mut state);
     assert_eq!(layout.resolved_size, Dimensions::new(10, 10));
     assert_eq!(layout.sublayouts.0.resolved_size, Dimensions::new(5, 1));
     assert_eq!(layout.sublayouts.1.resolved_size, Dimensions::new(10, 2));
@@ -32,10 +33,12 @@ fn oversized_layout_hstack() {
         Text::new("12345", &CharacterBufferFont),
         Rectangle.frame().with_width(2).priority(-1),
         Rectangle,
-    ));
+    ))
+    .foreground_color(());
     let offer = Size::new(10, 10);
     let env = DefaultEnvironment::default();
-    let layout = view.layout(&offer.into(), &env);
+    let mut state = view.build_state(&mut ());
+    let layout = view.layout(&offer.into(), &env, &mut (), &mut state);
     assert_eq!(layout.resolved_size, Dimensions::new(10, 10));
     assert_eq!(layout.sublayouts.0.resolved_size, Dimensions::new(5, 1));
     assert_eq!(layout.sublayouts.1.resolved_size, Dimensions::new(2, 10));

@@ -1,10 +1,10 @@
 use buoyant::{
     font::CharacterBufferFont,
-    layout::{Alignment, HorizontalAlignment, Layout, VerticalAlignment},
+    layout::{Alignment, HorizontalAlignment, VerticalAlignment},
     primitives::{Dimensions, Point, ProposedDimension, ProposedDimensions, Size},
     render::Render,
     render_target::FixedTextBuffer,
-    view::{Text, ViewExt},
+    view::prelude::*,
 };
 mod common;
 use common::make_render_tree;
@@ -12,30 +12,38 @@ use common::make_render_tree;
 #[test]
 fn test_fixed_width() {
     let font = CharacterBufferFont {};
-    let content = Text::new("123456", &font).frame().with_width(2);
+    let content = Text::new("123456", &font)
+        .frame()
+        .with_width(2)
+        .foreground_color(());
     let env = common::TestEnv::default();
+    content.build_state(&mut ());
 
     assert_eq!(
-        content.layout(&Size::new(1, 1).into(), &env).resolved_size,
+        content
+            .layout(&Size::new(1, 1).into(), &env, &mut (), &mut ())
+            .resolved_size,
         Dimensions::new(2, 1)
     );
 
     assert_eq!(
         content
-            .layout(&Size::new(20, 123).into(), &env)
+            .layout(&Size::new(20, 123).into(), &env, &mut (), &mut ())
             .resolved_size,
         Dimensions::new(2, 3)
     );
 
     assert_eq!(
         content
-            .layout(&Size::new(100, 1).into(), &env)
+            .layout(&Size::new(100, 1).into(), &env, &mut (), &mut ())
             .resolved_size,
         Dimensions::new(2, 1)
     );
 
     assert_eq!(
-        content.layout(&Size::new(1, 6).into(), &env).resolved_size,
+        content
+            .layout(&Size::new(1, 6).into(), &env, &mut (), &mut ())
+            .resolved_size,
         Dimensions::new(2, 3)
     );
 }
@@ -43,27 +51,35 @@ fn test_fixed_width() {
 #[test]
 fn test_fixed_height() {
     let font = CharacterBufferFont {};
-    let content = Text::new("123456", &font).frame().with_height(2);
+    let content = Text::new("123456", &font)
+        .frame()
+        .with_height(2)
+        .foreground_color(());
     let env = common::TestEnv::default();
+    content.build_state(&mut ());
 
     assert_eq!(
-        content.layout(&Size::new(1, 1).into(), &env).resolved_size,
+        content
+            .layout(&Size::new(1, 1).into(), &env, &mut (), &mut ())
+            .resolved_size,
         Dimensions::new(1, 2)
     );
     assert_eq!(
         content
-            .layout(&Size::new(20, 123).into(), &env)
+            .layout(&Size::new(20, 123).into(), &env, &mut (), &mut ())
             .resolved_size,
         Dimensions::new(6, 2)
     );
     assert_eq!(
         content
-            .layout(&Size::new(100, 1).into(), &env)
+            .layout(&Size::new(100, 1).into(), &env, &mut (), &mut ())
             .resolved_size,
         Dimensions::new(6, 2)
     );
     assert_eq!(
-        content.layout(&Size::new(2, 6).into(), &env).resolved_size,
+        content
+            .layout(&Size::new(2, 6).into(), &env, &mut (), &mut ())
+            .resolved_size,
         Dimensions::new(2, 2)
     );
 }
@@ -71,8 +87,11 @@ fn test_fixed_height() {
 #[test]
 fn test_fixed_frame_compact_width_height() {
     let font = CharacterBufferFont {};
-    let content = Text::new("123456", &font).frame_sized(2, 2);
+    let content = Text::new("123456", &font)
+        .frame_sized(2, 2)
+        .foreground_color(());
     let env = common::TestEnv::default();
+    content.build_state(&mut ());
 
     assert_eq!(
         content
@@ -81,7 +100,9 @@ fn test_fixed_frame_compact_width_height() {
                     width: ProposedDimension::Compact,
                     height: ProposedDimension::Compact
                 },
-                &env
+                &env,
+                &mut (),
+                &mut ()
             )
             .resolved_size,
         Dimensions::new(2, 2)
@@ -94,7 +115,9 @@ fn test_fixed_frame_compact_width_height() {
                     width: ProposedDimension::Exact(2),
                     height: ProposedDimension::Exact(2)
                 },
-                &env
+                &env,
+                &mut (),
+                &mut ()
             )
             .resolved_size,
         Dimensions::new(2, 2)
@@ -107,7 +130,9 @@ fn test_fixed_frame_compact_width_height() {
                     width: ProposedDimension::Exact(3),
                     height: ProposedDimension::Exact(3)
                 },
-                &env
+                &env,
+                &mut (),
+                &mut ()
             )
             .resolved_size,
         Dimensions::new(2, 2)
@@ -117,8 +142,11 @@ fn test_fixed_frame_compact_width_height() {
 #[test]
 fn test_fixed_frame_infinite_width_height() {
     let font = CharacterBufferFont {};
-    let content = Text::new("123456", &font).frame_sized(25, 25);
+    let content = Text::new("123456", &font)
+        .frame_sized(25, 25)
+        .foreground_color(());
     let env = common::TestEnv::default();
+    content.build_state(&mut ());
 
     assert_eq!(
         content
@@ -127,7 +155,9 @@ fn test_fixed_frame_infinite_width_height() {
                     width: ProposedDimension::Infinite,
                     height: ProposedDimension::Infinite
                 },
-                &env
+                &env,
+                &mut (),
+                &mut ()
             )
             .resolved_size,
         Dimensions::new(25, 25)
@@ -142,7 +172,7 @@ fn test_render_frame_top_leading_alignment() {
         .with_alignment(Alignment::TopLeading)
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let tree = make_render_tree(&content, buffer.size());
+    let tree = make_render_tree(&content, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aa    ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "bb    ");
@@ -159,7 +189,7 @@ fn test_render_frame_top_center_alignment() {
         .with_vertical_alignment(VerticalAlignment::Top)
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let tree = make_render_tree(&content, buffer.size());
+    let tree = make_render_tree(&content, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "  aa  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "  bb  ");
@@ -176,7 +206,7 @@ fn test_render_frame_top_trailing_alignment() {
         .with_alignment(Alignment::TopTrailing)
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let tree = make_render_tree(&content, buffer.size());
+    let tree = make_render_tree(&content, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "    aa");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "    bb");
@@ -193,7 +223,7 @@ fn test_render_frame_center_leading_alignment() {
         .with_horizontal_alignment(HorizontalAlignment::Leading)
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let tree = make_render_tree(&content, buffer.size());
+    let tree = make_render_tree(&content, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "aa    ");
@@ -209,7 +239,7 @@ fn test_render_frame_center_center_alignment() {
         .frame_sized(6, 5)
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let tree = make_render_tree(&content, buffer.size());
+    let tree = make_render_tree(&content, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "  aa  ");
@@ -226,7 +256,7 @@ fn test_render_frame_center_trailing_alignment() {
         .with_horizontal_alignment(HorizontalAlignment::Trailing)
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let tree = make_render_tree(&content, buffer.size());
+    let tree = make_render_tree(&content, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "    aa");
@@ -245,7 +275,7 @@ fn test_render_frame_bottom_leading_alignment() {
         .with_vertical_alignment(VerticalAlignment::Bottom)
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let tree = make_render_tree(&content, buffer.size());
+    let tree = make_render_tree(&content, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "      ");
@@ -262,7 +292,7 @@ fn test_render_frame_bottom_center_alignment() {
         .with_vertical_alignment(VerticalAlignment::Bottom)
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let tree = make_render_tree(&content, buffer.size());
+    let tree = make_render_tree(&content, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "      ");
@@ -279,7 +309,7 @@ fn test_render_frame_bottom_trailing_alignment() {
         .with_alignment(Alignment::BottomTrailing)
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let tree = make_render_tree(&content, buffer.size());
+    let tree = make_render_tree(&content, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "      ");

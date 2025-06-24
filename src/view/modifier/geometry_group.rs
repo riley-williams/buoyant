@@ -1,31 +1,35 @@
 use crate::{
-    layout::Layout,
-    primitives::Point,
-    render::{Offset, Renderable},
+    environment::LayoutEnvironment,
+    layout::ResolvedLayout,
+    primitives::{Point, ProposedDimensions},
+    render::Offset,
+    view::{ViewLayout, ViewMarker},
 };
 
 #[derive(Debug, Clone)]
-pub struct GeometryGroup<View> {
-    inner: View,
+pub struct GeometryGroup<ViewHandle> {
+    inner: ViewHandle,
 }
 
-impl<View> GeometryGroup<View> {
-    pub const fn new(view: View) -> Self {
+impl<ViewHandle> GeometryGroup<ViewHandle> {
+    pub const fn new(view: ViewHandle) -> Self {
         Self { inner: view }
     }
 }
 
-// Transparent layout
-impl<T: Layout> Layout for GeometryGroup<T> {
-    type Sublayout = T::Sublayout;
+impl<V> ViewMarker for GeometryGroup<V>
+where
+    V: ViewMarker,
+{
+    type Renderables = Offset<V::Renderables>;
+}
 
-    fn layout(
-        &self,
-        offer: &crate::primitives::ProposedDimensions,
-        env: &impl crate::environment::LayoutEnvironment,
-    ) -> crate::layout::ResolvedLayout<Self::Sublayout> {
-        self.inner.layout(offer, env)
-    }
+impl<Captures: ?Sized, V> ViewLayout<Captures> for GeometryGroup<V>
+where
+    V: ViewLayout<Captures>,
+{
+    type Sublayout = V::Sublayout;
+    type State = V::State;
 
     fn priority(&self) -> i8 {
         self.inner.priority()
@@ -34,18 +38,45 @@ impl<T: Layout> Layout for GeometryGroup<T> {
     fn is_empty(&self) -> bool {
         self.inner.is_empty()
     }
-}
 
-impl<T: Renderable> Renderable for GeometryGroup<T> {
-    type Renderables = Offset<T::Renderables>;
+    fn build_state(&self, captures: &mut Captures) -> Self::State {
+        self.inner.build_state(captures)
+    }
+    fn layout(
+        &self,
+        offer: &ProposedDimensions,
+        env: &impl LayoutEnvironment,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> ResolvedLayout<Self::Sublayout> {
+        self.inner.layout(offer, env, captures, state)
+    }
 
     fn render_tree(
         &self,
-        layout: &crate::layout::ResolvedLayout<Self::Sublayout>,
-        origin: crate::primitives::Point,
-        env: &impl crate::environment::LayoutEnvironment,
+        layout: &ResolvedLayout<Self::Sublayout>,
+        origin: Point,
+        env: &impl LayoutEnvironment,
+        captures: &mut Captures,
+        state: &mut Self::State,
     ) -> Self::Renderables {
         // Store the offset, and render subtrees from zero
-        Offset::new(origin, self.inner.render_tree(layout, Point::zero(), env))
+        Offset::new(
+            origin,
+            self.inner
+                .render_tree(layout, Point::zero(), env, captures, state),
+        )
+    }
+
+    fn handle_event(
+        &mut self,
+        event: &crate::view::Event,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> bool {
+        // FIXME: Apply offset to the event
+        self.inner
+            .handle_event(event, &mut render_tree.subtree, captures, state)
     }
 }

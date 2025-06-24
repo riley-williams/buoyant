@@ -28,7 +28,7 @@ impl<T: AnimatedJoin> AnimatedJoin for Offset<T> {
     }
 }
 
-impl<T: Render<C>, C> Render<C> for Offset<T> {
+impl<T: Render<C>, C: Copy> Render<C> for Offset<T> {
     fn render(
         &self,
         render_target: &mut impl RenderTarget<ColorFormat = C>,

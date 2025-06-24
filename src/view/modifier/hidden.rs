@@ -1,8 +1,8 @@
 use crate::{
     environment::LayoutEnvironment,
-    layout::{Layout, ResolvedLayout},
-    primitives::ProposedDimensions,
-    render::Renderable,
+    layout::ResolvedLayout,
+    primitives::{Point, ProposedDimensions},
+    view::{ViewLayout, ViewMarker},
 };
 
 /// A view that uses the layout of the child view, but renders nothing
@@ -17,16 +17,19 @@ impl<T> Hidden<T> {
     }
 }
 
-impl<T: Layout> Layout for Hidden<T> {
-    type Sublayout = T::Sublayout;
+impl<T> ViewMarker for Hidden<T>
+where
+    T: ViewMarker,
+{
+    type Renderables = (); // Render nothing
+}
 
-    fn layout(
-        &self,
-        offer: &ProposedDimensions,
-        env: &impl LayoutEnvironment,
-    ) -> ResolvedLayout<Self::Sublayout> {
-        self.child.layout(offer, env)
-    }
+impl<Captures: ?Sized, T> ViewLayout<Captures> for Hidden<T>
+where
+    T: ViewLayout<Captures>,
+{
+    type Sublayout = T::Sublayout;
+    type State = T::State;
 
     fn priority(&self) -> i8 {
         self.child.priority()
@@ -36,17 +39,27 @@ impl<T: Layout> Layout for Hidden<T> {
         // This is still useful because the empty property affects stack spacing
         self.child.is_empty()
     }
-}
 
-impl<T: Renderable> Renderable for Hidden<T> {
-    // Render nothing
-    type Renderables = ();
+    fn build_state(&self, captures: &mut Captures) -> Self::State {
+        self.child.build_state(captures)
+    }
+    fn layout(
+        &self,
+        offer: &ProposedDimensions,
+        env: &impl LayoutEnvironment,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> ResolvedLayout<Self::Sublayout> {
+        self.child.layout(offer, env, captures, state)
+    }
 
     fn render_tree(
         &self,
         _layout: &ResolvedLayout<Self::Sublayout>,
-        _origin: crate::primitives::Point,
+        _origin: Point,
         _env: &impl LayoutEnvironment,
+        _captures: &mut Captures,
+        _state: &mut Self::State,
     ) -> Self::Renderables {
     }
 }
