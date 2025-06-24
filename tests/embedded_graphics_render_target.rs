@@ -1,15 +1,10 @@
 use buoyant::{
     environment::DefaultEnvironment,
-    layout::Alignment,
     primitives::{Point, Size},
     render::Render,
     render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _},
     surface::AsDrawTarget,
-    view::{
-        padding::Edges,
-        shape::{Capsule, Circle, Rectangle, RoundedRectangle},
-        AsDrawable as _, HStack, Image, Text, VStack, View, ViewExt,
-    },
+    view::prelude::*,
 };
 use embedded_graphics::{
     geometry::{OriginDimensions, Point as EgPoint, Size as EgSize},
@@ -26,15 +21,16 @@ use u8g2_fonts::{fonts, types::FontColor, FontRenderer};
 
 const MOCK_SIZE: u32 = 64;
 
-fn render_to_mock(view: &impl View<Rgb888>, allow_overdraw: bool) -> MockDisplay<Rgb888> {
+fn render_to_mock(view: &impl View<Rgb888, ()>, allow_overdraw: bool) -> MockDisplay<Rgb888> {
     let mut display = MockDisplay::<Rgb888>::new();
     display.set_allow_overdraw(allow_overdraw);
     display.set_allow_out_of_bounds_drawing(false);
     let mut target = EmbeddedGraphicsRenderTarget::new(&mut display);
 
     let env = DefaultEnvironment::default();
-    let layout = view.layout(&target.size().into(), &env);
-    let tree = view.render_tree(&layout, Point::zero(), &env);
+    let mut state = view.build_state(&mut ());
+    let layout = view.layout(&target.size().into(), &env, &mut (), &mut state);
+    let tree = view.render_tree(&layout, Point::zero(), &env, &mut (), &mut state);
     tree.render(&mut target, &Rgb888::WHITE, Point::zero());
 
     display
@@ -119,7 +115,7 @@ fn as_drawable() {
     Rectangle
         .padding(Edges::All, 4)
         .foreground_color(Rgb888::CSS_SPRING_GREEN)
-        .as_drawable(display.size(), Rgb888::WHITE)
+        .as_drawable(display.size(), Rgb888::WHITE, &mut ())
         .draw(&mut display)
         .unwrap();
 

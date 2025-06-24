@@ -12,7 +12,7 @@ fn fixed_aspect_ratio_rect_fills_space() {
 
     let mut buffer = FixedTextBuffer::<12, 6>::default();
 
-    let tree = make_render_tree(&view, buffer.size());
+    let tree = make_render_tree(&view, buffer.size(), &mut ());
 
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "xxxxxxxxxxxx");
@@ -33,7 +33,7 @@ fn ideal_ratio_takes_child_ratio() {
 
     let mut buffer = FixedTextBuffer::<12, 6>::default();
 
-    let tree = make_render_tree(&view, buffer.size());
+    let tree = make_render_tree(&view, buffer.size(), &mut ());
 
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "xxxxxxxxxxxx");
@@ -59,7 +59,7 @@ fn stacked_aspect_ratios_fill_space() {
 
     let mut buffer = FixedTextBuffer::<12, 6>::default();
 
-    let tree = make_render_tree(&view, buffer.size());
+    let tree = make_render_tree(&view, buffer.size(), &mut ());
 
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "        yyyy");

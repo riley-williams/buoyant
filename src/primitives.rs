@@ -185,6 +185,14 @@ impl Frame {
     pub const fn new(origin: Point, size: Size) -> Self {
         Self { size, origin }
     }
+
+    #[must_use]
+    pub const fn contains(&self, point: &Point) -> bool {
+        self.origin.x <= point.x
+            && self.origin.y <= point.y
+            && point.x < (self.origin.x + self.size.width as i32)
+            && point.y < (self.origin.y + self.size.height as i32)
+    }
 }
 
 #[cfg(feature = "embedded-graphics")]
@@ -200,6 +208,15 @@ impl From<embedded_graphics_core::primitives::Rectangle> for Frame {
         Self {
             origin: value.top_left.into(),
             size: value.size.into(),
+        }
+    }
+}
+
+impl Interpolate for Frame {
+    fn interpolate(from: Self, to: Self, amount: u8) -> Self {
+        Self {
+            origin: Interpolate::interpolate(from.origin, to.origin, amount),
+            size: Interpolate::interpolate(from.size, to.size, amount),
         }
     }
 }

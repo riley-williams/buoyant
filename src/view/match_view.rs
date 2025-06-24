@@ -1,7 +1,8 @@
 use crate::{
-    layout::{Layout, ResolvedLayout},
+    layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
-    render::{OneOf2, OneOf3, Renderable},
+    render::{OneOf2, OneOf3},
+    view::{ViewLayout, ViewMarker},
 };
 
 /// A view that can conditionally render one of N subtrees based on the enum variant.
@@ -163,33 +164,22 @@ macro_rules! match_view {
     }};
 }
 
-impl<V0: Layout, V1: Layout> Layout for MatchView<Branch2<V0, V1>> {
-    type Sublayout = Branch2<ResolvedLayout<V0::Sublayout>, ResolvedLayout<V1::Sublayout>>;
+impl<V0, V1> ViewMarker for MatchView<Branch2<V0, V1>>
+where
+    V0: ViewMarker,
+    V1: ViewMarker,
+{
+    type Renderables = OneOf2<V0::Renderables, V1::Renderables>;
+}
 
-    fn layout(
-        &self,
-        offer: &ProposedDimensions,
-        env: &impl crate::environment::LayoutEnvironment,
-    ) -> ResolvedLayout<Self::Sublayout> {
-        match &self.branch {
-            Branch2::Variant0(v0) => {
-                let child_layout = v0.layout(offer, env);
-                let size = child_layout.resolved_size;
-                ResolvedLayout {
-                    sublayouts: Branch2::Variant0(child_layout),
-                    resolved_size: size,
-                }
-            }
-            Branch2::Variant1(v1) => {
-                let child_layout = v1.layout(offer, env);
-                let size = child_layout.resolved_size;
-                ResolvedLayout {
-                    sublayouts: Branch2::Variant1(child_layout),
-                    resolved_size: size,
-                }
-            }
-        }
-    }
+impl<Captures, V0, V1> ViewLayout<Captures> for MatchView<Branch2<V0, V1>>
+where
+    V0: ViewLayout<Captures>,
+    V1: ViewLayout<Captures>,
+    Captures: ?Sized,
+{
+    type Sublayout = Branch2<ResolvedLayout<V0::Sublayout>, ResolvedLayout<V1::Sublayout>>;
+    type State = Branch2<V0::State, V1::State>;
 
     fn priority(&self) -> i8 {
         match &self.branch {
@@ -204,47 +194,128 @@ impl<V0: Layout, V1: Layout> Layout for MatchView<Branch2<V0, V1>> {
             Branch2::Variant1(v1) => v1.is_empty(),
         }
     }
-}
 
-impl<V0: Layout, V1: Layout, V2: Layout> Layout for MatchView<Branch3<V0, V1, V2>> {
-    type Sublayout = Branch3<
-        ResolvedLayout<V0::Sublayout>,
-        ResolvedLayout<V1::Sublayout>,
-        ResolvedLayout<V2::Sublayout>,
-    >;
-
+    fn build_state(&self, captures: &mut Captures) -> Self::State {
+        match &self.branch {
+            Branch2::Variant0(v0) => Branch2::Variant0(v0.build_state(captures)),
+            Branch2::Variant1(v1) => Branch2::Variant1(v1.build_state(captures)),
+        }
+    }
     fn layout(
         &self,
         offer: &ProposedDimensions,
         env: &impl crate::environment::LayoutEnvironment,
+        captures: &mut Captures,
+        state: &mut Self::State,
     ) -> ResolvedLayout<Self::Sublayout> {
         match &self.branch {
-            Branch3::Variant0(v0) => {
-                let child_layout = v0.layout(offer, env);
+            Branch2::Variant0(v0) => {
+                let s0 = if let Branch2::Variant0(s) = state {
+                    s
+                } else {
+                    *state = Branch2::Variant0(v0.build_state(captures));
+                    let Branch2::Variant0(s) = state else {
+                        unreachable!("Guaranteed to not be any other variant")
+                    };
+                    s
+                };
+
+                let child_layout = v0.layout(offer, env, captures, s0);
                 let size = child_layout.resolved_size;
                 ResolvedLayout {
-                    sublayouts: Branch3::Variant0(child_layout),
+                    sublayouts: Branch2::Variant0(child_layout),
                     resolved_size: size,
                 }
             }
-            Branch3::Variant1(v1) => {
-                let child_layout = v1.layout(offer, env);
+            Branch2::Variant1(v1) => {
+                let s1 = if let Branch2::Variant1(s) = state {
+                    s
+                } else {
+                    *state = Branch2::Variant1(v1.build_state(captures));
+                    let Branch2::Variant1(s) = state else {
+                        unreachable!("Guaranteed to not be any other variant")
+                    };
+                    s
+                };
+                let child_layout = v1.layout(offer, env, captures, s1);
                 let size = child_layout.resolved_size;
                 ResolvedLayout {
-                    sublayouts: Branch3::Variant1(child_layout),
-                    resolved_size: size,
-                }
-            }
-            Branch3::Variant2(v2) => {
-                let child_layout = v2.layout(offer, env);
-                let size = child_layout.resolved_size;
-                ResolvedLayout {
-                    sublayouts: Branch3::Variant2(child_layout),
+                    sublayouts: Branch2::Variant1(child_layout),
                     resolved_size: size,
                 }
             }
         }
     }
+
+    fn render_tree(
+        &self,
+        layout: &ResolvedLayout<Self::Sublayout>,
+        origin: Point,
+        env: &impl crate::environment::LayoutEnvironment,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> Self::Renderables {
+        match (&self.branch, &layout.sublayouts, state) {
+            (Branch2::Variant0(v0), Branch2::Variant0(l0), Branch2::Variant0(s0)) => {
+                OneOf2::Variant0(v0.render_tree(l0, origin, env, captures, s0))
+            }
+            (Branch2::Variant1(v1), Branch2::Variant1(l1), Branch2::Variant1(s1)) => {
+                OneOf2::Variant1(v1.render_tree(l1, origin, env, captures, s1))
+            }
+            // This is reachable if an old layout attempts to be reused
+            _ => panic!(
+                "Layout/state branch mismatch in conditional view. Layouts cannot be reused."
+            ),
+        }
+    }
+
+    fn handle_event(
+        &mut self,
+        event: &crate::view::Event,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> bool {
+        match (&mut self.branch, render_tree, state) {
+            (Branch2::Variant0(v0), OneOf2::Variant0(t0), Branch2::Variant0(s0)) => {
+                v0.handle_event(event, t0, captures, s0)
+            }
+            (Branch2::Variant1(v1), OneOf2::Variant1(t1), Branch2::Variant1(s1)) => {
+                v1.handle_event(event, t1, captures, s1)
+            }
+            _ => {
+                assert!(
+                    !cfg!(debug_assertions),
+                    "State branch does not match view branch, likely due to improper reuse of layout."
+                );
+                false
+            }
+        }
+    }
+}
+
+impl<V0, V1, V2> ViewMarker for MatchView<Branch3<V0, V1, V2>>
+where
+    V0: ViewMarker,
+    V1: ViewMarker,
+    V2: ViewMarker,
+{
+    type Renderables = OneOf3<V0::Renderables, V1::Renderables, V2::Renderables>;
+}
+
+impl<Captures, V0, V1, V2> ViewLayout<Captures> for MatchView<Branch3<V0, V1, V2>>
+where
+    V0: ViewLayout<Captures>,
+    V1: ViewLayout<Captures>,
+    V2: ViewLayout<Captures>,
+    Captures: ?Sized,
+{
+    type Sublayout = Branch3<
+        ResolvedLayout<V0::Sublayout>,
+        ResolvedLayout<V1::Sublayout>,
+        ResolvedLayout<V2::Sublayout>,
+    >;
+    type State = Branch3<V0::State, V1::State, V2::State>;
 
     fn priority(&self) -> i8 {
         match &self.branch {
@@ -261,51 +332,125 @@ impl<V0: Layout, V1: Layout, V2: Layout> Layout for MatchView<Branch3<V0, V1, V2
             Branch3::Variant2(v2) => v2.is_empty(),
         }
     }
-}
 
-impl<V0: Renderable, V1: Renderable> Renderable for MatchView<Branch2<V0, V1>> {
-    type Renderables = OneOf2<V0::Renderables, V1::Renderables>;
-
-    fn render_tree(
-        &self,
-        layout: &ResolvedLayout<Self::Sublayout>,
-        origin: Point,
-        env: &impl crate::environment::LayoutEnvironment,
-    ) -> Self::Renderables {
-        match (&self.branch, &layout.sublayouts) {
-            (Branch2::Variant0(v0), Branch2::Variant0(l0)) => {
-                OneOf2::Variant0(v0.render_tree(l0, origin, env))
-            }
-            (Branch2::Variant1(v1), Branch2::Variant1(l1)) => {
-                OneOf2::Variant1(v1.render_tree(l1, origin, env))
-            }
-            // This is reachable if an old layout attempts to be reused
-            _ => panic!("An outdated layout was used"),
+    fn build_state(&self, captures: &mut Captures) -> Self::State {
+        match &self.branch {
+            Branch3::Variant0(v0) => Branch3::Variant0(v0.build_state(captures)),
+            Branch3::Variant1(v1) => Branch3::Variant1(v1.build_state(captures)),
+            Branch3::Variant2(v2) => Branch3::Variant2(v2.build_state(captures)),
         }
     }
-}
-
-impl<V0: Renderable, V1: Renderable, V2: Renderable> Renderable for MatchView<Branch3<V0, V1, V2>> {
-    type Renderables = OneOf3<V0::Renderables, V1::Renderables, V2::Renderables>;
+    fn layout(
+        &self,
+        offer: &ProposedDimensions,
+        env: &impl crate::environment::LayoutEnvironment,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> ResolvedLayout<Self::Sublayout> {
+        match &self.branch {
+            Branch3::Variant0(v0) => {
+                let s0 = if let Branch3::Variant0(s) = state {
+                    s
+                } else {
+                    *state = Branch3::Variant0(v0.build_state(captures));
+                    let Branch3::Variant0(s) = state else {
+                        unreachable!("Guaranteed to not be any other variant")
+                    };
+                    s
+                };
+                let child_layout = v0.layout(offer, env, captures, s0);
+                let size = child_layout.resolved_size;
+                ResolvedLayout {
+                    sublayouts: Branch3::Variant0(child_layout),
+                    resolved_size: size,
+                }
+            }
+            Branch3::Variant1(v1) => {
+                let s1 = if let Branch3::Variant1(s) = state {
+                    s
+                } else {
+                    *state = Branch3::Variant1(v1.build_state(captures));
+                    let Branch3::Variant1(s) = state else {
+                        unreachable!("Guaranteed to not be any other variant")
+                    };
+                    s
+                };
+                let child_layout = v1.layout(offer, env, captures, s1);
+                let size = child_layout.resolved_size;
+                ResolvedLayout {
+                    sublayouts: Branch3::Variant1(child_layout),
+                    resolved_size: size,
+                }
+            }
+            Branch3::Variant2(v2) => {
+                let s2 = if let Branch3::Variant2(s) = state {
+                    s
+                } else {
+                    *state = Branch3::Variant2(v2.build_state(captures));
+                    let Branch3::Variant2(s) = state else {
+                        unreachable!("Guaranteed to not be any other variant")
+                    };
+                    s
+                };
+                let child_layout = v2.layout(offer, env, captures, s2);
+                let size = child_layout.resolved_size;
+                ResolvedLayout {
+                    sublayouts: Branch3::Variant2(child_layout),
+                    resolved_size: size,
+                }
+            }
+        }
+    }
 
     fn render_tree(
         &self,
         layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
         env: &impl crate::environment::LayoutEnvironment,
+        captures: &mut Captures,
+        state: &mut Self::State,
     ) -> Self::Renderables {
-        match (&self.branch, &layout.sublayouts) {
-            (Branch3::Variant0(v0), Branch3::Variant0(l0)) => {
-                OneOf3::Variant0(v0.render_tree(l0, origin, env))
+        match (&self.branch, &layout.sublayouts, state) {
+            (Branch3::Variant0(v0), Branch3::Variant0(l0), Branch3::Variant0(s0)) => {
+                OneOf3::Variant0(v0.render_tree(l0, origin, env, captures, s0))
             }
-            (Branch3::Variant1(v1), Branch3::Variant1(l1)) => {
-                OneOf3::Variant1(v1.render_tree(l1, origin, env))
+            (Branch3::Variant1(v1), Branch3::Variant1(l1), Branch3::Variant1(s1)) => {
+                OneOf3::Variant1(v1.render_tree(l1, origin, env, captures, s1))
             }
-            (Branch3::Variant2(v2), Branch3::Variant2(l2)) => {
-                OneOf3::Variant2(v2.render_tree(l2, origin, env))
+            (Branch3::Variant2(v2), Branch3::Variant2(l2), Branch3::Variant2(s2)) => {
+                OneOf3::Variant2(v2.render_tree(l2, origin, env, captures, s2))
             }
             // This is reachable if an old layout attempts to be reused
-            _ => panic!("An outdated layout was used"),
+            _ => panic!(
+                "Layout/state branch mismatch in conditional view. Layouts cannot be reused."
+            ),
+        }
+    }
+
+    fn handle_event(
+        &mut self,
+        event: &crate::view::Event,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> bool {
+        match (&mut self.branch, render_tree, state) {
+            (Branch3::Variant0(v0), OneOf3::Variant0(t0), Branch3::Variant0(s0)) => {
+                v0.handle_event(event, t0, captures, s0)
+            }
+            (Branch3::Variant1(v1), OneOf3::Variant1(t1), Branch3::Variant1(s1)) => {
+                v1.handle_event(event, t1, captures, s1)
+            }
+            (Branch3::Variant2(v2), OneOf3::Variant2(t2), Branch3::Variant2(s2)) => {
+                v2.handle_event(event, t2, captures, s2)
+            }
+            _ => {
+                assert!(
+                    !cfg!(debug_assertions),
+                    "State branch does not match view branch, likely due to improper reuse of layout."
+                );
+                false
+            }
         }
     }
 }

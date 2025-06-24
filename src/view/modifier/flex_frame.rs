@@ -1,8 +1,8 @@
 use crate::{
     environment::LayoutEnvironment,
-    layout::{Alignment, HorizontalAlignment, Layout, ResolvedLayout, VerticalAlignment},
+    layout::{Alignment, HorizontalAlignment, ResolvedLayout, VerticalAlignment},
     primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions},
-    render::Renderable,
+    view::{ViewLayout, ViewMarker},
 };
 
 #[derive(Debug, Clone)]
@@ -143,13 +143,37 @@ fn clamp_optional<T: Ord + Copy>(mut value: T, min: Option<T>, max: Option<T>) -
     value.max(min.unwrap_or(value))
 }
 
-impl<V: Layout> Layout for FlexFrame<V> {
-    type Sublayout = ResolvedLayout<V::Sublayout>;
+impl<V> ViewMarker for FlexFrame<V>
+where
+    V: ViewMarker,
+{
+    type Renderables = V::Renderables;
+}
 
+impl<Captures: ?Sized, V> ViewLayout<Captures> for FlexFrame<V>
+where
+    V: ViewLayout<Captures>,
+{
+    type Sublayout = ResolvedLayout<V::Sublayout>;
+    type State = V::State;
+
+    fn priority(&self) -> i8 {
+        self.child.priority()
+    }
+
+    fn is_empty(&self) -> bool {
+        self.child.is_empty()
+    }
+
+    fn build_state(&self, captures: &mut Captures) -> Self::State {
+        self.child.build_state(captures)
+    }
     fn layout(
         &self,
         offer: &ProposedDimensions,
         env: &impl LayoutEnvironment,
+        captures: &mut Captures,
+        state: &mut Self::State,
     ) -> ResolvedLayout<Self::Sublayout> {
         let sublayout_width_offer = match offer.width {
             ProposedDimension::Exact(d) => ProposedDimension::Exact(clamp_optional(
@@ -199,7 +223,7 @@ impl<V: Layout> Layout for FlexFrame<V> {
             height: sublayout_height_offer,
         };
 
-        let sublayout = self.child.layout(&sublayout_offer, env);
+        let sublayout = self.child.layout(&sublayout_offer, env, captures, state);
 
         // restrict self size to min/max regardless of what the sublayout returns
         let sublayout_width = sublayout.resolved_size.width;
@@ -227,24 +251,14 @@ impl<V: Layout> Layout for FlexFrame<V> {
             resolved_size,
         }
     }
-}
-
-fn greatest_possible(proposal: ProposedDimension, ideal: Dimension) -> Dimension {
-    match proposal {
-        ProposedDimension::Exact(d) => d.into(),
-        ProposedDimension::Compact => ideal,
-        ProposedDimension::Infinite => Dimension::infinite(),
-    }
-}
-
-impl<T: Renderable> Renderable for FlexFrame<T> {
-    type Renderables = T::Renderables;
 
     fn render_tree(
         &self,
         layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
         env: &impl LayoutEnvironment,
+        captures: &mut Captures,
+        state: &mut Self::State,
     ) -> Self::Renderables {
         let new_origin = origin
             + Point::new(
@@ -258,6 +272,25 @@ impl<T: Renderable> Renderable for FlexFrame<T> {
                 ),
             );
 
-        self.child.render_tree(&layout.sublayouts, new_origin, env)
+        self.child
+            .render_tree(&layout.sublayouts, new_origin, env, captures, state)
+    }
+
+    fn handle_event(
+        &mut self,
+        event: &crate::view::Event,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> bool {
+        self.child.handle_event(event, render_tree, captures, state)
+    }
+}
+
+fn greatest_possible(proposal: ProposedDimension, ideal: Dimension) -> Dimension {
+    match proposal {
+        ProposedDimension::Exact(d) => d.into(),
+        ProposedDimension::Compact => ideal,
+        ProposedDimension::Infinite => Dimension::infinite(),
     }
 }

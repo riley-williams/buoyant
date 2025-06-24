@@ -80,6 +80,15 @@ impl From<Size> for ProposedDimensions {
     }
 }
 
+impl From<Dimensions> for ProposedDimensions {
+    fn from(dimensions: Dimensions) -> Self {
+        Self {
+            width: ProposedDimension::Exact(dimensions.width.0),
+            height: ProposedDimension::Exact(dimensions.height.0),
+        }
+    }
+}
+
 #[cfg(feature = "embedded-graphics")]
 impl From<embedded_graphics_core::geometry::Size> for ProposedDimensions {
     fn from(size: embedded_graphics_core::geometry::Size) -> Self {

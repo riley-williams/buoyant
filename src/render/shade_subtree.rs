@@ -17,7 +17,7 @@ impl<C, T> ShadeSubtree<C, T> {
     }
 }
 
-impl<C: Clone + Interpolate, T: AnimatedJoin> AnimatedJoin for ShadeSubtree<C, T> {
+impl<C: Interpolate, T: AnimatedJoin> AnimatedJoin for ShadeSubtree<C, T> {
     fn join(source: Self, target: Self, config: &AnimationDomain) -> Self {
         Self {
             style: Interpolate::interpolate(source.style, target.style, config.factor),
