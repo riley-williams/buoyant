@@ -1,5 +1,5 @@
-//! View types used for building interfaces
-
+mod button;
+mod capturing;
 mod divider;
 mod empty_view;
 mod foreach;
@@ -15,6 +15,9 @@ mod view_that_fits;
 mod vstack;
 mod zstack;
 
+pub use button::Button;
+pub use capturing::EraseCaptures;
+pub use capturing::Lens;
 pub use divider::Divider;
 pub use empty_view::EmptyView;
 pub use foreach::ForEach;
@@ -33,13 +36,15 @@ pub use zstack::ZStack;
 pub mod prelude {
     pub use super::aspect_ratio::{ContentMode, Ratio};
     pub use super::{padding::Edges, FitAxis, HorizontalTextAlignment};
-    pub use super::{
-        shape::*, Divider, EmptyView, ForEach, HStack, Spacer, Text, VStack, View, ViewExt,
-        ViewThatFits, ZStack,
-    };
     #[cfg(feature = "embedded-graphics")]
     pub use super::{AsDrawable, Image};
+    pub use super::{
+        Button, Divider, EmptyView, ForEach, HStack, Lens, Spacer, Text, VStack, View, ViewExt,
+        ViewLayout, ViewThatFits, ZStack,
+    };
+    pub use crate::animation::Animation;
     pub use crate::layout::{Alignment, HorizontalAlignment, VerticalAlignment};
+    pub use crate::view::shape::*;
 }
 
 use modifier::{
@@ -49,9 +54,11 @@ use modifier::{
 
 use crate::{
     animation::Animation,
-    layout::{Alignment, HorizontalAlignment, VerticalAlignment},
+    environment::LayoutEnvironment,
+    event::Event,
+    layout::{Alignment, HorizontalAlignment, ResolvedLayout, VerticalAlignment},
     primitives::Point,
-    render::{Render, Renderable},
+    render::Render,
 };
 
 #[cfg(feature = "embedded-graphics")]
@@ -60,11 +67,92 @@ use crate::{
     primitives::{Interpolate, ProposedDimensions},
 };
 
-pub trait View<C>: Renderable<Renderables: Render<C>> {}
-impl<C, T: Renderable<Renderables: Render<C>>> View<C> for T {}
+/// A view that can be rendered with a specific color type.
+///
+/// # Type Parameters
+///
+/// The first generic, `Color`, is the pixel color type used for rendering (e.g., `Rgb888`, `Rgb565`).
+/// The second, `Captures`, refers to external mutable state that the view can access when handling events.
+///
+/// # Examples
+///
+/// A simple view that renders a red rectangle:
+///
+/// ```
+/// use buoyant::view::prelude::*;
+/// use embedded_graphics::pixelcolor::{Rgb888, RgbColor};
+///
+/// fn red_rectangle() -> impl View<Rgb888, ()> {
+///     Rectangle.foreground_color(Rgb888::RED)
+/// }
+/// ```
+pub trait View<Color, Captures: ?Sized>: ViewLayout<Captures, Renderables: Render<Color>> {}
+
+impl<T, Color, Captures: ?Sized> View<Color, Captures> for T where
+    Self: ViewLayout<Captures, Renderables: Render<Color>>
+{
+}
+
+/// Properties and behavior that don't depend on generic parameters
+pub trait ViewMarker: Sized {
+    type Renderables;
+}
+
+/// State management for views
+pub trait ViewLayout<Captures: ?Sized>: ViewMarker {
+    type State;
+    type Sublayout: Clone + PartialEq;
+
+    /// The layout priority of the view. Higher priority views are more likely to be given the size they want
+    fn priority(&self) -> i8 {
+        0
+    }
+
+    /// Returns true if the view should not included in layout. `ConditionalView` is the primary example of this
+    fn is_empty(&self) -> bool {
+        false
+    }
+
+    /// Constructs a default state. This is called once after view init, and may be called again if
+    /// new branches are created as a result of changes to the captures.
+    fn build_state(&self, captures: &mut Captures) -> Self::State;
+
+    /// The size of the view given the offer
+    fn layout(
+        &self,
+        offer: &ProposedDimensions,
+        env: &impl LayoutEnvironment,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> ResolvedLayout<Self::Sublayout>;
+
+    fn render_tree(
+        &self,
+        layout: &ResolvedLayout<Self::Sublayout>,
+        origin: Point,
+        env: &impl LayoutEnvironment,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> Self::Renderables;
+
+    /// Process an event, returning true if the event was handled.
+    fn handle_event(
+        &mut self,
+        _event: &Event,
+        _render_tree: &mut Self::Renderables,
+        _captures: &mut Captures,
+        _state: &mut Self::State,
+    ) -> bool {
+        false
+    }
+}
 
 /// Modifiers that extend the functionality of views.
 pub trait ViewExt: Sized {
+    fn erase_captures(self) -> EraseCaptures<Self> {
+        EraseCaptures::new(self)
+    }
+
     /// Constrains the dimensions to the specified aspect ratio.
     ///
     /// # Examples
@@ -75,7 +163,7 @@ pub trait ViewExt: Sized {
     /// # use embedded_graphics::prelude::RgbColor;
     ///
     /// // A 16:9 aspect ratio rectangle that will scale to fit the available space
-    /// fn widescreen_rectangle() -> impl View<Rgb565> {
+    /// fn widescreen_rectangle() -> impl View<Rgb565, ()> {
     ///     Rectangle
     ///         .aspect_ratio(
     ///             Ratio::Fixed(16, 9),
@@ -86,7 +174,7 @@ pub trait ViewExt: Sized {
     /// // Ideal aspect ratio maintains the child's ideal aspect ratio
     ///
     /// /// An icon that maintains its aspect ratio while fitting within a 100x100 area
-    /// fn profile_icon() -> impl View<Rgb565> {
+    /// fn profile_icon() -> impl View<Rgb565, ()> {
     ///     image()
     ///         .aspect_ratio(Ratio::Ideal, ContentMode::Fit)
     ///         .flex_frame()
@@ -94,7 +182,7 @@ pub trait ViewExt: Sized {
     /// }
     ///
     /// /// (Equivalent to) A flexible 2:3 ratio image
-    /// fn image() -> impl View<Rgb565> {
+    /// fn image() -> impl View<Rgb565, ()> {
     ///     Rectangle
     ///         .flex_frame()
     ///         .with_ideal_size(40, 60)
@@ -233,14 +321,11 @@ pub trait ViewExt: Sized {
     ///
     /// ```
     /// use core::time::Duration;
-    /// use buoyant::view::{shape::{Circle, Capsule}, ZStack, padding::Edges, View, ViewExt as _};
-    /// use buoyant::animation::Animation;
-    /// use buoyant::layout::HorizontalAlignment;
-    /// use buoyant::render::Renderable;
+    /// use buoyant::view::prelude::*;
     /// use embedded_graphics::pixelcolor::Rgb565;
     /// use embedded_graphics::prelude::*;
     ///
-    /// fn toggle_button(is_on: bool) -> impl View<Rgb565> {
+    /// fn toggle_button(is_on: bool) -> impl View<Rgb565, ()> {
     ///     let (color, alignment) = if is_on {
     ///         (Rgb565::GREEN, HorizontalAlignment::Trailing)
     ///     } else {
@@ -269,11 +354,10 @@ pub trait ViewExt: Sized {
     /// Example:
     ///
     /// ```
-    /// use buoyant::view::{padding::Edges, shape::RoundedRectangle, Text, View, ViewExt as _};
-    /// use buoyant::layout::Alignment;
+    /// use buoyant::view::prelude::*;
     /// use embedded_graphics::{prelude::*, pixelcolor::Rgb565, mono_font::ascii::FONT_9X15_BOLD};
     ///
-    /// fn bordered_button() -> impl View<Rgb565> {
+    /// fn bordered_button() -> impl View<Rgb565, ()> {
     ///     Text::new("Press me", &FONT_9X15_BOLD)
     ///         .foreground_color(Rgb565::WHITE)
     ///         .padding(Edges::All, 10)
@@ -283,12 +367,8 @@ pub trait ViewExt: Sized {
     ///         })
     /// }
     /// ```
-    fn background<U>(
-        self,
-        alignment: Alignment,
-        background: impl FnOnce() -> U,
-    ) -> BackgroundView<Self, U> {
-        BackgroundView::new(self, background(), alignment)
+    fn background<U>(self, alignment: Alignment, background: U) -> BackgroundView<Self, U> {
+        BackgroundView::new(self, background, alignment)
     }
 
     /// Overlay uses the modified view to compute bounds, and renders the overlay
@@ -300,7 +380,7 @@ pub trait ViewExt: Sized {
     /// use buoyant::view::prelude::*;
     /// use embedded_graphics::{prelude::*, pixelcolor::Rgb888, mono_font::ascii::FONT_9X15_BOLD};
     ///
-    /// fn notification_badge() -> impl View<Rgb888> {
+    /// fn notification_badge() -> impl View<Rgb888, ()> {
     ///     Text::new("Content", &FONT_9X15_BOLD)
     ///         .overlay(
     ///             Alignment::TopTrailing,
@@ -342,81 +422,7 @@ pub trait ViewExt: Sized {
     }
 }
 
-impl<T: crate::layout::Layout> ViewExt for T {}
-
-#[deprecated(
-    since = "0.5.0",
-    note = "`RenderExtensions` has been replaced with `ViewExt`"
-)]
-pub trait RenderExtensions: ViewExt {
-    fn foreground_color<C>(self, color: C) -> ForegroundStyle<Self, C> {
-        <Self as ViewExt>::foreground_color(self, color)
-    }
-}
-
-#[allow(deprecated)]
-impl<T: crate::layout::Layout> RenderExtensions for T {}
-
-#[deprecated(
-    since = "0.5.0",
-    note = "`LayoutExtensions` has been replaced with `ViewExt`"
-)]
-pub trait LayoutExtensions: ViewExt {
-    fn padding(self, edges: padding::Edges, amount: u32) -> Padding<Self> {
-        <Self as ViewExt>::padding(self, edges, amount)
-    }
-
-    fn frame(self) -> FixedFrame<Self> {
-        <Self as ViewExt>::frame(self)
-    }
-
-    fn frame_sized(self, width: u32, height: u32) -> FixedFrame<Self> {
-        <Self as ViewExt>::frame_sized(self, width, height)
-    }
-
-    fn flex_frame(self) -> FlexFrame<Self> {
-        <Self as ViewExt>::flex_frame(self)
-    }
-
-    fn flex_infinite_width(self, alignment: HorizontalAlignment) -> FlexFrame<Self> {
-        <Self as ViewExt>::flex_infinite_width(self, alignment)
-    }
-
-    fn flex_infinite_height(self, alignment: VerticalAlignment) -> FlexFrame<Self> {
-        <Self as ViewExt>::flex_infinite_height(self, alignment)
-    }
-
-    fn fixed_size(self, horizontal: bool, vertical: bool) -> FixedSize<Self> {
-        <Self as ViewExt>::fixed_size(self, horizontal, vertical)
-    }
-
-    fn priority(self, priority: i8) -> Priority<Self> {
-        <Self as ViewExt>::priority(self, priority)
-    }
-
-    fn animated<T: PartialEq + Clone>(self, animation: Animation, value: T) -> Animated<Self, T> {
-        <Self as ViewExt>::animated(self, animation, value)
-    }
-
-    fn geometry_group(self) -> GeometryGroup<Self> {
-        <Self as ViewExt>::geometry_group(self)
-    }
-
-    fn background<U>(
-        self,
-        alignment: Alignment,
-        background: impl FnOnce() -> U,
-    ) -> BackgroundView<Self, U> {
-        <Self as ViewExt>::background(self, alignment, background)
-    }
-
-    fn hidden(self) -> Hidden<Self> {
-        <Self as ViewExt>::hidden(self)
-    }
-}
-
-#[allow(deprecated)]
-impl<T: crate::layout::Layout> LayoutExtensions for T {}
+impl<T> ViewExt for T where T: ViewMarker {}
 
 /// Convert a view into an object that can be drawn with embedded-graphics.
 ///
@@ -437,31 +443,36 @@ impl<T: crate::layout::Layout> LayoutExtensions for T {}
 ///     .foreground_color(Rgb888::GREEN);
 ///
 /// // Draw the view directly to the display using AsDrawable
-/// view.as_drawable(display.size(), Rgb888::BLACK)
+/// view.as_drawable(display.size(), Rgb888::BLACK, &mut ())
 ///     .draw(&mut display)
 ///     .unwrap();
 /// ```
 #[cfg(feature = "embedded-graphics")]
-pub trait AsDrawable<Color> {
+pub trait AsDrawable<Color, Captures: ?Sized> {
     fn as_drawable(
         &self,
         size: impl Into<ProposedDimensions>,
         default_color: Color,
+        captures: &mut Captures,
     ) -> impl embedded_graphics_core::Drawable<Color = Color, Output = ()>;
 }
 
 #[cfg(feature = "embedded-graphics")]
-impl<C: embedded_graphics_core::pixelcolor::PixelColor + Interpolate, T: View<C>> AsDrawable<C>
-    for T
+impl<Color, Captures: ?Sized, T> AsDrawable<Color, Captures> for T
+where
+    Color: embedded_graphics_core::pixelcolor::PixelColor + Interpolate,
+    T: View<Color, Captures>,
 {
     fn as_drawable(
         &self,
         size: impl Into<ProposedDimensions>,
-        default_color: C,
-    ) -> impl embedded_graphics_core::Drawable<Color = C, Output = ()> {
+        default_color: Color,
+        captures: &mut Captures,
+    ) -> impl embedded_graphics_core::Drawable<Color = Color, Output = ()> {
         let env = DefaultEnvironment::non_animated();
-        let layout = self.layout(&size.into(), &env);
-        let render_tree = self.render_tree(&layout, Point::zero(), &env);
+        let mut state = self.build_state(captures);
+        let layout = self.layout(&size.into(), &env, captures, &mut state);
+        let render_tree = self.render_tree(&layout, Point::zero(), &env, captures, &mut state);
         DrawableView {
             render_tree,
             default_color,
@@ -470,7 +481,7 @@ impl<C: embedded_graphics_core::pixelcolor::PixelColor + Interpolate, T: View<C>
 }
 
 #[cfg(feature = "embedded-graphics")]
-struct DrawableView<T: Render<C>, C> {
+struct DrawableView<T, C> {
     render_tree: T,
     default_color: C,
 }

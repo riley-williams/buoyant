@@ -16,7 +16,7 @@ fn inner_inset_rectangle() {
     Rectangle
         .stroked(4)
         .padding(Edges::All, 4)
-        .as_drawable(display.size(), Rgb888::WHITE)
+        .as_drawable(display.size(), Rgb888::WHITE, &mut ())
         .draw(&mut display)
         .unwrap();
 
@@ -40,7 +40,7 @@ fn center_inset_rectangle() {
     Rectangle
         .stroked_offset(4, StrokeOffset::Center)
         .padding(Edges::All, 4)
-        .as_drawable(display.size(), Rgb888::WHITE)
+        .as_drawable(display.size(), Rgb888::WHITE, &mut ())
         .draw(&mut display)
         .unwrap();
 
@@ -64,7 +64,7 @@ fn outer_inset_rectangle() {
     Rectangle
         .stroked_offset(4, StrokeOffset::Outer)
         .padding(Edges::All, 4)
-        .as_drawable(display.size(), Rgb888::WHITE)
+        .as_drawable(display.size(), Rgb888::WHITE, &mut ())
         .draw(&mut display)
         .unwrap();
 
@@ -88,7 +88,7 @@ fn inner_inset_rounded_rectangle() {
     RoundedRectangle::new(5)
         .stroked(4)
         .padding(Edges::All, 4)
-        .as_drawable(display.size(), Rgb888::WHITE)
+        .as_drawable(display.size(), Rgb888::WHITE, &mut ())
         .draw(&mut display)
         .unwrap();
 
@@ -115,7 +115,7 @@ fn center_inset_rounded_rectangle() {
     RoundedRectangle::new(5)
         .stroked_offset(4, StrokeOffset::Center)
         .padding(Edges::All, 4)
-        .as_drawable(display.size(), Rgb888::WHITE)
+        .as_drawable(display.size(), Rgb888::WHITE, &mut ())
         .draw(&mut display)
         .unwrap();
 
@@ -142,7 +142,7 @@ fn outer_inset_rounded_rectangle() {
     RoundedRectangle::new(5)
         .stroked_offset(4, StrokeOffset::Outer)
         .padding(Edges::All, 4)
-        .as_drawable(display.size(), Rgb888::WHITE)
+        .as_drawable(display.size(), Rgb888::WHITE, &mut ())
         .draw(&mut display)
         .unwrap();
 
@@ -169,7 +169,7 @@ fn inner_inset_circle() {
     Circle
         .stroked(4)
         .padding(Edges::All, 4)
-        .as_drawable(display.size(), Rgb888::WHITE)
+        .as_drawable(display.size(), Rgb888::WHITE, &mut ())
         .draw(&mut display)
         .unwrap();
 
@@ -195,7 +195,7 @@ fn center_inset_circle() {
     Circle
         .stroked_offset(4, StrokeOffset::Center)
         .padding(Edges::All, 4)
-        .as_drawable(display.size(), Rgb888::WHITE)
+        .as_drawable(display.size(), Rgb888::WHITE, &mut ())
         .draw(&mut display)
         .unwrap();
 
@@ -221,7 +221,7 @@ fn outer_inset_circle() {
     Circle
         .stroked_offset(4, StrokeOffset::Outer)
         .padding(Edges::All, 4)
-        .as_drawable(display.size(), Rgb888::WHITE)
+        .as_drawable(display.size(), Rgb888::WHITE, &mut ())
         .draw(&mut display)
         .unwrap();
 
@@ -247,7 +247,7 @@ fn inner_inset_capsule() {
     Capsule
         .stroked(4)
         .padding(Edges::All, 4)
-        .as_drawable(display.size(), Rgb888::WHITE)
+        .as_drawable(display.size(), Rgb888::WHITE, &mut ())
         .draw(&mut display)
         .unwrap();
 
@@ -277,7 +277,7 @@ fn center_inset_capsule() {
     Capsule
         .stroked_offset(4, StrokeOffset::Center)
         .padding(Edges::All, 4)
-        .as_drawable(display.size(), Rgb888::WHITE)
+        .as_drawable(display.size(), Rgb888::WHITE, &mut ())
         .draw(&mut display)
         .unwrap();
 
@@ -307,7 +307,7 @@ fn outer_inset_capsule() {
     Capsule
         .stroked_offset(4, StrokeOffset::Outer)
         .padding(Edges::All, 4)
-        .as_drawable(display.size(), Rgb888::WHITE)
+        .as_drawable(display.size(), Rgb888::WHITE, &mut ())
         .draw(&mut display)
         .unwrap();
 

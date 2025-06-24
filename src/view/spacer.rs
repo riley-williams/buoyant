@@ -1,8 +1,8 @@
 use crate::{
     environment::LayoutEnvironment,
-    layout::{Layout, LayoutDirection, ResolvedLayout},
+    layout::{LayoutDirection, ResolvedLayout},
     primitives::{Dimensions, Point, ProposedDimensions},
-    render::Renderable,
+    view::{ViewLayout, ViewMarker},
 };
 
 #[derive(Debug, Default, PartialEq, Eq)]
@@ -10,14 +10,28 @@ pub struct Spacer {
     min_length: u32,
 }
 
-impl Layout for Spacer {
+impl ViewMarker for Spacer {
+    type Renderables = ();
+}
+
+impl<Captures: ?Sized> ViewLayout<Captures> for Spacer {
+    type State = ();
     type Sublayout = ();
+
+    fn priority(&self) -> i8 {
+        // This view should take all the remaining space after other siblings have been laid out
+        i8::MIN
+    }
+
+    fn build_state(&self, _captures: &mut Captures) -> Self::State {}
 
     fn layout(
         &self,
         offer: &ProposedDimensions,
         env: &impl LayoutEnvironment,
-    ) -> ResolvedLayout<()> {
+        _captures: &mut Captures,
+        _state: &mut Self::State,
+    ) -> ResolvedLayout<Self::Sublayout> {
         let size = match env.layout_direction() {
             LayoutDirection::Horizontal => Dimensions {
                 width: offer.width.resolve_most_flexible(0, self.min_length),
@@ -34,20 +48,14 @@ impl Layout for Spacer {
         }
     }
 
-    fn priority(&self) -> i8 {
-        // This view should take all the remaining space after other siblings have been laid out
-        i8::MIN
-    }
-}
-
-impl Renderable for Spacer {
-    type Renderables = ();
-
     fn render_tree(
         &self,
         _layout: &ResolvedLayout<Self::Sublayout>,
         _origin: Point,
         _env: &impl LayoutEnvironment,
-    ) {
+        _captures: &mut Captures,
+        _state: &mut Self::State,
+    ) -> Self::Renderables {
     }
 }
+

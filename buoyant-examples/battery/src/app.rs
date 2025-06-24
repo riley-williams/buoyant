@@ -1,11 +1,6 @@
 use std::time::{Duration, Instant};
 
-use buoyant::{
-    environment::DefaultEnvironment,
-    layout::Layout as _,
-    primitives::ProposedDimensions,
-    render::{Render, Renderable as _},
-};
+use buoyant::{environment::DefaultEnvironment, primitives::ProposedDimensions, render::Render};
 
 use crate::{charge_simulator::ChargeSim, color, view::Screen};
 

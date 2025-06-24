@@ -9,6 +9,10 @@ pub trait Interpolate: Copy + PartialEq {
     }
 }
 
+impl Interpolate for () {
+    fn interpolate(_from: Self, _to: Self, _amount: u8) -> Self {}
+}
+
 impl Interpolate for u16 {
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
         (((u32::from(amount) * u32::from(to)) + (u32::from(255 - amount) * u32::from(from))) / 255)

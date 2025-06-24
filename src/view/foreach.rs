@@ -2,9 +2,9 @@ use core::cmp::max;
 
 use crate::{
     environment::LayoutEnvironment,
-    layout::{HorizontalAlignment, Layout, LayoutDirection, ResolvedLayout},
+    layout::{HorizontalAlignment, LayoutDirection, ResolvedLayout},
     primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions},
-    render::Renderable,
+    view::{ViewLayout, ViewMarker},
 };
 
 #[derive(Debug, Clone)]
@@ -87,7 +87,6 @@ impl<const N: usize> ForEach<N> {
 
 impl<'a, const N: usize, I, V, F> ForEachView<'a, N, I, V, F>
 where
-    V: Layout,
     F: Fn(&'a I) -> V,
 {
     /// Sets an alignment strategy for when child views vary in width
@@ -105,13 +104,31 @@ where
     }
 }
 
-impl<'a, const N: usize, I, V, F> Layout for ForEachView<'a, N, I, V, F>
+impl<'a, const N: usize, I, V, F> ViewMarker for ForEachView<'a, N, I, V, F>
 where
-    V: Layout,
+    F: Fn(&'a I) -> V,
+    V: ViewMarker,
+{
+    type Renderables = heapless::Vec<V::Renderables, N>;
+}
+
+impl<'a, const N: usize, I, V, F, Captures: ?Sized> ViewLayout<Captures>
+    for ForEachView<'a, N, I, V, F>
+where
+    V: ViewLayout<Captures>,
     F: Fn(&'a I) -> V,
 {
     type Sublayout = heapless::Vec<ResolvedLayout<V::Sublayout>, N>;
+    type State = heapless::Vec<V::State, N>;
 
+    fn build_state(&self, captures: &mut Captures) -> Self::State {
+        let mut state = heapless::Vec::new();
+        for item in self.items {
+            let view = (self.build_view)(item);
+            _ = state.push(view.build_state(captures));
+        }
+        state
+    }
     // This layout implementation trades extra work for lower memory usage as embedded is the
     // primary target environment. Views are repeatedly created for every layout call, but it
     // should be assumed that this is cheap
@@ -119,6 +136,8 @@ where
         &self,
         offer: &ProposedDimensions,
         env: &impl LayoutEnvironment,
+        captures: &mut Captures,
+        state: &mut Self::State,
     ) -> ResolvedLayout<Self::Sublayout> {
         let env = &ForEachEnvironment::from(env);
         let mut sublayouts: heapless::Vec<ResolvedLayout<V::Sublayout>, N> = heapless::Vec::new();
@@ -126,14 +145,22 @@ where
 
         // fill sublayouts with an initial garbage layout
         // TODO: guess there are no empty views, often no extra work needed?
-        for item in self.items {
+        for (i, item) in self.items.iter().enumerate() {
             let view = (self.build_view)(item);
-            _ = sublayouts.push(view.layout(offer, env));
+            let Some(item_state) = state.get_mut(i) else {
+                break;
+            };
+            _ = sublayouts.push(view.layout(offer, env, captures, item_state));
             _ = subview_stages.push((view.priority(), view.is_empty()));
         }
 
         let layout_fn = |index: usize, offer: ProposedDimensions| {
-            let layout = (self.build_view)(&self.items[index]).layout(&offer, env);
+            let layout = (self.build_view)(&self.items[index]).layout(
+                &offer,
+                env,
+                captures,
+                &mut state[index],
+            );
             let size = layout.resolved_size;
             sublayouts[index] = layout;
             size
@@ -145,26 +172,22 @@ where
             resolved_size: size,
         }
     }
-}
-
-impl<'a, const N: usize, I, V: Renderable, F> Renderable for ForEachView<'a, N, I, V, F>
-where
-    F: Fn(&'a I) -> V,
-{
-    type Renderables = heapless::Vec<V::Renderables, N>;
 
     fn render_tree(
         &self,
         layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
         env: &impl LayoutEnvironment,
+        captures: &mut Captures,
+        state: &mut Self::State,
     ) -> Self::Renderables {
         let env = &ForEachEnvironment::from(env);
 
         let mut accumulated_height = 0;
         let mut renderables = heapless::Vec::new();
 
-        for (item_layout, item) in layout.sublayouts.iter().zip(self.items) {
+        for ((item_layout, item), item_state) in layout.sublayouts.iter().zip(self.items).zip(state)
+        {
             let aligned_origin = origin
                 + Point::new(
                     self.alignment.align(
@@ -175,7 +198,13 @@ where
                 );
             let view = (self.build_view)(item);
             // TODO: If we include an ID here, rows can be animated and transitioned
-            let item = renderables.push(view.render_tree(item_layout, aligned_origin, env));
+            let item = renderables.push(view.render_tree(
+                item_layout,
+                aligned_origin,
+                env,
+                captures,
+                item_state,
+            ));
             assert!(item.is_ok());
 
             if !view.is_empty() {
@@ -185,6 +214,27 @@ where
         }
 
         renderables
+    }
+
+    fn handle_event(
+        &mut self,
+        event: &crate::view::Event,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> bool {
+        for ((item, item_state), render_tree) in self
+            .items
+            .iter()
+            .zip(state.iter_mut())
+            .zip(render_tree.iter_mut())
+        {
+            let mut view = (self.build_view)(item);
+            if view.handle_event(event, render_tree, captures, item_state) {
+                return true;
+            }
+        }
+        false
     }
 }
 

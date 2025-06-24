@@ -1,18 +1,14 @@
 //! Render primitives.
 //!
-//! If you are constructing views, this is probably not the module you want. Use ``View`` instead.
+//! If you are constructing views, this is probably not the module you want. Use ``ViewHandle`` instead.
 
 use core::time::Duration;
 
-use crate::{
-    environment::LayoutEnvironment,
-    layout::{Layout, ResolvedLayout},
-    primitives::Point,
-    render_target::RenderTarget,
-};
+use crate::{primitives::Point, render_target::RenderTarget};
 
 mod animate;
 pub mod collections;
+mod container;
 mod empty;
 #[cfg(feature = "embedded-graphics")]
 mod image;
@@ -24,6 +20,7 @@ pub mod shape;
 mod text;
 
 pub use animate::Animate;
+pub use container::Container;
 #[cfg(feature = "embedded-graphics")]
 pub use image::Image;
 pub use offset::Offset;
@@ -35,22 +32,6 @@ pub use shape::Rect;
 pub use shape::RoundedRect;
 pub use shape::StrokedShape;
 pub use text::Text;
-
-/// A type that can produce a render tree.
-///
-/// The ``Renderables`` associated type specifies the subtree produced.
-/// Views may have a matching renderable, like in the case of ``Rectangle``,
-/// which has a concrete size and position. Some views like the frame modifier
-/// do not produce a node at all, and instead insert their subview render tree.
-pub trait Renderable: Layout {
-    type Renderables;
-    fn render_tree(
-        &self,
-        layout: &ResolvedLayout<Self::Sublayout>,
-        origin: Point,
-        env: &impl LayoutEnvironment,
-    ) -> Self::Renderables;
-}
 
 pub trait AnimatedJoin {
     /// Produces a new tree by consuming and interpolating between two partially animated trees

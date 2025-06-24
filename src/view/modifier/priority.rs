@@ -1,8 +1,8 @@
 use crate::{
     environment::LayoutEnvironment,
-    layout::{Layout, ResolvedLayout},
+    layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
-    render::Renderable,
+    view::{ViewLayout, ViewMarker},
 };
 
 /// Sets the priority of the view layout.
@@ -29,16 +29,19 @@ impl<T> PartialEq for Priority<T> {
     }
 }
 
-impl<V: Layout> Layout for Priority<V> {
-    type Sublayout = V::Sublayout;
+impl<V> ViewMarker for Priority<V>
+where
+    V: ViewMarker,
+{
+    type Renderables = V::Renderables;
+}
 
-    fn layout(
-        &self,
-        offer: &ProposedDimensions,
-        env: &impl LayoutEnvironment,
-    ) -> ResolvedLayout<Self::Sublayout> {
-        self.child.layout(offer, env)
-    }
+impl<Captures: ?Sized, V> ViewLayout<Captures> for Priority<V>
+where
+    V: ViewLayout<Captures>,
+{
+    type Sublayout = V::Sublayout;
+    type State = V::State;
 
     fn priority(&self) -> i8 {
         self.priority
@@ -47,17 +50,38 @@ impl<V: Layout> Layout for Priority<V> {
     fn is_empty(&self) -> bool {
         self.child.is_empty()
     }
-}
 
-impl<T: Renderable> Renderable for Priority<T> {
-    type Renderables = T::Renderables;
+    fn build_state(&self, captures: &mut Captures) -> Self::State {
+        self.child.build_state(captures)
+    }
+    fn layout(
+        &self,
+        offer: &ProposedDimensions,
+        env: &impl LayoutEnvironment,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> ResolvedLayout<Self::Sublayout> {
+        self.child.layout(offer, env, captures, state)
+    }
 
     fn render_tree(
         &self,
         layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
         env: &impl LayoutEnvironment,
+        captures: &mut Captures,
+        state: &mut Self::State,
     ) -> Self::Renderables {
-        self.child.render_tree(layout, origin, env)
+        self.child.render_tree(layout, origin, env, captures, state)
+    }
+
+    fn handle_event(
+        &mut self,
+        event: &crate::view::Event,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> bool {
+        self.child.handle_event(event, render_tree, captures, state)
     }
 }
