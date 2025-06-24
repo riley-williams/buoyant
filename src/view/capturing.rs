@@ -151,4 +151,3 @@ impl<
             .handle_event(event, render_tree, (self.capture_fn)(captures), state)
     }
 }
-
