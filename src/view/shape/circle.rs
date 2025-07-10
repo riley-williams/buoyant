@@ -5,9 +5,21 @@ use crate::{
     view::{ViewLayout, ViewMarker},
 };
 
-/// A circle primitive
+/// A circle which takes space greedily on both axes while maintaining a square aspect ratio.
+///
+/// By default, this renders a filled shape with the inherited foreground color.
+/// To render with a stroke instead, use [`ShapeExt::stroked`][`super::ShapeExt::stroked`]
+/// or [`ShapeExt::stroked_offset`][`super::ShapeExt::stroked_offset`].
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Default)]
 pub struct Circle;
+
+impl Circle {
+    #[allow(missing_docs)]
+    #[must_use]
+    pub const fn new() -> Self {
+        Self
+    }
+}
 
 impl ViewMarker for Circle {
     type Renderables = crate::render::Circle;
@@ -49,12 +61,5 @@ impl<Captures: ?Sized> ViewLayout<Captures> for Circle {
             origin,
             diameter: layout.resolved_size.width.into(),
         }
-    }
-}
-
-impl Circle {
-    #[must_use]
-    pub const fn new() -> Self {
-        Self
     }
 }

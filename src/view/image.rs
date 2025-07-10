@@ -6,7 +6,7 @@ use crate::{
     view::{ViewLayout, ViewMarker},
 };
 
-/// An image that renders raw images conforming to the `ImageDrawable` trait.
+/// A view that renders raw images conforming to [`ImageDrawable`].
 ///
 /// Images are fixed to the size of the image itself.
 #[non_exhaustive]
@@ -16,6 +16,7 @@ pub struct Image<'a, T: ?Sized> {
 }
 
 impl<'a, T: ImageDrawable + ?Sized> Image<'a, T> {
+    #[allow(missing_docs)]
     #[must_use]
     pub const fn new(image: &'a T) -> Self {
         Self { image }

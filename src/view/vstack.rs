@@ -7,6 +7,10 @@ use crate::{
     view::{ViewLayout, ViewMarker},
 };
 
+/// A stack of heterogeneous views that arranges its children vertically.
+///
+/// [`VStack`] attempts to fairly distribute the available height among its children,
+/// laying out groups of children based on priority.
 #[derive(Debug, Clone)]
 pub struct VStack<T> {
     items: T,
@@ -43,6 +47,8 @@ impl<T> PartialEq for VStack<T> {
 }
 
 impl<T> VStack<T> {
+    #[allow(missing_docs)]
+    #[must_use]
     pub fn new(items: T) -> Self {
         Self {
             items,
@@ -51,11 +57,13 @@ impl<T> VStack<T> {
         }
     }
 
+    /// Sets the spacing between items in the stack.
     #[must_use]
     pub fn with_spacing(self, spacing: u32) -> Self {
         Self { spacing, ..self }
     }
 
+    /// Sets the horizontal alignment to use when placing child views of different widths.
     #[must_use]
     pub fn with_alignment(self, alignment: HorizontalAlignment) -> Self {
         Self { alignment, ..self }

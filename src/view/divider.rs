@@ -5,12 +5,16 @@ use crate::{
     view::{ViewLayout, ViewMarker},
 };
 
+/// Divider renders a horizontal or vertical line, depending on the context in which it is
+/// used.
 #[derive(Debug, Clone)]
 pub struct Divider {
+    /// The line width
     pub weight: u16,
 }
 
 impl Divider {
+    #[allow(missing_docs)]
     #[must_use]
     pub const fn new(weight: u16) -> Self {
         Self { weight }

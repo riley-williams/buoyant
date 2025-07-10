@@ -1,6 +1,6 @@
 //! Render primitives.
 //!
-//! If you are constructing views, this is probably not the module you want. Use ``ViewHandle`` instead.
+//! If you are constructing views, this is probably not the module you want. Use [`ViewHandle`] instead.
 
 use core::time::Duration;
 
@@ -50,7 +50,7 @@ pub trait Render<Color>: AnimatedJoin + Sized {
     /// Render view and all subviews, animating from a source view to a target view
     ///
     /// The implementation of this method should match the implementation of
-    /// ``AnimatedJoin::join`` to get smooth continuous animations
+    /// [`AnimatedJoin::join`] to get smooth continuous animations
     fn render_animated(
         render_target: &mut impl RenderTarget<ColorFormat = Color>,
         source: &Self,

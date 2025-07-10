@@ -5,7 +5,7 @@ use crate::{
     view::{ViewLayout, ViewMarker},
 };
 
-/// Proposes ``ProposedDimension::Compact``, resulting in the child view rendering at its ideal
+/// Proposes [`ProposedDimension::Compact`], resulting in the child view rendering at its ideal
 /// size along the specified axis.
 #[derive(Debug, Clone)]
 pub struct FixedSize<T> {

@@ -6,6 +6,10 @@ use crate::{
 
 use super::AnimationDomain;
 
+/// A node that tracks a frame and contains a child view.
+///
+/// This is used to track view frames in event handlers, where only the child frame
+/// would otherwise be available.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Container<T> {
     pub frame: Frame,

@@ -49,7 +49,7 @@ where
 /// Alignment and spacing can be configured, and have the same behavior
 /// as with `VStack`.
 ///
-/// Example:
+/// # Examples
 ///
 /// ```
 /// use buoyant::view::{ForEach, Text};
@@ -71,6 +71,7 @@ where
 pub struct ForEach<const N: usize> {}
 
 impl<const N: usize> ForEach<N> {
+    #[allow(missing_docs)]
     #[expect(clippy::new_ret_no_self)]
     pub fn new<'a, I, V, F>(items: &'a [I], build_view: F) -> ForEachView<'a, N, I, V, F>
     where

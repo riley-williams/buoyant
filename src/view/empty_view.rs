@@ -5,6 +5,39 @@ use crate::{
     view::{ViewLayout, ViewMarker},
 };
 
+/// A view that does not render anything and has a zero size.
+///
+/// In stacks, spacing is not added around this view which makes
+/// it particularly useful for variants of [`match_view!`][crate::match_view!]
+/// that should not render an item.
+///
+/// # Examples
+///
+/// This view maintains the expected 10 pixel spacing between the first and last
+/// views when the state is `Nothing`.
+///
+/// ```
+/// use buoyant::match_view;
+/// use buoyant::font::CharacterBufferFont;
+/// use buoyant::view::prelude::*;
+/// use embedded_graphics::mono_font::ascii::FONT_9X15;
+///
+/// enum State {
+///     Message(&'static str),
+///     Nothing,
+/// }
+///
+/// let view = |state| {
+///     VStack::new((
+///         Text::new("First", &FONT_9X15),
+///         match_view!(state => {
+///             State::Message(msg) => Text::new(msg, &FONT_9X15),
+///             State::Nothing => EmptyView,
+///         }),
+///         Text::new("First", &FONT_9X15),
+///     )).with_spacing(10)
+/// };
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EmptyView;
 

@@ -11,14 +11,17 @@ use super::match_view::{Branch2, Branch3, Branch4};
 /// The axis along which the view should be fit.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FitAxis {
+    /// Use the first view with a compact height that fits vertically.
     Vertical,
+    /// Use the first view with a compact width that fits horizontally.
     Horizontal,
+    /// Use the first view with a compact size that fits the space offered
     Both,
 }
 
 impl FitAxis {
     #[must_use]
-    pub(crate) const fn components(self) -> (bool, bool) {
+    const fn components(self) -> (bool, bool) {
         match self {
             Self::Vertical => (false, true),
             Self::Horizontal => (true, false),
@@ -37,7 +40,7 @@ impl FitAxis {
 ///
 /// If the branch which fits changes, the state will be rebuilt.
 ///
-/// Example:
+/// # Examples
 ///
 /// ```
 /// # use embedded_graphics::mono_font::MonoFont;
@@ -82,6 +85,7 @@ pub struct ViewThatFits<T> {
 }
 
 impl<T> ViewThatFits<(T,)> {
+    #[allow(missing_docs)]
     #[must_use]
     pub const fn new(axis: FitAxis, view: T) -> Self {
         Self {
@@ -92,6 +96,7 @@ impl<T> ViewThatFits<(T,)> {
 }
 
 impl<T> ViewThatFits<(T,)> {
+    /// An alternative view to use if the first one does not fit.
     #[must_use]
     pub fn or<V>(self, alternate: V) -> ViewThatFits<(T, V)> {
         ViewThatFits {
@@ -104,6 +109,7 @@ impl<T> ViewThatFits<(T,)> {
 macro_rules! derive_or {
     ($(($n:tt, $type:ident)),*) => {
         impl<T0, $($type),*> ViewThatFits<(T0, $($type),*)> {
+            /// An alternative view to use if the first one does not fit.
             #[must_use]
             pub fn or<V>(self, alternate: V) -> ViewThatFits<(T0, $($type),*, V)> {
                 ViewThatFits {

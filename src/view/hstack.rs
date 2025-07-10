@@ -8,6 +8,10 @@ use crate::{
     view::{ViewLayout, ViewMarker},
 };
 
+/// A stack of heterogeneous views that arranges its children horizontally.
+///
+/// [`HStack`] attempts to fairly distribute the available width among its children,
+/// laying out groups of children based on priority.
 #[derive(Debug, Clone)]
 pub struct HStack<T> {
     items: T,
@@ -37,11 +41,13 @@ impl<'a, T: LayoutEnvironment> From<&'a T> for HorizontalEnvironment<'a, T> {
 }
 
 impl<T> HStack<T> {
+    /// Sets the spacing between items in the stack.
     #[must_use]
     pub fn with_spacing(self, spacing: u32) -> Self {
         Self { spacing, ..self }
     }
 
+    /// Sets the vertical alignment to use when placing child views of different heights.
     #[must_use]
     pub fn with_alignment(self, alignment: VerticalAlignment) -> Self {
         Self { alignment, ..self }
@@ -55,6 +61,8 @@ impl<T> PartialEq for HStack<T> {
 }
 
 impl<T> HStack<T> {
+    #[allow(missing_docs)]
+    #[must_use]
     pub fn new(items: T) -> Self {
         Self {
             items,
