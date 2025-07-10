@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use buoyant::{
     environment::DefaultEnvironment,
-    primitives::{Point, Size},
+    primitives::{Point, ProposedDimensions},
     view::View,
 };
 
@@ -68,12 +68,13 @@ macro_rules! assert_str_grid_eq {
     }};
 }
 
+#[allow(dead_code)]
 pub fn tree<V: View<char, Data>, Data: ?Sized>(
     view: &V,
     captures: &mut Data,
     state: &mut V::State,
     time: Duration,
-    size: Size,
+    size: impl Into<ProposedDimensions>,
 ) -> V::Renderables {
     let env = DefaultEnvironment::new(time);
     let layout = view.layout(&size.into(), &env, captures, state);
