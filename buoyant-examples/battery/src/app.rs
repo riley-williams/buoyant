@@ -1,5 +1,6 @@
 use std::time::{Duration, Instant};
 
+use buoyant::view::prelude::*;
 use buoyant::{environment::DefaultEnvironment, primitives::ProposedDimensions, render::Render};
 
 use crate::{charge_simulator::ChargeSim, color, view::Screen};
@@ -81,7 +82,16 @@ impl App {
             &self.state.simulator.battery,
             self.state.auto_off,
         );
-        let layout = view.layout(&dimensions, &env);
-        view.render_tree(&layout, buoyant::primitives::Point::zero(), &env)
+        // FIXME: State is intended to persist across instantiations of view, layout, and render
+        // trees
+        let mut state = view.build_state(&mut ());
+        let layout = view.layout(&dimensions, &env, &mut (), &mut state);
+        view.render_tree(
+            &layout,
+            buoyant::primitives::Point::zero(),
+            &env,
+            &mut (),
+            &mut state,
+        )
     }
 }
