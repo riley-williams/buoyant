@@ -1,8 +1,8 @@
 //! # Example: Quickstart
 //!
-//! This example renders a simple "Hello World" message using the ``embedded_graphics_simulator``.
+//! This example renders a simple "Hello World" message using the [`embedded_graphics_simulator`].
 //!
-//! To run this example using the ``embedded_graphics_simulator``, you must have the `sdl2` package installed.
+//! To run this example using the [`embedded_graphics_simulator`], you must have the `sdl2` package installed.
 //! See [SDL2](https://github.com/Rust-SDL2/rust-sdl2) for installation instructions.
 
 use buoyant::view::prelude::*;

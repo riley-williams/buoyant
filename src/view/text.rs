@@ -6,7 +6,7 @@ use crate::{
     render::{self},
     view::{ViewLayout, ViewMarker},
 };
-use core::marker::PhantomData;
+use core::{fmt::Write as _, marker::PhantomData};
 
 pub use wrap::WhitespaceWrap;
 
@@ -14,6 +14,21 @@ mod wrap;
 
 // W is hardcoded elsewhere to WhitespaceWrap, leaving generic for future fix
 
+/// Displays text in a given font.
+///
+/// Multiline text is leading aligned by default.
+///
+/// # Examples
+///
+/// ```
+/// use buoyant::view::prelude::*;
+/// use embedded_graphics::pixelcolor::Rgb888;
+/// use embedded_graphics::mono_font::ascii::FONT_9X15;
+///
+/// fn view() -> impl View<Rgb888, ()> {
+///     Text::new("Hello, world!", &FONT_9X15)
+/// }
+/// ```
 #[derive(Debug, Clone)]
 pub struct Text<'a, T, F, W = WhitespaceWrap<'a, F>> {
     #[allow(clippy::struct_field_names)]
@@ -23,11 +38,15 @@ pub struct Text<'a, T, F, W = WhitespaceWrap<'a, F>> {
     pub(crate) _wrap: PhantomData<W>,
 }
 
+/// The alignment of multiline text. This has no effect on single-line text.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum HorizontalTextAlignment {
+    /// Align multiline text to the leading edge.
     #[default]
     Leading,
+    /// Center multiline text.
     Center,
+    /// Align multiline text to the trailing edge.
     Trailing,
 }
 
@@ -42,6 +61,7 @@ impl HorizontalTextAlignment {
 }
 
 impl<'a, T: AsRef<str>, F> Text<'a, T, F> {
+    #[allow(missing_docs)]
     #[must_use]
     pub fn new(text: T, font: &'a F) -> Self {
         Self {
@@ -52,8 +72,33 @@ impl<'a, T: AsRef<str>, F> Text<'a, T, F> {
         }
     }
 }
+impl<'a, F> Text<'a, (), F> {
+    /// A convenience constructor for [`Text`] backed by an owned [`heapless::String<N>`]
+    /// and formatted with the result of [`format_args!`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use buoyant::view::prelude::*;
+    /// # use embedded_graphics::mono_font::ascii::FONT_9X15_BOLD;
+    /// # use embedded_graphics::pixelcolor::Rgb888;
+    /// #
+    /// fn counter(count: i32) -> impl View<Rgb888, ()> {
+    ///    Text::new_fmt::<32>(format_args!("Count: {count}"), &FONT_9X15_BOLD)
+    /// }
+    /// ```
+    pub fn new_fmt<const N: usize>(
+        args: core::fmt::Arguments<'_>,
+        font: &'a F,
+    ) -> Text<'a, heapless::String<N>, F> {
+        let mut s = heapless::String::<N>::new();
+        _ = s.write_fmt(args);
+        Text::new(s, font)
+    }
+}
 
 impl<T, F> Text<'_, T, F> {
+    /// Sets the alignment of multiline text.
     #[must_use]
     pub fn multiline_text_alignment(self, alignment: HorizontalTextAlignment) -> Self {
         Text { alignment, ..self }
@@ -75,11 +120,11 @@ where
     T: AsRef<str> + Clone,
     F: Font,
 {
-    // this could be used to store the precalculated line breaks
     type Sublayout = ();
     type State = ();
 
     fn build_state(&self, _captures: &mut Captures) -> Self::State {}
+
     fn layout(
         &self,
         offer: &ProposedDimensions,

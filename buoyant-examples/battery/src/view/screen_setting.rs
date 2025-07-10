@@ -62,7 +62,7 @@ fn toggle(is_on: bool) -> impl View<ColorFormat, ()> {
     .flex_frame()
     .with_max_height(70)
     .padding(Edges::All, 5)
-    .background(Alignment::Center, || {
+    .background(Alignment::Center, {
         RoundedRectangle::new(10).foreground_color(color::SECONDARY_BACKGROUND)
     })
 }

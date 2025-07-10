@@ -5,6 +5,11 @@ use crate::{
     view::{ViewLayout, ViewMarker},
 };
 
+/// An invisible spacer that greedily takes space in the layout.
+///
+/// Depending on the layout direction, it will take up space either horizontally or vertically.
+/// Spacer has the minimum layout priority so it will be offered space by stacks only after
+/// all other siblings have been laid out.
 #[derive(Debug, Default, PartialEq, Eq)]
 pub struct Spacer {
     min_length: u32,
@@ -58,4 +63,3 @@ impl<Captures: ?Sized> ViewLayout<Captures> for Spacer {
     ) -> Self::Renderables {
     }
 }
-
