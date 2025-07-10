@@ -11,12 +11,14 @@ pub struct MatchView<T> {
     branch: T,
 }
 
+#[allow(missing_docs)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Branch2<V0, V1> {
     Variant0(V0),
     Variant1(V1),
 }
 
+#[allow(missing_docs)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Branch3<V0, V1, V2> {
     Variant0(V0),
@@ -24,6 +26,7 @@ pub enum Branch3<V0, V1, V2> {
     Variant2(V2),
 }
 
+#[allow(missing_docs)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Branch4<V0, V1, V2, V3> {
     Variant0(V0),
@@ -50,9 +53,9 @@ impl<V0, V1, V2> MatchView<Branch3<V0, V1, V2>> {
 
 /// A view that conditionally renders its arms based on a boolean expression.
 ///
-/// If you need variable bindings, use the ``match_view!`` macro instead.
+/// If you need variable bindings, use the [`match_view!`] macro instead.
 ///
-/// Example:
+/// # Examples
 /// ```
 /// use buoyant::if_view;
 /// use buoyant::font::CharacterBufferFont;

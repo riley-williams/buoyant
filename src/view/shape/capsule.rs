@@ -6,6 +6,10 @@ use crate::{
 };
 
 /// A capsule primitive, oriented horizontally
+///
+/// By default, this renders a filled shape with the inherited foreground color.
+/// To render with a stroke instead, use [`ShapeExt::stroked`][`super::ShapeExt::stroked`]
+/// or [`ShapeExt::stroked_offset`][`super::ShapeExt::stroked_offset`].
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Default)]
 pub struct Capsule;
 

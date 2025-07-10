@@ -5,6 +5,7 @@ use crate::{
     view::{ViewLayout, ViewMarker},
 };
 
+/// The strategy for scaling a view within the available space.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ContentMode {
     /// Scales the child view to fit within the available space while maintaining its aspect ratio.
@@ -13,6 +14,7 @@ pub enum ContentMode {
     Fill,
 }
 
+/// The aspect ratio to maintain
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Ratio {
     /// A fixed aspect ratio defined by width and height
@@ -23,6 +25,7 @@ pub enum Ratio {
     Ideal,
 }
 
+/// A modifier that enforces a specific aspect ratio on its child view.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AspectRatio<T> {
     #[allow(clippy::struct_field_names)]
@@ -32,6 +35,7 @@ pub struct AspectRatio<T> {
 }
 
 impl<T> AspectRatio<T> {
+    #[allow(missing_docs)]
     #[must_use]
     pub const fn new(child: T, aspect_ratio: Ratio, content_mode: ContentMode) -> Self {
         Self {

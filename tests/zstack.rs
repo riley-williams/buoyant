@@ -4,7 +4,7 @@ use buoyant::primitives::{Dimensions, Point, Size};
 use buoyant::render::Render;
 use buoyant::render_target::FixedTextBuffer;
 use buoyant::view::padding::Edges;
-use buoyant::view::{prelude::*,  };
+use buoyant::view::prelude::*;
 mod common;
 use common::make_render_tree;
 
@@ -211,7 +211,7 @@ fn test_render_two_bottom_trailing_alignment() {
     assert_eq!(buffer.text[4].iter().collect::<String>(), "      ");
 }
 
-/// When proposing compact width or height, the ``ZStack`` should first resolve child
+/// When proposing compact width or height, the [`ZStack`] should first resolve child
 /// dimensions with the original offer and then offer the union of the resolved
 /// child sizes again.
 #[test]

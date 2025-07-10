@@ -5,6 +5,8 @@ use crate::{
     view::{ViewLayout, ViewMarker},
 };
 
+/// Describes a set of edges
+#[allow(missing_docs)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Edges {
     All,
@@ -28,6 +30,7 @@ pub struct Padding<T> {
 }
 
 impl<T> Padding<T> {
+    #[allow(missing_docs)]
     pub const fn new(edges: Edges, padding: u32, inner: T) -> Self {
         Self {
             edges,

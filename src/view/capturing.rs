@@ -5,72 +5,7 @@ use crate::{
     view::{ViewLayout, ViewMarker},
 };
 
-#[derive(Debug, Clone)]
-pub struct EraseCaptures<T> {
-    inner: T,
-}
-
-impl<T> EraseCaptures<T> {
-    pub fn new(inner: T) -> Self {
-        Self { inner }
-    }
-}
-
-impl<T> ViewMarker for EraseCaptures<T>
-where
-    T: ViewMarker,
-{
-    type Renderables = T::Renderables;
-}
-
-impl<T: ViewLayout<()>, Captures: ?Sized> ViewLayout<Captures> for EraseCaptures<T> {
-    type State = T::State;
-    type Sublayout = T::Sublayout;
-
-    fn priority(&self) -> i8 {
-        self.inner.priority()
-    }
-
-    fn is_empty(&self) -> bool {
-        self.inner.is_empty()
-    }
-
-    fn build_state(&self, _captures: &mut Captures) -> Self::State {
-        self.inner.build_state(&mut ())
-    }
-
-    fn layout(
-        &self,
-        offer: &ProposedDimensions,
-        env: &impl LayoutEnvironment,
-        _captures: &mut Captures,
-        state: &mut Self::State,
-    ) -> ResolvedLayout<Self::Sublayout> {
-        self.inner.layout(offer, env, &mut (), state)
-    }
-
-    fn render_tree(
-        &self,
-        layout: &ResolvedLayout<Self::Sublayout>,
-        origin: Point,
-        env: &impl LayoutEnvironment,
-        _captures: &mut Captures,
-        state: &mut Self::State,
-    ) -> Self::Renderables {
-        self.inner.render_tree(layout, origin, env, &mut (), state)
-    }
-
-    fn handle_event(
-        &mut self,
-        event: &crate::view::Event,
-        render_tree: &mut Self::Renderables,
-        _captures: &mut Captures,
-        state: &mut Self::State,
-    ) -> bool {
-        self.inner.handle_event(event, render_tree, &mut (), state)
-    }
-}
-
+/// Converts the captures of a parent view to a subview's captures.
 #[derive(Debug, Clone)]
 pub struct Lens<InnerView, CaptureFn> {
     inner: InnerView,
@@ -78,6 +13,8 @@ pub struct Lens<InnerView, CaptureFn> {
 }
 
 impl<InnerView, CaptureFn> Lens<InnerView, CaptureFn> {
+    #[allow(missing_docs)]
+    #[must_use]
     pub fn new<OuterCapture, InnerCapture>(inner: InnerView, capture_fn: CaptureFn) -> Self
     where
         InnerView: ViewLayout<InnerCapture>,

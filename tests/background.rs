@@ -11,7 +11,7 @@ fn background_inherits_foreground_size() {
     let view = Text::new("This is on\ntop", &font)
         .multiline_text_alignment(HorizontalTextAlignment::Center)
         .padding(Edges::All, 1)
-        .background(Alignment::default(), || Rectangle)
+        .background(Alignment::default(), Rectangle)
         .flex_frame()
         .with_infinite_max_width()
         .with_infinite_max_height()
@@ -33,7 +33,7 @@ fn background_inherits_foreground_size() {
 #[test]
 fn background_alignment_coverage() {
     let view_fn = |alignment: Alignment| {
-        EmptyView.frame_sized(3, 3).background(alignment, || {
+        EmptyView.frame_sized(3, 3).background(alignment, {
             Rectangle.foreground_color('X').frame_sized(1, 1)
         })
     };

@@ -5,7 +5,7 @@ use buoyant::primitives::{
 };
 use buoyant::render::Render;
 use buoyant::render_target::FixedTextBuffer;
-use buoyant::view::{prelude::*};
+use buoyant::view::prelude::*;
 use common::{collect_text, TestEnv};
 
 mod common;

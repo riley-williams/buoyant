@@ -11,7 +11,7 @@ fn background_renders_on_hidden_view() {
     let hstack = HStack::new((
         Text::new("1234", &font)
             .hidden()
-            .background(Alignment::default(), || {
+            .background(Alignment::default(), {
                 Rectangle
                     .foreground_color('+')
                     .padding(Edges::Horizontal, 1)

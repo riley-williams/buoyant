@@ -5,6 +5,11 @@ use crate::{
     view::{ViewLayout, ViewMarker},
 };
 
+/// A view that does not render anything and has a zero size.
+///
+/// In stacks, spacing is not added around this view which makes
+/// it particularly useful for variants of `match_view` that should not
+/// render an item.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EmptyView;
 

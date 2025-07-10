@@ -10,7 +10,7 @@ use paste::paste;
 /// A stack of heterogeneous views that arranges its views from back to front.
 ///
 /// The parent size is first offered to each subview. If any offered dimension is
-/// ``ProposedDimension::Compact``, ``ZStack`` will offer a new frame that is the
+/// [`ProposedDimension::Compact``, ``ZStack`] will offer a new frame that is the
 /// union of all the resolved frame sizes from the previous pass.
 ///
 /// ```rust
@@ -42,6 +42,7 @@ impl<T> PartialEq for ZStack<T> {
 }
 
 impl<T> ZStack<T> {
+    /// Sets the horizontal alignment to use when placing child views of different widths.
     #[must_use]
     pub fn with_horizontal_alignment(self, alignment: HorizontalAlignment) -> Self {
         Self {
@@ -50,6 +51,7 @@ impl<T> ZStack<T> {
         }
     }
 
+    /// Sets the vertical alignment to use when placing child views of different heights.
     #[must_use]
     pub fn with_vertical_alignment(self, alignment: VerticalAlignment) -> Self {
         Self {
@@ -58,6 +60,8 @@ impl<T> ZStack<T> {
         }
     }
 
+    /// Sets the horizontal and vertical alignment to use when placing child views of different
+    /// sizes.
     #[must_use]
     pub fn with_alignment(self, alignment: Alignment) -> Self {
         Self {
@@ -69,6 +73,7 @@ impl<T> ZStack<T> {
 }
 
 impl<T> ZStack<T> {
+    #[allow(missing_docs)]
     pub fn new(items: T) -> Self {
         Self {
             items,

@@ -1,6 +1,6 @@
 use buoyant::primitives::Point;
 use buoyant::render::Render;
-use buoyant::view::{prelude::*,  };
+use buoyant::view::prelude::*;
 use buoyant::{
     environment::DefaultEnvironment,
     font::CharacterBufferFont,
@@ -757,7 +757,7 @@ fn test_infinite_max_height_with_min_ideal() {
     assert_eq!(layout.resolved_size.height, 5.into()); // Uses min
 }
 
-/// Usage of ``flex_infinite_width`` should be equivalent to using ``HStack`` with ``Spacer``
+/// Usage of [`flex_infinite_width`` should be equivalent to using ``HStack`` with ``Spacer`]
 #[test]
 fn infinite_max_width_equivalent_to_hstack_spacer() {
     let font = CharacterBufferFont {};
@@ -785,7 +785,7 @@ fn infinite_max_width_equivalent_to_hstack_spacer() {
     assert_eq!(buffer1, buffer2);
 }
 
-/// Usage of ``flex_infinite_height`` should be equivalent to using ``VStack`` with ``Spacer``
+/// Usage of [`flex_infinite_height`` should be equivalent to using ``VStack`` with ``Spacer`]
 #[test]
 fn infinite_max_height_equivalent_to_vstack_spacer() {
     let font = CharacterBufferFont {};

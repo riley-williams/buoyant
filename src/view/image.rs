@@ -16,6 +16,7 @@ pub struct Image<'a, T: ?Sized> {
 }
 
 impl<'a, T: ImageDrawable + ?Sized> Image<'a, T> {
+    #[allow(missing_docs)]
     #[must_use]
     pub const fn new(image: &'a T) -> Self {
         Self { image }

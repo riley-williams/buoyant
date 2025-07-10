@@ -15,7 +15,63 @@ pub enum ButtonState {
     AtRest,
 }
 
-#[derive(Debug)]
+/// A tappable button that can be pressed to trigger an action.
+///
+/// The action is executed upon releasing if the tap starts and ends within the button's area.
+///
+/// # Examples
+///
+/// A counter with buttons to increment and decrement the count:
+///
+/// ```
+/// use buoyant::view::prelude::*;
+/// use embedded_graphics::pixelcolor::Rgb888;
+/// use embedded_graphics::mono_font::ascii::FONT_9X15;
+///
+/// fn count_view(count: i32) -> impl View<Rgb888, i32> {
+///     VStack::new((
+///         Text::new_fmt::<32>(
+///             format_args!("count: {count}"),
+///             &FONT_9X15,
+///         ),
+///         Button::new(
+///             |c: &mut i32| { *c += 1; },
+///             |_| Text::new("Increment", &FONT_9X15),
+///         ),
+///         Button::new(
+///             |c: &mut i32| { *c -= 1; },
+///             |_| Text::new("Decrement", &FONT_9X15),
+///         ),
+///     ))
+/// }
+/// ```
+///
+/// The boolean passed to the view function can be used to alter the pressed appearance:
+///
+/// ```
+/// use buoyant::view::prelude::*;
+/// use embedded_graphics::pixelcolor::{Rgb888, RgbColor};
+/// use embedded_graphics::mono_font::ascii::FONT_9X15;
+///
+/// fn highlight_button() -> impl View<Rgb888, i32> {
+///     Button::new(
+///         |c: &mut i32| { *c += 1; },
+///         |is_pressed| {
+///             Text::new("Press me", &FONT_9X15)
+///                 .padding(Edges::All, 10)
+///                 .background(Alignment::default(), RoundedRectangle::new(10).stroked(2))
+///                 .foreground_color(
+///                     if is_pressed {
+///                         Rgb888::BLUE
+///                     } else {
+///                         Rgb888::GREEN
+///                     }
+///                 )
+///         },
+///     )
+/// }
+/// ```
+#[derive(Debug, Clone)]
 pub struct Button<ViewFn, Inner, Action> {
     _inner_marker: PhantomData<Inner>,
     view: ViewFn,
@@ -23,6 +79,7 @@ pub struct Button<ViewFn, Inner, Action> {
 }
 
 impl<ViewFn, Inner, Action> Button<ViewFn, Inner, Action> {
+    #[allow(missing_docs)]
     pub fn new(action: Action, view: ViewFn) -> Self {
         Self {
             view,

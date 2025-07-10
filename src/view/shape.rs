@@ -19,6 +19,7 @@ use crate::{
     view::{ViewLayout, ViewMarker},
 };
 
+/// Extension trait for shapes that provides methods to draw them with a stroke.
 pub trait ShapeExt: ViewMarker<Renderables: Inset + AsShapePrimitive> {
     /// Draws a shape with a stroke instead of filling it.
     #[must_use]
@@ -28,7 +29,7 @@ pub trait ShapeExt: ViewMarker<Renderables: Inset + AsShapePrimitive> {
 
     /// Draws a shape with a stroke instead of filling it.
     ///
-    /// Using an offset other than ``StrokeOffset::Inner`` will render outside the shape's bounds.
+    /// Using an offset other than [`StrokeOffset::Inner`] will render outside the shape's bounds.
     #[must_use]
     fn stroked_offset(self, line_width: u32, offset: StrokeOffset) -> Stroked<Self> {
         Stroked::new(self, offset, line_width)
@@ -37,14 +38,19 @@ pub trait ShapeExt: ViewMarker<Renderables: Inset + AsShapePrimitive> {
 
 impl<T: ViewMarker<Renderables: Inset + AsShapePrimitive>> ShapeExt for T {}
 
+/// How the stroke should be drawn relative to the shape bounds.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub enum StrokeOffset {
+    /// Draws the stroke outside the shape bounds
     Outer,
+    /// Draws the stroke centered on the shape bounds
     Center,
+    /// Draws the stroke inside the shape bounds
     #[default]
     Inner,
 }
 
+/// A stroked variant of a shape.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Stroked<T> {
     shape: T,

@@ -3,7 +3,6 @@ use std::iter::zip;
 use buoyant::primitives::Point;
 use buoyant::render::Render;
 use buoyant::view::padding::Edges;
-use buoyant::view::{ };
 use buoyant::{
     environment::DefaultEnvironment,
     font::CharacterBufferFont,

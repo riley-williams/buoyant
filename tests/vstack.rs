@@ -4,7 +4,7 @@ use buoyant::primitives::{Dimensions, Point, ProposedDimension, ProposedDimensio
 use buoyant::render::Render;
 use buoyant::render_target::FixedTextBuffer;
 use buoyant::view::padding::Edges;
-use buoyant::view::{prelude::*,  };
+use buoyant::view::prelude::*;
 
 mod common;
 use common::{collect_text, make_render_tree};

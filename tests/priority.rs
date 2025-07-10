@@ -2,7 +2,7 @@ use buoyant::{
     environment::DefaultEnvironment,
     font::CharacterBufferFont,
     primitives::{Dimensions, Size},
-    view::{prelude::*,  },
+    view::prelude::*,
 };
 
 /// The greedy lower priority view with a non-zero min size results in a layout overflow

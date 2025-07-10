@@ -6,7 +6,7 @@ use buoyant::{
     font::CharacterBufferFont,
     primitives::{Dimensions, Point},
     render_target::FixedTextBuffer,
-    view::{prelude::*,  },
+    view::prelude::*,
 };
 mod common;
 use common::make_render_tree;

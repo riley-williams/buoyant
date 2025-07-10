@@ -2,11 +2,11 @@ use std::iter::zip;
 
 use buoyant::environment::DefaultEnvironment;
 use buoyant::font::CharacterBufferFont;
-
 use buoyant::primitives::{Dimensions, Point, ProposedDimension, ProposedDimensions, Size};
 use buoyant::render::Render;
 use buoyant::render_target::FixedTextBuffer;
-use buoyant::view::{prelude::*, View};
+use buoyant::view::prelude::*;
+
 mod common;
 use common::make_render_tree;
 
