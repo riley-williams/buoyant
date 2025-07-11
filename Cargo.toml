@@ -51,6 +51,14 @@ workspace = true
 name = "crossterm"
 required-features = ["crossterm"]
 
+[[example]]
+name = "espresso"
+required-features = ["embedded-graphics"]
+
+[[example]]
+name = "quickstart"
+required-features = ["embedded-graphics"]
+
 [workspace]
 members = ["buoyant-examples/battery"]
 
