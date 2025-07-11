@@ -21,7 +21,7 @@ views when all the branches are the same type:
 # use embedded_graphics::pixelcolor::Rgb888;
 # 
 /// This will jump between two different rectangles
-fn bar1(is_wide: bool) -> impl View<Rgb888> {
+fn bar1(is_wide: bool) -> impl View<Rgb888, ()> {
     if_view!((is_wide) {
         Rectangle.frame_sized(100, 5)
     } else {
@@ -30,7 +30,7 @@ fn bar1(is_wide: bool) -> impl View<Rgb888> {
 }
 
 /// This will animate the frame of the Rectangle
-fn bar2(is_wide: bool) -> impl View<Rgb888> {
+fn bar2(is_wide: bool) -> impl View<Rgb888, ()> {
     Rectangle.frame_sized(if is_wide { 100 } else { 20 }, 5)
 }
 ```

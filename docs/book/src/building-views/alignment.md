@@ -34,7 +34,7 @@ you could set ``VerticalAlignment::Top``.
 #     display.clear(BACKGROUND_COLOR).unwrap();
 # 
 #     view()
-#         .as_drawable(display.size(), DEFAULT_COLOR)
+#         .as_drawable(display.size(), DEFAULT_COLOR, &mut ())
 #         .draw(&mut display)
 #         .unwrap();
 # 
@@ -43,7 +43,7 @@ you could set ``VerticalAlignment::Top``.
 # 
 use buoyant::view::prelude::*;
 
-fn view() -> impl View<Rgb888> {
+fn view() -> impl View<Rgb888, ()> {
     HStack::new((
         Circle.foreground_color(Rgb888::CSS_CORAL),
         Rectangle

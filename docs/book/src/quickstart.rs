@@ -17,7 +17,7 @@ fn main() {
     display.clear(BACKGROUND_COLOR);
 
     hello_view()
-        .as_drawable(display.size(), DEFAULT_COLOR)
+        .as_drawable(display.size(), DEFAULT_COLOR, &mut ())
         .draw(&mut display)
         .unwrap();
 
@@ -26,7 +26,7 @@ fn main() {
 
 // ANCHOR_END: simulator
 // ANCHOR: view
-fn hello_view() -> impl View<Rgb888> {
+fn hello_view() -> impl View<Rgb888, ()> {
     HStack::new((
         Text::new("Hello", &FONT_10X20).foreground_color(Rgb888::GREEN),
         Spacer::default(),
