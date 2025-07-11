@@ -62,15 +62,12 @@ use crate::{
     environment::LayoutEnvironment,
     event::Event,
     layout::{Alignment, HorizontalAlignment, ResolvedLayout, VerticalAlignment},
-    primitives::Point,
+    primitives::{Point, ProposedDimensions},
     render::Render,
 };
 
 #[cfg(feature = "embedded-graphics")]
-use crate::{
-    environment::DefaultEnvironment,
-    primitives::{Interpolate, ProposedDimensions},
-};
+use crate::{environment::DefaultEnvironment, primitives::Interpolate};
 
 /// A view that can be rendered with a specific color type.
 ///
