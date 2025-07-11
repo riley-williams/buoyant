@@ -32,7 +32,7 @@ I'll briefly indulge this misconception.
 #     display.clear(BACKGROUND_COLOR).unwrap();
 # 
 #     view()
-#         .as_drawable(display.size(), DEFAULT_COLOR)
+#         .as_drawable(display.size(), DEFAULT_COLOR, &mut ())
 #         .draw(&mut display)
 #         .unwrap();
 # 
@@ -42,7 +42,7 @@ I'll briefly indulge this misconception.
 // No!
 use buoyant::view::prelude::*;
 
-fn view() -> impl View<Rgb888> {
+fn view() -> impl View<Rgb888, ()> {
     VStack::new((
         Circle.foreground_color(Rgb888::CSS_CORAL),
         HStack::new((
@@ -108,7 +108,7 @@ as the previous code.
 #     display.clear(BACKGROUND_COLOR).unwrap();
 # 
 #     view()
-#         .as_drawable(display.size(), DEFAULT_COLOR)
+#         .as_drawable(display.size(), DEFAULT_COLOR, &mut ())
 #         .draw(&mut display)
 #         .unwrap();
 # 
@@ -118,7 +118,7 @@ as the previous code.
 // Preferred
 use buoyant::view::prelude::*;
 
-fn view() -> impl View<Rgb888> {
+fn view() -> impl View<Rgb888, ()> {
     VStack::new((
         Circle.foreground_color(Rgb888::CSS_CORAL),
         Circle
