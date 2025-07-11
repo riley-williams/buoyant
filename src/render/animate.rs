@@ -11,7 +11,7 @@ use super::AnimatedJoin;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
-pub struct Animate<T, U> {
+pub struct Animate<T: Clone, U: Clone> {
     pub subtree: T,
     /// Length of the animation
     pub animation: Animation,
@@ -24,7 +24,7 @@ pub struct Animate<T, U> {
     pub is_partial: bool,
 }
 
-impl<T, U: PartialEq> Animate<T, U> {
+impl<T: Clone, U: PartialEq + Clone> Animate<T, U> {
     #[must_use]
     pub const fn new(subtree: T, animation: Animation, frame_time: Duration, value: U) -> Self {
         Self {
@@ -37,7 +37,7 @@ impl<T, U: PartialEq> Animate<T, U> {
     }
 }
 
-impl<T: AnimatedJoin, U: PartialEq> AnimatedJoin for Animate<T, U> {
+impl<T: AnimatedJoin + Clone, U: PartialEq + Clone> AnimatedJoin for Animate<T, U> {
     #[expect(clippy::useless_let_if_seq)]
     fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
         let (end_time, duration) = if source.value != target.value {
@@ -85,7 +85,7 @@ impl<T: AnimatedJoin, U: PartialEq> AnimatedJoin for Animate<T, U> {
     }
 }
 
-impl<C, T: Render<C>, U: PartialEq> Render<C> for Animate<T, U> {
+impl<C, T: Render<C>, U: PartialEq + Clone> Render<C> for Animate<T, U> {
     fn render(
         &self,
         render_target: &mut impl RenderTarget<ColorFormat = C>,

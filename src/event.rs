@@ -24,3 +24,52 @@ pub enum Event {
     Scroll(Point),
     Exit,
 }
+
+#[cfg(feature = "simulator")]
+pub mod impl_eg {
+    use crate::primitives::Point;
+
+    use super::Event;
+    use embedded_graphics_simulator::SimulatorEvent;
+
+    impl TryFrom<SimulatorEvent> for Event {
+        type Error = ();
+
+        fn try_from(event: SimulatorEvent) -> Result<Self, Self::Error> {
+            match event {
+                SimulatorEvent::Quit => Ok(Self::Exit),
+                SimulatorEvent::MouseButtonDown {
+                    mouse_btn: _,
+                    point,
+                } => Ok(Self::TouchDown(Point::new(point.x, point.y))),
+                SimulatorEvent::MouseButtonUp {
+                    mouse_btn: _,
+                    point,
+                } => Ok(Self::TouchUp(Point::new(point.x, point.y))),
+                SimulatorEvent::MouseMove { point } => {
+                    Ok(Self::TouchMoved(Point::new(point.x, point.y)))
+                }
+                SimulatorEvent::MouseWheel {
+                    scroll_delta,
+                    direction,
+                } => {
+                    if direction == embedded_graphics_simulator::sdl2::MouseWheelDirection::Normal {
+                        Ok(Self::Scroll(Point::new(scroll_delta.x, scroll_delta.y)))
+                    } else {
+                        Ok(Self::Scroll(Point::new(-scroll_delta.x, -scroll_delta.y)))
+                    }
+                }
+                SimulatorEvent::KeyDown {
+                    keycode: _,
+                    keymod: _,
+                    repeat: _,
+                }
+                | SimulatorEvent::KeyUp {
+                    keycode: _,
+                    keymod: _,
+                    repeat: _,
+                } => Err(()),
+            }
+        }
+    }
+}

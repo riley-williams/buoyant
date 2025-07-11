@@ -3,10 +3,19 @@ use crate::primitives::{Interpolate as _, Point};
 use super::{AnimatedJoin, AnimationDomain};
 
 #[non_exhaustive]
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Copy, Debug, PartialEq, Eq)]
 pub struct Image<'a, T: ?Sized> {
     pub origin: Point,
     pub image: &'a T,
+}
+
+impl<T: ?Sized> Clone for Image<'_, T> {
+    fn clone(&self) -> Self {
+        Self {
+            origin: self.origin,
+            image: self.image,
+        }
+    }
 }
 
 impl<'a, T: ?Sized> Image<'a, T> {

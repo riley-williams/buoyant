@@ -24,14 +24,14 @@ impl<InnerView, Value: PartialEq> Animated<InnerView, Value> {
     }
 }
 
-impl<InnerView: ViewMarker, U> ViewMarker for Animated<InnerView, U> {
+impl<InnerView: ViewMarker<Renderables: Clone>, U: Clone> ViewMarker for Animated<InnerView, U> {
     type Renderables = Animate<InnerView::Renderables, U>;
 }
 
 impl<Captures: ?Sized, InnerView, U: PartialEq + Clone> ViewLayout<Captures>
     for Animated<InnerView, U>
 where
-    InnerView: ViewLayout<Captures>,
+    InnerView: ViewLayout<Captures, Renderables: Clone>,
 {
     type State = (U, InnerView::State);
     type Sublayout = InnerView::Sublayout;

@@ -6,19 +6,15 @@
 //! To run this example using the `embedded_graphics` simulator, you must have the `sdl2` package installed.
 //! See [SDL2](https://github.com/Rust-SDL2/rust-sdl2) for installation instructions.
 
+use std::thread::sleep;
 use std::time::{Duration, Instant};
 
-use buoyant::event::Event;
+use buoyant::app::App;
 use buoyant::render_target::EmbeddedGraphicsRenderTarget;
-use buoyant::{
-    animation::Animation,
-    environment::DefaultEnvironment,
-    if_view, match_view,
-    render::{AnimatedJoin, AnimationDomain, Render},
-    view::prelude::*,
-};
+use buoyant::{animation::Animation, if_view, match_view, view::prelude::*};
+
 use embedded_graphics::prelude::*;
-use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, SimulatorEvent, Window};
+use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
 
 #[allow(unused)]
 mod spacing {
@@ -61,80 +57,28 @@ mod color {
 fn main() {
     let size = Size::new(480, 320);
     let mut display: SimulatorDisplay<color::Space> = SimulatorDisplay::new(size);
-    let mut target = EmbeddedGraphicsRenderTarget::new(&mut display);
+    let target = EmbeddedGraphicsRenderTarget::new(&mut display);
     let mut window = Window::new("Coffeeeee", &OutputSettings::default());
     let app_start = Instant::now();
 
-    let mut captures = AppState::default();
-    let env = DefaultEnvironment::new(app_start.elapsed());
-    let mut view = root_view(&captures);
-    let mut state = view.build_state(&mut captures);
-    let layout = view.layout(&size.into(), &env, &mut captures, &mut state);
-    let mut source_tree = view.render_tree(
-        &layout,
-        buoyant::primitives::Point::zero(),
-        &env,
-        &mut captures,
-        &mut state,
-    );
+    let captures = AppState::default();
+    let mut app = App::new(root_view, target, captures, app_start.elapsed());
 
-    let mut target_tree = view.render_tree(
-        &layout,
-        buoyant::primitives::Point::zero(),
-        &env,
-        &mut captures,
-        &mut state,
-    );
-
-    'running: loop {
-        target.display_mut().clear(color::BACKGROUND).unwrap();
-
-        // Render frame
-        Render::render_animated(
-            &mut target,
-            &source_tree,
-            &target_tree,
-            &color::Space::WHITE,
-            buoyant::primitives::Point::zero(),
-            &AnimationDomain::top_level(app_start.elapsed()),
-        );
+    loop {
+        app.target.display_mut().clear(color::BACKGROUND).unwrap();
+        app.render(app_start.elapsed(), &color::Space::WHITE);
 
         // Flush to window
-        window.update(target.display());
+        window.update(app.target.display());
 
-        for event in window.events() {
-            let app_event = match event {
-                SimulatorEvent::Quit => break 'running,
-                SimulatorEvent::MouseButtonDown {
-                    mouse_btn: _,
-                    point,
-                } => Some(Event::TouchDown(Point::new(point.x, point.y).into())),
-                SimulatorEvent::MouseButtonUp {
-                    mouse_btn: _,
-                    point,
-                } => Some(Event::TouchUp(Point::new(point.x, point.y).into())),
-                SimulatorEvent::MouseMove { point } => {
-                    Some(Event::TouchMoved(Point::new(point.x, point.y).into()))
-                }
-                _ => None,
-            };
-            if let Some(event) = app_event {
-                let time = app_start.elapsed();
-                source_tree =
-                    AnimatedJoin::join(source_tree, target_tree, &AnimationDomain::top_level(time));
-                view.handle_event(&event, &mut source_tree, &mut captures, &mut state);
-                view = root_view(&captures);
-                let env = DefaultEnvironment::new(time);
-                let layout = view.layout(&size.into(), &env, &mut captures, &mut state);
+        let should_exit = app.handle_events(
+            app_start.elapsed(),
+            window.events().filter_map(|event| event.try_into().ok()),
+        );
+        sleep(Duration::from_millis(15));
 
-                target_tree = view.render_tree(
-                    &layout,
-                    buoyant::primitives::Point::zero(),
-                    &env,
-                    &mut captures,
-                    &mut state,
-                );
-            }
+        if should_exit {
+            break;
         }
     }
 }

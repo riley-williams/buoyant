@@ -38,7 +38,7 @@ pub trait AnimatedJoin {
     fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self;
 }
 
-pub trait Render<Color>: AnimatedJoin + Sized {
+pub trait Render<Color>: AnimatedJoin + Sized + Clone {
     /// Render the view to the screen
     fn render(
         &self,

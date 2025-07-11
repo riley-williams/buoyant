@@ -6,13 +6,25 @@ use crate::{
     view::{HorizontalTextAlignment, WhitespaceWrap},
 };
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Text<'a, T, F> {
     pub origin: Point,
     pub size: Size,
     pub font: &'a F,
     pub text: T,
     pub alignment: HorizontalTextAlignment,
+}
+
+impl<T: Clone, F> Clone for Text<'_, T, F> {
+    fn clone(&self) -> Self {
+        Self {
+            origin: self.origin,
+            size: self.size,
+            font: self.font,
+            text: self.text.clone(),
+            alignment: self.alignment,
+        }
+    }
 }
 
 impl<T: AsRef<str>, F> AnimatedJoin for Text<'_, T, F> {
@@ -26,7 +38,7 @@ impl<T: AsRef<str>, F> AnimatedJoin for Text<'_, T, F> {
     }
 }
 
-impl<C: Copy, T: AsRef<str>, F: FontRender<C>> Render<C> for Text<'_, T, F> {
+impl<C: Copy, T: AsRef<str> + Clone, F: FontRender<C>> Render<C> for Text<'_, T, F> {
     fn render(
         &self,
         render_target: &mut impl RenderTarget<ColorFormat = C>,
