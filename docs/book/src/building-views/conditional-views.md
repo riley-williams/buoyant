@@ -8,7 +8,7 @@ If you try something like this:
 # use buoyant::view::prelude::*;
 # use embedded_graphics::{mono_font::ascii::FONT_9X15, pixelcolor::Rgb888};
 #
-fn view(is_redacted: bool) -> impl View<Rgb888> {
+fn view(is_redacted: bool) -> impl View<Rgb888, ()> {
     if is_redacted {
         Rectangle
     } else {
@@ -44,7 +44,7 @@ The `if_view!` macro allows you to write views as if you were writing a plain `i
 #     display.clear(BACKGROUND_COLOR).unwrap();
 #
 #     view()
-#         .as_drawable(display.size(), DEFAULT_COLOR)
+#         .as_drawable(display.size(), DEFAULT_COLOR, &mut ())
 #         .draw(&mut display)
 #         .unwrap();
 #
@@ -55,7 +55,7 @@ use buoyant::if_view;
 use buoyant::view::prelude::*;
 use embedded_graphics::{mono_font::ascii::FONT_9X15, pixelcolor::Rgb888, prelude::*};
 
-fn secret_message(message: &str, is_redacted: bool) -> impl View<Rgb888> + use<'_> {
+fn secret_message(message: &str, is_redacted: bool) -> impl View<Rgb888, ()> + use<'_> {
     if_view!((is_redacted) {
         RoundedRectangle::new(4)
             .frame()
@@ -66,7 +66,7 @@ fn secret_message(message: &str, is_redacted: bool) -> impl View<Rgb888> + use<'
     })
 }
 
-fn view() -> impl View<Rgb888> {
+fn view() -> impl View<Rgb888, ()> {
     VStack::new((
         secret_message("Top secret message", true),
         secret_message("Hi Mom!", false),
@@ -102,7 +102,7 @@ variables in the match arms.
 #     display.clear(BACKGROUND_COLOR).unwrap();
 #
 #     view()
-#         .as_drawable(display.size(), DEFAULT_COLOR)
+#         .as_drawable(display.size(), DEFAULT_COLOR, &mut ())
 #         .draw(&mut display)
 #         .unwrap();
 #
@@ -120,7 +120,7 @@ enum Shape {
     None,
 }
 
-fn shape(shape: Shape) -> impl View<Rgb888> {
+fn shape(shape: Shape) -> impl View<Rgb888, ()> {
     match_view!(shape => {
         Shape::Rectangle => {
             Rectangle
@@ -134,7 +134,7 @@ fn shape(shape: Shape) -> impl View<Rgb888> {
     })
 }
 
-fn view() -> impl View<Rgb888> {
+fn view() -> impl View<Rgb888, ()> {
     VStack::new((
         shape(Shape::Rectangle)
             .foreground_color(Rgb888::CSS_PALE_GREEN),
@@ -169,7 +169,7 @@ use buoyant::view::prelude::*;
 use buoyant::if_view;
 
 /// A rectangle if not hidden, otherwise implicit `EmptyView`
-fn maybe_rectangle(hidden: bool) -> impl View<Rgb888> {
+fn maybe_rectangle(hidden: bool) -> impl View<Rgb888, ()> {
     if_view!((!hidden) {
         Rectangle
     })
