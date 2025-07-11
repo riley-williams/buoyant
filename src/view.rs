@@ -61,15 +61,12 @@ use crate::{
     animation::Animation,
     environment::LayoutEnvironment,
     layout::{Alignment, HorizontalAlignment, ResolvedLayout, VerticalAlignment},
-    primitives::Point,
+    primitives::{Point, ProposedDimensions},
     render::Render,
 };
 
 #[cfg(feature = "embedded-graphics")]
-use crate::{
-    environment::DefaultEnvironment,
-    primitives::{Interpolate, ProposedDimensions},
-};
+use crate::{environment::DefaultEnvironment, primitives::Interpolate};
 
 /// An interaction event that can be handled by a view.
 #[non_exhaustive]
