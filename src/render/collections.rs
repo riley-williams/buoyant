@@ -47,7 +47,7 @@ impl<T: AnimatedJoin, const N: usize> AnimatedJoin for heapless::Vec<T, N> {
 }
 macro_rules! impl_render_for_collections {
     ($(($n:tt, $type:ident)),+) => {
-        impl<Color, $($type: crate::render::Render<Color> ),+> crate::render::Render<Color> for ($($type),+) {
+        impl<Color: Copy, $($type: crate::render::Render<Color> ),+> crate::render::Render<Color> for ($($type),+) {
             fn render(
                 &self,
                 target: &mut impl crate::render_target::RenderTarget<ColorFormat = Color>,
@@ -95,7 +95,7 @@ macro_rules! impl_render_for_collections {
         impl_render_for_collections!((0, T0), (1, T1), (2, T2), (3, T3), (4, T4), (5, T5), (6, T6), (7, T7), (8, T8), (9, T9));
     }
 
-impl<Color, T: Render<Color>, const N: usize> Render<Color> for heapless::Vec<T, N> {
+impl<Color: Copy, T: Render<Color>, const N: usize> Render<Color> for heapless::Vec<T, N> {
     fn render(
         &self,
         render_target: &mut impl RenderTarget<ColorFormat = Color>,

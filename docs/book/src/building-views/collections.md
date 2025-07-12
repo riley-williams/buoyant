@@ -22,7 +22,7 @@ better choice. Use ForEach when you want to display a collection of like views.
 #     display.clear(BACKGROUND_COLOR).unwrap();
 #
 #     view(&SWATCHES)
-#         .as_drawable(display.size(), DEFAULT_COLOR)
+#         .as_drawable(display.size(), DEFAULT_COLOR, &mut ())
 #         .draw(&mut display)
 #         .unwrap();
 #
@@ -61,7 +61,7 @@ static SWATCHES: [Swatch; 4] = [
     },
 ];
 
-fn view(swatches: &[Swatch]) -> impl View<Rgb888> + use<'_> {
+fn view(swatches: &[Swatch]) -> impl View<Rgb888, ()> + use<'_> {
     ForEach::<10>::new(swatches, |swatch| {
         HStack::new((
             RoundedRectangle::new(8)

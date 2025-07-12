@@ -12,8 +12,7 @@ with a manual view lifecycle.
 # extern crate embedded_graphics_simulator;
 use buoyant::{
     environment::DefaultEnvironment,
-    layout::Layout,
-    render::{Render as _, Renderable as _},
+    render::Render as _,
     render_target::EmbeddedGraphicsRenderTarget,
     view::prelude::*,
 };
@@ -34,16 +33,20 @@ fn main() {
     let environment = DefaultEnvironment::default();
     let origin = buoyant::primitives::Point::zero();
 
+    let mut app_data = ();
+
     let view = hello_view();
-    let layout = view.layout(&size.into(), &environment);
-    let render_tree = view.render_tree(&layout, origin, &environment);
+
+    let mut app_state = view.build_state(&mut app_data);
+    let layout = view.layout(&size.into(), &environment, &mut app_data, &mut app_state);
+    let render_tree = view.render_tree(&layout, origin, &environment, &mut app_data, &mut app_state);
 
     render_tree.render(&mut target, &DEFAULT_COLOR, origin);
 
     window.show_static(target.display());
 }
 
-fn hello_view() -> impl View<Rgb888> {
+fn hello_view() -> impl View<Rgb888, ()> {
     HStack::new((
         Text::new("Hello", &FONT_10X20).foreground_color(Rgb888::GREEN),
         Spacer::default(),
@@ -56,7 +59,7 @@ fn hello_view() -> impl View<Rgb888> {
 ## Layout
 
 ```rust,ignore
-let layout = view.layout(&size.into(), &environment);
+let layout = view.layout(&size.into(), &environment, &mut app_data, &mut app_state);
 ```
 
 The layout call resolves the sizes of all the views. It is a bug to try to reuse the layout
@@ -65,7 +68,7 @@ after mutating the view, and Buoyant may panic if you do so.
 ## Render Tree
 
 ```rust,ignore
-let render_tree = view.render_tree(&layout, origin, &environment);
+let render_tree = view.render_tree(&layout, origin, &environment, &mut app_data, &mut app_state);
 ```
 
 The render tree is a minimal snapshot of the view. It holds a copy of the resolved positions,

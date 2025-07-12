@@ -6,7 +6,7 @@ impl AnimatedJoin for () {
     fn join(_source: Self, _target: Self, _: &AnimationDomain) -> Self {}
 }
 
-impl<C> Render<C> for () {
+impl<C: Copy> Render<C> for () {
     fn render(
         &self,
         _render_target: &mut impl RenderTarget<ColorFormat = C>,

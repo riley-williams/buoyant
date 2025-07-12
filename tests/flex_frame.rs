@@ -1,16 +1,11 @@
-use buoyant::layout::Alignment;
 use buoyant::primitives::Point;
 use buoyant::render::Render;
-use buoyant::view::HStack;
-use buoyant::view::Spacer;
-use buoyant::view::VStack;
+use buoyant::view::prelude::*;
 use buoyant::{
     environment::DefaultEnvironment,
     font::CharacterBufferFont,
-    layout::{HorizontalAlignment, Layout, VerticalAlignment},
     primitives::{ProposedDimension, ProposedDimensions, Size},
     render_target::FixedTextBuffer,
-    view::{shape::Rectangle, Text, ViewExt},
 };
 mod common;
 use common::make_render_tree;
@@ -21,28 +16,33 @@ fn test_min() {
     let content = Text::new("123456", &font).flex_frame().with_min_size(2, 2);
 
     let env = DefaultEnvironment::non_animated();
+    content.build_state(&mut ());
 
     assert_eq!(
-        content.layout(&Size::new(1, 1).into(), &env).resolved_size,
+        content
+            .layout(&Size::new(1, 1).into(), &env, &mut (), &mut ())
+            .resolved_size,
         Size::new(2, 2).into()
     );
 
     assert_eq!(
         content
-            .layout(&Size::new(1, 123).into(), &env)
+            .layout(&Size::new(1, 123).into(), &env, &mut (), &mut ())
             .resolved_size,
         Size::new(2, 3).into()
     );
 
     assert_eq!(
         content
-            .layout(&Size::new(100, 1).into(), &env)
+            .layout(&Size::new(100, 1).into(), &env, &mut (), &mut ())
             .resolved_size,
         Size::new(6, 2).into()
     );
 
     assert_eq!(
-        content.layout(&Size::new(1, 6).into(), &env).resolved_size,
+        content
+            .layout(&Size::new(1, 6).into(), &env, &mut (), &mut ())
+            .resolved_size,
         Size::new(2, 3).into()
     );
 }
@@ -50,31 +50,39 @@ fn test_min() {
 #[test]
 fn test_max() {
     let font = CharacterBufferFont {};
-    let content = Text::new("123456", &font).flex_frame().with_max_size(2, 2);
+    let content = Text::new("123456", &font)
+        .flex_frame()
+        .with_max_size(2, 2)
+        .foreground_color(());
 
     let env = DefaultEnvironment::non_animated();
+    content.build_state(&mut ());
 
     assert_eq!(
-        content.layout(&Size::new(2, 1).into(), &env).resolved_size,
+        content
+            .layout(&Size::new(2, 1).into(), &env, &mut (), &mut ())
+            .resolved_size,
         Size::new(2, 1).into()
     );
 
     assert_eq!(
         content
-            .layout(&Size::new(1, 123).into(), &env)
+            .layout(&Size::new(1, 123).into(), &env, &mut (), &mut ())
             .resolved_size,
         Size::new(1, 2).into()
     );
 
     assert_eq!(
         content
-            .layout(&Size::new(100, 1).into(), &env)
+            .layout(&Size::new(100, 1).into(), &env, &mut (), &mut ())
             .resolved_size,
         Size::new(2, 1).into()
     );
 
     assert_eq!(
-        content.layout(&Size::new(1, 6).into(), &env).resolved_size,
+        content
+            .layout(&Size::new(1, 6).into(), &env, &mut (), &mut ())
+            .resolved_size,
         Size::new(1, 2).into()
     );
 }
@@ -91,40 +99,45 @@ fn test_min_max() {
         .foreground_color(' ');
 
     let env = DefaultEnvironment::non_animated();
+    content.build_state(&mut ());
 
     assert_eq!(
-        content.layout(&Size::new(2, 1).into(), &env).resolved_size,
+        content
+            .layout(&Size::new(2, 1).into(), &env, &mut (), &mut ())
+            .resolved_size,
         Size::new(2, 2).into()
     );
 
     assert_eq!(
         content
-            .layout(&Size::new(1, 123).into(), &env)
+            .layout(&Size::new(1, 123).into(), &env, &mut (), &mut ())
             .resolved_size,
         Size::new(2, 4).into()
     );
 
     assert_eq!(
         content
-            .layout(&Size::new(100, 1).into(), &env)
+            .layout(&Size::new(100, 1).into(), &env, &mut (), &mut ())
             .resolved_size,
         Size::new(4, 2).into()
     );
 
     assert_eq!(
-        content.layout(&Size::new(1, 6).into(), &env).resolved_size,
+        content
+            .layout(&Size::new(1, 6).into(), &env, &mut (), &mut ())
+            .resolved_size,
         Size::new(2, 4).into()
     );
 
     assert_eq!(
         content
-            .layout(&Size::new(1000, 1000).into(), &env)
+            .layout(&Size::new(1000, 1000).into(), &env, &mut (), &mut ())
             .resolved_size,
         Size::new(4, 4).into()
     );
 
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let tree = make_render_tree(&content, buffer.size());
+    let tree = make_render_tree(&content, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "xxx|  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "xxx|  ");
@@ -142,7 +155,7 @@ fn test_render_min_flex_frame_top_leading_alignment() {
         .with_alignment(Alignment::TopLeading)
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let tree = make_render_tree(&content, buffer.size());
+    let tree = make_render_tree(&content, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aa    ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "bb    ");
@@ -160,7 +173,7 @@ fn test_render_min_flex_frame_top_center_alignment() {
         .with_vertical_alignment(VerticalAlignment::Top)
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let tree = make_render_tree(&content, buffer.size());
+    let tree = make_render_tree(&content, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "  aa  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "  bb  ");
@@ -178,7 +191,7 @@ fn test_render_min_flex_frame_top_trailing_alignment() {
         .with_alignment(Alignment::TopTrailing)
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let tree = make_render_tree(&content, buffer.size());
+    let tree = make_render_tree(&content, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "    aa");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "    bb");
@@ -196,7 +209,7 @@ fn test_render_min_flex_frame_center_leading_alignment() {
         .with_horizontal_alignment(HorizontalAlignment::Leading)
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let tree = make_render_tree(&content, buffer.size());
+    let tree = make_render_tree(&content, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "aa    ");
@@ -213,7 +226,7 @@ fn test_render_min_flex_frame_center_center_alignment() {
         .with_min_size(6, 5)
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let tree = make_render_tree(&content, buffer.size());
+    let tree = make_render_tree(&content, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "  aa  ");
@@ -231,7 +244,7 @@ fn test_render_min_flex_frame_center_trailing_alignment() {
         .with_horizontal_alignment(HorizontalAlignment::Trailing)
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let tree = make_render_tree(&content, buffer.size());
+    let tree = make_render_tree(&content, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "    aa");
@@ -249,7 +262,7 @@ fn test_render_min_flex_frame_bottom_leading_alignment() {
         .with_alignment(Alignment::BottomLeading)
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let tree = make_render_tree(&content, buffer.size());
+    let tree = make_render_tree(&content, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "      ");
@@ -267,7 +280,7 @@ fn test_render_min_flex_frame_bottom_center_alignment() {
         .with_vertical_alignment(VerticalAlignment::Bottom)
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let tree = make_render_tree(&content, buffer.size());
+    let tree = make_render_tree(&content, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "      ");
@@ -285,7 +298,7 @@ fn test_render_min_flex_frame_bottom_trailing_alignment() {
         .with_alignment(Alignment::BottomTrailing)
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let tree = make_render_tree(&content, buffer.size());
+    let tree = make_render_tree(&content, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "      ");
@@ -305,7 +318,7 @@ fn test_render_infinite_width_height_fills_space() {
         .with_vertical_alignment(VerticalAlignment::Center)
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let tree = make_render_tree(&content, buffer.size());
+    let tree = make_render_tree(&content, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "  aa  ");
@@ -325,7 +338,7 @@ fn test_render_oversize_mix() {
         .with_max_height(u16::MAX)
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
-    let tree = make_render_tree(&content, buffer.size());
+    let tree = make_render_tree(&content, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "      ");
@@ -341,6 +354,7 @@ fn test_compact() {
         .flex_frame()
         .with_ideal_size(8, 4)
         .with_min_size(2, 2);
+    content.build_state(&mut ());
 
     let layout = content.layout(
         &ProposedDimensions {
@@ -348,6 +362,8 @@ fn test_compact() {
             height: ProposedDimension::Compact,
         },
         &env,
+        &mut (),
+        &mut (),
     );
     assert_eq!(layout.resolved_size.width, 8.into());
     assert_eq!(layout.resolved_size.height, 4.into());
@@ -357,6 +373,7 @@ fn test_compact() {
 fn test_infinite() {
     let env = DefaultEnvironment::non_animated();
     let content = Rectangle.flex_frame().with_min_width(2).with_min_height(2);
+    content.build_state(&mut ());
 
     let layout = content.layout(
         &ProposedDimensions {
@@ -364,6 +381,8 @@ fn test_infinite() {
             height: ProposedDimension::Infinite,
         },
         &env,
+        &mut (),
+        &mut (),
     );
     // Rectangle defaults to a 10x10 size if not constrained.
     assert!(layout.resolved_size.width.is_infinite());
@@ -374,12 +393,15 @@ fn test_infinite() {
 fn test_infinite_width_only() {
     let env = DefaultEnvironment::non_animated();
     let content = Rectangle.flex_frame().with_min_width(4); // no ideal or max
+    content.build_state(&mut ());
     let layout = content.layout(
         &ProposedDimensions {
             width: ProposedDimension::Infinite,
             height: ProposedDimension::Exact(6),
         },
         &env,
+        &mut (),
+        &mut (),
     );
     assert!(layout.resolved_size.width.is_infinite());
     assert_eq!(layout.resolved_size.height, 6.into());
@@ -389,12 +411,15 @@ fn test_infinite_width_only() {
 fn test_infinite_width_with_min_ideal() {
     let env = DefaultEnvironment::non_animated();
     let content = Rectangle.flex_frame().with_min_width(2).with_ideal_width(8);
+    content.build_state(&mut ());
     let layout = content.layout(
         &ProposedDimensions {
             width: ProposedDimension::Infinite,
             height: ProposedDimension::Compact,
         },
         &env,
+        &mut (),
+        &mut (),
     );
     // Rectangle's infinite offer leads to child returning infinite, then min ensures at least 2.
     assert!(layout.resolved_size.width.is_infinite());
@@ -407,6 +432,8 @@ fn test_infinite_width_with_min_ideal() {
             height: ProposedDimension::Exact(2),
         },
         &env,
+        &mut (),
+        &mut (),
     );
     assert!(layout2.resolved_size.width.is_infinite());
     assert_eq!(layout2.resolved_size.height, 2.into());
@@ -416,12 +443,15 @@ fn test_infinite_width_with_min_ideal() {
 fn test_infinite_height_only() {
     let env = DefaultEnvironment::non_animated();
     let content = Rectangle.flex_frame().with_min_height(5);
+    content.build_state(&mut ());
     let layout = content.layout(
         &ProposedDimensions {
             width: ProposedDimension::Exact(7),
             height: ProposedDimension::Infinite,
         },
         &env,
+        &mut (),
+        &mut (),
     );
     assert_eq!(layout.resolved_size.width, 7.into());
     assert!(layout.resolved_size.height.is_infinite());
@@ -432,6 +462,8 @@ fn test_infinite_height_only() {
             height: ProposedDimension::Infinite,
         },
         &env,
+        &mut (),
+        &mut (),
     );
     assert_eq!(layout2.resolved_size.width, 5.into());
     assert!(layout2.resolved_size.height.is_infinite());
@@ -444,12 +476,15 @@ fn test_infinite_height_with_min_ideal() {
         .flex_frame()
         .with_min_height(2)
         .with_ideal_height(4);
+    content.build_state(&mut ());
     let layout = content.layout(
         &ProposedDimensions {
             width: ProposedDimension::Compact,
             height: ProposedDimension::Infinite,
         },
         &env,
+        &mut (),
+        &mut (),
     );
     // For height = infinite, child returns infinite; flex frame ensures at least 2 => u16::MAX
     assert!(layout.resolved_size.height.is_infinite());
@@ -462,6 +497,8 @@ fn test_infinite_height_with_min_ideal() {
             height: ProposedDimension::Infinite,
         },
         &env,
+        &mut (),
+        &mut (),
     );
     assert_eq!(layout2.resolved_size.width, 3.into());
     assert!(layout2.resolved_size.height.is_infinite());
@@ -474,12 +511,15 @@ fn test_min_greater_than_ideal_height() {
         .flex_frame()
         .with_min_height(10)
         .with_ideal_height(5);
+    content.build_state(&mut ());
     let layout = content.layout(
         &ProposedDimensions {
             width: ProposedDimension::Exact(8),
             height: ProposedDimension::Compact,
         },
         &env,
+        &mut (),
+        &mut (),
     );
     // min is bigger than ideal, so 10 should be used
     assert_eq!(layout.resolved_size.height, 10.into());
@@ -493,12 +533,15 @@ fn test_max_smaller_than_min_ideal_height() {
         .with_min_height(4)
         .with_ideal_height(6)
         .with_max_height(3);
+    content.build_state(&mut ());
     let layout = content.layout(
         &ProposedDimensions {
             width: ProposedDimension::Compact,
             height: ProposedDimension::Infinite,
         },
         &env,
+        &mut (),
+        &mut (),
     );
     // max is 3, but min/ideal are 4/6; when max is smaller, the paradox is resolved by using min
     assert_eq!(layout.resolved_size.height, 4.into());
@@ -511,12 +554,15 @@ fn test_min_greater_than_ideal_width() {
         .flex_frame()
         .with_min_width(12)
         .with_ideal_width(6);
+    content.build_state(&mut ());
     let layout = content.layout(
         &ProposedDimensions {
             width: ProposedDimension::Compact,
             height: ProposedDimension::Exact(5),
         },
         &env,
+        &mut (),
+        &mut (),
     );
     // min is bigger than ideal, so 12 should be used
     assert_eq!(layout.resolved_size.width, 12.into());
@@ -530,12 +576,15 @@ fn test_max_smaller_than_min_ideal_width() {
         .with_min_width(5)
         .with_ideal_width(8)
         .with_max_width(3);
+    content.build_state(&mut ());
     let layout = content.layout(
         &ProposedDimensions {
             width: ProposedDimension::Infinite,
             height: ProposedDimension::Compact,
         },
         &env,
+        &mut (),
+        &mut (),
     );
     // max is 3, but min/ideal are 5/8; when max is smaller, the paradox is resolved by using min
     assert_eq!(layout.resolved_size.width, 5.into());
@@ -545,6 +594,7 @@ fn test_max_smaller_than_min_ideal_width() {
 fn test_infinite_max_width() {
     let env = DefaultEnvironment::non_animated();
     let content = Rectangle.flex_frame().with_infinite_max_width();
+    content.build_state(&mut ());
 
     // With Infinite offer
     let layout = content.layout(
@@ -553,6 +603,8 @@ fn test_infinite_max_width() {
             height: ProposedDimension::Exact(5),
         },
         &env,
+        &mut (),
+        &mut (),
     );
     assert!(layout.resolved_size.width.is_infinite());
     assert_eq!(layout.resolved_size.height, 5.into());
@@ -564,6 +616,8 @@ fn test_infinite_max_width() {
             height: ProposedDimension::Exact(5),
         },
         &env,
+        &mut (),
+        &mut (),
     );
     assert_eq!(layout.resolved_size.width, 15.into());
     assert_eq!(layout.resolved_size.height, 5.into());
@@ -575,6 +629,8 @@ fn test_infinite_max_width() {
             height: ProposedDimension::Exact(5),
         },
         &env,
+        &mut (),
+        &mut (),
     );
     assert_eq!(layout.resolved_size.width, 1.into()); // Default magic value
     assert_eq!(layout.resolved_size.height, 5.into());
@@ -589,6 +645,8 @@ fn test_infinite_max_width_with_min_ideal() {
         .with_min_width(5)
         .with_ideal_width(8);
 
+    content.build_state(&mut ());
+
     // With Compact offer, should use ideal
     let layout = content.layout(
         &ProposedDimensions {
@@ -596,6 +654,8 @@ fn test_infinite_max_width_with_min_ideal() {
             height: ProposedDimension::Exact(5),
         },
         &env,
+        &mut (),
+        &mut (),
     );
     assert_eq!(layout.resolved_size.width, 8.into());
     assert_eq!(layout.resolved_size.height, 5.into());
@@ -607,6 +667,8 @@ fn test_infinite_max_width_with_min_ideal() {
             height: ProposedDimension::Exact(5),
         },
         &env,
+        &mut (),
+        &mut (),
     );
     assert_eq!(layout.resolved_size.width, 5.into()); // Uses min
     assert_eq!(layout.resolved_size.height, 5.into());
@@ -616,6 +678,7 @@ fn test_infinite_max_width_with_min_ideal() {
 fn test_infinite_max_height() {
     let env = DefaultEnvironment::non_animated();
     let content = Rectangle.flex_frame().with_infinite_max_height();
+    content.build_state(&mut ());
 
     // With Infinite offer
     let layout = content.layout(
@@ -624,6 +687,8 @@ fn test_infinite_max_height() {
             height: ProposedDimension::Infinite,
         },
         &env,
+        &mut (),
+        &mut (),
     );
     assert_eq!(layout.resolved_size.width, 5.into());
     assert!(layout.resolved_size.height.is_infinite());
@@ -635,6 +700,8 @@ fn test_infinite_max_height() {
             height: ProposedDimension::Exact(15),
         },
         &env,
+        &mut (),
+        &mut (),
     );
     assert_eq!(layout.resolved_size.width, 5.into());
     assert_eq!(layout.resolved_size.height, 15.into());
@@ -646,6 +713,8 @@ fn test_infinite_max_height() {
             height: ProposedDimension::Compact,
         },
         &env,
+        &mut (),
+        &mut (),
     );
     assert_eq!(layout.resolved_size.width, 5.into());
     assert_eq!(layout.resolved_size.height, 1.into()); // Default magic value
@@ -660,6 +729,7 @@ fn test_infinite_max_height_with_min_ideal() {
         .with_min_height(5)
         .with_ideal_height(8);
 
+    content.build_state(&mut ());
     // With Compact offer, should use ideal
     let layout = content.layout(
         &ProposedDimensions {
@@ -667,6 +737,8 @@ fn test_infinite_max_height_with_min_ideal() {
             height: ProposedDimension::Compact,
         },
         &env,
+        &mut (),
+        &mut (),
     );
     assert_eq!(layout.resolved_size.width, 5.into());
     assert_eq!(layout.resolved_size.height, 8.into());
@@ -678,12 +750,14 @@ fn test_infinite_max_height_with_min_ideal() {
             height: ProposedDimension::Exact(3),
         },
         &env,
+        &mut (),
+        &mut (),
     );
     assert_eq!(layout.resolved_size.width, 5.into());
     assert_eq!(layout.resolved_size.height, 5.into()); // Uses min
 }
 
-/// Usage of ``flex_infinite_width`` should be equivalent to using ``HStack`` with ``Spacer``
+/// Usage of [`flex_infinite_width`` should be equivalent to using ``HStack`` with ``Spacer`]
 #[test]
 fn infinite_max_width_equivalent_to_hstack_spacer() {
     let font = CharacterBufferFont {};
@@ -701,17 +775,17 @@ fn infinite_max_width_equivalent_to_hstack_spacer() {
     ))
     .foreground_color(' ');
     let mut buffer1 = FixedTextBuffer::<6, 5>::default();
-    let tree = make_render_tree(&stack_view, buffer1.size());
+    let tree = make_render_tree(&stack_view, buffer1.size(), &mut ());
     tree.render(&mut buffer1, &' ', Point::zero());
 
     let mut buffer2 = FixedTextBuffer::<6, 5>::default();
-    let tree = make_render_tree(&flex_view, buffer2.size());
+    let tree = make_render_tree(&flex_view, buffer2.size(), &mut ());
     tree.render(&mut buffer2, &' ', Point::zero());
 
     assert_eq!(buffer1, buffer2);
 }
 
-/// Usage of ``flex_infinite_height`` should be equivalent to using ``VStack`` with ``Spacer``
+/// Usage of [`flex_infinite_height`` should be equivalent to using ``VStack`` with ``Spacer`]
 #[test]
 fn infinite_max_height_equivalent_to_vstack_spacer() {
     let font = CharacterBufferFont {};
@@ -729,11 +803,11 @@ fn infinite_max_height_equivalent_to_vstack_spacer() {
     ))
     .foreground_color(' ');
     let mut buffer1 = FixedTextBuffer::<6, 5>::default();
-    let tree = make_render_tree(&stack_view, buffer1.size());
+    let tree = make_render_tree(&stack_view, buffer1.size(), &mut ());
     tree.render(&mut buffer1, &' ', Point::zero());
 
     let mut buffer2 = FixedTextBuffer::<6, 5>::default();
-    let tree = make_render_tree(&flex_view, buffer2.size());
+    let tree = make_render_tree(&flex_view, buffer2.size(), &mut ());
     tree.render(&mut buffer2, &' ', Point::zero());
 
     assert_eq!(buffer1, buffer2);

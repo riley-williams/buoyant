@@ -79,7 +79,7 @@ impl<V0: AnimatedJoin, V1: AnimatedJoin, V2: AnimatedJoin, V3: AnimatedJoin> Ani
     }
 }
 
-impl<V0, V1, C> Render<C> for OneOf2<V0, V1>
+impl<V0, V1, C: Copy> Render<C> for OneOf2<V0, V1>
 where
     V0: Render<C>,
     V1: Render<C>,
@@ -114,7 +114,7 @@ where
     }
 }
 
-impl<V0, V1, V2, C> Render<C> for OneOf3<V0, V1, V2>
+impl<V0, V1, V2, C: Copy> Render<C> for OneOf3<V0, V1, V2>
 where
     V0: Render<C>,
     V1: Render<C>,
@@ -154,7 +154,7 @@ where
     }
 }
 
-impl<V0, V1, V2, V3, C> Render<C> for OneOf4<V0, V1, V2, V3>
+impl<V0, V1, V2, V3, C: Copy> Render<C> for OneOf4<V0, V1, V2, V3>
 where
     V0: Render<C>,
     V1: Render<C>,

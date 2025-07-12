@@ -25,7 +25,7 @@ You can configure the spacing between child views using `.with_spacing`.
 #     display.clear(BACKGROUND_COLOR).unwrap();
 # 
 #     view()
-#         .as_drawable(display.size(), DEFAULT_COLOR)
+#         .as_drawable(display.size(), DEFAULT_COLOR, &mut ())
 #         .draw(&mut display)
 #         .unwrap();
 # 
@@ -34,7 +34,7 @@ You can configure the spacing between child views using `.with_spacing`.
 # 
 use buoyant::view::prelude::*;
 
-fn view() -> impl View<Rgb888> {
+fn view() -> impl View<Rgb888, ()> {
     VStack::new((
         Circle.foreground_color(Rgb888::CSS_CORAL),
         Rectangle
@@ -71,7 +71,7 @@ incrementally larger values for each class of separation.
 #     display.clear(BACKGROUND_COLOR).unwrap();
 # 
 #     view()
-#         .as_drawable(display.size(), DEFAULT_COLOR)
+#         .as_drawable(display.size(), DEFAULT_COLOR, &mut ())
 #         .draw(&mut display)
 #         .unwrap();
 # 
@@ -91,7 +91,7 @@ mod spacing {
     pub const SECTION: u32 = 18;
 }
 
-fn view() -> impl View<Rgb888> {
+fn view() -> impl View<Rgb888, ()> {
     VStack::new((
         VStack::new((
             Text::new("Parents", &FONT_9X15_BOLD),
@@ -118,7 +118,7 @@ fn contact_row<'a>(
     color: Rgb888,
     name: &'a str,
     relationship: &'a str,
-) -> impl View<Rgb888> + use<'a> {
+) -> impl View<Rgb888, ()> + use<'a> {
     HStack::new((
         Circle.foreground_color(color).frame().with_width(40),
         VStack::new((

@@ -18,7 +18,7 @@ This tree is what is actually rendered.
 # };
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::RgbColor as _};
 # 
-fn toggle(is_on: bool) -> impl View<Rgb888> {
+fn toggle(is_on: bool) -> impl View<Rgb888, ()> {
     ZStack::new((
         Capsule.foreground_color(Rgb888::BLACK),
         Circle

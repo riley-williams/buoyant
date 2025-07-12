@@ -1,8 +1,8 @@
 use crate::{
     environment::LayoutEnvironment,
-    layout::{Alignment, Layout, ResolvedLayout},
+    layout::{Alignment, ResolvedLayout},
     primitives::{Point, ProposedDimension, ProposedDimensions},
-    render::Renderable,
+    view::{ViewLayout, ViewMarker},
 };
 
 /// A view that uses the layout of the foreground view, but renders the background
@@ -24,29 +24,22 @@ impl<T, U> BackgroundView<T, U> {
     }
 }
 
-impl<T: Layout, U: Layout> Layout for BackgroundView<T, U> {
+impl<T, U> ViewMarker for BackgroundView<T, U>
+where
+    T: ViewMarker,
+    U: ViewMarker,
+{
+    type Renderables = (U::Renderables, T::Renderables);
+}
+
+impl<Captures: ?Sized, T, U> ViewLayout<Captures> for BackgroundView<T, U>
+where
+    T: ViewLayout<Captures>,
+    U: ViewLayout<Captures>,
+{
     type Sublayout = (ResolvedLayout<T::Sublayout>, ResolvedLayout<U::Sublayout>);
-
-    fn layout(
-        &self,
-        offer: &ProposedDimensions,
-        env: &impl LayoutEnvironment,
-    ) -> ResolvedLayout<Self::Sublayout> {
-        let foreground_layout = self.foreground.layout(offer, env);
-        let foreground_size = foreground_layout.resolved_size;
-        // Propose the foreground size to the background
-        // This would benefit from splitting layout into separate functions for the various offers
-        let background_offer = ProposedDimensions {
-            width: ProposedDimension::Exact(foreground_size.width.into()),
-            height: ProposedDimension::Exact(foreground_size.height.into()),
-        };
-        let background_layout = self.background.layout(&background_offer, env);
-
-        ResolvedLayout {
-            sublayouts: (foreground_layout, background_layout),
-            resolved_size: foreground_size,
-        }
-    }
+    // Tuples are rendered first to last
+    type State = (T::State, U::State);
 
     fn priority(&self) -> i8 {
         self.foreground.priority()
@@ -55,17 +48,45 @@ impl<T: Layout, U: Layout> Layout for BackgroundView<T, U> {
     fn is_empty(&self) -> bool {
         self.foreground.is_empty()
     }
-}
 
-impl<T: Renderable, U: Renderable> Renderable for BackgroundView<T, U> {
-    // Tuples are rendered first to last
-    type Renderables = (U::Renderables, T::Renderables);
+    fn build_state(&self, captures: &mut Captures) -> Self::State {
+        (
+            self.foreground.build_state(captures),
+            self.background.build_state(captures),
+        )
+    }
+    fn layout(
+        &self,
+        offer: &ProposedDimensions,
+        env: &impl LayoutEnvironment,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> ResolvedLayout<Self::Sublayout> {
+        let foreground_layout = self.foreground.layout(offer, env, captures, &mut state.0);
+        let foreground_size = foreground_layout.resolved_size;
+        // Propose the foreground size to the background
+        // This would benefit from splitting layout into separate functions for the various offers
+        let background_offer = ProposedDimensions {
+            width: ProposedDimension::Exact(foreground_size.width.into()),
+            height: ProposedDimension::Exact(foreground_size.height.into()),
+        };
+        let background_layout =
+            self.background
+                .layout(&background_offer, env, captures, &mut state.1);
+
+        ResolvedLayout {
+            sublayouts: (foreground_layout, background_layout),
+            resolved_size: foreground_size,
+        }
+    }
 
     fn render_tree(
         &self,
         layout: &ResolvedLayout<Self::Sublayout>,
-        origin: crate::primitives::Point,
+        origin: Point,
         env: &impl LayoutEnvironment,
+        captures: &mut Captures,
+        state: &mut Self::State,
     ) -> Self::Renderables {
         let new_origin = origin
             + Point::new(
@@ -80,10 +101,33 @@ impl<T: Renderable, U: Renderable> Renderable for BackgroundView<T, U> {
             );
 
         (
-            self.background
-                .render_tree(&layout.sublayouts.1, new_origin, env),
+            self.background.render_tree(
+                &layout.sublayouts.1,
+                new_origin,
+                env,
+                captures,
+                &mut state.1,
+            ),
             self.foreground
-                .render_tree(&layout.sublayouts.0, origin, env),
+                .render_tree(&layout.sublayouts.0, origin, env, captures, &mut state.0),
         )
+    }
+
+    fn handle_event(
+        &mut self,
+        event: &crate::view::Event,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> bool {
+        // Foreground handles events first
+        if self
+            .foreground
+            .handle_event(event, &mut render_tree.1, captures, &mut state.0)
+        {
+            return true;
+        }
+        self.background
+            .handle_event(event, &mut render_tree.0, captures, &mut state.1)
     }
 }
