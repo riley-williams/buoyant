@@ -12,7 +12,7 @@ mod image;
 #[allow(missing_docs)]
 pub mod match_view;
 mod modifier;
-mod scroll_view;
+pub mod scroll_view;
 /// Shape primitives
 pub mod shape;
 mod spacer;

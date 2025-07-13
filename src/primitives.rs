@@ -99,6 +99,16 @@ pub struct Point {
     pub y: i32,
 }
 
+impl core::ops::Neg for Point {
+    type Output = Self;
+    fn neg(self) -> Self {
+        Self {
+            x: -self.x,
+            y: -self.y,
+        }
+    }
+}
+
 impl core::ops::Add for Point {
     type Output = Self;
     fn add(self, rhs: Self) -> Self {

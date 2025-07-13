@@ -11,6 +11,7 @@ use std::time::{Duration, Instant};
 
 use buoyant::app::App;
 use buoyant::render_target::EmbeddedGraphicsRenderTarget;
+use buoyant::view::scroll_view::ScrollDirection;
 use buoyant::{animation::Animation, if_view, match_view, view::prelude::*};
 
 use embedded_graphics::prelude::*;
@@ -30,15 +31,16 @@ mod spacing {
 
 #[allow(unused)]
 mod font {
+    use u8g2_fonts::{fonts, FontRenderer};
+
+    pub static MYSTERY_QUEST_28: FontRenderer =
+        FontRenderer::new::<fonts::u8g2_font_mystery_quest_28_tr>();
     /// Font for body text
-    pub const BODY: embedded_graphics::mono_font::MonoFont<'_> =
-        embedded_graphics::mono_font::ascii::FONT_10X20;
+    pub static BODY: FontRenderer = FontRenderer::new::<fonts::u8g2_font_inr16_mr>();
+    pub static HEADING: FontRenderer = FontRenderer::new::<fonts::u8g2_font_bubble_tr>();
     /// Font for captions, smaller text
-    pub const CAPTION: embedded_graphics::mono_font::MonoFont<'_> =
-        embedded_graphics::mono_font::ascii::FONT_9X15;
-    /// Font for bold captions
-    pub const CAPTION_BOLD: embedded_graphics::mono_font::MonoFont<'_> =
-        embedded_graphics::mono_font::ascii::FONT_9X15_BOLD;
+    pub static CAPTION: FontRenderer = FontRenderer::new::<fonts::u8g2_font_busdisplay11x5_tr>();
+    pub static CAPTION_BOLD: FontRenderer = FontRenderer::new::<fonts::u8g2_font_inb16_mr>();
 }
 
 #[allow(unused)]
@@ -153,7 +155,7 @@ fn tab_item<C, F: Fn(&mut C)>(
                 }),
                 VStack::new((
                     Circle.frame().with_width(15),
-                    Text::new(name, &font::CAPTION_BOLD),
+                    Text::new(name, &font::CAPTION),
                 ))
                 .with_spacing(spacing::ELEMENT)
                 .padding(Edges::All, spacing::ELEMENT),
@@ -167,26 +169,29 @@ fn tab_item<C, F: Fn(&mut C)>(
 }
 
 fn brew_tab<C>(_state: &AppState) -> impl View<color::Space, C> {
-    VStack::new((
-        Text::new("Good morning", &font::BODY),
-        Text::new(
-            "Use the arrow keys to navigate to the settings tab",
-            &font::CAPTION_BOLD,
-        )
-        .multiline_text_alignment(HorizontalTextAlignment::Leading),
-    ))
-    .with_spacing(spacing::COMPONENT)
-    .with_alignment(HorizontalAlignment::Leading)
-    .flex_infinite_width(HorizontalAlignment::Leading)
-    .padding(Edges::All, spacing::SECTION_MARGIN)
-    .foreground_color(color::Space::WHITE)
+    ScrollView::new(
+        VStack::new((
+            Text::new("Good morning", &font::HEADING),
+            Text::new(
+                "You can't brew coffee in a simulator, but you can pretend.",
+                &font::MYSTERY_QUEST_28,
+            )
+            .multiline_text_alignment(HorizontalTextAlignment::Center),
+        ))
+        .with_spacing(spacing::COMPONENT)
+        .with_alignment(HorizontalAlignment::Center)
+        .flex_infinite_width(HorizontalAlignment::Center)
+        .padding(Edges::All, spacing::SECTION_MARGIN)
+        .foreground_color(color::Space::WHITE),
+    )
+    .with_direction(ScrollDirection::Both)
 }
 
 fn settings_tab(state: &AppState) -> impl View<color::Space, AppState> {
     ScrollView::new(
         VStack::new((
             toggle_text(
-                "Auto (b)rew",
+                "Auto brew",
                 state.auto_brew,
                 "Automatically brew coffee at 7am",
                 true,
@@ -195,7 +200,7 @@ fn settings_tab(state: &AppState) -> impl View<color::Space, AppState> {
                 },
             ),
             toggle_text(
-                "Stop on (w)eight",
+                "Stop on weight",
                 state.stop_on_weight,
                 "Stop the machine automatically when the target weight is reached",
                 false,
@@ -210,9 +215,9 @@ fn settings_tab(state: &AppState) -> impl View<color::Space, AppState> {
             .multiline_text_alignment(HorizontalTextAlignment::Trailing)
             .foreground_color(color::Space::WHITE)
             .frame()
-            .with_width(40),
+            .with_width(90),
             toggle_text(
-                "Auto (o)ff",
+                "Auto off",
                 state.auto_off,
                 "The display will go to sleep after 5 minutes of inactivity",
                 true,
@@ -226,6 +231,7 @@ fn settings_tab(state: &AppState) -> impl View<color::Space, AppState> {
         .padding(Edges::All, spacing::SECTION_MARGIN)
         .animated(Animation::linear(Duration::from_millis(200)), state.clone()),
     )
+    .with_overlapping_bar(true) // we already have padding
 }
 
 fn toggle_text<C>(
