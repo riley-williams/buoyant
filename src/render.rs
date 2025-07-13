@@ -18,6 +18,7 @@ mod empty;
 mod image;
 mod offset;
 mod one_of;
+mod option;
 mod shade_subtree;
 pub mod shape;
 mod text;
