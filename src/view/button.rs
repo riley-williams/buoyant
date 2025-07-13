@@ -165,7 +165,7 @@ where
                 }
             }
             Event::TouchUp(point) => {
-                if render_tree.frame.contains(point) && state.0 == ButtonState::CaptivePressed {
+                if render_tree.frame.contains(point) && state.0 != ButtonState::AtRest {
                     (self.action)(captures);
                     state.0 = ButtonState::AtRest;
                     true
@@ -185,6 +185,13 @@ where
                 }
                 (true, ButtonState::CaptivePressed) | (false, ButtonState::Captive) => true,
                 (_, ButtonState::AtRest) => false,
+            },
+            Event::TouchCancelled => match state.0 {
+                ButtonState::CaptivePressed => {
+                    state.0 = ButtonState::Captive;
+                    true
+                }
+                _ => false,
             },
             _ => false,
         }

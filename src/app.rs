@@ -65,17 +65,14 @@ where
             if event == Event::Exit {
                 return true;
             }
-            {
-                extern crate std;
-                std::println!("Event: {event:?}");
-            }
-            handled = handled
-                || self.view.handle_event(
-                    &event,
-                    &mut joined_tree,
-                    &mut self.data,
-                    &mut self.view_state,
-                );
+
+            let event_handled = self.view.handle_event(
+                &event,
+                &mut joined_tree,
+                &mut self.data,
+                &mut self.view_state,
+            );
+            handled = handled || event_handled;
         }
         self.source_tree = joined_tree;
         let env = DefaultEnvironment::new(time);

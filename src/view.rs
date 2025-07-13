@@ -12,6 +12,7 @@ mod image;
 #[allow(missing_docs)]
 pub mod match_view;
 mod modifier;
+mod scroll_view;
 /// Shape primitives
 pub mod shape;
 mod spacer;
@@ -30,6 +31,7 @@ pub use hstack::HStack;
 pub use image::Image;
 pub use modifier::aspect_ratio;
 pub use modifier::padding;
+pub use scroll_view::ScrollView;
 pub use spacer::Spacer;
 pub(crate) use text::WhitespaceWrap;
 pub use text::{HorizontalTextAlignment, Text};
@@ -44,8 +46,8 @@ pub mod prelude {
     #[cfg(feature = "embedded-graphics")]
     pub use super::{AsDrawable, Image};
     pub use super::{
-        Button, Divider, EmptyView, ForEach, HStack, Lens, Spacer, Text, VStack, View, ViewExt,
-        ViewLayout, ViewThatFits, ZStack,
+        Button, Divider, EmptyView, ForEach, HStack, Lens, ScrollView, Spacer, Text, VStack, View,
+        ViewExt, ViewLayout, ViewThatFits, ZStack,
     };
     pub use crate::animation::Animation;
     pub use crate::layout::{Alignment, HorizontalAlignment, VerticalAlignment};

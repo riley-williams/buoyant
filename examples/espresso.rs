@@ -183,39 +183,49 @@ fn brew_tab<C>(_state: &AppState) -> impl View<color::Space, C> {
 }
 
 fn settings_tab(state: &AppState) -> impl View<color::Space, AppState> {
-    VStack::new((
-        toggle_text(
-            "Auto (b)rew",
-            state.auto_brew,
-            "Automatically brew coffee at 7am",
-            true,
-            |state: &mut AppState| {
-                state.auto_brew = !state.auto_brew;
-            },
-        ),
-        toggle_text(
-            "Stop on (w)eight",
-            state.stop_on_weight,
-            "Stop the machine automatically when the target weight is reached",
-            false,
-            |state: &mut AppState| {
-                state.stop_on_weight = !state.stop_on_weight;
-            },
-        ),
-        toggle_text(
-            "Auto (o)ff",
-            state.auto_off,
-            "The display will go to sleep after 5 minutes of inactivity",
-            true,
-            |state: &mut AppState| {
-                state.auto_off = !state.auto_off;
-            },
-        ),
-    ))
-    .with_spacing(spacing::COMPONENT)
-    .with_alignment(HorizontalAlignment::Trailing)
-    .padding(Edges::All, spacing::SECTION_MARGIN)
-    .animated(Animation::linear(Duration::from_millis(200)), state.clone())
+    ScrollView::new(
+        VStack::new((
+            toggle_text(
+                "Auto (b)rew",
+                state.auto_brew,
+                "Automatically brew coffee at 7am",
+                true,
+                |state: &mut AppState| {
+                    state.auto_brew = !state.auto_brew;
+                },
+            ),
+            toggle_text(
+                "Stop on (w)eight",
+                state.stop_on_weight,
+                "Stop the machine automatically when the target weight is reached",
+                false,
+                |state: &mut AppState| {
+                    state.stop_on_weight = !state.stop_on_weight;
+                },
+            ),
+            Text::new(
+                "This is a bunch of bullshit to make the view longer",
+                &font::CAPTION,
+            )
+            .multiline_text_alignment(HorizontalTextAlignment::Trailing)
+            .foreground_color(color::Space::WHITE)
+            .frame()
+            .with_width(40),
+            toggle_text(
+                "Auto (o)ff",
+                state.auto_off,
+                "The display will go to sleep after 5 minutes of inactivity",
+                true,
+                |state: &mut AppState| {
+                    state.auto_off = !state.auto_off;
+                },
+            ),
+        ))
+        .with_spacing(spacing::COMPONENT)
+        .with_alignment(HorizontalAlignment::Trailing)
+        .padding(Edges::All, spacing::SECTION_MARGIN)
+        .animated(Animation::linear(Duration::from_millis(200)), state.clone()),
+    )
 }
 
 fn toggle_text<C>(

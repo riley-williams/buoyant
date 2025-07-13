@@ -21,8 +21,24 @@ pub enum Event {
     /// This event is triggered when the user moves their finger during
     /// a touch interaction or moves the mouse cursor while pressed.
     TouchMoved(Point),
+    TouchCancelled,
     Scroll(Point),
     Exit,
+}
+
+impl Event {
+    /// Offsets the event's coordinates by the given point.
+    #[must_use]
+    pub fn offset(&self, offset: Point) -> Self {
+        let mut event = self.clone();
+        match &mut event {
+            Self::TouchDown(point) | Self::TouchUp(point) | Self::TouchMoved(point) => {
+                *point += offset;
+            }
+            _ => {}
+        }
+        event
+    }
 }
 
 #[cfg(feature = "simulator")]
@@ -53,10 +69,17 @@ pub mod impl_eg {
                     scroll_delta,
                     direction,
                 } => {
-                    if direction == embedded_graphics_simulator::sdl2::MouseWheelDirection::Normal {
-                        Ok(Self::Scroll(Point::new(scroll_delta.x, scroll_delta.y)))
+                    if direction == embedded_graphics_simulator::sdl2::MouseWheelDirection::Flipped
+                    {
+                        Ok(Self::Scroll(Point::new(
+                            scroll_delta.x * 4,
+                            scroll_delta.y * 4,
+                        )))
                     } else {
-                        Ok(Self::Scroll(Point::new(-scroll_delta.x, -scroll_delta.y)))
+                        Ok(Self::Scroll(Point::new(
+                            -scroll_delta.x * 4,
+                            -scroll_delta.y * 4,
+                        )))
                     }
                 }
                 SimulatorEvent::KeyDown {
