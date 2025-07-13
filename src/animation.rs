@@ -17,6 +17,10 @@ pub enum Curve {
     EaseOut,
     /// Quadratic ease in and out
     EaseInOut,
+    /// Cubic ease in
+    EaseInCubic,
+    /// Cubic ease out
+    EaseOutCubic,
     /// Ease out with a bounce effect
     EaseOutBounce,
 }
@@ -64,6 +68,27 @@ impl Animation {
         }
     }
 
+    /// Constructs a new animation with a cubic ease-in curve.
+    ///
+    /// The animation will start slow and speed up.
+    #[must_use]
+    pub const fn ease_in_cubic(duration: Duration) -> Self {
+        Self {
+            duration,
+            curve: Curve::EaseInCubic,
+        }
+    }
+
+    /// Constructs a new animation with a cubic ease-out curve.
+    ///
+    /// The animation will start fast and slow down.
+    #[must_use]
+    pub const fn ease_out_cubic(duration: Duration) -> Self {
+        Self {
+            duration,
+            curve: Curve::EaseOutCubic,
+        }
+    }
     /// Constructs a new animation with a bouncy ease-out curve.
     ///
     /// The animation will bounce at the end, staying within the bounds of the start and end points.
@@ -120,6 +145,21 @@ impl Curve {
                         .try_into()
                         .unwrap_or(255)
                 }
+            }
+            Self::EaseInCubic => {
+                let x = (time.as_millis() * 256)
+                    .checked_div(duration.as_millis())
+                    .unwrap_or(255) as u64;
+                let x_3 = (((x * x) >> 8) * x) >> 8;
+                x_3.min(255) as u8
+            }
+            Self::EaseOutCubic => {
+                let duration_ms = duration.as_millis();
+                let x = (duration_ms.saturating_sub(time.as_millis()) * 256)
+                    .checked_div(duration_ms)
+                    .unwrap_or(255) as u64;
+                let x_2 = (((x * x) >> 8) * x) >> 8;
+                255u8 - x_2.min(255) as u8
             }
             Self::EaseOutBounce => {
                 // Use 1024-scale (4x) for better precision
@@ -192,6 +232,14 @@ impl Curve {
                     let y = -2.0 * x + 2.0;
                     1.0 - y * y / 2.0
                 }
+            }
+            Self::EaseInCubic => {
+                let x = time.as_secs_f32() / duration.as_secs_f32();
+                x * x * x
+            }
+            Self::EaseOutCubic => {
+                let x = time.as_secs_f32() / duration.as_secs_f32();
+                1.0 - (1.0 - x) * (1.0 - x) * (1.0 - x)
             }
             Self::EaseOutBounce => {
                 let x = time.as_secs_f32() / duration.as_secs_f32();
@@ -305,6 +353,26 @@ mod tests {
     }
 
     #[test]
+    fn ease_in_cubic_factor_approximates_f32() {
+        let animation = Animation::ease_in_cubic(Duration::from_millis(500));
+        for time in 0..512 {
+            let f32_factor = factor_f32(&animation, time);
+            let u8_factor = factor(&animation, time);
+            assert!(f32_factor.abs_diff(u8_factor) <= 2);
+        }
+    }
+
+    #[test]
+    fn ease_out_cubic_factor_approximates_f32() {
+        let animation = Animation::ease_out_cubic(Duration::from_millis(500));
+        for time in 0..512 {
+            let f32_factor = factor_f32(&animation, time);
+            let u8_factor = factor(&animation, time);
+            assert!(f32_factor.abs_diff(u8_factor) <= 3);
+        }
+    }
+
+    #[test]
     fn ease_out_bounce_factor_approximates_f32() {
         let animation = Animation::ease_out_bounce(Duration::from_millis(500));
         for time in 0..512 {
@@ -315,6 +383,24 @@ mod tests {
                 "Expected {u8_factor} to be nearly {f32_factor} at t={time}"
             );
         }
+    }
+
+    #[test]
+    fn ease_in_cubic_animation_factor_bounds() {
+        let animation = Animation::ease_in_cubic(Duration::from_millis(100));
+        assert_eq!(factor(&animation, 0), 0);
+        assert_eq!(factor(&animation, 100), 255);
+        assert_eq!(factor(&animation, 101), 255);
+        assert_eq!(factor(&animation, 1500), 255);
+    }
+
+    #[test]
+    fn ease_out_cubic_animation_factor_bounds() {
+        let animation = Animation::ease_out_cubic(Duration::from_millis(100));
+        assert_eq!(factor(&animation, 0), 0);
+        assert_eq!(factor(&animation, 100), 255);
+        assert_eq!(factor(&animation, 101), 255);
+        assert_eq!(factor(&animation, 1500), 255);
     }
 
     #[test]
