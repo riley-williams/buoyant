@@ -17,7 +17,7 @@ use crossterm::style::Colors;
 
 const FONT: CharacterBufferFont = CharacterBufferFont;
 
-fn view() -> impl View<Colors> {
+fn view() -> impl View<Colors, ()> {
     VStack::new((
         HStack::new((
             Text::new(
@@ -112,12 +112,13 @@ fn main() {
     }
 }
 
-fn render_view(target: &mut CrosstermRenderTarget, view: &impl View<Colors>) {
+fn render_view(target: &mut CrosstermRenderTarget, view: &impl View<Colors, ()>) {
     target.clear();
     let size = target.size();
     let env = DefaultEnvironment::default();
-    let layout = view.layout(&size.into(), &env);
-    let tree = view.render_tree(&layout, Point::zero(), &env);
+    let mut state = view.build_state(&mut ());
+    let layout = view.layout(&size.into(), &env, &mut (), &mut state);
+    let tree = view.render_tree(&layout, Point::zero(), &env, &mut (), &mut state);
     tree.render(
         target,
         &Colors {

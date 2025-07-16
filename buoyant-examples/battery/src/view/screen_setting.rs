@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use buoyant::{animation::Animation, if_view, view::prelude::*};
+use buoyant::{if_view, view::prelude::*};
 
 use crate::{
     color::{self, ColorFormat},
@@ -8,7 +8,7 @@ use crate::{
 };
 
 #[must_use]
-pub fn view(auto_off: bool) -> impl View<ColorFormat> {
+pub fn view(auto_off: bool) -> impl View<ColorFormat, ()> {
     VStack::new((
         Text::new("Auto Screen Off", &font::SUBTITLE)
             .multiline_text_alignment(HorizontalTextAlignment::Center),
@@ -19,7 +19,7 @@ pub fn view(auto_off: bool) -> impl View<ColorFormat> {
     .with_spacing(5)
 }
 
-fn toggle(is_on: bool) -> impl View<ColorFormat> {
+fn toggle(is_on: bool) -> impl View<ColorFormat, ()> {
     let (txt_lhs, txt_rhs) = if is_on {
         (color::GREEN, color::BLACK)
     } else {
@@ -62,7 +62,7 @@ fn toggle(is_on: bool) -> impl View<ColorFormat> {
     .flex_frame()
     .with_max_height(70)
     .padding(Edges::All, 5)
-    .background(Alignment::Center, || {
+    .background(Alignment::Center, {
         RoundedRectangle::new(10).foreground_color(color::SECONDARY_BACKGROUND)
     })
 }

@@ -1,11 +1,12 @@
 use crate::{
     environment::LayoutEnvironment,
     font::{Font, FontMetrics},
-    layout::{Layout, ResolvedLayout},
+    layout::ResolvedLayout,
     primitives::{Point, ProposedDimension, ProposedDimensions, Size},
-    render::{self, Renderable},
+    render::{self},
+    view::{ViewLayout, ViewMarker},
 };
-use core::marker::PhantomData;
+use core::{fmt::Write as _, marker::PhantomData};
 
 pub use wrap::WhitespaceWrap;
 
@@ -13,6 +14,21 @@ mod wrap;
 
 // W is hardcoded elsewhere to WhitespaceWrap, leaving generic for future fix
 
+/// Displays text in a given font.
+///
+/// Multiline text is leading aligned by default.
+///
+/// # Examples
+///
+/// ```
+/// use buoyant::view::prelude::*;
+/// use embedded_graphics::pixelcolor::Rgb888;
+/// use embedded_graphics::mono_font::ascii::FONT_9X15;
+///
+/// fn view() -> impl View<Rgb888, ()> {
+///     Text::new("Hello, world!", &FONT_9X15)
+/// }
+/// ```
 #[derive(Debug, Clone)]
 pub struct Text<'a, T, F, W = WhitespaceWrap<'a, F>> {
     #[allow(clippy::struct_field_names)]
@@ -22,11 +38,15 @@ pub struct Text<'a, T, F, W = WhitespaceWrap<'a, F>> {
     pub(crate) _wrap: PhantomData<W>,
 }
 
+/// The alignment of multiline text. This has no effect on single-line text.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum HorizontalTextAlignment {
+    /// Align multiline text to the leading edge.
     #[default]
     Leading,
+    /// Center multiline text.
     Center,
+    /// Align multiline text to the trailing edge.
     Trailing,
 }
 
@@ -41,6 +61,7 @@ impl HorizontalTextAlignment {
 }
 
 impl<'a, T: AsRef<str>, F> Text<'a, T, F> {
+    #[allow(missing_docs)]
     #[must_use]
     pub fn new(text: T, font: &'a F) -> Self {
         Self {
@@ -51,8 +72,33 @@ impl<'a, T: AsRef<str>, F> Text<'a, T, F> {
         }
     }
 }
+impl<'a, F> Text<'a, (), F> {
+    /// A convenience constructor for [`Text`] backed by an owned [`heapless::String<N>`]
+    /// and formatted with the result of [`format_args!`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use buoyant::view::prelude::*;
+    /// # use embedded_graphics::mono_font::ascii::FONT_9X15_BOLD;
+    /// # use embedded_graphics::pixelcolor::Rgb888;
+    /// #
+    /// fn counter(count: i32) -> impl View<Rgb888, ()> {
+    ///    Text::new_fmt::<32>(format_args!("Count: {count}"), &FONT_9X15_BOLD)
+    /// }
+    /// ```
+    pub fn new_fmt<const N: usize>(
+        args: core::fmt::Arguments<'_>,
+        font: &'a F,
+    ) -> Text<'a, heapless::String<N>, F> {
+        let mut s = heapless::String::<N>::new();
+        _ = s.write_fmt(args);
+        Text::new(s, font)
+    }
+}
 
 impl<T, F> Text<'_, T, F> {
+    /// Sets the alignment of multiline text.
     #[must_use]
     pub fn multiline_text_alignment(self, alignment: HorizontalTextAlignment) -> Self {
         Text { alignment, ..self }
@@ -65,14 +111,26 @@ impl<T: PartialEq, F> PartialEq for Text<'_, T, F> {
     }
 }
 
-impl<T: AsRef<str>, F: Font> Layout for Text<'_, T, F> {
-    // this could be used to store the precalculated line breaks
+impl<'a, T: Clone, F> ViewMarker for Text<'a, T, F> {
+    type Renderables = render::Text<'a, T, F>;
+}
+
+impl<Captures: ?Sized, T, F> ViewLayout<Captures> for Text<'_, T, F>
+where
+    T: AsRef<str> + Clone,
+    F: Font,
+{
     type Sublayout = ();
+    type State = ();
+
+    fn build_state(&self, _captures: &mut Captures) -> Self::State {}
 
     fn layout(
         &self,
         offer: &ProposedDimensions,
         _env: &impl LayoutEnvironment,
+        _captures: &mut Captures,
+        _state: &mut Self::State,
     ) -> ResolvedLayout<Self::Sublayout> {
         let metrics = self.font.metrics();
         let line_height = metrics.default_line_height();
@@ -91,16 +149,14 @@ impl<T: AsRef<str>, F: Font> Layout for Text<'_, T, F> {
             resolved_size: size.into(),
         }
     }
-}
-
-impl<'a, T: AsRef<str> + Clone, F: Font> Renderable for Text<'a, T, F> {
-    type Renderables = render::Text<'a, T, F>;
 
     fn render_tree(
         &self,
         layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
         _env: &impl LayoutEnvironment,
+        _captures: &mut Captures,
+        _state: &mut Self::State,
     ) -> Self::Renderables {
         render::Text {
             text: self.text.clone(),
@@ -117,9 +173,8 @@ mod test {
     use crate::{
         environment::DefaultEnvironment,
         font::{Font, FontMetrics, FontRender},
-        layout::Layout as _,
         primitives::{Dimensions, ProposedDimension, ProposedDimensions, Size},
-        view::Text,
+        view::{Text, ViewLayout},
     };
 
     #[derive(Debug)]
@@ -186,7 +241,8 @@ mod test {
         let text = Text::new("A", &font);
         let offer = Size::new(100, 100);
         let env = DefaultEnvironment::non_animated();
-        let layout = text.layout(&offer.into(), &env);
+        let mut captures = ();
+        let layout = text.layout(&offer.into(), &env, &mut captures, &mut ());
         assert_eq!(layout.resolved_size, Dimensions::new(5, 10));
     }
 
@@ -196,7 +252,8 @@ mod test {
         let text = Text::new("A", &font);
         let offer = Size::new(4, 10);
         let env = DefaultEnvironment::non_animated();
-        let layout = text.layout(&offer.into(), &env);
+        let mut captures = ();
+        let layout = text.layout(&offer.into(), &env, &mut captures, &mut ());
         assert_eq!(layout.resolved_size, Dimensions::new(5, 10));
     }
 
@@ -206,7 +263,8 @@ mod test {
         let text = Text::new("Hello, world!", &font);
         let offer = Size::new(100, 100);
         let env = DefaultEnvironment::non_animated();
-        let layout = text.layout(&offer.into(), &env);
+        let mut captures = ();
+        let layout = text.layout(&offer.into(), &env, &mut captures, &mut ());
         assert_eq!(layout.resolved_size, Dimensions::new(5 * 13, 10));
     }
 
@@ -216,7 +274,8 @@ mod test {
         let text = Text::new("Hello, world!", &font);
         let offer = Size::new(50, 100);
         let env = DefaultEnvironment::non_animated();
-        let layout = text.layout(&offer.into(), &env);
+        let mut captures = ();
+        let layout = text.layout(&offer.into(), &env, &mut captures, &mut ());
         assert_eq!(layout.resolved_size, Dimensions::new(6 * 5, 20));
     }
 
@@ -226,7 +285,8 @@ mod test {
         let text = Text::new("123412341234", &font);
         let offer = Size::new(20, 100);
         let env = DefaultEnvironment::non_animated();
-        let layout = text.layout(&offer.into(), &env);
+        let mut captures = ();
+        let layout = text.layout(&offer.into(), &env, &mut captures, &mut ());
         assert_eq!(layout.resolved_size, Dimensions::new(20, 30));
     }
 
@@ -236,7 +296,8 @@ mod test {
         let text = Text::new("1234\n12\n\n123\n", &font);
         let offer = Size::new(25, 100);
         let env = DefaultEnvironment::non_animated();
-        let layout = text.layout(&offer.into(), &env);
+        let mut captures = ();
+        let layout = text.layout(&offer.into(), &env, &mut captures, &mut ());
         assert_eq!(layout.resolved_size, Dimensions::new(20, 40));
     }
 
@@ -249,7 +310,8 @@ mod test {
             height: 100.into(),
         };
         let env = DefaultEnvironment::non_animated();
-        let layout = text.layout(&offer, &env);
+        let mut captures = ();
+        let layout = text.layout(&offer, &env, &mut captures, &mut ());
         assert_eq!(layout.resolved_size, Dimensions::new(8, 1));
     }
 
@@ -262,7 +324,8 @@ mod test {
             height: 100.into(),
         };
         let env = DefaultEnvironment::non_animated();
-        let layout = text.layout(&offer, &env);
+        let mut captures = ();
+        let layout = text.layout(&offer, &env, &mut captures, &mut ());
         assert_eq!(layout.resolved_size, Dimensions::new(8, 1));
     }
 
@@ -275,7 +338,8 @@ mod test {
             height: ProposedDimension::Infinite,
         };
         let env = DefaultEnvironment::non_animated();
-        let layout = text.layout(&offer, &env);
+        let mut captures = ();
+        let layout = text.layout(&offer, &env, &mut captures, &mut ());
         assert_eq!(layout.resolved_size, Dimensions::new(10, 1));
     }
 
@@ -288,7 +352,8 @@ mod test {
             height: ProposedDimension::Compact,
         };
         let env = DefaultEnvironment::non_animated();
-        let layout = text.layout(&offer, &env);
+        let mut captures = ();
+        let layout = text.layout(&offer, &env, &mut captures, &mut ());
         assert_eq!(layout.resolved_size, Dimensions::new(10, 1));
     }
 
@@ -301,7 +366,8 @@ mod test {
             height: ProposedDimension::Infinite,
         };
         let env = DefaultEnvironment::non_animated();
-        let layout = text.layout(&offer, &env);
+        let mut captures = ();
+        let layout = text.layout(&offer, &env, &mut captures, &mut ());
         assert_eq!(layout.resolved_size, Dimensions::new(8, 2));
     }
 
@@ -314,7 +380,8 @@ mod test {
             height: ProposedDimension::Compact,
         };
         let env = DefaultEnvironment::non_animated();
-        let layout = text.layout(&offer, &env);
+        let mut captures = ();
+        let layout = text.layout(&offer, &env, &mut captures, &mut ());
         assert_eq!(layout.resolved_size, Dimensions::new(8, 2));
     }
 }

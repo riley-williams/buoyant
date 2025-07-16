@@ -1,8 +1,8 @@
 use crate::{
     environment::LayoutEnvironment,
-    layout::{Alignment, HorizontalAlignment, Layout, ResolvedLayout, VerticalAlignment},
+    layout::{Alignment, HorizontalAlignment, ResolvedLayout, VerticalAlignment},
     primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions},
-    render::Renderable,
+    view::{ViewLayout, ViewMarker},
 };
 
 #[derive(Debug, Clone)]
@@ -73,19 +73,43 @@ impl<T> PartialEq for FixedFrame<T> {
     }
 }
 
-impl<V: Layout> Layout for FixedFrame<V> {
-    type Sublayout = ResolvedLayout<V::Sublayout>;
+impl<V> ViewMarker for FixedFrame<V>
+where
+    V: ViewMarker,
+{
+    type Renderables = V::Renderables;
+}
 
+impl<Captures: ?Sized, V> ViewLayout<Captures> for FixedFrame<V>
+where
+    V: ViewLayout<Captures>,
+{
+    type Sublayout = ResolvedLayout<V::Sublayout>;
+    type State = V::State;
+
+    fn priority(&self) -> i8 {
+        self.child.priority()
+    }
+
+    fn is_empty(&self) -> bool {
+        self.child.is_empty()
+    }
+
+    fn build_state(&self, captures: &mut Captures) -> Self::State {
+        self.child.build_state(captures)
+    }
     fn layout(
         &self,
         offer: &ProposedDimensions,
         env: &impl LayoutEnvironment,
+        captures: &mut Captures,
+        state: &mut Self::State,
     ) -> ResolvedLayout<Self::Sublayout> {
         let modified_offer = ProposedDimensions {
             width: self.width.map_or(offer.width, ProposedDimension::Exact),
             height: self.height.map_or(offer.height, ProposedDimension::Exact),
         };
-        let child_layout = self.child.layout(&modified_offer, env);
+        let child_layout = self.child.layout(&modified_offer, env, captures, state);
         let resolved_size = Dimensions {
             width: self
                 .width
@@ -99,16 +123,14 @@ impl<V: Layout> Layout for FixedFrame<V> {
             resolved_size,
         }
     }
-}
-
-impl<T: Renderable> Renderable for FixedFrame<T> {
-    type Renderables = T::Renderables;
 
     fn render_tree(
         &self,
         layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
         env: &impl LayoutEnvironment,
+        captures: &mut Captures,
+        state: &mut Self::State,
     ) -> Self::Renderables {
         let new_origin = origin
             + Point::new(
@@ -122,6 +144,17 @@ impl<T: Renderable> Renderable for FixedFrame<T> {
                 ),
             );
 
-        self.child.render_tree(&layout.sublayouts, new_origin, env)
+        self.child
+            .render_tree(&layout.sublayouts, new_origin, env, captures, state)
+    }
+
+    fn handle_event(
+        &mut self,
+        event: &crate::view::Event,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> bool {
+        self.child.handle_event(event, render_tree, captures, state)
     }
 }

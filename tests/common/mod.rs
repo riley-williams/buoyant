@@ -65,11 +65,16 @@ pub fn collect_text<const W: usize, const H: usize>(buffer: &FixedTextBuffer<W, 
 
 #[allow(dead_code)]
 #[must_use]
-pub fn make_render_tree<C, V>(view: &V, size: Size) -> V::Renderables
+pub fn make_render_tree<Color: Copy, Captures: ?Sized, V>(
+    view: &V,
+    size: Size,
+    captures: &mut Captures,
+) -> V::Renderables
 where
-    V: View<C>,
+    V: View<Color, Captures>,
 {
     let env = DefaultEnvironment::default();
-    let layout = view.layout(&size.into(), &env);
-    view.render_tree(&layout, Point::zero(), &env)
+    let mut state = view.build_state(captures);
+    let layout = view.layout(&size.into(), &env, captures, &mut state);
+    view.render_tree(&layout, Point::zero(), &env, captures, &mut state)
 }

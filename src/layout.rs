@@ -1,7 +1,4 @@
-use crate::{
-    environment::LayoutEnvironment,
-    primitives::{Dimensions, ProposedDimension, ProposedDimensions},
-};
+use crate::primitives::{Dimensions, ProposedDimension, ProposedDimensions};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub enum LayoutDirection {
@@ -134,25 +131,5 @@ impl Axis {
                 height: ProposedDimension::Exact(h),
             },
         }
-    }
-}
-
-pub trait Layout: Sized {
-    type Sublayout: Clone + PartialEq;
-    /// The size of the view given the offer
-    fn layout(
-        &self,
-        offer: &ProposedDimensions,
-        env: &impl LayoutEnvironment,
-    ) -> ResolvedLayout<Self::Sublayout>;
-
-    /// The layout priority of the view. Higher priority views are more likely to be given the size they want
-    fn priority(&self) -> i8 {
-        0
-    }
-
-    /// Returns true if the view should not included in layout. `ConditionalView` is the primary example of this
-    fn is_empty(&self) -> bool {
-        false
     }
 }

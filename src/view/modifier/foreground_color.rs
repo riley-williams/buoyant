@@ -1,8 +1,9 @@
 use crate::{
     environment::LayoutEnvironment,
-    layout::{Layout, ResolvedLayout},
-    primitives::{Point, ProposedDimensions},
-    render::{Renderable, ShadeSubtree},
+    layout::ResolvedLayout,
+    primitives::{Interpolate, Point, ProposedDimensions},
+    render::ShadeSubtree,
+    view::{ViewLayout, ViewMarker},
 };
 
 /// Sets a foreground style
@@ -18,16 +19,18 @@ impl<V, S> ForegroundStyle<V, S> {
     }
 }
 
-impl<Inner: Layout, Color> Layout for ForegroundStyle<Inner, Color> {
-    type Sublayout = Inner::Sublayout;
+impl<Inner, Color> ViewMarker for ForegroundStyle<Inner, Color>
+where
+    Inner: ViewMarker,
+{
+    type Renderables = ShadeSubtree<Color, Inner::Renderables>;
+}
 
-    fn layout(
-        &self,
-        offer: &ProposedDimensions,
-        env: &impl LayoutEnvironment,
-    ) -> ResolvedLayout<Self::Sublayout> {
-        self.inner.layout(offer, env)
-    }
+impl<Color: Interpolate, Captures: ?Sized, Inner: ViewLayout<Captures>> ViewLayout<Captures>
+    for ForegroundStyle<Inner, Color>
+{
+    type Sublayout = Inner::Sublayout;
+    type State = Inner::State;
 
     fn priority(&self) -> i8 {
         self.inner.priority()
@@ -36,20 +39,42 @@ impl<Inner: Layout, Color> Layout for ForegroundStyle<Inner, Color> {
     fn is_empty(&self) -> bool {
         self.inner.is_empty()
     }
-}
 
-impl<C: Clone, V: Renderable> Renderable for ForegroundStyle<V, C> {
-    type Renderables = ShadeSubtree<C, V::Renderables>;
+    fn build_state(&self, captures: &mut Captures) -> Self::State {
+        self.inner.build_state(captures)
+    }
+    fn layout(
+        &self,
+        offer: &ProposedDimensions,
+        env: &impl LayoutEnvironment,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> ResolvedLayout<Self::Sublayout> {
+        self.inner.layout(offer, env, captures, state)
+    }
 
     fn render_tree(
         &self,
         layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
         env: &impl LayoutEnvironment,
+        captures: &mut Captures,
+        state: &mut Self::State,
     ) -> Self::Renderables {
         ShadeSubtree::new(
-            self.style.clone(),
-            self.inner.render_tree(layout, origin, env),
+            self.style,
+            self.inner.render_tree(layout, origin, env, captures, state),
         )
+    }
+
+    fn handle_event(
+        &mut self,
+        event: &crate::view::Event,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> bool {
+        self.inner
+            .handle_event(event, &mut render_tree.subtree, captures, state)
     }
 }

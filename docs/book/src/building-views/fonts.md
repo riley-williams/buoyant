@@ -33,7 +33,7 @@ text in animation-heavy applications.
 #     display.clear(BACKGROUND_COLOR).unwrap();
 # 
 #     view()
-#         .as_drawable(display.size(), DEFAULT_COLOR)
+#         .as_drawable(display.size(), DEFAULT_COLOR, &mut ())
 #         .draw(&mut display)
 #         .unwrap();
 # 
@@ -43,7 +43,7 @@ text in animation-heavy applications.
 use buoyant::view::prelude::*;
 use embedded_graphics::mono_font::ascii::{FONT_10X20, FONT_6X10, FONT_9X15};
 
-fn view() -> impl View<Rgb888> {
+fn view() -> impl View<Rgb888, ()> {
     VStack::new((
         Text::new("Small (6x10)", &FONT_6X10)
             .foreground_color(Rgb888::CSS_PALE_GREEN),
@@ -88,7 +88,7 @@ is the best catalog to search for specific u8g2 fonts.
 #     display.clear(BACKGROUND_COLOR).unwrap();
 # 
 #     view()
-#         .as_drawable(display.size(), DEFAULT_COLOR)
+#         .as_drawable(display.size(), DEFAULT_COLOR, &mut ())
 #         .draw(&mut display)
 #         .unwrap();
 # 
@@ -105,7 +105,7 @@ static MYSTERY_QUEST_28: FontRenderer = FontRenderer::new::<fonts::u8g2_font_mys
 static GREENBLOOD: FontRenderer = FontRenderer::new::<fonts::u8g2_font_greenbloodserif2_tr>();
 static TOM_THUMB: FontRenderer = FontRenderer::new::<fonts::u8g2_font_tom_thumb_4x6_mr>();
 
-fn view() -> impl View<Rgb888> {
+fn view() -> impl View<Rgb888, ()> {
     VStack::new((
         Text::new("Helvetica 12pt", &HELVETICA)
             .foreground_color(Rgb888::CSS_ORANGE_RED),
