@@ -10,6 +10,14 @@ pub struct Circle {
     pub diameter: u32,
 }
 
+impl Circle {
+    /// Creates a new circle with the given origin and diameter.
+    #[must_use]
+    pub const fn new(origin: Point, diameter: u32) -> Self {
+        Self { origin, diameter }
+    }
+}
+
 impl Inset for Circle {
     fn inset(mut self, amount: i32) -> Self {
         self.diameter = self.diameter.saturating_add_signed(-2 * amount);
@@ -29,7 +37,21 @@ impl AsShapePrimitive for Circle {
 impl AnimatedJoin for Circle {
     fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
         let origin = Point::interpolate(source.origin, target.origin, domain.factor);
-        let diameter = u32::interpolate(source.diameter, target.diameter, domain.factor);
+        // Interpolating diameter can lead to jitter from lack of precision,
+        // interpolate the bottom-right corner instead and derive diameter of the largest
+        // fitting circle. Diameter drift is not noticeable, while drift in the leading/trailing
+        // edges is.
+
+        let bottom_right = Point::interpolate(
+            source.origin + Point::new(source.diameter as i32, source.diameter as i32),
+            target.origin + Point::new(target.diameter as i32, target.diameter as i32),
+            domain.factor,
+        );
+        let diameter = bottom_right
+            .x
+            .abs_diff(origin.x)
+            .max(bottom_right.y.abs_diff(origin.y));
+
         Self { origin, diameter }
     }
 }
@@ -114,5 +136,18 @@ mod tests {
         // Inset larger than diameter should not result in negative diameter
         assert_eq!(inset_circle.origin, Point::new(210, 220));
         assert_eq!(inset_circle.diameter, 0);
+    }
+
+    #[test]
+    fn trailing_corner_does_not_jitter() {
+        let source = Circle::new(Point::new(990, 990), 10);
+        let target = Circle::new(Point::new(0, 0), 1000);
+
+        for factor in 0..=255 {
+            let result =
+                AnimatedJoin::join(source.clone(), target.clone(), &animation_domain(factor));
+            assert_eq!(result.origin.x + result.diameter as i32, 1000);
+            assert_eq!(result.origin.y + result.diameter as i32, 1000);
+        }
     }
 }

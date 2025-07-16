@@ -41,7 +41,16 @@ impl AsShapePrimitive for Capsule {
 impl AnimatedJoin for Capsule {
     fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
         let origin = Point::interpolate(source.origin, target.origin, domain.factor);
-        let size = Size::interpolate(source.size, target.size, domain.factor);
+        // Avoid directly interpolating the size as it can lead to jitter from lack of precision
+        let bottom_right = Point::interpolate(
+            source.origin + source.size,
+            target.origin + target.size,
+            domain.factor,
+        );
+        let size = Size::new(
+            bottom_right.x.abs_diff(origin.x),
+            bottom_right.y.abs_diff(origin.y),
+        );
         Self::new(origin, size)
     }
 }
@@ -112,5 +121,17 @@ mod tests {
         // Inset larger than size should not result in negative dimensions
         assert_eq!(inset_capsule.origin, Point::new(210, 220));
         assert_eq!(inset_capsule.size, Size::new(0, 0));
+    }
+
+    #[test]
+    fn trailing_corner_does_not_jitter() {
+        let source = Capsule::new(Point::new(990, 990), Size::new(10, 10));
+        let target = Capsule::new(Point::new(0, 0), Size::new(1000, 1000));
+
+        for factor in 0..=255 {
+            let result =
+                AnimatedJoin::join(source.clone(), target.clone(), &animation_domain(factor));
+            assert_eq!(result.origin + result.size, Point::new(1000, 1000));
+        }
     }
 }
