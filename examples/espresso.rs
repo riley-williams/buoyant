@@ -36,11 +36,12 @@ mod font {
     pub static MYSTERY_QUEST_28: FontRenderer =
         FontRenderer::new::<fonts::u8g2_font_mystery_quest_28_tr>();
     /// Font for body text
-    pub static BODY: FontRenderer = FontRenderer::new::<fonts::u8g2_font_inr16_mr>();
+    pub static BODY: FontRenderer = FontRenderer::new::<fonts::u8g2_font_fur14_tr>();
+    pub static BODY_BOLD: FontRenderer = FontRenderer::new::<fonts::u8g2_font_fur14_tr>();
     pub static HEADING: FontRenderer = FontRenderer::new::<fonts::u8g2_font_bubble_tr>();
     /// Font for captions, smaller text
-    pub static CAPTION: FontRenderer = FontRenderer::new::<fonts::u8g2_font_busdisplay11x5_tr>();
-    pub static CAPTION_BOLD: FontRenderer = FontRenderer::new::<fonts::u8g2_font_inb16_mr>();
+    pub static CAPTION: FontRenderer = FontRenderer::new::<fonts::u8g2_font_fur11_tr>();
+    pub static CAPTION_BOLD: FontRenderer = FontRenderer::new::<fonts::u8g2_font_fub11_tr>();
 }
 
 #[allow(unused)]
