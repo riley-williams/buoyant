@@ -126,6 +126,16 @@ impl core::ops::AddAssign for Point {
     }
 }
 
+impl core::ops::Add<Size> for Point {
+    type Output = Self;
+    fn add(self, rhs: Size) -> Self {
+        Self {
+            x: self.x + rhs.width as i32,
+            y: self.y + rhs.height as i32,
+        }
+    }
+}
+
 impl Point {
     #[must_use]
     pub const fn new(x: i32, y: i32) -> Self {

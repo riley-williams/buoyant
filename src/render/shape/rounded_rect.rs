@@ -14,6 +14,17 @@ pub struct RoundedRect {
     pub corner_radius: u16,
 }
 
+impl RoundedRect {
+    #[must_use]
+    pub const fn new(origin: Point, size: Size, corner_radius: u16) -> Self {
+        Self {
+            origin,
+            size,
+            corner_radius,
+        }
+    }
+}
+
 impl Inset for RoundedRect {
     fn inset(mut self, amount: i32) -> Self {
         self.size.width = self.size.width.saturating_add_signed(-2 * amount);
@@ -39,7 +50,16 @@ impl AsShapePrimitive for RoundedRect {
 impl AnimatedJoin for RoundedRect {
     fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
         let origin = Point::interpolate(source.origin, target.origin, domain.factor);
-        let size = Size::interpolate(source.size, target.size, domain.factor);
+        // Avoid directly interpolating the size as it can lead to jitter from lack of precision
+        let bottom_right = Point::interpolate(
+            source.origin + source.size,
+            target.origin + target.size,
+            domain.factor,
+        );
+        let size = Size::new(
+            bottom_right.x.abs_diff(origin.x),
+            bottom_right.y.abs_diff(origin.y),
+        );
         let r = u16::interpolate(source.corner_radius, target.corner_radius, domain.factor);
         Self {
             origin,
@@ -139,5 +159,17 @@ mod tests {
         assert_eq!(inset_rect.origin, Point::new(210, 220));
         assert_eq!(inset_rect.size, Size::new(0, 0));
         assert_eq!(inset_rect.corner_radius, 0);
+    }
+
+    #[test]
+    fn trailing_corner_does_not_jitter() {
+        let source = RoundedRect::new(Point::new(990, 990), Size::new(10, 10), 5);
+        let target = RoundedRect::new(Point::new(0, 0), Size::new(1000, 1000), 70);
+
+        for factor in 0..=255 {
+            let result =
+                AnimatedJoin::join(source.clone(), target.clone(), &animation_domain(factor));
+            assert_eq!(result.origin + result.size, Point::new(1000, 1000));
+        }
     }
 }
