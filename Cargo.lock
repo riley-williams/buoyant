@@ -60,6 +60,7 @@ name = "buoyant"
 version = "0.6.0-alpha.0"
 dependencies = [
  "crossterm",
+ "embassy-futures",
  "embedded-graphics",
  "embedded-graphics-core",
  "embedded-graphics-simulator",
@@ -167,6 +168,12 @@ checksum = "95249b50c6c185bee49034bcb378a49dc2b5dff0be90ff6616d31d64febab05d"
 dependencies = [
  "litrs",
 ]
+
+[[package]]
+name = "embassy-futures"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1f878075b9794c1e4ac788c95b728f26aa6366d32eeb10c7051389f898f7d067"
 
 [[package]]
 name = "embedded-graphics"

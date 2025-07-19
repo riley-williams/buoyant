@@ -35,7 +35,7 @@ pub use text::Text;
 
 pub trait AnimatedJoin {
     /// Produces a new tree by consuming and interpolating between two partially animated trees
-    fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self;
+    fn join(&mut self, target: &Self, domain: &AnimationDomain);
 }
 
 pub trait Render<Color>: AnimatedJoin + Sized + Clone {

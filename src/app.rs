@@ -1,4 +1,4 @@
-use core::time::Duration;
+use core::{ time::Duration};
 
 use crate::{
     environment::DefaultEnvironment,
@@ -6,101 +6,94 @@ use crate::{
     primitives::Point,
     render::{AnimatedJoin, AnimationDomain, Render},
     render_target::RenderTarget,
-    view::View,
+    view::{View, ViewLayout},
 };
 
-#[derive(Debug)]
-pub struct App<V, ViewFn, Tree, AppData, ViewState, Target> {
-    pub view: V,
-    pub view_fn: ViewFn,
-    pub view_state: ViewState,
-    pub data: AppData,
-    pub target: Target,
-    pub source_tree: Tree,
-    pub target_tree: Tree,
+async fn render_loop<C, V, F, R, P, T, D>(
+    target: &mut T,
+    mut app_data: D,
+    default_style: C,
+    app_time: fn() -> Duration,
+    view_fn: F,
+    mut flush_fn: R,
+    mut poll_fn: P,
+) where
+    V: View<C, D>,
+    F: Fn(&mut D) -> V,
+    R: AsyncFnMut(&mut T),
+    P: for<'a> AsyncFnMut(&mut EventHandler<'a, V, D>),
+    T: RenderTarget<ColorFormat = C>,
+{
+    let time = app_time();
+    let mut view = view_fn(&mut app_data);
+    let mut state = view.build_state(&mut app_data);
+    let env = DefaultEnvironment::new(time);
+    let layout = view.layout(&target.size().into(), &env, &mut app_data, &mut state);
+    let mut source_tree =
+        view.render_tree(&layout, Point::default(), &env, &mut app_data, &mut state);
+    let mut target_tree =
+        view.render_tree(&layout, Point::default(), &env, &mut app_data, &mut state);
+
+    loop {
+        let time = app_time();
+        // render
+        let domain = AnimationDomain::top_level(time);
+        Render::render_animated(
+            target,
+            &source_tree,
+            &target_tree,
+            &default_style,
+            Point::zero(),
+            &domain,
+        );
+
+        let view_size = target.size();
+
+        let mut events = async || {
+            // Immediately attempt to yield to allow flush task to start
+            embassy_futures::yield_now().await;
+            let time = app_time();
+            let mut event_handler = EventHandler {
+                view: &mut view,
+                source_tree: &mut source_tree,
+                target_tree: &mut target_tree,
+                state: &mut state,
+                app_data: &mut app_data,
+                redraw: false,
+            };
+            poll_fn(&mut event_handler).await;
+
+            let needs_redraw = event_handler.redraw;
+            if needs_redraw {
+                source_tree.join(&target_tree, &domain);
+                let env = DefaultEnvironment::new(time);
+                let layout = view.layout(&view_size.into(), &env, &mut app_data, &mut state);
+                target_tree =
+                    view.render_tree(&layout, Point::default(), &env, &mut app_data, &mut state);
+            }
+        };
+        // wait for display transfer to finish
+        embassy_futures::join::join(flush_fn(target), events()).await;
+    }
 }
 
-impl<Color, V, ViewFn, AppData, Target> App<V, ViewFn, V::Renderables, AppData, V::State, Target>
-where
-    ViewFn: Fn(&AppData) -> V,
-    V: View<Color, AppData>,
-    Target: RenderTarget<ColorFormat = Color>,
-    V::Renderables: Clone,
-{
-    pub fn new(
-        view_fn: ViewFn,
-        target: Target,
-        mut data: AppData,
-        time: core::time::Duration,
-    ) -> Self {
-        let env = DefaultEnvironment::new(time);
-        let view = (view_fn)(&data);
-        let mut view_state = view.build_state(&mut data);
-        let layout = view.layout(&target.size().into(), &env, &mut data, &mut view_state);
-        let source_tree =
-            view.render_tree(&layout, Point::zero(), &env, &mut data, &mut view_state);
-        let target_tree =
-            view.render_tree(&layout, Point::zero(), &env, &mut data, &mut view_state);
-        Self {
-            view,
-            view_fn,
-            view_state,
-            data,
-            target,
-            source_tree,
-            target_tree,
-        }
-    }
+struct EventHandler<'a, V: ViewLayout<D>, D> {
+    view: &'a mut V,
+    source_tree: &'a mut V::Renderables,
+    target_tree: &'a mut V::Renderables,
+    state: &'a mut V::State,
+    app_data: &'a mut D,
+    redraw: bool,
+}
 
-    pub fn handle_events(
-        &mut self,
-        time: Duration,
-        events: impl IntoIterator<Item = Event>,
-    ) -> bool {
-        let domain = AnimationDomain::top_level(time);
-        let mut joined_tree =
-            AnimatedJoin::join(self.source_tree.clone(), self.target_tree.clone(), &domain);
-        let mut handled = false;
-        for event in events {
-            if event == Event::Exit {
-                return true;
-            }
-
-            let event_handled = self.view.handle_event(
-                &event,
-                &mut joined_tree,
-                &mut self.data,
-                &mut self.view_state,
-            );
-            handled = handled || event_handled;
-        }
-        self.source_tree = joined_tree;
-        let env = DefaultEnvironment::new(time);
-        self.view = (self.view_fn)(&self.data);
-        let layout = self.view.layout(
-            &self.target.size().into(),
-            &env,
-            &mut self.data,
-            &mut self.view_state,
+impl<'a, V: ViewLayout<D>, D> EventHandler<'a, V, D> {
+    async fn handle_event(&mut self, event: &Event) {
+        let needs_redraw = self.view.handle_event(
+            event,
+            &mut self.target_tree,
+            &mut self.app_data,
+            &mut self.state,
         );
-        self.target_tree = self.view.render_tree(
-            &layout,
-            Point::zero(),
-            &env,
-            &mut self.data,
-            &mut self.view_state,
-        );
-        false
-    }
-
-    pub fn render(&mut self, time: Duration, default_color: &Color) {
-        Render::<Color>::render_animated(
-            &mut self.target,
-            &self.source_tree,
-            &self.target_tree,
-            default_color,
-            Point::zero(),
-            &AnimationDomain::top_level(time),
-        );
+        self.redraw = self.redraw || needs_redraw;
     }
 }
