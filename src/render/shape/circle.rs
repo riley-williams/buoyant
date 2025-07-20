@@ -35,24 +35,21 @@ impl AsShapePrimitive for Circle {
 }
 
 impl AnimatedJoin for Circle {
-    fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
-        let origin = Point::interpolate(source.origin, target.origin, domain.factor);
+    fn join_from(&mut self, source: &Self, domain: &AnimationDomain) {
         // Interpolating diameter can lead to jitter from lack of precision,
         // interpolate the bottom-right corner instead and derive diameter of the largest
         // fitting circle. Diameter drift is not noticeable, while drift in the leading/trailing
         // edges is.
-
         let bottom_right = Point::interpolate(
             source.origin + Point::new(source.diameter as i32, source.diameter as i32),
-            target.origin + Point::new(target.diameter as i32, target.diameter as i32),
+            self.origin + Point::new(self.diameter as i32, self.diameter as i32),
             domain.factor,
         );
-        let diameter = bottom_right
+        self.origin = Point::interpolate(source.origin, self.origin, domain.factor);
+        self.diameter = bottom_right
             .x
-            .abs_diff(origin.x)
-            .max(bottom_right.y.abs_diff(origin.y));
-
-        Self { origin, diameter }
+            .abs_diff(self.origin.x)
+            .max(bottom_right.y.abs_diff(self.origin.y));
     }
 }
 
@@ -71,16 +68,16 @@ mod tests {
             origin: Point::new(0, 0),
             diameter: 10,
         };
-        let target = Circle {
+        let mut target = Circle {
             origin: Point::new(100, 50),
             diameter: 30,
         };
 
-        let result = AnimatedJoin::join(source.clone(), target.clone(), &animation_domain(0));
+        target.join_from(&source, &animation_domain(0));
 
         // At factor 0, should be identical to source
-        assert_eq!(result.origin, source.origin);
-        assert_eq!(result.diameter, source.diameter);
+        assert_eq!(target.origin, source.origin);
+        assert_eq!(target.diameter, source.diameter);
     }
 
     #[test]
@@ -89,16 +86,17 @@ mod tests {
             origin: Point::new(0, 0),
             diameter: 10,
         };
-        let target = Circle {
+        let original_target = Circle {
             origin: Point::new(100, 50),
             diameter: 30,
         };
+        let mut target = original_target.clone();
 
-        let result = AnimatedJoin::join(source.clone(), target.clone(), &animation_domain(255));
+        target.join_from(&source, &animation_domain(255));
 
         // At factor 255, should be identical to target
-        assert_eq!(result.origin, target.origin);
-        assert_eq!(result.diameter, target.diameter);
+        assert_eq!(target.origin, original_target.origin);
+        assert_eq!(target.diameter, original_target.diameter);
     }
 
     #[test]
@@ -141,13 +139,13 @@ mod tests {
     #[test]
     fn trailing_corner_does_not_jitter() {
         let source = Circle::new(Point::new(990, 990), 10);
-        let target = Circle::new(Point::new(0, 0), 1000);
+        let original_target = Circle::new(Point::new(0, 0), 1000);
 
         for factor in 0..=255 {
-            let result =
-                AnimatedJoin::join(source.clone(), target.clone(), &animation_domain(factor));
-            assert_eq!(result.origin.x + result.diameter as i32, 1000);
-            assert_eq!(result.origin.y + result.diameter as i32, 1000);
+            let mut target = original_target.clone();
+            target.join_from(&source, &animation_domain(factor));
+            assert_eq!(target.origin.x + target.diameter as i32, 1000);
+            assert_eq!(target.origin.y + target.diameter as i32, 1000);
         }
     }
 }

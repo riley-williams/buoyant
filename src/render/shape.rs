@@ -44,11 +44,9 @@ impl<T: AnimatedJoin + Clone + AsShapePrimitive, C: Copy> Render<C> for T {
         offset: Point,
         domain: &AnimationDomain,
     ) {
-        AnimatedJoin::join(source.clone(), target.clone(), domain).render(
-            render_target,
-            style,
-            offset,
-        );
+        let mut joined_shape = target.clone();
+        joined_shape.join_from(source, domain);
+        joined_shape.render(render_target, style, offset);
     }
 }
 
@@ -68,10 +66,9 @@ impl<T> StrokedShape<T> {
 }
 
 impl<T: AnimatedJoin> AnimatedJoin for StrokedShape<T> {
-    fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
-        let shape = AnimatedJoin::join(source.shape, target.shape, domain);
-        let line_width = u32::interpolate(source.line_width, target.line_width, domain.factor);
-        Self { shape, line_width }
+    fn join_from(&mut self, source: &Self, domain: &AnimationDomain) {
+        self.shape.join_from(&source.shape, domain);
+        self.line_width = u32::interpolate(source.line_width, self.line_width, domain.factor);
     }
 }
 
@@ -101,11 +98,9 @@ impl<T: AnimatedJoin + Clone + AsShapePrimitive, C: Copy> Render<C> for StrokedS
         offset: Point,
         domain: &AnimationDomain,
     ) {
-        AnimatedJoin::join(source.clone(), target.clone(), domain).render(
-            render_target,
-            style,
-            offset,
-        );
+        let mut joined_shape = source.clone();
+        joined_shape.join_from(target, domain);
+        joined_shape.render(render_target, style, offset);
     }
 }
 
@@ -123,7 +118,7 @@ mod tests {
             },
             2,
         );
-        let shape2 = StrokedShape::new(
+        let mut shape2 = StrokedShape::new(
             Circle {
                 origin: Point::new(10, 10),
                 diameter: 20,
@@ -132,9 +127,9 @@ mod tests {
         );
         let domain = AnimationDomain::new(128, core::time::Duration::from_millis(100));
 
-        let joined_shape = AnimatedJoin::join(shape1, shape2, &domain);
+        shape2.join_from(&shape1, &domain);
         assert_eq!(
-            joined_shape,
+            shape2,
             StrokedShape::new(
                 Circle {
                     origin: Point::new(5, 5),

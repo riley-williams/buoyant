@@ -34,8 +34,8 @@ pub use shape::StrokedShape;
 pub use text::Text;
 
 pub trait AnimatedJoin {
-    /// Produces a new tree by consuming and interpolating between two partially animated trees
-    fn join(&mut self, target: &Self, domain: &AnimationDomain);
+    /// Modifies a target tree by joining it with the source tree
+    fn join_from(&mut self, source: &Self, domain: &AnimationDomain);
 }
 
 pub trait Render<Color>: AnimatedJoin + Sized + Clone {

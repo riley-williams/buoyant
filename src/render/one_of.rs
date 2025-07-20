@@ -27,32 +27,22 @@ pub enum OneOf4<V0, V1, V2, V3> {
 }
 
 impl<V0: AnimatedJoin, V1: AnimatedJoin> AnimatedJoin for OneOf2<V0, V1> {
-    fn join(source: Self, target: Self, domain: &crate::render::AnimationDomain) -> Self {
-        match (source, target) {
-            (Self::Variant0(source), Self::Variant0(target)) => {
-                Self::Variant0(V0::join(source, target, domain))
-            }
-            (Self::Variant1(source), Self::Variant1(target)) => {
-                Self::Variant1(V1::join(source, target, domain))
-            }
-            (_, target) => target,
+    fn join_from(&mut self, source: &Self, domain: &crate::render::AnimationDomain) {
+        match (source, self) {
+            (Self::Variant0(source), Self::Variant0(target)) => target.join_from(source, domain),
+            (Self::Variant1(source), Self::Variant1(target)) => target.join_from(source, domain),
+            (_, _) => (),
         }
     }
 }
 
 impl<V0: AnimatedJoin, V1: AnimatedJoin, V2: AnimatedJoin> AnimatedJoin for OneOf3<V0, V1, V2> {
-    fn join(source: Self, target: Self, domain: &crate::render::AnimationDomain) -> Self {
-        match (source, target) {
-            (Self::Variant0(source), Self::Variant0(target)) => {
-                Self::Variant0(V0::join(source, target, domain))
-            }
-            (Self::Variant1(source), Self::Variant1(target)) => {
-                Self::Variant1(V1::join(source, target, domain))
-            }
-            (Self::Variant2(source), Self::Variant2(target)) => {
-                Self::Variant2(V2::join(source, target, domain))
-            }
-            (_, target) => target,
+    fn join_from(&mut self, source: &Self, domain: &crate::render::AnimationDomain) {
+        match (source, self) {
+            (Self::Variant0(source), Self::Variant0(target)) => target.join_from(source, domain),
+            (Self::Variant1(source), Self::Variant1(target)) => target.join_from(source, domain),
+            (Self::Variant2(source), Self::Variant2(target)) => target.join_from(source, domain),
+            (_, _) => (),
         }
     }
 }
@@ -60,21 +50,13 @@ impl<V0: AnimatedJoin, V1: AnimatedJoin, V2: AnimatedJoin> AnimatedJoin for OneO
 impl<V0: AnimatedJoin, V1: AnimatedJoin, V2: AnimatedJoin, V3: AnimatedJoin> AnimatedJoin
     for OneOf4<V0, V1, V2, V3>
 {
-    fn join(source: Self, target: Self, domain: &crate::render::AnimationDomain) -> Self {
-        match (source, target) {
-            (Self::Variant0(source), Self::Variant0(target)) => {
-                Self::Variant0(V0::join(source, target, domain))
-            }
-            (Self::Variant1(source), Self::Variant1(target)) => {
-                Self::Variant1(V1::join(source, target, domain))
-            }
-            (Self::Variant2(source), Self::Variant2(target)) => {
-                Self::Variant2(V2::join(source, target, domain))
-            }
-            (Self::Variant3(source), Self::Variant3(target)) => {
-                Self::Variant3(V3::join(source, target, domain))
-            }
-            (_, target) => target,
+    fn join_from(&mut self, source: &Self, domain: &crate::render::AnimationDomain) {
+        match (source, self) {
+            (Self::Variant0(source), Self::Variant0(target)) => target.join_from(source, domain),
+            (Self::Variant1(source), Self::Variant1(target)) => target.join_from(source, domain),
+            (Self::Variant2(source), Self::Variant2(target)) => target.join_from(source, domain),
+            (Self::Variant3(source), Self::Variant3(target)) => target.join_from(source, domain),
+            (_, _) => (),
         }
     }
 }

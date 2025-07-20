@@ -280,11 +280,11 @@ fn partial_animation_join() {
     buffer.clear();
 
     // Join the views at 1s of animation
-    source_tree = AnimatedJoin::join(
-        source_tree,
-        target_tree,
+    target_tree.join_from(
+        &source_tree,
         &AnimationDomain::new(255, Duration::from_millis(1050)),
     );
+    source_tree = target_tree; // Lazy, without a/b swapping
 
     // The joined view should render to the correct partial animation state
     source_tree.render(&mut buffer, &' ', Point::zero());
@@ -434,11 +434,11 @@ fn jump_toggle_animation() {
     assert_eq!(buffer.text[2].iter().collect::<String>(), "           ");
     buffer.clear();
 
-    source_tree = AnimatedJoin::join(
-        source_tree,
-        target_tree,
+    target_tree.join_from(
+        &source_tree,
         &AnimationDomain::top_level(Duration::from_millis(550)),
     );
+    source_tree = target_tree; // Lazy, without a/b swapping
 
     source_tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      __#__");
@@ -547,11 +547,11 @@ fn nested_toggle_animation() {
     buffer.clear();
 
     // Join the views at 1s of animation
-    source_tree = AnimatedJoin::join(
-        source_tree,
-        target_tree,
+    target_tree.join_from(
+        &source_tree,
         &AnimationDomain::top_level(Duration::from_millis(550)),
     );
+    source_tree = target_tree; // Lazy, without a/b swapping
 
     // The joined view should render to the partial animation state
     source_tree.render(&mut buffer, &' ', Point::zero());

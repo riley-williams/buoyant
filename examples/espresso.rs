@@ -9,13 +9,14 @@
 use std::thread::sleep;
 use std::time::{Duration, Instant};
 
-use buoyant::app::App;
+use buoyant::app::EventHandler;
 use buoyant::render_target::EmbeddedGraphicsRenderTarget;
 use buoyant::view::scroll_view::ScrollDirection;
 use buoyant::{animation::Animation, if_view, match_view, view::prelude::*};
 
 use embedded_graphics::prelude::*;
 use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
+use smol::lock::Mutex;
 
 #[allow(unused)]
 mod spacing {
@@ -60,30 +61,43 @@ mod color {
 fn main() {
     let size = Size::new(480, 320);
     let mut display: SimulatorDisplay<color::Space> = SimulatorDisplay::new(size);
-    let target = EmbeddedGraphicsRenderTarget::new(&mut display);
-    let mut window = Window::new("Coffeeeee", &OutputSettings::default());
+    let mut target = EmbeddedGraphicsRenderTarget::new(&mut display);
+    let window = Mutex::new(Window::new("Coffeeeee", &OutputSettings::default()));
     let app_start = Instant::now();
 
     let captures = AppState::default();
-    let mut app = App::new(root_view, target, captures, app_start.elapsed());
 
-    loop {
-        app.target.display_mut().clear(color::BACKGROUND).unwrap();
-        app.render(app_start.elapsed(), &color::Space::WHITE);
+    let app_time = || app_start.elapsed();
+    let view_fn = |state: &mut AppState| {
+        root_view(state).background(
+            Alignment::default(),
+            Rectangle.foreground_color(color::BACKGROUND),
+        )
+    };
+    let flush_fn = async |target: &mut EmbeddedGraphicsRenderTarget<_>| {
+        window.lock().await.update(target.display());
+    };
 
-        // Flush to window
-        window.update(app.target.display());
-
-        let should_exit = app.handle_events(
-            app_start.elapsed(),
-            window.events().filter_map(|event| event.try_into().ok()),
-        );
-        sleep(Duration::from_millis(15));
-
-        if should_exit {
-            break;
-        }
-    }
+    let render_loop = buoyant::app::render_loop(
+        &mut target,
+        captures,
+        color::Space::WHITE,
+        app_time,
+        view_fn,
+        flush_fn,
+        async |handler| {
+            window
+                .lock()
+                .await
+                .events()
+                .filter_map(|event| event.try_into().ok())
+                .for_each(|event| {
+                    println!("handled {event:?}");
+                    handler.handle_event(&event);
+                });
+        },
+    );
+    smol::block_on(render_loop);
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Default)]

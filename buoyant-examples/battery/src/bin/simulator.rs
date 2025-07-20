@@ -55,7 +55,7 @@ fn main() {
     'running: loop {
         // Create a new target tree if the state changes
         if app.reset_dirty() {
-            source_tree = AnimatedJoin::join(
+            source_tree = AnimatedJoin::join_from(
                 source_tree,
                 target_tree,
                 &AnimationDomain::top_level(app_start.elapsed()),

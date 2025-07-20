@@ -28,13 +28,10 @@ impl<T: Clone, F> Clone for Text<'_, T, F> {
 }
 
 impl<T: AsRef<str>, F> AnimatedJoin for Text<'_, T, F> {
-    fn join(source: Self, mut target: Self, domain: &AnimationDomain) -> Self {
-        if domain.factor == 0 {
-            return source;
-        }
-        target.origin = Interpolate::interpolate(source.origin, target.origin, domain.factor);
-        target.size = Interpolate::interpolate(source.size, target.size, domain.factor);
-        target
+    fn join_from(&mut self, source: &Self, domain: &AnimationDomain) {
+        // Text content jumps
+        self.origin = Interpolate::interpolate(source.origin, self.origin, domain.factor);
+        self.size = Interpolate::interpolate(source.size, self.size, domain.factor);
     }
 }
 
@@ -131,7 +128,7 @@ mod tests {
             text: "Hello",
             alignment: HorizontalTextAlignment::Leading,
         };
-        let target = Text {
+        let mut target = Text {
             origin: Point::new(50, 25),
             size: Size::new(200, 100),
             font: &font,
@@ -139,13 +136,13 @@ mod tests {
             alignment: HorizontalTextAlignment::Center,
         };
 
-        let result = AnimatedJoin::join(source.clone(), target.clone(), &animation_domain(0));
+        target.join_from(&source, &animation_domain(0));
 
         // At factor 0, should have source's position, size, text and font
-        assert_eq!(result.origin, source.origin);
-        assert_eq!(result.size, source.size);
-        assert_eq!(result.text, source.text);
-        assert_eq!(result.alignment, source.alignment);
+        assert_eq!(target.origin, source.origin);
+        assert_eq!(target.size, source.size);
+        assert_eq!(target.text, target.text);
+        assert_eq!(target.alignment, target.alignment);
     }
 
     #[test]
@@ -158,21 +155,22 @@ mod tests {
             text: "Hello",
             alignment: HorizontalTextAlignment::Leading,
         };
-        let target = Text {
+        let original_target = Text {
             origin: Point::new(50, 25),
             size: Size::new(200, 100),
             font: &font,
             text: "World",
             alignment: HorizontalTextAlignment::Center,
         };
+        let mut target = original_target.clone();
 
-        let result = AnimatedJoin::join(source.clone(), target.clone(), &animation_domain(255));
+        target.join_from(&source, &animation_domain(255));
 
         // At factor 255, should be identical to target
-        assert_eq!(result.origin, target.origin);
-        assert_eq!(result.size, target.size);
-        assert_eq!(result.text, target.text);
-        assert_eq!(result.alignment, target.alignment);
+        assert_eq!(target.origin, original_target.origin);
+        assert_eq!(target.size, original_target.size);
+        assert_eq!(target.text, original_target.text);
+        assert_eq!(target.alignment, original_target.alignment);
     }
 
     #[test]
@@ -185,24 +183,30 @@ mod tests {
             text: "Start",
             alignment: HorizontalTextAlignment::Leading,
         };
-        let target = Text {
+        let original_target = Text {
             origin: Point::new(100, 50),
             size: Size::new(150, 75),
             font: &font,
             text: "End",
             alignment: HorizontalTextAlignment::Trailing,
         };
+        let mut target = original_target.clone();
 
-        let result = AnimatedJoin::join(source.clone(), target.clone(), &animation_domain(128));
+        target.join_from(&source, &animation_domain(128));
 
         // Position and size should be interpolated
-        assert!(result.origin.x > source.origin.x && result.origin.x < target.origin.x);
-        assert!(result.origin.y > source.origin.y && result.origin.y < target.origin.y);
-        assert!(result.size.width > source.size.width && result.size.width < target.size.width);
-        assert!(result.size.height > source.size.height && result.size.height < target.size.height);
+        assert!(target.origin.x > source.origin.x && target.origin.x < original_target.origin.x);
+        assert!(target.origin.y > source.origin.y && target.origin.y < original_target.origin.y);
+        assert!(
+            target.size.width > source.size.width && target.size.width < original_target.size.width
+        );
+        assert!(
+            target.size.height > source.size.height
+                && target.size.height < original_target.size.height
+        );
 
         // Text and alignment should come from target
-        assert_eq!(result.text, target.text);
-        assert_eq!(result.alignment, target.alignment);
+        assert_eq!(target.text, original_target.text);
+        assert_eq!(target.alignment, original_target.alignment);
     }
 }

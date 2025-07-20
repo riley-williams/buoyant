@@ -21,10 +21,9 @@ impl<T> Offset<T> {
 }
 
 impl<T: AnimatedJoin> AnimatedJoin for Offset<T> {
-    fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
-        let subtree = T::join(source.subtree, target.subtree, domain);
-        let offset = Point::interpolate(source.offset, target.offset, domain.factor);
-        Self { offset, subtree }
+    fn join_from(&mut self, source: &Self, domain: &AnimationDomain) {
+        self.subtree.join_from(&source.subtree, domain);
+        self.offset = Point::interpolate(source.offset, self.offset, domain.factor);
     }
 }
 
@@ -70,34 +69,36 @@ mod tests {
     #[test]
     fn animated_join_at_start() {
         let source = Offset::new(Point::new(0, 0), ());
-        let target = Offset::new(Point::new(100, 50), ());
+        let mut target = Offset::new(Point::new(100, 50), ());
 
-        let result = AnimatedJoin::join(source.clone(), target.clone(), &animation_domain(0));
+        target.join_from(&source, &animation_domain(0));
 
         // At factor 0, should have source's offset
-        assert_eq!(result.offset, source.offset);
+        assert_eq!(target.offset, source.offset);
     }
 
     #[test]
     fn animated_join_at_end() {
         let source = Offset::new(Point::new(0, 0), ());
-        let target = Offset::new(Point::new(100, 50), ());
+        let original_target = Offset::new(Point::new(100, 50), ());
+        let mut target = original_target.clone();
 
-        let result = AnimatedJoin::join(source.clone(), target.clone(), &animation_domain(255));
+        target.join_from(&source, &animation_domain(255));
 
         // At factor 255, should have target's offset
-        assert_eq!(result.offset, target.offset);
+        assert_eq!(target.offset, original_target.offset);
     }
 
     #[test]
     fn animated_join_interpolates_offset() {
         let source = Offset::new(Point::new(0, 0), ());
-        let target = Offset::new(Point::new(100, 50), ());
+        let original_target = Offset::new(Point::new(100, 50), ());
+        let mut target = original_target.clone();
 
-        let result = AnimatedJoin::join(source.clone(), target.clone(), &animation_domain(128));
+        target.join_from(&source, &animation_domain(128));
 
         // At factor 128 (~50%), offset should be interpolated
-        assert!(result.offset.x > source.offset.x && result.offset.x < target.offset.x);
-        assert!(result.offset.y > source.offset.y && result.offset.y < target.offset.y);
+        assert!(target.offset.x > source.offset.x && target.offset.x < original_target.offset.x);
+        assert!(target.offset.y > source.offset.y && target.offset.y < original_target.offset.y);
     }
 }

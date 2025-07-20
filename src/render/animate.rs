@@ -39,10 +39,10 @@ impl<T: Clone, U: PartialEq + Clone> Animate<T, U> {
 
 impl<T: AnimatedJoin + Clone, U: PartialEq + Clone> AnimatedJoin for Animate<T, U> {
     #[expect(clippy::useless_let_if_seq)]
-    fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
-        let (end_time, duration) = if source.value != target.value {
-            let duration = target.animation.duration;
-            (target.frame_time + duration, duration)
+    fn join_from(&mut self, source: &Self, domain: &AnimationDomain) {
+        let (end_time, duration) = if source.value != self.value {
+            let duration = self.animation.duration;
+            (self.frame_time + duration, duration)
         } else if source.is_partial {
             // continue source animation
             let duration = source.animation.duration;
@@ -75,13 +75,10 @@ impl<T: AnimatedJoin + Clone, U: PartialEq + Clone> AnimatedJoin for Animate<T, 
             };
         }
 
-        Self {
-            animation: target.animation.with_duration(new_duration),
-            subtree: T::join(source.subtree, target.subtree, &subdomain),
-            frame_time: domain.app_time,
-            value: target.value,
-            is_partial,
-        }
+        self.subtree.join_from(&source.subtree, &subdomain);
+        self.animation = self.animation.clone().with_duration(new_duration);
+        self.frame_time = domain.app_time;
+        self.is_partial = is_partial;
     }
 }
 

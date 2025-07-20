@@ -44,6 +44,7 @@ embedded-graphics-simulator = { version = "0.7.0", default-features = false, fea
   "with-sdl",
 ] }
 tinytga = "^0.5"
+smol = "2.0.2"
 
 [profile.release]
 debug = true

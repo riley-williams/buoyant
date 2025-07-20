@@ -37,19 +37,19 @@ impl AsShapePrimitive for Rect {
 }
 
 impl AnimatedJoin for Rect {
-    fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
-        let origin = Point::interpolate(source.origin, target.origin, domain.factor);
+    fn join_from(&mut self, source: &Self, domain: &AnimationDomain) {
         // Avoid directly interpolating the size as it can lead to jitter from lack of precision
         let bottom_right = Point::interpolate(
             source.origin + source.size,
-            target.origin + target.size,
+            self.origin + self.size,
             domain.factor,
         );
-        let size = Size::new(
-            bottom_right.x.abs_diff(origin.x),
-            bottom_right.y.abs_diff(origin.y),
+
+        self.origin = Point::interpolate(source.origin, self.origin, domain.factor);
+        self.size = Size::new(
+            bottom_right.x.abs_diff(self.origin.x),
+            bottom_right.y.abs_diff(self.origin.y),
         );
-        Self::new(origin, size)
     }
 }
 
@@ -65,23 +65,24 @@ mod tests {
     #[test]
     fn animated_join_at_start() {
         let source = Rect::new(Point::new(0, 0), Size::new(10, 20));
-        let target = Rect::new(Point::new(50, 30), Size::new(40, 60));
+        let mut target = Rect::new(Point::new(50, 30), Size::new(40, 60));
 
-        let result = AnimatedJoin::join(source.clone(), target.clone(), &animation_domain(0));
+        target.join_from(&source, &animation_domain(0));
 
-        assert_eq!(result.origin, source.origin);
-        assert_eq!(result.size, source.size);
+        assert_eq!(target.origin, source.origin);
+        assert_eq!(target.size, source.size);
     }
 
     #[test]
     fn animated_join_at_end() {
         let source = Rect::new(Point::new(0, 0), Size::new(10, 20));
-        let target = Rect::new(Point::new(50, 30), Size::new(40, 60));
+        let original_target = Rect::new(Point::new(50, 30), Size::new(40, 60));
+        let mut target = original_target.clone();
 
-        let result = AnimatedJoin::join(source.clone(), target.clone(), &animation_domain(255));
+        target.join_from(&source, &animation_domain(255));
 
-        assert_eq!(result.origin, target.origin);
-        assert_eq!(result.size, target.size);
+        assert_eq!(target.origin, original_target.origin);
+        assert_eq!(target.size, original_target.size);
     }
 
     #[test]
@@ -124,12 +125,12 @@ mod tests {
     #[test]
     fn trailing_corner_does_not_jitter() {
         let source = Rect::new(Point::new(990, 990), Size::new(10, 10));
-        let target = Rect::new(Point::new(0, 0), Size::new(1000, 1000));
+        let original_target = Rect::new(Point::new(0, 0), Size::new(1000, 1000));
 
         for factor in 0..=255 {
-            let result =
-                AnimatedJoin::join(source.clone(), target.clone(), &animation_domain(factor));
-            assert_eq!(result.origin + result.size, Point::new(1000, 1000));
+            let mut target = original_target.clone();
+            target.join_from(&source, &animation_domain(factor));
+            assert_eq!(target.origin + target.size, Point::new(1000, 1000));
         }
     }
 }
