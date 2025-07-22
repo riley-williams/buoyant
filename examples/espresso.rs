@@ -10,6 +10,7 @@ use std::thread::sleep;
 use std::time::{Duration, Instant};
 
 use buoyant::app::EventHandler;
+use buoyant::primitives::Seal;
 use buoyant::render_target::EmbeddedGraphicsRenderTarget;
 use buoyant::view::scroll_view::ScrollDirection;
 use buoyant::{animation::Animation, if_view, match_view, view::prelude::*};
@@ -137,21 +138,21 @@ fn root_view(state: &AppState) -> impl View<color::Space, AppState> {
 
 fn tab_bar(tab: Tab) -> impl View<color::Space, Tab> {
     HStack::new((
-        tab_item("Brew", tab == Tab::Brew, |tab: &mut Tab| {
-            *tab = Tab::Brew;
+        tab_item("Brew", tab == Tab::Brew, |tab: &mut Seal<Tab>| {
+            *tab.as_mut() = Tab::Brew;
         }),
-        tab_item("Clean", tab == Tab::Clean, |tab: &mut Tab| {
-            *tab = Tab::Clean;
+        tab_item("Clean", tab == Tab::Clean, |tab: &mut Seal<Tab>| {
+            *tab.as_mut() = Tab::Clean;
         }),
-        tab_item("Settings", tab == Tab::Settings, |tab: &mut Tab| {
-            *tab = Tab::Settings;
+        tab_item("Settings", tab == Tab::Settings, |tab: &mut Seal<Tab>| {
+            *tab.as_mut() = Tab::Settings;
         }),
     ))
     .fixed_size(false, true)
     .animated(Animation::linear(Duration::from_millis(125)), tab)
 }
 
-fn tab_item<C, F: Fn(&mut C)>(
+fn tab_item<C, F: Fn(&mut Seal<C>)>(
     name: &'static str,
     is_selected: bool,
     on_tap: F,
@@ -210,7 +211,7 @@ fn settings_tab(state: &AppState) -> impl View<color::Space, AppState> {
                 state.auto_brew,
                 "Automatically brew coffee at 7am",
                 true,
-                |state: &mut AppState| {
+                |state: &mut Seal<AppState>| {
                     state.auto_brew = !state.auto_brew;
                 },
             ),
@@ -219,7 +220,7 @@ fn settings_tab(state: &AppState) -> impl View<color::Space, AppState> {
                 state.stop_on_weight,
                 "Stop the machine automatically when the target weight is reached",
                 false,
-                |state: &mut AppState| {
+                |state: &mut Seal<AppState>| {
                     state.stop_on_weight = !state.stop_on_weight;
                 },
             ),
@@ -236,7 +237,7 @@ fn settings_tab(state: &AppState) -> impl View<color::Space, AppState> {
                 state.auto_off,
                 "The display will go to sleep after 5 minutes of inactivity",
                 true,
-                |state: &mut AppState| {
+                |state: &mut Seal<AppState>| {
                     state.auto_off = !state.auto_off;
                 },
             ),
@@ -254,7 +255,7 @@ fn toggle_text<C>(
     is_on: bool,
     description: &'static str,
     hides_description: bool,
-    action: fn(&mut C),
+    action: fn(&mut Seal<C>),
 ) -> impl View<color::Space, C> {
     VStack::new((
         HStack::new((
@@ -273,7 +274,7 @@ fn toggle_text<C>(
     .flex_infinite_width(HorizontalAlignment::Trailing)
 }
 
-fn toggle_button<C>(is_on: bool, on_tap: fn(&mut C)) -> impl View<color::Space, C> {
+fn toggle_button<C>(is_on: bool, on_tap: fn(&mut Seal<C>)) -> impl View<color::Space, C> {
     let (color, alignment) = if is_on {
         (color::ACCENT, HorizontalAlignment::Trailing)
     } else {

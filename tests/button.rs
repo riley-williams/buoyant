@@ -4,7 +4,7 @@ use buoyant::{
     environment::DefaultEnvironment,
     event::Event,
     font::CharacterBufferFont,
-    primitives::{Point, Size},
+    primitives::{Point, Seal, Size},
     render::Render,
     render_target::FixedTextBuffer,
     view::prelude::*,
@@ -41,14 +41,14 @@ fn count_view(count: i32) -> impl View<char, i32> {
             &CharacterBufferFont,
         ),
         Button::new(
-            |count: &mut i32| {
-                *count += 1;
+            |count: &mut Seal<i32>| {
+                *count.as_mut() += 1;
             },
             |_| Text::new("Increment", &CharacterBufferFont),
         ),
         Button::new(
-            |count: &mut i32| {
-                *count -= 1;
+            |count: &mut Seal<i32>| {
+                *count.as_mut() -= 1;
             },
             |_| Text::new("Decrement", &CharacterBufferFont),
         ),

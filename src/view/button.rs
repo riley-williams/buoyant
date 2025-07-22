@@ -3,7 +3,7 @@ use core::marker::PhantomData;
 use crate::{
     environment::LayoutEnvironment,
     layout::ResolvedLayout,
-    primitives::{Frame, ProposedDimensions},
+    primitives::{Frame, ProposedDimensions, Seal},
     render::Container,
     view::{Event, ViewLayout, ViewMarker},
 };
@@ -95,7 +95,7 @@ impl<ViewFn, Inner: ViewMarker, Action> ViewMarker for Button<ViewFn, Inner, Act
 
 impl<Captures, Inner, ViewFn, Action> ViewLayout<Captures> for Button<ViewFn, Inner, Action>
 where
-    Action: Fn(&mut Captures),
+    Action: Fn(&mut Seal<Captures>),
     Captures: ?Sized,
     Inner: ViewLayout<Captures>,
     ViewFn: Fn(bool) -> Inner,
@@ -166,7 +166,8 @@ where
             }
             Event::TouchUp(point) => {
                 if render_tree.frame.contains(point) && state.0 != ButtonState::AtRest {
-                    (self.action)(captures);
+                    let mut seal = Seal::new(captures);
+                    (self.action)(&mut seal);
                     state.0 = ButtonState::AtRest;
                     true
                 } else {

@@ -1,4 +1,4 @@
-use core::{ time::Duration};
+use core::time::Duration;
 
 use crate::{
     environment::DefaultEnvironment,
