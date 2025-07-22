@@ -21,6 +21,8 @@ mod view_that_fits;
 mod vstack;
 mod zstack;
 
+use core::time::Duration;
+
 pub use button::Button;
 pub use capturing::Lens;
 pub use divider::Divider;
@@ -59,6 +61,7 @@ use modifier::{
     ForegroundStyle, GeometryGroup, Hidden, Offset, OverlayView, Padding, Priority,
 };
 
+use crate::event::EventResult;
 use crate::{
     animation::Animation,
     environment::LayoutEnvironment,
@@ -104,7 +107,14 @@ pub trait ViewMarker: Sized {
     ///
     /// This is a concrete snapshot of the view which can be drawn to a render target and
     /// interpolated.
-    type Renderables;
+    type Renderables: Clone;
+}
+
+impl<T> ViewMarker for &T
+where
+    T: ViewMarker,
+{
+    type Renderables = T::Renderables;
 }
 
 /// Layout and state management behavior for views.
@@ -172,13 +182,66 @@ pub trait ViewLayout<Captures: ?Sized>: ViewMarker {
 
     /// Process an event, returning true if the event was handled.
     fn handle_event(
-        &mut self,
+        &self,
         _event: &Event,
         _render_tree: &mut Self::Renderables,
         _captures: &mut Captures,
         _state: &mut Self::State,
-    ) -> bool {
-        false
+        _app_time: Duration,
+    ) -> EventResult {
+        EventResult::default()
+    }
+}
+
+impl<T, Captures: ?Sized> ViewLayout<Captures> for &T
+where
+    T: ViewLayout<Captures>,
+{
+    type State = T::State;
+    type Sublayout = T::Sublayout;
+
+    fn build_state(&self, captures: &mut Captures) -> Self::State {
+        (*self).build_state(captures)
+    }
+
+    fn layout(
+        &self,
+        offer: &ProposedDimensions,
+        env: &impl LayoutEnvironment,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> ResolvedLayout<Self::Sublayout> {
+        (*self).layout(offer, env, captures, state)
+    }
+
+    fn render_tree(
+        &self,
+        layout: &ResolvedLayout<Self::Sublayout>,
+        origin: Point,
+        env: &impl LayoutEnvironment,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> Self::Renderables {
+        (*self).render_tree(layout, origin, env, captures, state)
+    }
+
+    fn priority(&self) -> i8 {
+        (*self).priority()
+    }
+
+    fn is_empty(&self) -> bool {
+        (*self).is_empty()
+    }
+
+    fn handle_event(
+        &self,
+        event: &Event,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+        app_time: Duration,
+    ) -> EventResult {
+        (*self).handle_event(event, render_tree, captures, state, app_time)
     }
 }
 

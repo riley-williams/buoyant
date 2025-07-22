@@ -87,6 +87,19 @@ impl Rectangle {
     pub const fn new(origin: Point, size: Size) -> Self {
         Self { origin, size }
     }
+
+    #[must_use]
+    pub fn intersects(&self, other: &Self) -> bool {
+        let self_right = self.origin.x + self.size.width as i32;
+        let self_bottom = self.origin.y + self.size.height as i32;
+        let other_right = other.origin.x + other.size.width as i32;
+        let other_bottom = other.origin.y + other.size.height as i32;
+
+        !(self.origin.x >= other_right
+            || self_right <= other.origin.x
+            || self.origin.y >= other_bottom
+            || self_bottom <= other.origin.y)
+    }
 }
 
 #[cfg(feature = "embedded-graphics")]

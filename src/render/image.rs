@@ -3,7 +3,7 @@ use crate::primitives::{Interpolate as _, Point};
 use super::{AnimatedJoin, AnimationDomain};
 
 #[non_exhaustive]
-#[derive(Copy, Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Image<'a, T: ?Sized> {
     pub origin: Point,
     pub image: &'a T,

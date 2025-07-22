@@ -1,5 +1,8 @@
+use core::time::Duration;
+
 use crate::{
     environment::LayoutEnvironment,
+    event::EventResult,
     layout::{Alignment, ResolvedLayout},
     primitives::{Point, ProposedDimension, ProposedDimensions},
     view::{ViewLayout, ViewMarker},
@@ -114,20 +117,22 @@ where
     }
 
     fn handle_event(
-        &mut self,
+        &self,
         event: &crate::view::Event,
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
-    ) -> bool {
+        app_time: Duration,
+    ) -> EventResult {
         // Overlay handles events first (it's on top)
-        if self
-            .overlay
-            .handle_event(event, &mut render_tree.1, captures, &mut state.1)
-        {
-            return true;
+        let overlay_result =
+            self.overlay
+                .handle_event(event, &mut render_tree.1, captures, &mut state.1, app_time);
+        if overlay_result.handled {
+            return overlay_result;
         }
         self.foreground
-            .handle_event(event, &mut render_tree.0, captures, &mut state.0)
+            .handle_event(event, &mut render_tree.0, captures, &mut state.0, app_time)
+            .merging(overlay_result)
     }
 }

@@ -1,5 +1,8 @@
+use core::time::Duration;
+
 use crate::{
     environment::LayoutEnvironment,
+    event::EventResult,
     layout::{Alignment, ResolvedLayout},
     primitives::{Point, ProposedDimension, ProposedDimensions},
     view::{ViewLayout, ViewMarker},
@@ -114,20 +117,26 @@ where
     }
 
     fn handle_event(
-        &mut self,
+        &self,
         event: &crate::view::Event,
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
-    ) -> bool {
+        app_time: Duration,
+    ) -> EventResult {
         // Foreground handles events first
-        if self
-            .foreground
-            .handle_event(event, &mut render_tree.1, captures, &mut state.0)
-        {
-            return true;
+        let foreground_result = self.foreground.handle_event(
+            event,
+            &mut render_tree.1,
+            captures,
+            &mut state.0,
+            app_time,
+        );
+        if foreground_result.handled {
+            return foreground_result;
         }
         self.background
-            .handle_event(event, &mut render_tree.0, captures, &mut state.1)
+            .handle_event(event, &mut render_tree.0, captures, &mut state.1, app_time)
+            .merging(foreground_result)
     }
 }

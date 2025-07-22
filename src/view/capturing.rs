@@ -1,5 +1,8 @@
+use core::time::Duration;
+
 use crate::{
     environment::LayoutEnvironment,
+    event::EventResult,
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
     view::{ViewLayout, ViewMarker},
@@ -78,13 +81,19 @@ impl<
     }
 
     fn handle_event(
-        &mut self,
+        &self,
         event: &super::Event,
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
-    ) -> bool {
-        self.inner
-            .handle_event(event, render_tree, (self.capture_fn)(captures), state)
+        app_time: Duration,
+    ) -> EventResult {
+        self.inner.handle_event(
+            event,
+            render_tree,
+            (self.capture_fn)(captures),
+            state,
+            app_time,
+        )
     }
 }

@@ -63,6 +63,20 @@ pub fn collect_text<const W: usize, const H: usize>(buffer: &FixedTextBuffer<W, 
         .collect::<String>()
 }
 
+// #[allow(dead_code)]
+// pub fn collect_lines<const W: usize, const H: usize>(
+//     buffer: &FixedTextBuffer<W, H>,
+// ) -> Vec<String> {
+//     let vec = heapless::Vec::new();
+//     buffer
+//         .text
+//         .iter()
+//         .map(|chars| {
+//             chars.iter().collect::<String>();
+//         })
+//         .collect::<Vec<_>>();
+// }
+
 #[allow(dead_code)]
 #[must_use]
 pub fn make_render_tree<Color: Copy, Captures: ?Sized, V>(

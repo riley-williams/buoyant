@@ -1,4 +1,5 @@
 use core::fmt::Write;
+use std::time::Duration;
 
 use buoyant::{
     environment::DefaultEnvironment,
@@ -70,7 +71,7 @@ fn rebuild_tree<V: View<char, AppState>>(
 #[test]
 fn increment_single_frame() {
     let mut app_state = AppState::default();
-    let mut view = counter_view(&app_state);
+    let view = counter_view(&app_state);
     let mut view_state = view.build_state(&mut app_state);
 
     let mut buffer = FixedTextBuffer::<10, 6>::default();
@@ -89,6 +90,7 @@ fn increment_single_frame() {
         &mut tree,
         &mut app_state,
         &mut view_state,
+        Duration::ZERO,
     );
     assert_eq!(app_state, AppState { a: 0, b: 0 });
     view.handle_event(
@@ -96,6 +98,7 @@ fn increment_single_frame() {
         &mut tree,
         &mut app_state,
         &mut view_state,
+        Duration::ZERO,
     );
     assert_eq!(app_state, AppState { a: 1, b: 0 });
 
@@ -113,7 +116,7 @@ fn increment_single_frame() {
 #[test]
 fn drag_cancel() {
     let mut app_state = AppState::default();
-    let mut view = counter_view(&app_state);
+    let view = counter_view(&app_state);
     let mut view_state = view.build_state(&mut app_state);
 
     let mut tree = rebuild_tree(
@@ -128,6 +131,7 @@ fn drag_cancel() {
         &mut tree,
         &mut app_state,
         &mut view_state,
+        Duration::ZERO,
     );
     assert_eq!(app_state, AppState { a: 0, b: 0 });
     view.handle_event(
@@ -135,6 +139,7 @@ fn drag_cancel() {
         &mut tree,
         &mut app_state,
         &mut view_state,
+        Duration::ZERO,
     );
     assert_eq!(app_state, AppState { a: 0, b: 0 });
     view.handle_event(
@@ -142,6 +147,7 @@ fn drag_cancel() {
         &mut tree,
         &mut app_state,
         &mut view_state,
+        Duration::ZERO,
     );
     assert_eq!(app_state, AppState { a: 0, b: 0 });
 }
@@ -149,7 +155,7 @@ fn drag_cancel() {
 #[test]
 fn drag_cancel_uncancel() {
     let mut app_state = AppState::default();
-    let mut view = counter_view(&app_state);
+    let view = counter_view(&app_state);
     let mut view_state = view.build_state(&mut app_state);
 
     let mut tree = rebuild_tree(
@@ -164,6 +170,7 @@ fn drag_cancel_uncancel() {
         &mut tree,
         &mut app_state,
         &mut view_state,
+        Duration::ZERO,
     );
     assert_eq!(app_state, AppState { a: 0, b: 0 });
     view.handle_event(
@@ -171,6 +178,7 @@ fn drag_cancel_uncancel() {
         &mut tree,
         &mut app_state,
         &mut view_state,
+        Duration::ZERO,
     );
     assert_eq!(app_state, AppState { a: 0, b: 0 });
     view.handle_event(
@@ -178,6 +186,7 @@ fn drag_cancel_uncancel() {
         &mut tree,
         &mut app_state,
         &mut view_state,
+        Duration::ZERO,
     );
     assert_eq!(app_state, AppState { a: 0, b: 0 });
     view.handle_event(
@@ -185,6 +194,7 @@ fn drag_cancel_uncancel() {
         &mut tree,
         &mut app_state,
         &mut view_state,
+        Duration::ZERO,
     );
     assert_eq!(app_state, AppState { a: 1, b: 0 });
 }

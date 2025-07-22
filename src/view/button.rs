@@ -1,7 +1,8 @@
-use core::marker::PhantomData;
+use core::{marker::PhantomData, time::Duration};
 
 use crate::{
     environment::LayoutEnvironment,
+    event::EventResult,
     layout::ResolvedLayout,
     primitives::{Frame, ProposedDimensions, Seal},
     render::Container,
@@ -149,19 +150,23 @@ where
     }
 
     fn handle_event(
-        &mut self,
+        &self,
         event: &Event,
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
-    ) -> bool {
+        app_time: Duration,
+    ) -> EventResult {
+        let mut result = EventResult::default();
         match event {
             Event::TouchDown(point) => {
                 if render_tree.frame.contains(point) {
                     state.0 = ButtonState::CaptivePressed;
-                    true
-                } else {
-                    false
+                    // TODO: I think we could maybe just recompute the tiny button render
+                    // tree here and avoid recomputing the view.
+                    // May require an internal animation render node?
+                    result.recompute_view = true;
+                    result.handled = true;
                 }
             }
             Event::TouchUp(point) => {
@@ -169,32 +174,39 @@ where
                     let mut seal = Seal::new(captures);
                     (self.action)(&mut seal);
                     state.0 = ButtonState::AtRest;
-                    true
-                } else {
-                    state.0 = ButtonState::AtRest;
-                    false
+                    // TODO: Same here, if the seal isn't broken?
+                    result.recompute_view = seal.is_broken();
+                    result.handled = true;
                 }
             }
             Event::TouchMoved(point) => match (render_tree.frame.contains(point), state.0) {
                 (true, ButtonState::Captive) => {
                     state.0 = ButtonState::CaptivePressed;
-                    true
+                    // TODO: Same here...
+                    result.recompute_view = true;
+                    result.handled = true;
                 }
                 (false, ButtonState::CaptivePressed) => {
                     state.0 = ButtonState::Captive;
-                    true
+                    // TODO: Same here...
+                    result.recompute_view = true;
+                    result.handled = true;
                 }
-                (true, ButtonState::CaptivePressed) | (false, ButtonState::Captive) => true,
-                (_, ButtonState::AtRest) => false,
-            },
-            Event::TouchCancelled => match state.0 {
-                ButtonState::CaptivePressed => {
-                    state.0 = ButtonState::Captive;
-                    true
+                (true, ButtonState::CaptivePressed) | (false, ButtonState::Captive) => {
+                    result.handled = true;
                 }
-                _ => false,
+                (_, ButtonState::AtRest) => (),
             },
-            _ => false,
+            Event::TouchCancelled => {
+                state.0 = ButtonState::AtRest;
+                if state.0 == ButtonState::CaptivePressed {
+                    // TODO: Same here...
+                    result.recompute_view = true;
+                }
+                result.handled = false;
+            }
+            _ => (),
         }
+        result
     }
 }

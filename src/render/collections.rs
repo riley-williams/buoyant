@@ -40,6 +40,7 @@ impl<T: AnimatedJoin, const N: usize> AnimatedJoin for heapless::Vec<T, N> {
         });
     }
 }
+
 macro_rules! impl_render_for_collections {
     ($(($n:tt, $type:ident)),+) => {
         impl<Color, $($type: crate::render::Render<Color> ),+> crate::render::Render<Color> for ($($type),+) {

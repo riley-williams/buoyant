@@ -23,6 +23,9 @@ pub enum Event {
     TouchMoved(Point),
     TouchCancelled,
     Scroll(Point),
+    /// External state changed which may affect the view.
+    External,
+    /// The app should exit
     Exit,
 }
 
@@ -93,6 +96,44 @@ pub mod impl_eg {
                     repeat: _,
                 } => Err(()),
             }
+        }
+    }
+}
+
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct EventResult {
+    /// Whether the event was handled by the view.
+    pub handled: bool,
+    /// Whether the view should be recomputed, and render trees joined.
+    pub recompute_view: bool,
+}
+
+impl EventResult {
+    /// Creates a new `EventResult` with the specified handled state and recompute flag.
+    #[must_use]
+    pub const fn new(handled: bool, recompute_view: bool) -> Self {
+        Self {
+            handled,
+            recompute_view,
+        }
+    }
+
+    /// merges another `EventResult` into this one.
+    // FIXME: Clippy is probably right
+    #[expect(clippy::needless_pass_by_value)]
+    pub fn merge(&mut self, other: Self) {
+        self.handled |= other.handled;
+        self.recompute_view |= other.recompute_view;
+    }
+
+    /// Returns the result of merging another `EventResult` into this one.
+    #[must_use]
+    // FIXME: Clippy is probably right
+    #[expect(clippy::needless_pass_by_value)]
+    pub fn merging(self, other: Self) -> Self {
+        Self {
+            handled: self.handled || other.handled,
+            recompute_view: self.recompute_view || other.recompute_view,
         }
     }
 }

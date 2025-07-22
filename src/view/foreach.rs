@@ -1,7 +1,8 @@
-use core::cmp::max;
+use core::{cmp::max, time::Duration};
 
 use crate::{
     environment::LayoutEnvironment,
+    event::EventResult,
     layout::{HorizontalAlignment, LayoutDirection, ResolvedLayout},
     primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions},
     view::{ViewLayout, ViewMarker},
@@ -218,24 +219,27 @@ where
     }
 
     fn handle_event(
-        &mut self,
+        &self,
         event: &crate::view::Event,
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
-    ) -> bool {
+        app_time: Duration,
+    ) -> EventResult {
+        let mut result = EventResult::default();
         for ((item, item_state), render_tree) in self
             .items
             .iter()
             .zip(state.iter_mut())
             .zip(render_tree.iter_mut())
         {
-            let mut view = (self.build_view)(item);
-            if view.handle_event(event, render_tree, captures, item_state) {
-                return true;
+            let view = (self.build_view)(item);
+            result.merge(view.handle_event(event, render_tree, captures, item_state, app_time));
+            if result.handled {
+                return result;
             }
         }
-        false
+        result
     }
 }
 

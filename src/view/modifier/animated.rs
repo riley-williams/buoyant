@@ -1,6 +1,9 @@
+use core::time::Duration;
+
 use crate::{
     animation::Animation,
     environment::LayoutEnvironment,
+    event::EventResult,
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
     render::Animate,
@@ -76,13 +79,19 @@ where
     }
 
     fn handle_event(
-        &mut self,
+        &self,
         event: &crate::view::Event,
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
-    ) -> bool {
-        self.inner
-            .handle_event(event, &mut render_tree.subtree, captures, &mut state.1)
+        app_time: Duration,
+    ) -> EventResult {
+        self.inner.handle_event(
+            event,
+            &mut render_tree.subtree,
+            captures,
+            &mut state.1,
+            app_time,
+        )
     }
 }

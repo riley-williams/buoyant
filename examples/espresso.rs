@@ -69,13 +69,14 @@ fn main() {
     let captures = AppState::default();
 
     let app_time = || app_start.elapsed();
-    let view_fn = |state: &mut AppState| {
-        root_view(state).background(
+
+    let view_fn = |app_data: &mut AppState, _, _| {
+        root_view(app_data).background(
             Alignment::default(),
             Rectangle.foreground_color(color::BACKGROUND),
         )
     };
-    let flush_fn = async |target: &mut EmbeddedGraphicsRenderTarget<_>| {
+    let flush_fn = async |target: &mut EmbeddedGraphicsRenderTarget<_>, _, _| {
         window.lock().await.update(target.display());
     };
 

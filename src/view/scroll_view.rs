@@ -4,10 +4,10 @@ use core::time::Duration;
 
 use crate::{
     animation::Animation,
-    event::Event,
+    event::{Event, EventResult},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimension, ProposedDimensions, Size},
-    render::{Animate, Capsule, Offset},
+    render::{Animate, Capsule, Offset, ScrollMetadata},
     view::{ViewLayout, ViewMarker},
 };
 
@@ -116,7 +116,7 @@ pub enum ScrollBarVisibility {
 /// }
 /// ```
 #[non_exhaustive]
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct ScrollView<Inner> {
     inner: Inner,
     bar_config: ScrollBarConfig,
@@ -211,14 +211,11 @@ pub struct ScrollViewState<InnerState> {
     inner_state: InnerState,
 }
 
-impl<Inner: ViewMarker<Renderables: Clone>> ViewMarker for ScrollView<Inner> {
-    type Renderables =
-        Animate<(Offset<Inner::Renderables>, Option<Capsule>, Option<Capsule>), bool>;
+impl<Inner: ViewMarker> ViewMarker for ScrollView<Inner> {
+    type Renderables = ScrollMetadata<Inner::Renderables>;
 }
 
-impl<Inner: ViewLayout<Captures, Renderables: Clone>, Captures> ViewLayout<Captures>
-    for ScrollView<Inner>
-{
+impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<Inner> {
     type State = ScrollViewState<Inner::State>;
     type Sublayout = ResolvedLayout<Inner::Sublayout>;
 
@@ -328,6 +325,221 @@ impl<Inner: ViewLayout<Captures, Renderables: Clone>, Captures> ViewLayout<Captu
             }
         };
 
+        let (horizontal_bar, vertical_bar) = self.scroll_bars(
+            Point::zero(),
+            Size::new(scroll_view_width, scroll_view_height),
+            Size::new(inner_view_width, inner_view_height),
+            subview_offset,
+        );
+
+        let inner_origin = subview_offset;
+        let inner_render_tree = self.inner.render_tree(
+            &layout.sublayouts,
+            Point::zero(),
+            env,
+            captures,
+            &mut state.inner_state,
+        );
+        let offset = Offset::new(inner_origin, inner_render_tree);
+        let animation_time = if is_dragging {
+            Duration::from_millis(0)
+        } else {
+            Duration::from_millis(300)
+        };
+
+        ScrollMetadata::new(
+            Size::new(scroll_view_width, scroll_view_height),
+            Size::new(inner_view_width, inner_view_height),
+            Offset::new(
+                origin,
+                Animate::new(
+                    (offset, horizontal_bar, vertical_bar),
+                    Animation::ease_out_cubic(animation_time),
+                    env.app_time(),
+                    is_dragging,
+                ),
+            ),
+        )
+    }
+
+    #[expect(clippy::too_many_lines)]
+    fn handle_event(
+        &self,
+        event: &crate::event::Event,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+        app_time: Duration,
+    ) -> EventResult {
+        let (result, delta) = match event {
+            Event::Scroll(delta) => (EventResult::new(true, true), *delta),
+            Event::TouchDown(point) => {
+                state.interaction = ScrollInteraction::Dragging {
+                    drag_start: *point,
+                    last_point: *point,
+                    is_exclusive: false,
+                };
+                (
+                    EventResult::new(true, false).merging(self.inner.handle_event(
+                        &event.offset(-render_tree.offset() - render_tree.inner.offset),
+                        render_tree.inner_mut(),
+                        captures,
+                        &mut state.inner_state,
+                        app_time,
+                    )),
+                    Point::zero(),
+                )
+            }
+            Event::TouchMoved(point) => match &mut state.interaction {
+                ScrollInteraction::Dragging {
+                    drag_start,
+                    last_point,
+                    is_exclusive,
+                } => {
+                    let delta = *point - *last_point;
+
+                    *last_point = *point;
+                    let total_scroll = *point - *drag_start;
+
+                    if !*is_exclusive && (total_scroll.x.abs() >= 3 || total_scroll.y.abs() >= 3) {
+                        // cancel inner interaction once we're sure the user intended to scroll
+                        *is_exclusive = true;
+                        (
+                            EventResult::new(true, true).merging(self.inner.handle_event(
+                                &Event::TouchCancelled,
+                                render_tree.inner_mut(),
+                                captures,
+                                &mut state.inner_state,
+                                app_time,
+                            )),
+                            delta,
+                        )
+                    } else {
+                        (EventResult::new(true, false), delta)
+                    }
+                }
+                ScrollInteraction::Idle => (EventResult::default(), Point::zero()),
+            },
+            Event::TouchUp(point) => match state.interaction {
+                ScrollInteraction::Dragging {
+                    drag_start: _,
+                    last_point,
+                    is_exclusive,
+                } => {
+                    state.interaction = ScrollInteraction::Idle;
+
+                    let delta = *point - last_point;
+
+                    if is_exclusive {
+                        // If we don't set this, the scroll view will not animate the
+                        // snap back because the frame time is old
+                        render_tree.inner.subtree.frame_time = app_time;
+                        render_tree.inner.subtree.value = true;
+                        (EventResult::new(true, true), delta)
+                    } else {
+                        (
+                            EventResult::new(true, true).merging(self.inner.handle_event(
+                                &Event::TouchUp(
+                                    *point - render_tree.offset() - render_tree.inner.offset,
+                                ),
+                                render_tree.inner_mut(),
+                                captures,
+                                &mut state.inner_state,
+                                app_time,
+                            )),
+                            delta,
+                        )
+                    }
+                }
+                ScrollInteraction::Idle => (EventResult::default(), Point::zero()),
+            },
+            Event::TouchCancelled => {
+                state.interaction = ScrollInteraction::Idle;
+                // FIXME: This might not be right
+                (
+                    EventResult::new(true, true).merging(self.inner.handle_event(
+                        &Event::TouchCancelled,
+                        render_tree.inner_mut(),
+                        captures,
+                        &mut state.inner_state,
+                        app_time,
+                    )),
+                    Point::zero(),
+                )
+            }
+            _ => (EventResult::default(), Point::zero()),
+        };
+
+        match self.direction {
+            ScrollDirection::Vertical => {
+                state.scroll_offset.y += delta.y;
+            }
+            ScrollDirection::Horizontal => {
+                state.scroll_offset.x += delta.x;
+            }
+            ScrollDirection::Both => {
+                state.scroll_offset.x += delta.x;
+                state.scroll_offset.y += delta.y;
+            }
+        }
+
+        // Recompute scroll bars
+        if delta != Point::zero() {
+            let subview_offset = {
+                let permitted_offset_x = render_tree
+                    .inner_size
+                    .width
+                    .saturating_sub(render_tree.scroll_size.width)
+                    as i32;
+                let permitted_offset_y = render_tree
+                    .inner_size
+                    .height
+                    .saturating_sub(render_tree.scroll_size.height)
+                    as i32;
+
+                // Movement beyond the bounds is reduced by half while dragging
+                let mut offset = state.scroll_offset;
+                if offset.x > 0 {
+                    // Overscrolling on the left
+                    offset.x /= 2;
+                } else if -offset.x > permitted_offset_x {
+                    // Overscrolling on the right
+                    offset.x = offset.x.midpoint(permitted_offset_x) - permitted_offset_x;
+                }
+
+                if offset.y > 0 {
+                    // Overscrolling on the top
+                    offset.y /= 2;
+                } else if -offset.y > permitted_offset_y {
+                    // Overscrolling on the bottom
+                    offset.y = offset.y.midpoint(permitted_offset_y) - permitted_offset_y;
+                }
+
+                offset
+            };
+            *render_tree.offset_mut() = subview_offset;
+            let (horizontal_bar, vertical_bar) = self.scroll_bars(
+                Point::zero(),
+                render_tree.scroll_size,
+                render_tree.inner_size,
+                subview_offset,
+            );
+            render_tree.set_bars(horizontal_bar, vertical_bar);
+        }
+
+        result
+    }
+}
+
+impl<V> ScrollView<V> {
+    #[must_use]
+    fn scroll_bars(
+        &self,
+        origin: Point,
+        scroll_size: Size,
+        inner_size: Size,
+        subview_offset: Point,
+    ) -> (Option<Capsule>, Option<Capsule>) {
         let should_show_scrollbar = match self.bar_config.visibility {
             ScrollBarVisibility::Always => true,
             ScrollBarVisibility::Never => false,
@@ -340,13 +552,14 @@ impl<Inner: ViewLayout<Captures, Renderables: Clone>, Captures> ViewLayout<Captu
                 ScrollDirection::Vertical | ScrollDirection::Both
             ) {
             let (bar_y, bar_height) = bar_size(
-                scroll_view_height,
-                inner_view_height,
+                scroll_size.height,
+                inner_size.height,
                 subview_offset.y,
                 self.bar_config.minimum_bar_length,
                 self.bar_config.padding,
             );
-            let bar_x = scroll_view_width
+            let bar_x = scroll_size
+                .width
                 .saturating_sub(self.bar_config.padding)
                 .saturating_sub(self.bar_config.width);
 
@@ -364,13 +577,14 @@ impl<Inner: ViewLayout<Captures, Renderables: Clone>, Captures> ViewLayout<Captu
                 ScrollDirection::Horizontal | ScrollDirection::Both
             ) {
             let (bar_x, bar_width) = bar_size(
-                scroll_view_width,
-                inner_view_width,
+                scroll_size.width,
+                inner_size.width,
                 subview_offset.x,
                 self.bar_config.minimum_bar_length,
                 self.bar_config.padding,
             );
-            let bar_y = scroll_view_height
+            let bar_y = scroll_size
+                .height
                 .saturating_sub(self.bar_config.padding)
                 .saturating_sub(self.bar_config.width);
 
@@ -381,156 +595,7 @@ impl<Inner: ViewLayout<Captures, Renderables: Clone>, Captures> ViewLayout<Captu
         } else {
             None
         };
-
-        let inner_origin = origin + subview_offset;
-        let inner_render_tree = self.inner.render_tree(
-            &layout.sublayouts,
-            Point::zero(),
-            env,
-            captures,
-            &mut state.inner_state,
-        );
-        let offset = Offset::new(inner_origin, inner_render_tree);
-        let animation_time = if is_dragging {
-            Duration::from_millis(125)
-        } else {
-            Duration::from_millis(300)
-        };
-
-        Animate::new(
-            (offset, horizontal_bar, vertical_bar),
-            Animation::ease_out_cubic(animation_time),
-            env.app_time(),
-            is_dragging,
-        )
-    }
-
-    #[expect(clippy::too_many_lines)]
-    fn handle_event(
-        &mut self,
-        event: &crate::event::Event,
-        render_tree: &mut Self::Renderables,
-        captures: &mut Captures,
-        state: &mut Self::State,
-    ) -> bool {
-        match event {
-            Event::Scroll(delta) => {
-                match self.direction {
-                    ScrollDirection::Vertical => {
-                        state.scroll_offset.y += delta.y;
-                    }
-                    ScrollDirection::Horizontal => {
-                        state.scroll_offset.x += delta.x;
-                    }
-                    ScrollDirection::Both => {
-                        state.scroll_offset.x += delta.x;
-                        state.scroll_offset.y += delta.y;
-                    }
-                }
-                true
-            }
-            Event::TouchDown(point) => {
-                state.interaction = ScrollInteraction::Dragging {
-                    drag_start: *point,
-                    last_point: *point,
-                    is_exclusive: false,
-                };
-                self.inner.handle_event(
-                    &event.offset(-render_tree.subtree.0.offset),
-                    &mut render_tree.subtree.0.subtree,
-                    captures,
-                    &mut state.inner_state,
-                );
-                true
-            }
-            Event::TouchMoved(point) => match &mut state.interaction {
-                ScrollInteraction::Dragging {
-                    drag_start,
-                    last_point,
-                    is_exclusive,
-                } => {
-                    let delta = *point - *last_point;
-
-                    match self.direction {
-                        ScrollDirection::Vertical => {
-                            state.scroll_offset.y += delta.y;
-                        }
-                        ScrollDirection::Horizontal => {
-                            state.scroll_offset.x += delta.x;
-                        }
-                        ScrollDirection::Both => {
-                            state.scroll_offset.x += delta.x;
-                            state.scroll_offset.y += delta.y;
-                        }
-                    }
-
-                    *last_point = *point;
-                    let total_scroll = *point - *drag_start;
-
-                    if !*is_exclusive && (total_scroll.x.abs() >= 5 || total_scroll.y.abs() >= 5) {
-                        // cancel inner interaction once we're sure the user intended to scroll
-                        *is_exclusive = true;
-                        self.inner.handle_event(
-                            &Event::TouchCancelled,
-                            &mut render_tree.subtree.0.subtree,
-                            captures,
-                            &mut state.inner_state,
-                        );
-                    }
-                    true
-                }
-                ScrollInteraction::Idle => false,
-            },
-            Event::TouchUp(point) => {
-                let result = match &mut state.interaction {
-                    ScrollInteraction::Dragging {
-                        drag_start: _,
-                        last_point,
-                        is_exclusive,
-                    } => {
-                        let delta = *point - *last_point;
-
-                        match self.direction {
-                            ScrollDirection::Vertical => {
-                                state.scroll_offset.y += delta.y;
-                            }
-                            ScrollDirection::Horizontal => {
-                                state.scroll_offset.x += delta.x;
-                            }
-                            ScrollDirection::Both => {
-                                state.scroll_offset.x += delta.x;
-                                state.scroll_offset.y += delta.y;
-                            }
-                        }
-
-                        if *is_exclusive {
-                            true
-                        } else {
-                            self.inner.handle_event(
-                                &Event::TouchUp(*point - render_tree.subtree.0.offset),
-                                &mut render_tree.subtree.0.subtree,
-                                captures,
-                                &mut state.inner_state,
-                            )
-                        }
-                    }
-                    ScrollInteraction::Idle => false,
-                };
-                state.interaction = ScrollInteraction::Idle;
-                result
-            }
-            Event::TouchCancelled => {
-                state.interaction = ScrollInteraction::Idle;
-                self.inner.handle_event(
-                    &Event::TouchCancelled,
-                    &mut render_tree.subtree.0.subtree,
-                    captures,
-                    &mut state.inner_state,
-                );
-                true
-            }
-            _ => false,
-        }
+        (vertical_bar, horizontal_bar)
     }
 }
 
