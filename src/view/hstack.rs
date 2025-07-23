@@ -3,11 +3,15 @@ use paste::paste;
 
 use crate::{
     environment::LayoutEnvironment,
-    layout::{Layout, LayoutDirection, ResolvedLayout, VerticalAlignment},
+    layout::{LayoutDirection, ResolvedLayout, VerticalAlignment},
     primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions},
-    render::Renderable,
+    view::{ViewLayout, ViewMarker},
 };
 
+/// A stack of heterogeneous views that arranges its children horizontally.
+///
+/// [`HStack`] attempts to fairly distribute the available width among its children,
+/// laying out groups of children based on priority.
 #[derive(Debug, Clone)]
 pub struct HStack<T> {
     items: T,
@@ -37,11 +41,13 @@ impl<'a, T: LayoutEnvironment> From<&'a T> for HorizontalEnvironment<'a, T> {
 }
 
 impl<T> HStack<T> {
+    /// Sets the spacing between items in the stack.
     #[must_use]
     pub fn with_spacing(self, spacing: u32) -> Self {
         Self { spacing, ..self }
     }
 
+    /// Sets the vertical alignment to use when placing child views of different heights.
     #[must_use]
     pub fn with_alignment(self, alignment: VerticalAlignment) -> Self {
         Self { alignment, ..self }
@@ -55,6 +61,8 @@ impl<T> PartialEq for HStack<T> {
 }
 
 impl<T> HStack<T> {
+    #[allow(missing_docs)]
+    #[must_use]
     pub fn new(items: T) -> Self {
         Self {
             items,
@@ -64,12 +72,13 @@ impl<T> HStack<T> {
     }
 }
 
-type LayoutFn<'a> = &'a mut dyn FnMut(ProposedDimensions) -> Dimensions;
+type LayoutFn<'a, C> = &'a mut dyn FnMut(ProposedDimensions, &mut C) -> Dimensions;
 
-fn layout_n<const N: usize>(
-    subviews: &mut [(LayoutFn, i8, bool); N],
+fn layout_n<const N: usize, C: ?Sized>(
+    subviews: &mut [(LayoutFn<C>, i8, bool); N],
     offer: ProposedDimensions,
     spacing: u32,
+    captures: &mut C,
 ) -> Dimensions {
     let ProposedDimension::Exact(width) = offer.width else {
         let mut total_width: Dimension = 0u32.into();
@@ -79,7 +88,7 @@ fn layout_n<const N: usize>(
             // layout must be called at least once on every view to avoid panic unwrapping the
             // resolved layout.
             // TODO: Allowing layouts to return a cheap "empty" layout could avoid this?
-            let dimensions = layout_fn(offer);
+            let dimensions = layout_fn(offer, captures);
             if *is_empty {
                 continue;
             }
@@ -113,13 +122,13 @@ fn layout_n<const N: usize>(
     };
 
     for index in 0..N {
-        let minimum_dimension = subviews[index].0(min_proposal);
+        let minimum_dimension = subviews[index].0(min_proposal, captures);
         // skip any further work for empty views
         if subviews[index].2 {
             num_empty_views += 1;
             continue;
         }
-        let maximum_dimension = subviews[index].0(max_proposal);
+        let maximum_dimension = subviews[index].0(max_proposal, captures);
         flexibilities[index] = maximum_dimension.width - minimum_dimension.width;
     }
 
@@ -172,10 +181,13 @@ fn layout_n<const N: usize>(
         for index in group_indices {
             let width_fraction =
                 remaining_width / remaining_group_size + remaining_width % remaining_group_size;
-            let size = subviews[*index].0(ProposedDimensions {
-                width: ProposedDimension::Exact(width_fraction),
-                height: offer.height,
-            });
+            let size = subviews[*index].0(
+                ProposedDimensions {
+                    width: ProposedDimension::Exact(width_fraction),
+                    height: offer.height,
+                },
+                captures,
+            );
             remaining_width = remaining_width.saturating_sub(size.width.into());
             remaining_group_size -= 1;
             max_height = max_height.max(size.height);
@@ -198,37 +210,54 @@ macro_rules! count {
     ($head:tt $(, $rest:tt)*) => (1 + count!($($rest),*));
 }
 
-macro_rules! impl_layout_for_hstack {
+macro_rules! impl_view_for_hstack {
     ($(($n:tt, $type:ident)),+) => {
         paste! {
-        impl<$($type: Layout),+> Layout for HStack<($($type),+)> {
+        impl<$($type),+> ViewMarker for HStack<($($type),+)>
+        where
+            $($type: ViewMarker),+
+        {
+            type Renderables = ($($type::Renderables),+);
+        }
+
+        impl<$($type),+, Captures: ?Sized> ViewLayout<Captures> for HStack<($($type),+)>
+        where
+            $($type: ViewLayout<Captures>),+
+        {
+            type State = ($($type::State),+);
             type Sublayout = ($(ResolvedLayout<$type::Sublayout>),+);
+
+            fn build_state(&self, captures: &mut Captures) -> Self::State {
+                ($(self.items.$n.build_state(captures)),+)
+            }
 
             fn layout(
                 &self,
                 offer: &ProposedDimensions,
                 env: &impl LayoutEnvironment,
+                captures: &mut Captures,
+                state: &mut Self::State,
             ) -> ResolvedLayout<Self::Sublayout> {
                 const N: usize = count!($($n),+);
                 let env = &HorizontalEnvironment::from(env);
 
                 $(
                     let mut [<c $n>]: Option<ResolvedLayout<$type::Sublayout>> = None;
-                    let mut [<f $n>] = |size: ProposedDimensions| {
-                        let layout = self.items.$n.layout(&size, env);
+                    let mut [<f $n>] = |size: ProposedDimensions, captures: &mut Captures| {
+                        let layout = self.items.$n.layout(&size, env, captures, &mut state.$n);
                         let size = layout.resolved_size;
                         [<c $n>] = Some(layout);
                         size
                     };
                 )+
 
-                let mut subviews: [(LayoutFn, i8, bool); N] = [
+                let mut subviews: [(LayoutFn<Captures>, i8, bool); N] = [
                     $(
-                        (&mut paste::paste!{[<f $n>]}, self.items.$n.priority(), self.items.$n.is_empty()),
+                        (&mut [<f $n>], self.items.$n.priority(), self.items.$n.is_empty()),
                     )+
                 ];
 
-                let total_size = layout_n(&mut subviews, *offer, self.spacing);
+                let total_size = layout_n(&mut subviews, *offer, self.spacing, captures);
                 ResolvedLayout {
                     sublayouts: ($(
                         [<c $n>] .unwrap()
@@ -236,10 +265,6 @@ macro_rules! impl_layout_for_hstack {
                     resolved_size: total_size,
                 }
             }
-        }
-
-        impl<$($type: Renderable),+> Renderable for HStack<($($type),+)> {
-            type Renderables = ($($type::Renderables),+);
 
             #[allow(unused_assignments)]
             fn render_tree(
@@ -247,6 +272,8 @@ macro_rules! impl_layout_for_hstack {
                 layout: &ResolvedLayout<Self::Sublayout>,
                 origin: Point,
                 env: &impl LayoutEnvironment,
+                captures: &mut Captures,
+                state: &mut Self::State,
             ) -> Self::Renderables {
                 let env = HorizontalEnvironment::from(env);
                 let mut width_offset = 0;
@@ -262,7 +289,9 @@ macro_rules! impl_layout_for_hstack {
                     let [<subtree_$n>] = self.items.$n.render_tree(
                         &layout.sublayouts.$n,
                         offset,
-                        &env
+                        &env,
+                        captures,
+                        &mut state.$n
                     );
 
                     if !self.items.$n.is_empty() {
@@ -273,17 +302,32 @@ macro_rules! impl_layout_for_hstack {
 
                 ($([<subtree_$n>]),+)
             }
+
+            fn handle_event(
+                &mut self,
+                event: &crate::view::Event,
+                render_tree: &mut Self::Renderables,
+                captures: &mut Captures,
+                state: &mut Self::State,
+            ) -> bool {
+                $(
+                    if self.items.$n.handle_event(event, &mut render_tree.$n, captures, &mut state.$n) {
+                        return true;
+                    }
+                )+
+                false
+            }
         }
-    }
-    }
+        }
+    };
 }
 
-impl_layout_for_hstack!((0, T0), (1, T1));
-impl_layout_for_hstack!((0, T0), (1, T1), (2, T2));
-impl_layout_for_hstack!((0, T0), (1, T1), (2, T2), (3, T3));
-impl_layout_for_hstack!((0, T0), (1, T1), (2, T2), (3, T3), (4, T4));
-impl_layout_for_hstack!((0, T0), (1, T1), (2, T2), (3, T3), (4, T4), (5, T5));
-impl_layout_for_hstack!(
+impl_view_for_hstack!((0, T0), (1, T1));
+impl_view_for_hstack!((0, T0), (1, T1), (2, T2));
+impl_view_for_hstack!((0, T0), (1, T1), (2, T2), (3, T3));
+impl_view_for_hstack!((0, T0), (1, T1), (2, T2), (3, T3), (4, T4));
+impl_view_for_hstack!((0, T0), (1, T1), (2, T2), (3, T3), (4, T4), (5, T5));
+impl_view_for_hstack!(
     (0, T0),
     (1, T1),
     (2, T2),
@@ -292,7 +336,7 @@ impl_layout_for_hstack!(
     (5, T5),
     (6, T6)
 );
-impl_layout_for_hstack!(
+impl_view_for_hstack!(
     (0, T0),
     (1, T1),
     (2, T2),
@@ -302,7 +346,7 @@ impl_layout_for_hstack!(
     (6, T6),
     (7, T7)
 );
-impl_layout_for_hstack!(
+impl_view_for_hstack!(
     (0, T0),
     (1, T1),
     (2, T2),
@@ -313,7 +357,7 @@ impl_layout_for_hstack!(
     (7, T7),
     (8, T8)
 );
-impl_layout_for_hstack!(
+impl_view_for_hstack!(
     (0, T0),
     (1, T1),
     (2, T2),

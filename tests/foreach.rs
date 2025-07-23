@@ -1,13 +1,7 @@
 use buoyant::primitives::Point;
 use buoyant::render::Render;
-use buoyant::view::ForEach;
-use buoyant::view::ViewExt as _;
-use buoyant::{
-    font::CharacterBufferFont,
-    layout::{HorizontalAlignment, VerticalAlignment},
-    render_target::FixedTextBuffer,
-    view::{HStack, Spacer, Text},
-};
+
+use buoyant::{font::CharacterBufferFont, render_target::FixedTextBuffer, view::prelude::*};
 mod common;
 use common::make_render_tree;
 
@@ -54,7 +48,7 @@ fn foreach_with_inner_wrapping_hstack() {
         .foreground_color(' ')
     });
     let mut buffer = FixedTextBuffer::<10, 5>::default();
-    let tree = make_render_tree(&view, buffer.size());
+    let tree = make_render_tree(&view, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "Alice   99");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "Bob      2");
@@ -96,7 +90,7 @@ fn foreach_leading_aligned() {
     .with_alignment(HorizontalAlignment::Leading)
     .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<10, 5>::default();
-    let tree = make_render_tree(&view, buffer.size());
+    let tree = make_render_tree(&view, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "Alice 99  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "Bob 2     ");
@@ -138,7 +132,7 @@ fn foreach_trailing_aligned() {
     .with_alignment(HorizontalAlignment::Trailing)
     .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<10, 5>::default();
-    let tree = make_render_tree(&view, buffer.size());
+    let tree = make_render_tree(&view, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), " Alice 99 ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "    Bob 2 ");
@@ -158,7 +152,7 @@ fn foreach_spacing() {
         .with_spacing(1)
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<10, 5>::default();
-    let tree = make_render_tree(&view, buffer.size());
+    let tree = make_render_tree(&view, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "Row 1     ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "          ");
@@ -173,7 +167,7 @@ fn foreach_undersized() {
 
     let view = ForEach::<2>::new(&items, |name| Text::new(name, &FONT)).foreground_color(' ');
     let mut buffer = FixedTextBuffer::<10, 5>::default();
-    let tree = make_render_tree(&view, buffer.size());
+    let tree = make_render_tree(&view, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "A         ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "B         ");

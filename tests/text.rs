@@ -4,11 +4,9 @@ use std::iter::zip;
 use buoyant::{
     environment::DefaultEnvironment,
     font::CharacterBufferFont,
-    layout::Layout as _,
     primitives::{Dimensions, Point},
-    render::Renderable as _,
     render_target::FixedTextBuffer,
-    view::{HorizontalTextAlignment, Text, ViewExt as _},
+    view::prelude::*,
 };
 mod common;
 use common::make_render_tree;
@@ -18,7 +16,7 @@ fn test_render_wrapping_leading() {
     let font = CharacterBufferFont {};
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let text = Text::new("This is a lengthy text here", &font).foreground_color(' ');
-    make_render_tree(&text, buffer.size()).render(&mut buffer, &' ', Point::zero());
+    make_render_tree(&text, buffer.size(), &mut ()).render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "This  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "is a  ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "length");
@@ -33,7 +31,7 @@ fn test_render_wrapping_center_even() {
     let text = Text::new("This is a lengthy text here", &font)
         .multiline_text_alignment(HorizontalTextAlignment::Center)
         .foreground_color(' ');
-    make_render_tree(&text, buffer.size()).render(&mut buffer, &' ', Point::zero());
+    make_render_tree(&text, buffer.size(), &mut ()).render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), " This ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), " is a ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "length");
@@ -48,7 +46,7 @@ fn test_render_wrapping_center_odd() {
     let text = Text::new("This is a lengthy text 12345", &font)
         .multiline_text_alignment(HorizontalTextAlignment::Center)
         .foreground_color(' ');
-    make_render_tree(&text, buffer.size()).render(&mut buffer, &' ', Point::zero());
+    make_render_tree(&text, buffer.size(), &mut ()).render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), " This ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), " is a ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "length");
@@ -63,7 +61,7 @@ fn test_render_wrapping_trailing() {
     let text = Text::new("This is a lengthy text here", &font)
         .multiline_text_alignment(HorizontalTextAlignment::Trailing)
         .foreground_color(' ');
-    make_render_tree(&text, buffer.size()).render(&mut buffer, &' ', Point::zero());
+    make_render_tree(&text, buffer.size(), &mut ()).render(&mut buffer, &' ', Point::zero());
     assert_eq!(buffer.text[0].iter().collect::<String>(), "  This");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "  is a");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "length");
@@ -84,11 +82,12 @@ fn test_clipped_text_is_centered_correctly() {
     let env = DefaultEnvironment::non_animated();
     let mut buffer = FixedTextBuffer::<40, 2>::default();
 
-    let layout = view.layout(&buffer.size().into(), &env);
+    view.build_state(&mut ());
+    let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut ());
 
     assert_eq!(layout.resolved_size, Dimensions::new(13, 2));
 
-    let tree = view.render_tree(&layout, Point::zero(), &env);
+    let tree = view.render_tree(&layout, Point::zero(), &env, &mut (), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
 
     let lines = [
@@ -115,11 +114,12 @@ fn test_clipped_text_trails_correctly() {
     let env = DefaultEnvironment::non_animated();
     let mut buffer = FixedTextBuffer::<40, 3>::default();
 
-    let layout = view.layout(&buffer.size().into(), &env);
+    view.build_state(&mut ());
+    let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut ());
 
     assert_eq!(layout.resolved_size, Dimensions::new(13, 2));
 
-    let tree = view.render_tree(&layout, Point::zero(), &env);
+    let tree = view.render_tree(&layout, Point::zero(), &env, &mut (), &mut ());
     tree.render(&mut buffer, &' ', Point::zero());
 
     let lines = [

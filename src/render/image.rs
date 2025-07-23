@@ -4,18 +4,18 @@ use super::{AnimatedJoin, AnimationDomain};
 
 #[non_exhaustive]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Image<'a, T> {
+pub struct Image<'a, T: ?Sized> {
     pub origin: Point,
     pub image: &'a T,
 }
 
-impl<'a, T> Image<'a, T> {
+impl<'a, T: ?Sized> Image<'a, T> {
     pub const fn new(origin: Point, image: &'a T) -> Self {
         Self { origin, image }
     }
 }
 
-impl<T> AnimatedJoin for Image<'_, T> {
+impl<T: ?Sized> AnimatedJoin for Image<'_, T> {
     fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
         if domain.factor == 0 {
             return source;
