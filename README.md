@@ -28,25 +28,25 @@ Here's an animated toggle component, implemented with Buoyant:
 ![Toggle](./docs/images/toggle.gif)
 
 ```rust
-fn toggle_button(is_on: bool) -> impl View<Rgb565> {
-    let alignment = if is_on {
-        HorizontalAlignment::Trailing
-    } else {
-        HorizontalAlignment::Leading
-    };
-
+fn toggle_button(is_on: bool) -> impl View<Rgb565, bool> {
+    let alignment = if is_on { Alignment::Trailing } else { Alignment::Leading };
     let color = if is_on { Rgb565::GREEN } else { Rgb565::RED };
 
-    ZStack::new((
-        Capsule.foreground_color(color),
-        Circle
-            .foreground_color(Rgb565::WHITE)
-            .padding(Edges::All, 2),
-    ))
-    .with_horizontal_alignment(alignment)
-    .frame_sized(50, 25)
-    .animated(Animation::ease_in_out(Duration::from_millis(500)), is_on)
-    .geometry_group()
+    Button::new(
+        |is_on: &mut bool| *is_on = !*is_on,
+        |_| {
+            Capsule.foreground_color(color)
+                .overlay(
+                    alignment,
+                    Circle
+                        .foreground_color(Rgb565::WHITE)
+                        .padding(Edges::All, 2)
+                )
+            .frame_sized(50, 25)
+            .animated(Animation::ease_in_out(Duration::from_millis(500)), is_on)
+            .geometry_group()
+        }
+    )
 }
 ```
 
@@ -58,7 +58,7 @@ Static layout and animation between layouts are relatively feature-complete, asi
 transitions. You should be able to construct most desired layouts and animations.
 
 - ✅ Stacks of heterogeneous views (VStack, HStack, ZStack)
-- ✅ Stacks of homogeneous views (ForEach) - partial, vertical only
+- 🚧 Stacks of homogeneous views (ForEach) - partial, vertical only
 - ✅ Common SwiftUI-like primitives (Spacer, Divider, ...)
 - ✅ Common SwiftUI-like modifiers (.frame, .padding, ...)
 - ✅ Conditional views, with match variable binding
@@ -67,19 +67,23 @@ transitions. You should be able to construct most desired layouts and animations
 - ✅ Interruptible Animations + Curves
 - ✅ Common embedded-graphics shape primitives
 - ✅ Shape stroke+fill
-- 🚧 Canvas for arbitrary path/shape/raster drawing
+- 🚧 Custom sizing with GeometryView
+- 💤 Charts
+- 💤 Canvas for arbitrary path/shape/raster drawing
 - 💤 Simulated alpha and antialiasing
 - 💤 Transitions
 - 💤 Shape styles (e.g. gradients)
 
 ### Interactivity
 
-No native interactivity or state management currently exists, but it is the next major
-planned feature.
+Interactivity is under active development, and is not yet feature-complete.
 
-- 💤 State management
-- 💤 Click/tap routing
-- 💤 Focus management + keyboard input (Text input view)
+- 🚧 State management
+- 🚧 Click/tap routing
+- 🚧 Button
+- 🚧 ScrollView
+- 💤 Focus management + keyboard input
+- 💤 TextField
 
 ## Who should use this?
 

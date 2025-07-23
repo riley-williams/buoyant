@@ -23,7 +23,7 @@ Here, `Spacer` is used to push the two `Circle`s to either side.
 #     display.clear(BACKGROUND_COLOR).unwrap();
 # 
 #     view()
-#         .as_drawable(display.size(), DEFAULT_COLOR)
+#         .as_drawable(display.size(), DEFAULT_COLOR, &mut ())
 #         .draw(&mut display)
 #         .unwrap();
 # 
@@ -32,7 +32,7 @@ Here, `Spacer` is used to push the two `Circle`s to either side.
 # 
 use buoyant::view::prelude::*;
 
-fn view() -> impl View<Rgb888> {
+fn view() -> impl View<Rgb888, ()> {
     VStack::new((
         HStack::new((
             Circle.foreground_color(Rgb888::CSS_CORAL),

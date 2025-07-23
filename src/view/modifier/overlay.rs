@@ -1,8 +1,8 @@
 use crate::{
     environment::LayoutEnvironment,
-    layout::{Alignment, Layout, ResolvedLayout},
+    layout::{Alignment, ResolvedLayout},
     primitives::{Point, ProposedDimension, ProposedDimensions},
-    render::Renderable,
+    view::{ViewLayout, ViewMarker},
 };
 
 /// A view that uses the layout of the modified view, rendering the overlay
@@ -24,29 +24,22 @@ impl<T, U> OverlayView<T, U> {
     }
 }
 
-impl<T: Layout, U: Layout> Layout for OverlayView<T, U> {
+impl<T, U> ViewMarker for OverlayView<T, U>
+where
+    T: ViewMarker,
+    U: ViewMarker,
+{
+    type Renderables = (T::Renderables, U::Renderables);
+}
+
+impl<Captures: ?Sized, T, U> ViewLayout<Captures> for OverlayView<T, U>
+where
+    T: ViewLayout<Captures>,
+    U: ViewLayout<Captures>,
+{
     type Sublayout = (ResolvedLayout<T::Sublayout>, ResolvedLayout<U::Sublayout>);
-
-    fn layout(
-        &self,
-        offer: &ProposedDimensions,
-        env: &impl LayoutEnvironment,
-    ) -> ResolvedLayout<Self::Sublayout> {
-        let foreground_layout = self.foreground.layout(offer, env);
-        let foreground_size = foreground_layout.resolved_size;
-        // Propose the foreground size to the overlay
-        // This would benefit from splitting layout into separate functions for the various offers
-        let overlay_offer = ProposedDimensions {
-            width: ProposedDimension::Exact(foreground_size.width.into()),
-            height: ProposedDimension::Exact(foreground_size.height.into()),
-        };
-        let overlay_layout = self.overlay.layout(&overlay_offer, env);
-
-        ResolvedLayout {
-            sublayouts: (foreground_layout, overlay_layout),
-            resolved_size: foreground_size,
-        }
-    }
+    // Tuples are rendered first to last
+    type State = (T::State, U::State);
 
     fn priority(&self) -> i8 {
         self.foreground.priority()
@@ -55,17 +48,45 @@ impl<T: Layout, U: Layout> Layout for OverlayView<T, U> {
     fn is_empty(&self) -> bool {
         self.foreground.is_empty()
     }
-}
 
-impl<T: Renderable, U: Renderable> Renderable for OverlayView<T, U> {
-    // Tuples are rendered first to last
-    type Renderables = (T::Renderables, U::Renderables);
+    fn build_state(&self, captures: &mut Captures) -> Self::State {
+        (
+            self.foreground.build_state(captures),
+            self.overlay.build_state(captures),
+        )
+    }
+    fn layout(
+        &self,
+        offer: &ProposedDimensions,
+        env: &impl LayoutEnvironment,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> ResolvedLayout<Self::Sublayout> {
+        let foreground_layout = self.foreground.layout(offer, env, captures, &mut state.0);
+        let foreground_size = foreground_layout.resolved_size;
+        // Propose the foreground size to the overlay
+        // This would benefit from splitting layout into separate functions for the various offers
+        let overlay_offer = ProposedDimensions {
+            width: ProposedDimension::Exact(foreground_size.width.into()),
+            height: ProposedDimension::Exact(foreground_size.height.into()),
+        };
+        let overlay_layout = self
+            .overlay
+            .layout(&overlay_offer, env, captures, &mut state.1);
+
+        ResolvedLayout {
+            sublayouts: (foreground_layout, overlay_layout),
+            resolved_size: foreground_size,
+        }
+    }
 
     fn render_tree(
         &self,
         layout: &ResolvedLayout<Self::Sublayout>,
         origin: Point,
         env: &impl LayoutEnvironment,
+        captures: &mut Captures,
+        state: &mut Self::State,
     ) -> Self::Renderables {
         let new_origin = origin
             + Point::new(
@@ -81,9 +102,32 @@ impl<T: Renderable, U: Renderable> Renderable for OverlayView<T, U> {
 
         (
             self.foreground
-                .render_tree(&layout.sublayouts.0, origin, env),
-            self.overlay
-                .render_tree(&layout.sublayouts.1, new_origin, env),
+                .render_tree(&layout.sublayouts.0, origin, env, captures, &mut state.0),
+            self.overlay.render_tree(
+                &layout.sublayouts.1,
+                new_origin,
+                env,
+                captures,
+                &mut state.1,
+            ),
         )
+    }
+
+    fn handle_event(
+        &mut self,
+        event: &crate::view::Event,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> bool {
+        // Overlay handles events first (it's on top)
+        if self
+            .overlay
+            .handle_event(event, &mut render_tree.1, captures, &mut state.1)
+        {
+            return true;
+        }
+        self.foreground
+            .handle_event(event, &mut render_tree.0, captures, &mut state.0)
     }
 }

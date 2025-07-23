@@ -24,7 +24,7 @@ Both stacks can contain a heterogeneous set of views and can be nested inside ot
 #     display.clear(BACKGROUND_COLOR).unwrap();
 # 
 #     view()
-#         .as_drawable(display.size(), DEFAULT_COLOR)
+#         .as_drawable(display.size(), DEFAULT_COLOR, &mut ())
 #         .draw(&mut display)
 #         .unwrap();
 # 
@@ -33,7 +33,7 @@ Both stacks can contain a heterogeneous set of views and can be nested inside ot
 # 
 use buoyant::view::prelude::*;
 
-fn view() -> impl View<Rgb888> {
+fn view() -> impl View<Rgb888, ()> {
     HStack::new((
         Circle
             .stroked(15)
@@ -73,7 +73,7 @@ it can contain a heterogeneous set of views.
 #     display.clear(BACKGROUND_COLOR).unwrap();
 # 
 #     view()
-#         .as_drawable(display.size(), DEFAULT_COLOR)
+#         .as_drawable(display.size(), DEFAULT_COLOR, &mut ())
 #         .draw(&mut display)
 #         .unwrap();
 # 
@@ -82,7 +82,7 @@ it can contain a heterogeneous set of views.
 # 
 use buoyant::view::prelude::*;
 
-fn view() -> impl View<Rgb888> {
+fn view() -> impl View<Rgb888, ()> {
     ZStack::new((
         Rectangle
             .corner_radius(50)
@@ -120,7 +120,7 @@ Stacks can be nested to create complex layouts.
 #     display.clear(BACKGROUND_COLOR).unwrap();
 # 
 #     view()
-#         .as_drawable(display.size(), DEFAULT_COLOR)
+#         .as_drawable(display.size(), DEFAULT_COLOR, &mut ())
 #         .draw(&mut display)
 #         .unwrap();
 # 
@@ -129,7 +129,7 @@ Stacks can be nested to create complex layouts.
 # 
 use buoyant::view::prelude::*;
 
-fn view() -> impl View<Rgb888> {
+fn view() -> impl View<Rgb888, ()> {
     HStack::new((
         VStack::new((
             Circle.foreground_color(Rgb888::CSS_GOLDENROD),

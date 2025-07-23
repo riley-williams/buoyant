@@ -1,6 +1,6 @@
 [package]
 name = "buoyant"
-version = "0.5.3"
+version = "0.6.0-alpha.0"
 authors = ["Riley Williams"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
@@ -50,6 +50,14 @@ workspace = true
 [[example]]
 name = "crossterm"
 required-features = ["crossterm"]
+
+[[example]]
+name = "espresso"
+required-features = ["embedded-graphics"]
+
+[[example]]
+name = "quickstart"
+required-features = ["embedded-graphics"]
 
 [workspace]
 members = ["buoyant-examples/battery"]

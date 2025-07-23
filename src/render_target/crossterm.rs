@@ -19,7 +19,8 @@ use super::{Brush, Glyph, RenderTarget, Shape, Stroke};
 ///
 /// The target will exit the alternate screen when dropped.
 ///
-/// Example:
+/// # Examples
+///
 /// ```
 /// # use buoyant::render_target::CrosstermRenderTarget;
 /// let mut target = CrosstermRenderTarget::default();

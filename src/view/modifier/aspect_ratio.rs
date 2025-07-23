@@ -1,10 +1,11 @@
 use crate::{
     environment::LayoutEnvironment,
-    layout::{Layout, ResolvedLayout},
-    primitives::{ProposedDimension, ProposedDimensions},
-    render::Renderable,
+    layout::ResolvedLayout,
+    primitives::{Point, ProposedDimension, ProposedDimensions},
+    view::{ViewLayout, ViewMarker},
 };
 
+/// The strategy for scaling a view within the available space.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ContentMode {
     /// Scales the child view to fit within the available space while maintaining its aspect ratio.
@@ -13,6 +14,7 @@ pub enum ContentMode {
     Fill,
 }
 
+/// The aspect ratio to maintain
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Ratio {
     /// A fixed aspect ratio defined by width and height
@@ -23,6 +25,7 @@ pub enum Ratio {
     Ideal,
 }
 
+/// A modifier that enforces a specific aspect ratio on its child view.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AspectRatio<T> {
     #[allow(clippy::struct_field_names)]
@@ -32,6 +35,7 @@ pub struct AspectRatio<T> {
 }
 
 impl<T> AspectRatio<T> {
+    #[allow(missing_docs)]
     #[must_use]
     pub const fn new(child: T, aspect_ratio: Ratio, content_mode: ContentMode) -> Self {
         Self {
@@ -42,21 +46,44 @@ impl<T> AspectRatio<T> {
     }
 }
 
-impl<T: Layout> Layout for AspectRatio<T> {
-    type Sublayout = T::Sublayout;
+impl<T> ViewMarker for AspectRatio<T>
+where
+    T: ViewMarker,
+{
+    type Renderables = T::Renderables;
+}
 
+impl<Captures: ?Sized, T> ViewLayout<Captures> for AspectRatio<T>
+where
+    T: ViewLayout<Captures>,
+{
+    type Sublayout = T::Sublayout;
+    type State = T::State;
+
+    fn priority(&self) -> i8 {
+        self.child.priority()
+    }
+
+    fn is_empty(&self) -> bool {
+        self.child.is_empty()
+    }
+
+    fn build_state(&self, captures: &mut Captures) -> Self::State {
+        self.child.build_state(captures)
+    }
     fn layout(
         &self,
         offer: &ProposedDimensions,
         env: &impl LayoutEnvironment,
+        captures: &mut Captures,
+        state: &mut Self::State,
     ) -> ResolvedLayout<Self::Sublayout> {
         let (ratio_width, ratio_height) = match self.aspect_ratio {
             Ratio::Fixed(width, height) => (width, height),
             Ratio::Ideal => {
-                // Use child's ideal size to determine aspect ratio
                 let child_ideal_size = self
                     .child
-                    .layout(&ProposedDimensions::compact(), env)
+                    .layout(&ProposedDimensions::compact(), env, captures, state)
                     .resolved_size;
                 (
                     child_ideal_size.width.into(),
@@ -67,7 +94,7 @@ impl<T: Layout> Layout for AspectRatio<T> {
 
         // Avoid division by zero
         if ratio_width == 0 || ratio_height == 0 {
-            return self.child.layout(offer, env);
+            return self.child.layout(offer, env, captures, state);
         }
 
         match (offer.width, offer.height) {
@@ -93,7 +120,7 @@ impl<T: Layout> Layout for AspectRatio<T> {
                     }
                 };
                 let new_offer = ProposedDimensions::new(final_width, final_height);
-                self.child.layout(&new_offer, env)
+                self.child.layout(&new_offer, env, captures, state)
             }
 
             // One exact dimension, one infinite - Fill returns infinite, Fit calculates
@@ -101,56 +128,62 @@ impl<T: Layout> Layout for AspectRatio<T> {
                 ContentMode::Fit => {
                     let height = w * ratio_height / ratio_width;
                     let new_offer = ProposedDimensions::new(w, height);
-                    self.child.layout(&new_offer, env)
+                    self.child.layout(&new_offer, env, captures, state)
                 }
-                ContentMode::Fill => self.child.layout(&ProposedDimensions::infinite(), env),
+                ContentMode::Fill => {
+                    self.child
+                        .layout(&ProposedDimensions::infinite(), env, captures, state)
+                }
             },
             (ProposedDimension::Infinite, ProposedDimension::Exact(h)) => match self.content_mode {
                 ContentMode::Fit => {
                     let width = h * ratio_width / ratio_height;
                     let new_offer = ProposedDimensions::new(width, h);
-                    self.child.layout(&new_offer, env)
+                    self.child.layout(&new_offer, env, captures, state)
                 }
-                ContentMode::Fill => self.child.layout(&ProposedDimensions::infinite(), env),
+                ContentMode::Fill => {
+                    self.child
+                        .layout(&ProposedDimensions::infinite(), env, captures, state)
+                }
             },
 
             // One exact dimension, one compact - always calculate the missing dimension
             (ProposedDimension::Exact(w), ProposedDimension::Compact) => {
                 let height = w * ratio_height / ratio_width;
                 let new_offer = ProposedDimensions::new(w, height);
-                self.child.layout(&new_offer, env)
+                self.child.layout(&new_offer, env, captures, state)
             }
             (ProposedDimension::Compact, ProposedDimension::Exact(h)) => {
                 let width = h * ratio_width / ratio_height;
                 let new_offer = ProposedDimensions::new(width, h);
-                self.child.layout(&new_offer, env)
+                self.child.layout(&new_offer, env, captures, state)
             }
 
             // All other cases delegate to child
-            _ => self.child.layout(offer, env),
+            _ => self.child.layout(offer, env, captures, state),
         }
     }
-
-    fn priority(&self) -> i8 {
-        self.child.priority()
-    }
-
-    fn is_empty(&self) -> bool {
-        self.child.is_empty()
-    }
-}
-
-impl<T: Renderable> Renderable for AspectRatio<T> {
-    type Renderables = T::Renderables;
 
     fn render_tree(
         &self,
         layout: &ResolvedLayout<Self::Sublayout>,
-        origin: crate::primitives::Point,
+        origin: Point,
         env: &impl LayoutEnvironment,
+        captures: &mut Captures,
+        state: &mut Self::State,
     ) -> Self::Renderables {
         // delegate all rendering to the child
-        self.child.render_tree(layout, origin, env)
+        self.child.render_tree(layout, origin, env, captures, state)
+    }
+
+    fn handle_event(
+        &mut self,
+        event: &crate::view::Event,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> bool {
+        self.child.handle_event(event, render_tree, captures, state)
     }
 }
 
@@ -158,147 +191,172 @@ impl<T: Renderable> Renderable for AspectRatio<T> {
 mod tests {
     use super::*;
     use crate::environment::DefaultEnvironment;
-    use crate::layout::Layout;
     use crate::primitives::{Dimensions, ProposedDimensions};
     use crate::view::prelude::*;
 
     #[test]
     fn ideal_aspect_ratio_fit() {
+        fn make_view() -> impl View<(), ()> {
+            Rectangle
+                .flex_frame()
+                .with_ideal_size(5, 10)
+                .aspect_ratio(Ratio::Ideal, ContentMode::Fit)
+        }
+
         let env = DefaultEnvironment::default();
-        let child = Rectangle.flex_frame().with_ideal_size(5, 10);
-        let aspect_ratio = AspectRatio::new(child, Ratio::Ideal, ContentMode::Fit);
+        let view = make_view();
+        let mut captures = ();
+        let mut state = view.build_state(&mut captures);
 
         let offer = ProposedDimensions::new(100, 100);
-        let layout = aspect_ratio.layout(&offer, &env);
+        let layout = view.layout(&offer, &env, &mut captures, &mut state);
         assert_eq!(layout.resolved_size, Dimensions::new(50, 100));
 
         let offer = ProposedDimensions::new(100, 1000);
-        let layout = aspect_ratio.layout(&offer, &env);
+        let layout = view.layout(&offer, &env, &mut captures, &mut state);
         assert_eq!(layout.resolved_size, Dimensions::new(100, 200));
 
         let offer = ProposedDimensions::new(ProposedDimension::Infinite, 100);
-        let layout = aspect_ratio.layout(&offer, &env);
+        let layout = view.layout(&offer, &env, &mut captures, &mut state);
         assert_eq!(layout.resolved_size, Dimensions::new(50, 100));
 
         let offer = ProposedDimensions::new(ProposedDimension::Compact, 100);
-        let layout = aspect_ratio.layout(&offer, &env);
+        let layout = view.layout(&offer, &env, &mut captures, &mut state);
         assert_eq!(layout.resolved_size, Dimensions::new(50, 100));
 
         let offer = ProposedDimensions::new(100, ProposedDimension::Infinite);
-        let layout = aspect_ratio.layout(&offer, &env);
+        let layout = view.layout(&offer, &env, &mut captures, &mut state);
         assert_eq!(layout.resolved_size, Dimensions::new(100, 200));
 
         let offer = ProposedDimensions::new(100, ProposedDimension::Compact);
-        let layout = aspect_ratio.layout(&offer, &env);
+        let layout = view.layout(&offer, &env, &mut captures, &mut state);
         assert_eq!(layout.resolved_size, Dimensions::new(100, 200));
 
         let offer = ProposedDimensions::compact();
-        let layout = aspect_ratio.layout(&offer, &env);
+        let layout = view.layout(&offer, &env, &mut captures, &mut state);
         assert_eq!(layout.resolved_size, Dimensions::new(5, 10));
     }
 
     #[test]
     fn ideal_aspect_ratio_fill() {
+        fn make_view() -> impl View<(), ()> {
+            let child = Rectangle.flex_frame().with_ideal_size(5, 10);
+            AspectRatio::new(child, Ratio::Ideal, ContentMode::Fill)
+        }
+
         let env = DefaultEnvironment::default();
-        let child = Rectangle.flex_frame().with_ideal_size(5, 10);
-        let aspect_ratio = AspectRatio::new(child, Ratio::Ideal, ContentMode::Fill);
+        let view = make_view();
+        let mut captures = ();
+        let mut state = view.build_state(&mut captures);
 
         let offer = ProposedDimensions::new(100, 100);
-        let layout = aspect_ratio.layout(&offer, &env);
+        let layout = view.layout(&offer, &env, &mut captures, &mut state);
         assert_eq!(layout.resolved_size, Dimensions::new(100, 200));
 
         let offer = ProposedDimensions::new(100, 1000);
-        let layout = aspect_ratio.layout(&offer, &env);
+        let layout = view.layout(&offer, &env, &mut captures, &mut state);
         assert_eq!(layout.resolved_size, Dimensions::new(500, 1000));
 
         let offer = ProposedDimensions::new(ProposedDimension::Infinite, 100);
-        let layout = aspect_ratio.layout(&offer, &env);
+        let layout = view.layout(&offer, &env, &mut captures, &mut state);
         assert_eq!(layout.resolved_size, Dimensions::infinite());
 
         let offer = ProposedDimensions::new(ProposedDimension::Compact, 100);
-        let layout = aspect_ratio.layout(&offer, &env);
+        let layout = view.layout(&offer, &env, &mut captures, &mut state);
         assert_eq!(layout.resolved_size, Dimensions::new(50, 100));
 
         let offer = ProposedDimensions::new(100, ProposedDimension::Infinite);
-        let layout = aspect_ratio.layout(&offer, &env);
+        let layout = view.layout(&offer, &env, &mut captures, &mut state);
         assert_eq!(layout.resolved_size, Dimensions::infinite());
 
         let offer = ProposedDimensions::new(100, ProposedDimension::Compact);
-        let layout = aspect_ratio.layout(&offer, &env);
+        let layout = view.layout(&offer, &env, &mut captures, &mut state);
         assert_eq!(layout.resolved_size, Dimensions::new(100, 200));
 
         let offer = ProposedDimensions::compact();
-        let layout = aspect_ratio.layout(&offer, &env);
+        let layout = view.layout(&offer, &env, &mut captures, &mut state);
         assert_eq!(layout.resolved_size, Dimensions::new(5, 10));
     }
 
     #[test]
     fn fixed_aspect_ratio_fit() {
+        fn make_view() -> impl View<(), ()> {
+            let child = Rectangle.flex_frame().with_ideal_size(10, 10);
+            AspectRatio::new(child, Ratio::Fixed(1, 2), ContentMode::Fit)
+        }
+
         let env = DefaultEnvironment::default();
-        let child = Rectangle.flex_frame().with_ideal_size(10, 10);
-        let aspect_ratio = AspectRatio::new(child, Ratio::Fixed(1, 2), ContentMode::Fit);
+        let view = make_view();
+        let mut captures = ();
+        let mut state = view.build_state(&mut captures);
 
         let offer = ProposedDimensions::new(100, 100);
-        let layout = aspect_ratio.layout(&offer, &env);
+        let layout = view.layout(&offer, &env, &mut captures, &mut state);
         assert_eq!(layout.resolved_size, Dimensions::new(50, 100));
 
         let offer = ProposedDimensions::new(100, 1000);
-        let layout = aspect_ratio.layout(&offer, &env);
+        let layout = view.layout(&offer, &env, &mut captures, &mut state);
         assert_eq!(layout.resolved_size, Dimensions::new(100, 200));
 
         let offer = ProposedDimensions::new(ProposedDimension::Infinite, 100);
-        let layout = aspect_ratio.layout(&offer, &env);
+        let layout = view.layout(&offer, &env, &mut captures, &mut state);
         assert_eq!(layout.resolved_size, Dimensions::new(50, 100));
 
         let offer = ProposedDimensions::new(ProposedDimension::Compact, 100);
-        let layout = aspect_ratio.layout(&offer, &env);
+        let layout = view.layout(&offer, &env, &mut captures, &mut state);
         assert_eq!(layout.resolved_size, Dimensions::new(50, 100));
 
         let offer = ProposedDimensions::new(100, ProposedDimension::Infinite);
-        let layout = aspect_ratio.layout(&offer, &env);
+        let layout = view.layout(&offer, &env, &mut captures, &mut state);
         assert_eq!(layout.resolved_size, Dimensions::new(100, 200));
 
         let offer = ProposedDimensions::new(100, ProposedDimension::Compact);
-        let layout = aspect_ratio.layout(&offer, &env);
+        let layout = view.layout(&offer, &env, &mut captures, &mut state);
         assert_eq!(layout.resolved_size, Dimensions::new(100, 200));
 
         let offer = ProposedDimensions::compact();
-        let layout = aspect_ratio.layout(&offer, &env);
+        let layout = view.layout(&offer, &env, &mut captures, &mut state);
         assert_eq!(layout.resolved_size, Dimensions::new(10, 10));
     }
 
     #[test]
     fn fixed_aspect_ratio_fill() {
+        fn make_view() -> impl View<(), ()> {
+            let child = Rectangle.flex_frame().with_ideal_size(10, 10);
+            AspectRatio::new(child, Ratio::Fixed(1, 2), ContentMode::Fill)
+        }
+
         let env = DefaultEnvironment::default();
-        let child = Rectangle.flex_frame().with_ideal_size(10, 10);
-        let aspect_ratio = AspectRatio::new(child, Ratio::Fixed(1, 2), ContentMode::Fill);
+        let view = make_view();
+        let mut captures = ();
+        let mut state = view.build_state(&mut captures);
 
         let offer = ProposedDimensions::new(100, 100);
-        let layout = aspect_ratio.layout(&offer, &env);
+        let layout = view.layout(&offer, &env, &mut captures, &mut state);
         assert_eq!(layout.resolved_size, Dimensions::new(100, 200));
 
         let offer = ProposedDimensions::new(100, 1000);
-        let layout = aspect_ratio.layout(&offer, &env);
+        let layout = view.layout(&offer, &env, &mut captures, &mut state);
         assert_eq!(layout.resolved_size, Dimensions::new(500, 1000));
 
         let offer = ProposedDimensions::new(ProposedDimension::Infinite, 100);
-        let layout = aspect_ratio.layout(&offer, &env);
+        let layout = view.layout(&offer, &env, &mut captures, &mut state);
         assert_eq!(layout.resolved_size, Dimensions::infinite());
 
         let offer = ProposedDimensions::new(ProposedDimension::Compact, 100);
-        let layout = aspect_ratio.layout(&offer, &env);
+        let layout = view.layout(&offer, &env, &mut captures, &mut state);
         assert_eq!(layout.resolved_size, Dimensions::new(50, 100));
 
         let offer = ProposedDimensions::new(100, ProposedDimension::Infinite);
-        let layout = aspect_ratio.layout(&offer, &env);
+        let layout = view.layout(&offer, &env, &mut captures, &mut state);
         assert_eq!(layout.resolved_size, Dimensions::infinite());
 
         let offer = ProposedDimensions::new(100, ProposedDimension::Compact);
-        let layout = aspect_ratio.layout(&offer, &env);
+        let layout = view.layout(&offer, &env, &mut captures, &mut state);
         assert_eq!(layout.resolved_size, Dimensions::new(100, 200));
 
         let offer = ProposedDimensions::compact();
-        let layout = aspect_ratio.layout(&offer, &env);
+        let layout = view.layout(&offer, &env, &mut captures, &mut state);
         assert_eq!(layout.resolved_size, Dimensions::new(10, 10));
     }
 
@@ -306,49 +364,102 @@ mod tests {
     /// aspect ratio.
     #[test]
     fn aspect_ratio_fit_inherits_fixed_child_size() {
+        fn make_view() -> impl View<(), ()> {
+            AspectRatio::new(Circle, Ratio::Fixed(1, 2), ContentMode::Fit)
+        }
+
         let env = DefaultEnvironment::default();
-        let aspect_ratio = AspectRatio::new(Circle, Ratio::Fixed(1, 2), ContentMode::Fit);
+        let view = make_view();
+        let mut captures = ();
+        let mut state = view.build_state(&mut captures);
 
         let offer = ProposedDimensions::new(100, 100);
-        let layout = aspect_ratio.layout(&offer, &env);
+        let layout = view.layout(&offer, &env, &mut captures, &mut state);
         assert_eq!(layout.resolved_size, Dimensions::new(50, 50));
     }
 
     #[test]
     fn aspect_ratio_fill_inherits_fixed_child_size() {
+        fn make_view() -> impl View<(), ()> {
+            AspectRatio::new(Circle, Ratio::Fixed(1, 2), ContentMode::Fill)
+        }
+
         let env = DefaultEnvironment::default();
-        let aspect_ratio = AspectRatio::new(Circle, Ratio::Fixed(1, 2), ContentMode::Fill);
+        let view = make_view();
+        let mut captures = ();
+        let mut state = view.build_state(&mut captures);
 
         let offer = ProposedDimensions::new(100, 100);
-        let layout = aspect_ratio.layout(&offer, &env);
+        let layout = view.layout(&offer, &env, &mut captures, &mut state);
         assert_eq!(layout.resolved_size, Dimensions::new(100, 100));
     }
 
     #[test]
     fn zeros_should_not_panic() {
+        fn view(ratio: Ratio, mode: ContentMode) -> impl View<(), ()> {
+            AspectRatio::new(Circle, ratio, mode)
+        }
         let env = DefaultEnvironment::default();
-        let layout = AspectRatio::new(Circle, Ratio::Fixed(0, 2), ContentMode::Fill)
-            .layout(&ProposedDimensions::new(1, 1), &env);
+        let mut captures = ();
+
+        let view1 = view(Ratio::Fixed(0, 2), ContentMode::Fill);
+        let mut state1 = view1.build_state(&mut captures);
+        let layout = view1.layout(
+            &ProposedDimensions::new(1, 1),
+            &env,
+            &mut captures,
+            &mut state1,
+        );
         assert_eq!(layout.resolved_size, Dimensions::new(1, 1));
 
-        let layout = AspectRatio::new(Circle, Ratio::Fixed(2, 0), ContentMode::Fill)
-            .layout(&ProposedDimensions::new(1, 1), &env);
+        let view2 = view(Ratio::Fixed(2, 0), ContentMode::Fill);
+        let mut state2 = view2.build_state(&mut captures);
+        let layout = view2.layout(
+            &ProposedDimensions::new(1, 1),
+            &env,
+            &mut captures,
+            &mut state2,
+        );
         assert_eq!(layout.resolved_size, Dimensions::new(1, 1));
 
-        let layout = AspectRatio::new(Circle, Ratio::Fixed(0, 0), ContentMode::Fill)
-            .layout(&ProposedDimensions::new(1, 1), &env);
+        let view3 = view(Ratio::Fixed(0, 0), ContentMode::Fill);
+        let mut state3 = view3.build_state(&mut captures);
+        let layout = view3.layout(
+            &ProposedDimensions::new(1, 1),
+            &env,
+            &mut captures,
+            &mut state3,
+        );
         assert_eq!(layout.resolved_size, Dimensions::new(1, 1));
 
-        let layout = AspectRatio::new(Circle, Ratio::Ideal, ContentMode::Fit)
-            .layout(&ProposedDimensions::new(1, 0), &env);
+        let view4 = view(Ratio::Ideal, ContentMode::Fit);
+        let mut state4 = view4.build_state(&mut captures);
+        let layout = view4.layout(
+            &ProposedDimensions::new(1, 0),
+            &env,
+            &mut captures,
+            &mut state4,
+        );
         assert_eq!(layout.resolved_size, Dimensions::new(0, 0));
 
-        let layout = AspectRatio::new(Circle, Ratio::Ideal, ContentMode::Fit)
-            .layout(&ProposedDimensions::new(0, 1), &env);
+        let view5 = view(Ratio::Ideal, ContentMode::Fit);
+        let mut state5 = view5.build_state(&mut captures);
+        let layout = view5.layout(
+            &ProposedDimensions::new(0, 1),
+            &env,
+            &mut captures,
+            &mut state5,
+        );
         assert_eq!(layout.resolved_size, Dimensions::new(0, 0));
 
-        let layout = AspectRatio::new(Circle, Ratio::Ideal, ContentMode::Fill)
-            .layout(&ProposedDimensions::new(0, 0), &env);
+        let view6 = view(Ratio::Ideal, ContentMode::Fill);
+        let mut state6 = view6.build_state(&mut captures);
+        let layout = view6.layout(
+            &ProposedDimensions::new(0, 0),
+            &env,
+            &mut captures,
+            &mut state6,
+        );
         assert_eq!(layout.resolved_size, Dimensions::new(0, 0));
     }
 }

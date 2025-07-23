@@ -10,7 +10,7 @@ use crate::{
 const SPACING: u32 = 3;
 
 #[must_use]
-pub fn view(battery: &BatteryStatus) -> impl View<ColorFormat> {
+pub fn view(battery: &BatteryStatus) -> impl View<ColorFormat, ()> {
     ViewThatFits::new(FitAxis::Vertical, {
         VStack::new((
             VStack::new((
@@ -37,7 +37,7 @@ pub fn view(battery: &BatteryStatus) -> impl View<ColorFormat> {
     })
 }
 
-fn charge_gauge(charge: f32) -> impl View<ColorFormat> {
+fn charge_gauge(charge: f32) -> impl View<ColorFormat, ()> {
     let mut formatted_charge = heapless::String::<8>::new();
     _ = write!(formatted_charge, "{charge:.0}"); // ignore write failure
     ZStack::new((
@@ -51,7 +51,7 @@ fn charge_gauge(charge: f32) -> impl View<ColorFormat> {
     ))
 }
 
-fn port_power_view(power: &PortState) -> impl View<ColorFormat> {
+fn port_power_view(power: &PortState) -> impl View<ColorFormat, ()> {
     VStack::new((
         port_power_row("C1", power.usbc1_power as i32),
         port_power_row("C2", power.usbc2_power as i32),
@@ -61,7 +61,7 @@ fn port_power_view(power: &PortState) -> impl View<ColorFormat> {
 }
 
 #[expect(clippy::cast_precision_loss)]
-fn port_power_row(port_name: &str, power: i32) -> impl View<ColorFormat> + use<'_> {
+fn port_power_row(port_name: &str, power: i32) -> impl View<ColorFormat, ()> + use<'_> {
     let mut formatted_power = heapless::String::<8>::new();
     // save a few thousand cycles by not being lazy with fp
     _ = write!(formatted_power, "{:.1}w", power.abs() as f32); // ignore write failure
@@ -88,7 +88,7 @@ fn port_power_row(port_name: &str, power: i32) -> impl View<ColorFormat> + use<'
             .padding(Edges::All, 5)
             .flex_infinite_width(HorizontalAlignment::Trailing)
             .with_infinite_max_height()
-            .background(Alignment::default(), || {
+            .background(Alignment::default(), {
                 RoundedRectangle::new(5).foreground_color(match power {
                     p if p > 0 => color::BLUE,
                     p if p < 0 => color::GREEN,
@@ -98,7 +98,7 @@ fn port_power_row(port_name: &str, power: i32) -> impl View<ColorFormat> + use<'
     ))
     .with_spacing(SPACING * 2)
     .padding(Edges::All, 3)
-    .background(Alignment::default(), || {
+    .background(Alignment::default(), {
         RoundedRectangle::new(8).foreground_color(color::SECONDARY_BACKGROUND)
     })
 }

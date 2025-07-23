@@ -1,8 +1,8 @@
 use crate::{
     environment::LayoutEnvironment,
-    layout::{Layout, ResolvedLayout},
+    layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
-    render::Renderable,
+    view::{ViewLayout, ViewMarker},
 };
 
 /// Offsets the rendered position of a child view by a given point.
@@ -18,16 +18,19 @@ impl<T> Offset<T> {
     }
 }
 
-impl<T: Layout> Layout for Offset<T> {
-    type Sublayout = T::Sublayout;
+impl<T> ViewMarker for Offset<T>
+where
+    T: ViewMarker,
+{
+    type Renderables = T::Renderables;
+}
 
-    fn layout(
-        &self,
-        offer: &ProposedDimensions,
-        env: &impl LayoutEnvironment,
-    ) -> ResolvedLayout<Self::Sublayout> {
-        self.child.layout(offer, env)
-    }
+impl<Captures: ?Sized, T> ViewLayout<Captures> for Offset<T>
+where
+    T: ViewLayout<Captures>,
+{
+    type Sublayout = T::Sublayout;
+    type State = T::State;
 
     fn priority(&self) -> i8 {
         self.child.priority()
@@ -36,18 +39,40 @@ impl<T: Layout> Layout for Offset<T> {
     fn is_empty(&self) -> bool {
         self.child.is_empty()
     }
-}
 
-impl<T: Renderable> Renderable for Offset<T> {
-    type Renderables = T::Renderables;
+    fn build_state(&self, captures: &mut Captures) -> Self::State {
+        self.child.build_state(captures)
+    }
+    fn layout(
+        &self,
+        offer: &ProposedDimensions,
+        env: &impl LayoutEnvironment,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> ResolvedLayout<Self::Sublayout> {
+        self.child.layout(offer, env, captures, state)
+    }
 
     fn render_tree(
         &self,
         layout: &ResolvedLayout<Self::Sublayout>,
         origin: crate::primitives::Point,
         env: &impl LayoutEnvironment,
+        captures: &mut Captures,
+        state: &mut Self::State,
     ) -> Self::Renderables {
         let origin = origin + self.offset;
-        self.child.render_tree(layout, origin, env)
+        self.child.render_tree(layout, origin, env, captures, state)
+    }
+
+    fn handle_event(
+        &mut self,
+        event: &crate::view::Event,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> bool {
+        // FIXME: Apply offset to event coordinates
+        self.child.handle_event(event, render_tree, captures, state)
     }
 }

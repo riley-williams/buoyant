@@ -5,21 +5,17 @@ use buoyant::{
     environment::DefaultEnvironment,
     font::CharacterBufferFont,
     if_view,
-    layout::{HorizontalAlignment, Layout as _, VerticalAlignment},
     primitives::Point,
-    render::{AnimatedJoin, AnimationDomain, Render, Renderable},
+    render::{AnimatedJoin, AnimationDomain, Render},
     render_target::FixedTextBuffer,
-    view::{
-        shape::Rectangle, Divider, EmptyView, HorizontalTextAlignment, Text, VStack, View, ViewExt,
-        ZStack,
-    },
+    view::prelude::*,
 };
 mod common;
 use common::make_render_tree;
 
 const FONT: CharacterBufferFont = CharacterBufferFont;
 
-fn x_bar(alignment: HorizontalAlignment) -> impl View<char> {
+fn x_bar(alignment: HorizontalAlignment) -> impl View<char, ()> {
     Text::new("X", &FONT)
         .flex_infinite_width(alignment)
         .animated(Animation::linear(Duration::from_secs(1)), alignment)
@@ -33,15 +29,15 @@ fn sanity_animation_wipe() {
 
     let mut view = x_bar(HorizontalAlignment::Leading);
 
-    let source_tree = make_render_tree(&view, buffer.size());
+    let source_tree = make_render_tree(&view, buffer.size(), &mut ());
 
     view = x_bar(HorizontalAlignment::Trailing);
 
-    let target_tree = make_render_tree(&view, buffer.size());
+    let target_tree = make_render_tree(&view, buffer.size(), &mut ());
 
     // render 101 steps, 10 ms increments
     for i in 0..101u64 {
-        Render::render_animated(
+        Render::<char>::render_animated(
             &mut buffer,
             &source_tree,
             &target_tree,
@@ -59,11 +55,11 @@ fn sanity_animation_wipe_leading_half() {
 
     let mut view = x_bar(HorizontalAlignment::Leading);
 
-    let source_tree = make_render_tree(&view, buffer.size());
+    let source_tree = make_render_tree(&view, buffer.size(), &mut ());
 
     view = x_bar(HorizontalAlignment::Trailing);
 
-    let target_tree = make_render_tree(&view, buffer.size());
+    let target_tree = make_render_tree(&view, buffer.size(), &mut ());
 
     for i in 0..50u64 {
         Render::render_animated(
@@ -84,11 +80,11 @@ fn sanity_animation_wipe_trailing_half() {
 
     let mut view = x_bar(HorizontalAlignment::Leading);
 
-    let source_tree = make_render_tree(&view, buffer.size());
+    let source_tree = make_render_tree(&view, buffer.size(), &mut ());
 
     view = x_bar(HorizontalAlignment::Trailing);
 
-    let target_tree = make_render_tree(&view, buffer.size());
+    let target_tree = make_render_tree(&view, buffer.size(), &mut ());
 
     // The first frame detects the changed value and sets the animation end time in
     // the target tree.
@@ -116,7 +112,7 @@ fn sanity_animation_wipe_trailing_half() {
     assert_eq!(buffer.text[0].iter().collect::<String>(), "     XXXXX");
 }
 
-fn stacked_bars(alignment: HorizontalAlignment) -> impl View<char> {
+fn stacked_bars(alignment: HorizontalAlignment) -> impl View<char, ()> {
     VStack::new((
         Text::new("X", &FONT).animated(Animation::linear(Duration::from_secs(1)), alignment),
         Text::new("Y", &FONT),
@@ -131,11 +127,11 @@ fn animation_only_occurs_on_animated_subtrees() {
 
     let mut view = stacked_bars(HorizontalAlignment::Leading);
 
-    let source_tree = make_render_tree(&view, buffer.size());
+    let source_tree = make_render_tree(&view, buffer.size(), &mut ());
 
     view = stacked_bars(HorizontalAlignment::Trailing);
 
-    let target_tree = make_render_tree(&view, buffer.size());
+    let target_tree = make_render_tree(&view, buffer.size(), &mut ());
 
     Render::render_animated(
         &mut buffer,
@@ -169,7 +165,11 @@ fn animation_only_occurs_on_animated_subtrees() {
 
 /// Value is used to trigger the top text to animate.
 /// Changing alignment should not trigger animation.
-fn stacked_bars_value(x_value: u8, y_value: u8, alignment: HorizontalAlignment) -> impl View<char> {
+fn stacked_bars_value(
+    x_value: u8,
+    y_value: u8,
+    alignment: HorizontalAlignment,
+) -> impl View<char, ()> {
     VStack::new((
         Text::new("X", &FONT).animated(Animation::linear(Duration::from_secs(1)), x_value),
         Text::new("Y", &FONT).animated(Animation::linear(Duration::from_secs(2)), y_value),
@@ -185,11 +185,11 @@ fn no_animation_when_value_doesnt_change() {
 
     let mut view = stacked_bars_value(0, 0, HorizontalAlignment::Leading);
 
-    let source_tree = make_render_tree(&view, buffer.size());
+    let source_tree = make_render_tree(&view, buffer.size(), &mut ());
 
     view = stacked_bars_value(1, 0, HorizontalAlignment::Trailing);
 
-    let target_tree = make_render_tree(&view, buffer.size());
+    let target_tree = make_render_tree(&view, buffer.size(), &mut ());
 
     Render::render_animated(
         &mut buffer,
@@ -224,7 +224,7 @@ fn stacked_bars_3_value(
     y_value: u8,
     z_value: u8,
     alignment: HorizontalAlignment,
-) -> impl View<char> {
+) -> impl View<char, ()> {
     VStack::new((
         Text::new("X", &FONT).animated(Animation::linear(Duration::from_secs(1)), x_value),
         Text::new("Y", &FONT).animated(Animation::linear(Duration::from_secs(2)), y_value),
@@ -241,14 +241,15 @@ fn partial_animation_join() {
     let mut view = stacked_bars_3_value(0, 0, 0, HorizontalAlignment::Leading);
 
     let mut env = DefaultEnvironment::new(Duration::from_millis(0));
-    let layout = view.layout(&buffer.size().into(), &env);
-    let mut source_tree = view.render_tree(&layout, Point::default(), &env);
+    let mut state = view.build_state(&mut ());
+    let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
+    let mut source_tree = view.render_tree(&layout, Point::default(), &env, &mut (), &mut state);
 
     // change both x and y
     // don't update the env app time, so both frames are generated at the same time
     view = stacked_bars_3_value(1, 1, 1, HorizontalAlignment::Trailing);
-    let layout = view.layout(&buffer.size().into(), &env);
-    let mut target_tree = view.render_tree(&layout, Point::default(), &env);
+    let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
+    let mut target_tree = view.render_tree(&layout, Point::default(), &env, &mut (), &mut state);
 
     // initial render sets target animation times
     Render::render_animated(
@@ -296,8 +297,8 @@ fn partial_animation_join() {
     // However, in the new target align leading
     env.app_time = Duration::from_millis(1050);
     view = stacked_bars_3_value(1, 2, 1, HorizontalAlignment::Leading);
-    let layout = view.layout(&buffer.size().into(), &env);
-    target_tree = view.render_tree(&layout, Point::default(), &env);
+    let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
+    target_tree = view.render_tree(&layout, Point::default(), &env, &mut (), &mut state);
 
     // The previous y animation should continue, but x should jump because the state changed
     // without a change in value
@@ -359,7 +360,7 @@ fn partial_animation_join() {
 /// #____
 ///
 /// Only the toggle is animated, not the text
-fn toggle_switch(is_on: bool, subtext: &str) -> impl View<char> + use<'_> {
+fn toggle_switch(is_on: bool, subtext: &str) -> impl View<char, ()> + use<'_> {
     let alignment = if is_on {
         HorizontalAlignment::Trailing
     } else {
@@ -382,7 +383,7 @@ fn toggle_switch(is_on: bool, subtext: &str) -> impl View<char> + use<'_> {
     .with_alignment(HorizontalAlignment::Trailing)
 }
 
-fn toggle_move(is_on: bool, alignment: HorizontalAlignment) -> impl View<char> {
+fn toggle_move(is_on: bool, alignment: HorizontalAlignment) -> impl View<char, ()> {
     toggle_switch(is_on, "xxx")
         .flex_frame()
         .with_infinite_max_width()
@@ -396,14 +397,14 @@ fn jump_toggle_animation() {
     let mut buffer = FixedTextBuffer::<11, 4>::default();
 
     let mut view = toggle_move(false, HorizontalAlignment::Trailing);
-
+    let mut state = view.build_state(&mut ());
     let mut env = DefaultEnvironment::new(Duration::from_millis(0));
-    let layout = view.layout(&buffer.size().into(), &env);
-    let mut source_tree = view.render_tree(&layout, Point::default(), &env);
+    let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
+    let mut source_tree = view.render_tree(&layout, Point::default(), &env, &mut (), &mut state);
 
     view = toggle_move(true, HorizontalAlignment::Trailing);
-    let layout = view.layout(&buffer.size().into(), &env);
-    let mut target_tree = view.render_tree(&layout, Point::default(), &env);
+    let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
+    let mut target_tree = view.render_tree(&layout, Point::default(), &env, &mut (), &mut state);
 
     // initial render sets target animation times
     Render::render_animated(
@@ -447,8 +448,8 @@ fn jump_toggle_animation() {
 
     env.app_time = Duration::from_millis(550);
     view = toggle_move(true, HorizontalAlignment::Leading);
-    let layout = view.layout(&buffer.size().into(), &env);
-    target_tree = view.render_tree(&layout, Point::default(), &env);
+    let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
+    target_tree = view.render_tree(&layout, Point::default(), &env, &mut (), &mut state);
 
     Render::render_animated(
         &mut buffer,
@@ -480,7 +481,7 @@ fn jump_toggle_animation() {
     assert_eq!(buffer.text[2].iter().collect::<String>(), "           ");
 }
 
-fn toggle_stack(is_on: bool) -> impl View<char> {
+fn toggle_stack(is_on: bool) -> impl View<char, ()> {
     VStack::new((
         toggle_switch(is_on, "123456\n123"),
         toggle_switch(is_on, "xxx"),
@@ -501,14 +502,15 @@ fn nested_toggle_animation() {
 
     let mut view = toggle_stack(false);
 
+    let mut state = view.build_state(&mut ());
     let mut env = DefaultEnvironment::new(Duration::from_millis(0));
-    let layout = view.layout(&buffer.size().into(), &env);
-    let mut source_tree = view.render_tree(&layout, Point::default(), &env);
+    let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
+    let mut source_tree = view.render_tree(&layout, Point::default(), &env, &mut (), &mut state);
 
     // don't update the env app time, so both frames are generated at the same time
     view = toggle_stack(true);
-    let layout = view.layout(&buffer.size().into(), &env);
-    let mut target_tree = view.render_tree(&layout, Point::default(), &env);
+    let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
+    let mut target_tree = view.render_tree(&layout, Point::default(), &env, &mut (), &mut state);
 
     // initial render sets target animation times
     Render::render_animated(
@@ -562,8 +564,8 @@ fn nested_toggle_animation() {
 
     env.app_time = Duration::from_millis(550);
     view = toggle_stack(true);
-    let layout = view.layout(&buffer.size().into(), &env);
-    target_tree = view.render_tree(&layout, Point::default(), &env);
+    let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
+    target_tree = view.render_tree(&layout, Point::default(), &env, &mut (), &mut state);
 
     Render::render_animated(
         &mut buffer,

@@ -8,33 +8,33 @@ To animate between two render trees, you can use the `render_animated()` method:
 # extern crate buoyant;
 # extern crate embedded_graphics;
 # use std::time::Duration;
-# 
+#
 # use buoyant::{
 #     environment::DefaultEnvironment,
-#     layout::Layout as _,
 #     primitives::{Point, Size},
 #     render::{
 #         AnimatedJoin, AnimationDomain, Render,
-#         Renderable as _,
 #     },
 #     render_target::EmbeddedGraphicsRenderTarget,
 #     view::prelude::*,
 # };
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::RgbColor};
-# 
+#
 # let mut display = embedded_graphics::mock_display::MockDisplay::new();
 # let mut target = EmbeddedGraphicsRenderTarget::new(&mut display);
 # let app_time = Duration::from_secs(0);
-# 
+#
+# let mut captures = ();
 # let environment = DefaultEnvironment::new(app_time);
 # let source_view = view();
-# let source_layout = source_view.layout(&Size::new(200, 100).into(), &environment);
-let source_render_tree = source_view.render_tree(&source_layout, Point::zero(), &environment);
+# let mut view_state = source_view.build_state(&mut ());
+# let source_layout = source_view.layout(&Size::new(200, 100).into(), &environment, &mut captures, &mut view_state);
+let source_render_tree = source_view.render_tree(&source_layout, Point::zero(), &environment, &mut captures, &mut view_state);
 
 # let environment = DefaultEnvironment::new(app_time);
 # let target_view = view();
-# let target_layout = target_view.layout(&Size::new(200, 100).into(), &environment);
-let target_render_tree = target_view.render_tree(&target_layout, Point::zero(), &environment);
+# let target_layout = target_view.layout(&Size::new(200, 100).into(), &environment, &mut captures, &mut view_state);
+let target_render_tree = target_view.render_tree(&target_layout, Point::zero(), &environment, &mut captures, &mut view_state);
 
 Render::render_animated(
     &mut target,
@@ -44,9 +44,10 @@ Render::render_animated(
     Point::zero(),
     &AnimationDomain::top_level(app_time),
 );
-# 
-# fn view() -> impl View<Rgb888> {
-#     EmptyView
+#
+# /// This is just a tribute to the greatest view in the world.
+# fn view() -> impl View<Rgb888, ()> {
+#     EmptyView // Couldn't remember
 # }
 ```
 
@@ -64,33 +65,33 @@ is the same as rendering the two trees with `render_animated()`.
 # extern crate buoyant;
 # extern crate embedded_graphics;
 # use std::time::Duration;
-# 
+#
 # use buoyant::{
 #     environment::DefaultEnvironment,
-#     layout::Layout as _,
 #     primitives::{Point, Size},
 #     render::{
 #         AnimatedJoin, AnimationDomain, Render,
-#         Renderable as _,
 #     },
 #     render_target::EmbeddedGraphicsRenderTarget,
 #     view::prelude::*,
 # };
 # use embedded_graphics::{pixelcolor::Rgb888, prelude::RgbColor};
-# 
+#
 # let mut display = embedded_graphics::mock_display::MockDisplay::new();
 # let mut target = EmbeddedGraphicsRenderTarget::new(&mut display);
 # let app_time = Duration::from_secs(0);
-# 
+#
+# let mut captures = ();
 # let environment = DefaultEnvironment::new(app_time);
 # let source_view = view();
-# let source_layout = source_view.layout(&Size::new(200, 100).into(), &environment);
-let source_render_tree = source_view.render_tree(&source_layout, Point::zero(), &environment);
+# let mut view_state = source_view.build_state(&mut ());
+# let source_layout = source_view.layout(&Size::new(200, 100).into(), &environment, &mut captures, &mut view_state);
+let source_render_tree = source_view.render_tree(&source_layout, Point::zero(), &environment, &mut captures, &mut view_state);
 
 # let environment = DefaultEnvironment::new(app_time);
 # let target_view = view();
-# let target_layout = target_view.layout(&Size::new(200, 100).into(), &environment);
-let target_render_tree = target_view.render_tree(&target_layout, Point::zero(), &environment);
+# let target_layout = target_view.layout(&Size::new(200, 100).into(), &environment, &mut captures, &mut view_state);
+let target_render_tree = target_view.render_tree(&target_layout, Point::zero(), &environment, &mut captures, &mut view_state);
 
 // Join two trees
 let joined_tree = AnimatedJoin::join(
@@ -102,8 +103,8 @@ let joined_tree = AnimatedJoin::join(
 // Calling render on the joined tree produces the same result as
 // the render_animated call above
 joined_tree.render(&mut target, &Rgb888::BLACK, Point::zero());
-# 
-# fn view() -> impl View<Rgb888> {
+#
+# fn view() -> impl View<Rgb888, ()> {
 #     EmptyView
 # }
 ```
@@ -116,31 +117,65 @@ staggered animations to occur in a render loop.
 Buoyant on its own does not track whether state has changed, and you are responsible
 for managing the view and render tree lifecycle in response to state changes.
 
-Here's a rough outline of what a that might look like:
+Here's a minimal example that demonstrates the render loop pattern:
 
-```rust,ignore
-/// Produce a render tree for a given state, time, and size
-fn make_tree(state: &State, time: Duration, size: &Size) -> impl Render<Rgb888> {
-    let view = /* ... */;
-    let layout = /* ... */;
-    view.render_tree(/* ... */)
+```rust,no_run
+# extern crate buoyant;
+# extern crate embedded_graphics;
+# extern crate embedded_graphics_simulator;
+use std::time::{Duration, Instant};
+
+use buoyant::{
+    environment::DefaultEnvironment,
+    primitives::{Point, Size},
+    render::{AnimatedJoin, AnimationDomain, Render},
+    render_target::EmbeddedGraphicsRenderTarget,
+    view::prelude::*,
+};
+use embedded_graphics::{prelude::*, pixelcolor::Rgb888};
+use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
+
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+struct AppState {
+    counter: u32,
 }
 
 fn main() {
-    let mut display = /* ... */;
-    let app_start = Instant::now(); // track offset from app start
+    let size = Size::new(200, 100);
+    let mut display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(size.into());
+    let mut target = EmbeddedGraphicsRenderTarget::new(&mut display);
+    let mut window = Window::new("Render Loop Example", &OutputSettings::default());
+    let app_start = Instant::now();
 
-    let mut state = State::default();
+    let mut captures = AppState::default();
+    let env = DefaultEnvironment::new(app_start.elapsed());
+    let mut view = root_view(&captures);
+    let mut state = view.build_state(&mut captures);
+    let layout = view.layout(&size.into(), &env, &mut captures, &mut state);
 
-    let mut source_tree = make_tree(&state, app_start.elapsed());
-    let mut target_tree = make_tree(&state, app_start.elapsed());
+    let mut source_tree = view.render_tree(
+        &layout,
+        Point::zero(),
+        &env,
+        &mut captures,
+        &mut state,
+    );
 
-    loop {
-        display.clear(Rgb888::BLACK);
+    let mut target_tree = view.render_tree(
+        &layout,
+        Point::zero(),
+        &env,
+        &mut captures,
+        &mut state,
+    );
+
+    let mut rebuild_view = true;
+    'running: loop {
+        target.display_mut().clear(Rgb888::BLACK).unwrap();
 
         // Render, animating between the source and target trees
         Render::render_animated(
-            &mut display,
+            &mut target,
             &source_tree,
             &target_tree,
             &Rgb888::WHITE,
@@ -148,67 +183,57 @@ fn main() {
             &AnimationDomain::top_level(app_start.elapsed()),
         );
 
-        // Update state
-        match event {
-            Event::ButtonPressed(Button::A) => {
-                state.a.toggle();
-            }
-            /* ... */
-        }
+        window.update(target.display());
 
-        // If state changed, create a new source tree by joining the old source and target.
-        // The joined tree is partially animated between the old source and target trees.
-        if state.changed() {
+        if rebuild_view {
+            rebuild_view = false;
+            // Join source and target trees at the current time
+            let time = app_start.elapsed();
             source_tree = AnimatedJoin::join(
                 source_tree,
                 target_tree,
-                &AnimationDomain::top_level(app_start.elapsed()),
+                &AnimationDomain::top_level(time),
             );
-            target_tree = make_tree(&state, app_start.elapsed());
+
+            view = root_view(&captures);
+            let env = DefaultEnvironment::new(time);
+            let layout = view.layout(&size.into(), &env, &mut captures, &mut state);
+
+            target_tree = view.render_tree(
+                &layout,
+                Point::zero(),
+                &env,
+                &mut captures,
+                &mut state,
+            );
+        }
+
+        for event in window.events() {
+            // handle view events
+            // TODO: set rebuild_view = true on event
+            if let embedded_graphics_simulator::SimulatorEvent::Quit = event {
+                break 'running;
+            }
         }
     }
+}
+
+fn root_view(state: &AppState) -> impl View<Rgb888, AppState> {
+    let counter = state.counter; // make sure the closure doesn't capture state
+    Button::new(
+        |state: &mut AppState| state.counter += 1,
+        move |_| {
+            Text::new_fmt::<32>(
+                format_args!("Counter: {}", counter),
+                &embedded_graphics::mono_font::ascii::FONT_10X20,
+            )
+            .foreground_color(Rgb888::WHITE)
+            .padding(Edges::All, 10)
+        }
+    )
 }
 ```
 
 This loop will animate between the source and target trees, creating a new target tree when
 the state changes. The source tree is joined with the original target tree to create a new
 source tree that continues the animation from where it left off.
-
-## Tracking Changes in State
-
-You may find it useful to leverage the borrow checker to track whether state has changed by
-placing mutable state behind a method that sets a dirty flag.
-
-```rust
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub struct Settings {
-    pub big_text: bool,
-    pub increase_contrast: bool,
-    pub reduce_animation: bool,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub struct State {
-    settings: Settings,
-    is_dirty: bool,
-}
-
-impl State {
-    /// Returns a mutable reference to the app's state, and marks the state as dirty.
-    pub fn settings_mut(&mut self) -> &mut Settings {
-        self.is_dirty = true;
-        &mut self.settings
-    }
-
-    pub fn settings(&self) -> &Settings {
-        &self.settings
-    }
-
-    /// Resets the dirty flag and returns its previous value.
-    pub fn reset_dirty(&mut self) -> bool {
-        let was_dirty = self.is_dirty;
-        self.is_dirty = false;
-        was_dirty
-    }
-}
-```
