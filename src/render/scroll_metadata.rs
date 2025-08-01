@@ -3,21 +3,21 @@ use crate::{
     render::{Animate, AnimatedJoin, Capsule, Offset, Render},
 };
 
+// This hacks together scroll functionality from existing primitives, but
+// a bespoke implementation will eventually replace it
+type ScrolInner<T> = Offset<Animate<(Offset<T>, Option<Capsule>, Option<Capsule>), bool>>;
+
 /// This is just a metadata structure that allows [`ScrollView`] to mutate its offset and scroll bars
 /// without recomputing a new view tree.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ScrollMetadata<T> {
     pub scroll_size: Size,
     pub inner_size: Size,
-    pub inner: Offset<Animate<(Offset<T>, Option<Capsule>, Option<Capsule>), bool>>,
+    pub(crate) inner: ScrolInner<T>,
 }
 
 impl<T> ScrollMetadata<T> {
-    pub fn new(
-        scroll_size: Size,
-        inner_size: Size,
-        inner: Offset<Animate<(Offset<T>, Option<Capsule>, Option<Capsule>), bool>>,
-    ) -> Self {
+    pub(crate) fn new(scroll_size: Size, inner_size: Size, inner: ScrolInner<T>) -> Self {
         Self {
             scroll_size,
             inner_size,

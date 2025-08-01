@@ -2,13 +2,14 @@ use core::time::Duration;
 
 use crate::{
     environment::DefaultEnvironment,
-    event::{Event, EventResult},
+    event::{Event, EventContext, EventResult},
     primitives::Point,
     render::{AnimatedJoin, AnimationDomain, Render},
     render_target::RenderTarget,
     view::{View, ViewLayout},
 };
 
+/// This is an experimental render loop
 pub async fn render_loop<C, V, F, R, P, T, D, TimeFn>(
     target: &mut T,
     mut app_data: D,
@@ -119,13 +120,10 @@ impl<V: ViewLayout<D>, D, TimeFn: Fn() -> Duration> EventHandler<'_, V, D, TimeF
             self.result.recompute_view = true;
             return;
         }
-        let result = self.view.handle_event(
-            event,
-            self.target_tree,
-            self.app_data,
-            self.state,
-            (self.app_time)(),
-        );
+        let context = EventContext::new((self.app_time)());
+        let result =
+            self.view
+                .handle_event(event, &context, self.target_tree, self.app_data, self.state);
         self.result.merge(result);
     }
 }

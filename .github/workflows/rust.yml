@@ -50,7 +50,7 @@ jobs:
       - uses: actions-rust-lang/setup-rust-toolchain@v1
       - uses: Swatinem/rust-cache@v2
       - name: Rustfmt
-        run: rustfmt **/*.rs --check
+        run: rustfmt **/*.rs --check --edition 2021
 
   lint-markdown:
     runs-on: ubuntu-latest
@@ -111,6 +111,8 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@cargo-llvm-cov
+      - name: Install SDL2
+        run: sudo apt-get update && sudo apt-get install libsdl2-dev
       - name: Generate code coverage
         run: cargo llvm-cov --all-features --package buoyant --lcov --output-path lcov.info
       - name: Upload coverage to Codecov

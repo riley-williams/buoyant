@@ -1,4 +1,4 @@
-use crate::font::{FontMetrics, FontRender};
+use crate::font::FontRender;
 use crate::primitives::{Interpolate, Pixel};
 use crate::surface::{AsDrawTarget, OffsetSurface};
 use crate::{
@@ -99,7 +99,6 @@ where
     }
 
     fn set_clip_rect(&mut self, rect: Rectangle) -> Rectangle {
-        // TODO: clip to drawable area
         let old_rect = self.clip_rect.clone();
         self.clip_rect = rect;
         old_rect

@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use buoyant::{
-    event::Event,
+    event::{Event, EventContext},
     primitives::{Point, Size},
     render::Render,
     render_target::FixedTextBuffer,
@@ -46,18 +46,18 @@ fn vertical_scroll_does_not_move_horizontally() {
     );
     view.handle_event(
         &Event::TouchDown(Point::new(2, 3)),
+        &EventContext::new(Duration::ZERO),
         &mut tree,
         &mut captures,
         &mut state,
-        Duration::ZERO,
     );
 
     view.handle_event(
         &Event::TouchMoved(Point::new(20, 3)),
+        &EventContext::new(Duration::ZERO),
         &mut tree,
         &mut captures,
         &mut state,
-        Duration::ZERO,
     );
 
     tree.render(&mut buffer, &' ', Point::zero());
@@ -74,10 +74,10 @@ fn vertical_scroll_does_not_move_horizontally() {
 
     view.handle_event(
         &Event::TouchMoved(Point::new(-20, 2)),
+        &EventContext::new(Duration::ZERO),
         &mut tree,
         &mut captures,
         &mut state,
-        Duration::ZERO,
     );
 
     tree.render(&mut buffer, &' ', Point::zero());
@@ -94,10 +94,10 @@ fn vertical_scroll_does_not_move_horizontally() {
 
     view.handle_event(
         &Event::TouchUp(Point::new(1, 1)),
+        &EventContext::new(Duration::ZERO),
         &mut tree,
         &mut captures,
         &mut state,
-        Duration::ZERO,
     );
 
     tree.render(&mut buffer, &' ', Point::zero());

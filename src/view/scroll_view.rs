@@ -4,7 +4,7 @@ use core::time::Duration;
 
 use crate::{
     animation::Animation,
-    event::{Event, EventResult},
+    event::{Event, EventContext, EventResult},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimension, ProposedDimensions, Size},
     render::{Animate, Capsule, Offset, ScrollMetadata},
@@ -13,7 +13,6 @@ use crate::{
 
 /// The axes along which the scroll view can scroll.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-#[non_exhaustive]
 pub enum ScrollDirection {
     /// Constrain scrolling to the vertical axis
     #[default]
@@ -26,17 +25,17 @@ pub enum ScrollDirection {
 
 /// Configuration for the scroll bars appearance and behavior.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ScrollBarConfig {
+struct ScrollBarConfig {
     /// When to display scroll bars.
-    pub visibility: ScrollBarVisibility,
+    visibility: ScrollBarVisibility,
     /// Padding applied around all edges of scroll bars.
-    pub padding: u32,
+    padding: u32,
     /// Bar width.
-    pub width: u32,
+    width: u32,
     /// Whether the scroll bars overlap the content of the scroll view.
-    pub overlaps_content: bool,
+    overlaps_content: bool,
     /// The minimum length of the scroll bars.
-    pub minimum_bar_length: u32,
+    minimum_bar_length: u32,
 }
 
 impl Default for ScrollBarConfig {
@@ -60,6 +59,8 @@ pub enum ScrollBarVisibility {
     Always,
     /// Never show the scrollbar
     Never,
+    // /// Only show the scrollbar when scrolling
+    // Auto,
 }
 
 /// A scroll view that allows scrolling through its inner content.
@@ -93,7 +94,7 @@ pub enum ScrollBarVisibility {
 /// ```
 /// use buoyant::view::{
 ///     prelude::*,
-///     scroll_view::{ScrollBarConfig, ScrollBarVisibility, ScrollDirection}
+///     scroll_view::{ScrollBarVisibility, ScrollDirection}
 /// };
 /// use embedded_graphics::{pixelcolor::Rgb565, mono_font::ascii::FONT_9X15_BOLD};
 ///
@@ -106,17 +107,14 @@ pub enum ScrollBarVisibility {
 ///         ))
 ///     )
 ///     .with_direction(ScrollDirection::Both)
-///     .with_bar_config(ScrollBarConfig {
-///         visibility: ScrollBarVisibility::Never,
-///         padding: 4,
-///         width: 8,
-///         overlaps_content: false,
-///         minimum_bar_length: 30,
-///     })
+///     .with_bar_visibility(ScrollBarVisibility::Never)
+///     .with_bar_padding(4)
+///     .with_bar_width(8)
+///     .with_overlapping_bar(false)
+///     .with_minimum_bar_length(30)
 /// }
 /// ```
-#[non_exhaustive]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ScrollView<Inner> {
     inner: Inner,
     bar_config: ScrollBarConfig,
@@ -124,7 +122,7 @@ pub struct ScrollView<Inner> {
 }
 
 impl<Inner> ScrollView<Inner> {
-    #[allow(missing_docs)]
+    /// Constructs a new [`ScrollView`] with the given inner view.
     #[must_use]
     pub fn new(inner: Inner) -> Self {
         Self {
@@ -132,13 +130,6 @@ impl<Inner> ScrollView<Inner> {
             bar_config: ScrollBarConfig::default(),
             direction: ScrollDirection::default(),
         }
-    }
-
-    /// Sets the scrollbar configuration.
-    #[must_use]
-    pub fn with_bar_config(mut self, config: ScrollBarConfig) -> Self {
-        self.bar_config = config;
-        self
     }
 
     /// Sets the axes along which the scroll view can scroll.
@@ -366,10 +357,10 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
     fn handle_event(
         &self,
         event: &crate::event::Event,
+        context: &EventContext,
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
-        app_time: Duration,
     ) -> EventResult {
         let (result, delta) = match event {
             Event::Scroll(delta) => (EventResult::new(true, true), *delta),
@@ -380,12 +371,12 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
                     is_exclusive: false,
                 };
                 (
-                    EventResult::new(true, false).merging(self.inner.handle_event(
+                    EventResult::new(true, true).merging(self.inner.handle_event(
                         &event.offset(-render_tree.offset() - render_tree.inner.offset),
+                        context,
                         render_tree.inner_mut(),
                         captures,
                         &mut state.inner_state,
-                        app_time,
                     )),
                     Point::zero(),
                 )
@@ -407,15 +398,15 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
                         (
                             EventResult::new(true, true).merging(self.inner.handle_event(
                                 &Event::TouchCancelled,
+                                context,
                                 render_tree.inner_mut(),
                                 captures,
                                 &mut state.inner_state,
-                                app_time,
                             )),
                             delta,
                         )
                     } else {
-                        (EventResult::new(true, false), delta)
+                        (EventResult::new(true, true), delta)
                     }
                 }
                 ScrollInteraction::Idle => (EventResult::default(), Point::zero()),
@@ -433,7 +424,7 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
                     if is_exclusive {
                         // If we don't set this, the scroll view will not animate the
                         // snap back because the frame time is old
-                        render_tree.inner.subtree.frame_time = app_time;
+                        render_tree.inner.subtree.frame_time = context.app_time;
                         render_tree.inner.subtree.value = true;
                         (EventResult::new(true, true), delta)
                     } else {
@@ -442,10 +433,10 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
                                 &Event::TouchUp(
                                     *point - render_tree.offset() - render_tree.inner.offset,
                                 ),
+                                context,
                                 render_tree.inner_mut(),
                                 captures,
                                 &mut state.inner_state,
-                                app_time,
                             )),
                             delta,
                         )
@@ -459,10 +450,10 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
                 (
                     EventResult::new(true, true).merging(self.inner.handle_event(
                         &Event::TouchCancelled,
+                        context,
                         render_tree.inner_mut(),
                         captures,
                         &mut state.inner_state,
-                        app_time,
                     )),
                     Point::zero(),
                 )
@@ -531,6 +522,7 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
     }
 }
 
+// TODO: remove generics to prevent excessive monomorphization
 impl<V> ScrollView<V> {
     #[must_use]
     fn scroll_bars(
@@ -540,6 +532,11 @@ impl<V> ScrollView<V> {
         inner_size: Size,
         subview_offset: Point,
     ) -> (Option<Capsule>, Option<Capsule>) {
+        let overlap_padding = match self.direction {
+            ScrollDirection::Vertical | ScrollDirection::Horizontal => 0,
+            ScrollDirection::Both => self.bar_config.width + self.bar_config.padding,
+        };
+
         let should_show_scrollbar = match self.bar_config.visibility {
             ScrollBarVisibility::Always => true,
             ScrollBarVisibility::Never => false,
@@ -557,6 +554,7 @@ impl<V> ScrollView<V> {
                 subview_offset.y,
                 self.bar_config.minimum_bar_length,
                 self.bar_config.padding,
+                self.bar_config.padding + overlap_padding,
             );
             let bar_x = scroll_size
                 .width
@@ -582,6 +580,7 @@ impl<V> ScrollView<V> {
                 subview_offset.x,
                 self.bar_config.minimum_bar_length,
                 self.bar_config.padding,
+                self.bar_config.padding + overlap_padding,
             );
             let bar_y = scroll_size
                 .height
@@ -608,7 +607,8 @@ fn bar_size(
     inner_view_length: u32,
     scroll_offset: i32,
     min_length: u32,
-    padding: u32,
+    leading_padding: u32,
+    trailing_padding: u32,
 ) -> (i32, u32) {
     let overscroll_amount = if scroll_offset > 0 {
         scroll_offset as u32
@@ -617,7 +617,7 @@ fn bar_size(
         ((-scroll_offset) as u32).saturating_sub(max_offset)
     };
 
-    let available_space = scroll_view_length.saturating_sub(2 * padding);
+    let available_space = scroll_view_length.saturating_sub(leading_padding + trailing_padding);
 
     let perceived_scroll_length = scroll_view_length.saturating_sub(overscroll_amount);
     let bar_length = ((available_space * perceived_scroll_length)
@@ -628,10 +628,10 @@ fn bar_size(
         // Inner view is smaller, bar always touches the top or bottom
         if scroll_offset < 0 {
             // Bottom
-            (padding + available_space.saturating_sub(bar_length)) as i32
+            (leading_padding + available_space.saturating_sub(bar_length)) as i32
         } else {
             // Top
-            padding as i32
+            leading_padding as i32
         }
     } else {
         // Actual scrollable content - position based on scroll progress
@@ -639,7 +639,7 @@ fn bar_size(
         let permitted_offset = (inner_view_length - scroll_view_length) as i32;
 
         let scroll_progress = (-scroll_offset).max(0).min(permitted_offset);
-        padding as i32 + (scroll_progress * max_travel) / permitted_offset
+        leading_padding as i32 + (scroll_progress * max_travel) / permitted_offset
     };
 
     (bar_position, bar_length)
@@ -656,14 +656,16 @@ mod tests {
         let inner_length = 50;
         let scroll_offset = 0;
         let min_length = 10;
-        let padding = 5;
+        let leading_padding = 5;
+        let trailing_padding = 5;
 
         let (bar_y, bar_length) = bar_size(
             scroll_length,
             inner_length,
             scroll_offset,
             min_length,
-            padding,
+            leading_padding,
+            trailing_padding,
         );
 
         assert_eq!(bar_y, 5);
@@ -677,14 +679,16 @@ mod tests {
         let inner_length = 100;
         let scroll_offset = 0;
         let min_length = 10;
-        let padding = 5;
+        let leading_padding = 5;
+        let trailing_padding = 5;
 
         let (bar_y, bar_length) = bar_size(
             scroll_length,
             inner_length,
             scroll_offset,
             min_length,
-            padding,
+            leading_padding,
+            trailing_padding,
         );
 
         assert_eq!(bar_y, 5);
@@ -698,14 +702,16 @@ mod tests {
         let inner_length = 200;
         let scroll_offset = 0;
         let min_length = 10;
-        let padding = 5;
+        let leading_padding = 5;
+        let trailing_padding = 5;
 
         let (bar_y, bar_length) = bar_size(
             scroll_length,
             inner_length,
             scroll_offset,
             min_length,
-            padding,
+            leading_padding,
+            trailing_padding,
         );
 
         assert_eq!(bar_y, 5);
@@ -719,14 +725,16 @@ mod tests {
         let inner_length = 200;
         let scroll_offset = -100;
         let min_length = 10;
-        let padding = 5;
+        let leading_padding = 5;
+        let trailing_padding = 5;
 
         let (bar_y, bar_length) = bar_size(
             scroll_length,
             inner_length,
             scroll_offset,
             min_length,
-            padding,
+            leading_padding,
+            trailing_padding,
         );
 
         assert_eq!(bar_y, 50);
@@ -740,14 +748,16 @@ mod tests {
         let inner_length = 200;
         let scroll_offset = 20; // slight overscroll up
         let min_length = 10;
-        let padding = 5;
+        let leading_padding = 5;
+        let trailing_padding = 5;
 
         let (bar_y, bar_length) = bar_size(
             scroll_length,
             inner_length,
             scroll_offset,
             min_length,
-            padding,
+            leading_padding,
+            trailing_padding,
         );
 
         assert_eq!(bar_y, 5);
@@ -761,14 +771,16 @@ mod tests {
         let inner_length = 200;
         let scroll_offset = -120; // slight overscroll down
         let min_length = 10;
-        let padding = 5;
+        let leading_padding = 5;
+        let trailing_padding = 5;
 
         let (bar_y, bar_length) = bar_size(
             scroll_length,
             inner_length,
             scroll_offset,
             min_length,
-            padding,
+            leading_padding,
+            trailing_padding,
         );
 
         assert_eq!(bar_y, 59);
@@ -782,14 +794,16 @@ mod tests {
         let inner_length = 100_000;
         let scroll_offset = 0;
         let min_length = 7;
-        let padding = 10;
+        let leading_padding = 10;
+        let trailing_padding = 10;
 
         let (bar_y, bar_length) = bar_size(
             scroll_length,
             inner_length,
             scroll_offset,
             min_length,
-            padding,
+            leading_padding,
+            trailing_padding,
         );
 
         assert_eq!(bar_y, 10);
@@ -803,17 +817,19 @@ mod tests {
         let inner_length = 100_000;
         let scroll_offset = -99900;
         let min_length = 9;
-        let padding = 2;
+        let leading_padding = 2;
+        let trailing_padding = 5;
 
         let (bar_y, bar_length) = bar_size(
             scroll_length,
             inner_length,
             scroll_offset,
             min_length,
-            padding,
+            leading_padding,
+            trailing_padding,
         );
 
-        assert_eq!(bar_y, 89); // 100 - 2 - 9
+        assert_eq!(bar_y, 86); // 100 - 5 - 9
         assert_eq!(bar_length, 9);
     }
 
@@ -824,18 +840,20 @@ mod tests {
         let inner_length = 10;
         let scroll_offset = 50; // overscrolled up halfway
         let min_length = 7;
-        let padding = 10;
+        let leading_padding = 10;
+        let trailing_padding = 10;
 
         let (bar_y, bar_length) = bar_size(
             scroll_length,
             inner_length,
             scroll_offset,
             min_length,
-            padding,
+            leading_padding,
+            trailing_padding,
         );
 
         assert_eq!(bar_y, 10);
-        assert_eq!(bar_length, 40); // (100 - 2 * 10) * 50 / 100
+        assert_eq!(bar_length, 40); // (100 - (10 + 10)) * 50 / 100
     }
 
     #[test]
@@ -845,17 +863,19 @@ mod tests {
         let inner_length = 10;
         let scroll_offset = -50; // overscrolled down halfway
         let min_length = 9;
-        let padding = 2;
+        let leading_padding = 2;
+        let trailing_padding = 2;
 
         let (bar_y, bar_length) = bar_size(
             scroll_length,
             inner_length,
             scroll_offset,
             min_length,
-            padding,
+            leading_padding,
+            trailing_padding,
         );
 
         assert_eq!(bar_y, 50);
-        assert_eq!(bar_length, 48); // (100 - 2 * 2) * 50 / 100
+        assert_eq!(bar_length, 48); // (100 - (2 + 2)) * 50 / 100
     }
 }

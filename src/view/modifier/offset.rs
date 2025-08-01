@@ -1,5 +1,3 @@
-use core::time::Duration;
-
 use crate::{
     environment::LayoutEnvironment,
     event::EventResult,
@@ -71,13 +69,12 @@ where
     fn handle_event(
         &self,
         event: &crate::view::Event,
+        context: &crate::event::EventContext,
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
-        app_time: Duration,
     ) -> EventResult {
-        // FIXME: Apply offset to event coordinates
         self.child
-            .handle_event(event, render_tree, captures, state, app_time)
+            .handle_event(event, context, render_tree, captures, state)
     }
 }

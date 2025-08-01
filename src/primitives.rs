@@ -1,11 +1,9 @@
 mod dimension;
 pub mod geometry;
 mod interpolate;
-mod seal;
 
 pub use dimension::*;
 pub use interpolate::Interpolate;
-pub use seal::Seal;
 
 use core::cmp::max;
 

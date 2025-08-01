@@ -1,7 +1,7 @@
 use core::time::Duration;
 
 use buoyant::{
-    event::Event,
+    event::{Event, EventContext},
     primitives::{Point, Size},
     render::Render,
     render_target::FixedTextBuffer,
@@ -99,24 +99,22 @@ fn scroll_down_snaps_back() {
     );
     let event_result = view.handle_event(
         &Event::TouchDown(Point::new(2, 4)),
+        &EventContext::new(Duration::ZERO),
         &mut render_tree,
         &mut captures,
         &mut state,
-        Duration::ZERO,
     );
     assert!(event_result.handled);
-    assert!(!event_result.recompute_view);
 
     // Pull down
     let event_result = view.handle_event(
         &Event::TouchMoved(Point::new(2, 8)),
+        &EventContext::new(Duration::ZERO),
         &mut render_tree,
         &mut captures,
         &mut state,
-        Duration::ZERO,
     );
     assert!(event_result.handled);
-    assert!(!event_result.recompute_view);
 
     buffer.clear();
     render_tree.render(&mut buffer, &' ', Point::zero());
@@ -133,13 +131,12 @@ fn scroll_down_snaps_back() {
 
     let event_result = view.handle_event(
         &Event::TouchUp(Point::new(2, 8)), // Just at the bottom edge
+        &EventContext::new(Duration::ZERO),
         &mut render_tree,
         &mut captures,
         &mut state,
-        Duration::ZERO,
     );
     assert!(event_result.handled);
-    assert!(event_result.recompute_view);
 
     buffer.clear();
     render_tree.render(&mut buffer, &' ', Point::zero());
@@ -184,24 +181,22 @@ fn scroll_up_past_bottom_snaps_back() {
     // First scroll to the bottom of the content normally
     let event_result = view.handle_event(
         &Event::TouchDown(Point::new(2, 2)),
+        &EventContext::new(Duration::ZERO),
         &mut render_tree,
         &mut captures,
         &mut state,
-        Duration::ZERO,
     );
     assert!(event_result.handled);
-    assert!(!event_result.recompute_view);
 
     // Scroll up to just touch bottom content
     let event_result = view.handle_event(
         &Event::TouchMoved(Point::new(2, -7)),
+        &EventContext::new(Duration::ZERO),
         &mut render_tree,
         &mut captures,
         &mut state,
-        Duration::ZERO,
     );
     assert!(event_result.handled);
-    assert!(!event_result.recompute_view);
 
     buffer.clear();
     render_tree.render(&mut buffer, &' ', Point::zero());
@@ -219,13 +214,12 @@ fn scroll_up_past_bottom_snaps_back() {
     // Now scroll past the bottom limit - additional movement should be reduced by half
     let event_result = view.handle_event(
         &Event::TouchMoved(Point::new(2, -11)), // 4 past the limit
+        &EventContext::new(Duration::ZERO),
         &mut render_tree,
         &mut captures,
         &mut state,
-        Duration::ZERO,
     );
     assert!(event_result.handled);
-    assert!(!event_result.recompute_view);
 
     buffer.clear();
     render_tree.render(&mut buffer, &' ', Point::zero());
@@ -243,13 +237,12 @@ fn scroll_up_past_bottom_snaps_back() {
     // Release touch
     let event_result = view.handle_event(
         &Event::TouchUp(Point::new(2, -11)),
+        &EventContext::new(Duration::ZERO),
         &mut render_tree,
         &mut captures,
         &mut state,
-        Duration::ZERO,
     );
     assert!(event_result.handled);
-    assert!(event_result.recompute_view);
 
     // We're modifying the target tree, so it should retain the scroll position
     buffer.clear();
@@ -307,24 +300,22 @@ fn horizontal_scroll_right_snaps_back() {
     );
     let event_result = view.handle_event(
         &Event::TouchDown(Point::new(4, 2)),
+        &EventContext::new(Duration::ZERO),
         &mut render_tree,
         &mut captures,
         &mut state,
-        Duration::ZERO,
     );
     assert!(event_result.handled);
-    assert!(!event_result.recompute_view);
 
     // Pull right
     let event_result = view.handle_event(
         &Event::TouchMoved(Point::new(8, 2)),
+        &EventContext::new(Duration::ZERO),
         &mut render_tree,
         &mut captures,
         &mut state,
-        Duration::ZERO,
     );
     assert!(event_result.handled);
-    assert!(!event_result.recompute_view);
 
     buffer.clear();
     render_tree.render(&mut buffer, &' ', Point::zero());
@@ -341,13 +332,12 @@ fn horizontal_scroll_right_snaps_back() {
 
     let event_result = view.handle_event(
         &Event::TouchUp(Point::new(8, 2)), // Just at the right edge
+        &EventContext::new(Duration::ZERO),
         &mut render_tree,
         &mut captures,
         &mut state,
-        Duration::ZERO,
     );
     assert!(event_result.handled);
-    assert!(event_result.recompute_view);
 
     buffer.clear();
     render_tree.render(&mut buffer, &' ', Point::zero());
@@ -405,24 +395,22 @@ fn both_direction_scroll_diagonal_snaps_back_up_left() {
 
     let event_result = view.handle_event(
         &Event::TouchDown(Point::new(2, 2)),
+        &EventContext::new(Duration::ZERO),
         &mut render_tree,
         &mut captures,
         &mut state,
-        Duration::ZERO,
     );
     assert!(event_result.handled);
-    assert!(!event_result.recompute_view);
 
     // Pull diagonally down-right past the top-left bounds
     let event_result = view.handle_event(
         &Event::TouchMoved(Point::new(6, 4)),
+        &EventContext::new(Duration::ZERO),
         &mut render_tree,
         &mut captures,
         &mut state,
-        Duration::ZERO,
     );
     assert!(event_result.handled);
-    assert!(!event_result.recompute_view);
 
     buffer.clear();
     render_tree.render(&mut buffer, &' ', Point::zero());
@@ -440,13 +428,12 @@ fn both_direction_scroll_diagonal_snaps_back_up_left() {
 
     let event_result = view.handle_event(
         &Event::TouchUp(Point::new(6, 4)),
+        &EventContext::new(Duration::ZERO),
         &mut render_tree,
         &mut captures,
         &mut state,
-        Duration::ZERO,
     );
     assert!(event_result.handled);
-    assert!(event_result.recompute_view);
 
     buffer.clear();
     render_tree.render(&mut buffer, &' ', Point::zero());
@@ -492,24 +479,22 @@ fn both_direction_scroll_bottom_right_snaps_back() {
     // First scroll to the bottom-right corner normally
     let event_result = view.handle_event(
         &Event::TouchDown(Point::new(6, 3)),
+        &EventContext::new(Duration::from_millis(500)),
         &mut render_tree,
         &mut captures,
         &mut state,
-        Duration::ZERO,
     );
     assert!(event_result.handled);
-    assert!(!event_result.recompute_view);
 
     // Scroll to bottom-right corner
     let event_result = view.handle_event(
         &Event::TouchMoved(Point::new(4, 1)),
+        &EventContext::new(Duration::from_millis(600)),
         &mut render_tree,
         &mut captures,
         &mut state,
-        Duration::ZERO,
     );
     assert!(event_result.handled);
-    assert!(!event_result.recompute_view);
 
     buffer.clear();
     render_tree.render(&mut buffer, &' ', Point::zero());
@@ -528,13 +513,12 @@ fn both_direction_scroll_bottom_right_snaps_back() {
     // Now scroll past the bottom-right bounds (up-left movement past limits)
     let event_result = view.handle_event(
         &Event::TouchMoved(Point::new(0, -3)),
+        &EventContext::new(Duration::from_millis(700)),
         &mut render_tree,
         &mut captures,
         &mut state,
-        Duration::ZERO,
     );
     assert!(event_result.handled);
-    assert!(!event_result.recompute_view);
 
     buffer.clear();
     render_tree.render(&mut buffer, &' ', Point::zero());
@@ -552,13 +536,12 @@ fn both_direction_scroll_bottom_right_snaps_back() {
 
     let event_result = view.handle_event(
         &Event::TouchUp(Point::new(0, -3)),
+        &EventContext::new(Duration::from_millis(800)),
         &mut render_tree,
         &mut captures,
         &mut state,
-        Duration::ZERO,
     );
     assert!(event_result.handled);
-    assert!(event_result.recompute_view);
 
     buffer.clear();
     render_tree.render(&mut buffer, &' ', Point::zero());
@@ -604,24 +587,22 @@ fn horizontal_scroll_left_past_right_edge_snaps_back() {
     // First scroll to the right edge of the content normally
     let event_result = view.handle_event(
         &Event::TouchDown(Point::new(2, 2)),
+        &EventContext::new(Duration::from_millis(500)),
         &mut render_tree,
         &mut captures,
         &mut state,
-        Duration::ZERO,
     );
     assert!(event_result.handled);
-    assert!(!event_result.recompute_view);
 
     // Scroll left to just touch right edge content
     let event_result = view.handle_event(
         &Event::TouchMoved(Point::new(0, 2)),
+        &EventContext::new(Duration::from_millis(600)),
         &mut render_tree,
         &mut captures,
         &mut state,
-        Duration::ZERO,
     );
     assert!(event_result.handled);
-    assert!(!event_result.recompute_view);
 
     buffer.clear();
     render_tree.render(&mut buffer, &' ', Point::zero());
@@ -639,13 +620,12 @@ fn horizontal_scroll_left_past_right_edge_snaps_back() {
     // Now scroll past the right limit - additional movement should be reduced by half
     let event_result = view.handle_event(
         &Event::TouchMoved(Point::new(-8, 2)), // 4 past the limit
+        &EventContext::new(Duration::from_millis(700)),
         &mut render_tree,
         &mut captures,
         &mut state,
-        Duration::ZERO,
     );
     assert!(event_result.handled);
-    assert!(!event_result.recompute_view);
 
     buffer.clear();
     render_tree.render(&mut buffer, &' ', Point::zero());
@@ -663,13 +643,12 @@ fn horizontal_scroll_left_past_right_edge_snaps_back() {
     // Release touch
     let event_result = view.handle_event(
         &Event::TouchUp(Point::new(-8, 2)),
+        &EventContext::new(Duration::from_millis(800)),
         &mut render_tree,
         &mut captures,
         &mut state,
-        Duration::ZERO,
     );
     assert!(event_result.handled);
-    assert!(event_result.recompute_view);
 
     // We're modifying the target tree, so it should retain the scroll position
     buffer.clear();

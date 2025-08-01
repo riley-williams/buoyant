@@ -1,11 +1,10 @@
-use core::fmt::Write;
-use std::time::Duration;
+use core::time::Duration;
 
 use buoyant::{
     environment::DefaultEnvironment,
-    event::Event,
+    event::{Event, EventContext},
     font::CharacterBufferFont,
-    primitives::{Point, Seal, Size},
+    primitives::{Point, Size},
     render::Render,
     render_target::FixedTextBuffer,
     view::prelude::*,
@@ -15,12 +14,6 @@ use buoyant::{
 struct AppState {
     pub a: i32,
     pub b: i32,
-}
-
-fn string_fmt<const N: usize>(args: core::fmt::Arguments<'_>) -> heapless::String<N> {
-    let mut s = heapless::String::<N>::new();
-    _ = s.write_fmt(args);
-    s
 }
 
 fn counter_view(state: &AppState) -> impl View<char, AppState> {
@@ -37,10 +30,7 @@ fn counter_view(state: &AppState) -> impl View<char, AppState> {
 
 fn count_view(count: i32) -> impl View<char, i32> {
     VStack::new((
-        Text::new(
-            string_fmt::<16>(format_args!("count: {count}")),
-            &CharacterBufferFont,
-        ),
+        Text::new_fmt::<16>(format_args!("count: {count}"), &CharacterBufferFont),
         Button::new(
             |count: &mut Seal<i32>| {
                 *count.as_mut() += 1;
@@ -87,18 +77,18 @@ fn increment_single_frame() {
 
     view.handle_event(
         &Event::TouchDown(Point::new(1, 1)),
+        &EventContext::new(Duration::ZERO),
         &mut tree,
         &mut app_state,
         &mut view_state,
-        Duration::ZERO,
     );
     assert_eq!(app_state, AppState { a: 0, b: 0 });
     view.handle_event(
         &Event::TouchUp(Point::new(1, 1)),
+        &EventContext::new(Duration::ZERO),
         &mut tree,
         &mut app_state,
         &mut view_state,
-        Duration::ZERO,
     );
     assert_eq!(app_state, AppState { a: 1, b: 0 });
 
@@ -128,26 +118,26 @@ fn drag_cancel() {
 
     view.handle_event(
         &Event::TouchDown(Point::new(1, 1)),
+        &EventContext::new(Duration::ZERO),
         &mut tree,
         &mut app_state,
         &mut view_state,
-        Duration::ZERO,
     );
     assert_eq!(app_state, AppState { a: 0, b: 0 });
     view.handle_event(
         &Event::TouchMoved(Point::new(1, 2)),
+        &EventContext::new(Duration::ZERO),
         &mut tree,
         &mut app_state,
         &mut view_state,
-        Duration::ZERO,
     );
     assert_eq!(app_state, AppState { a: 0, b: 0 });
     view.handle_event(
         &Event::TouchUp(Point::new(1, 2)),
+        &EventContext::new(Duration::ZERO),
         &mut tree,
         &mut app_state,
         &mut view_state,
-        Duration::ZERO,
     );
     assert_eq!(app_state, AppState { a: 0, b: 0 });
 }
@@ -167,34 +157,34 @@ fn drag_cancel_uncancel() {
 
     view.handle_event(
         &Event::TouchDown(Point::new(1, 1)),
+        &EventContext::new(Duration::ZERO),
         &mut tree,
         &mut app_state,
         &mut view_state,
-        Duration::ZERO,
     );
     assert_eq!(app_state, AppState { a: 0, b: 0 });
     view.handle_event(
         &Event::TouchMoved(Point::new(1, 2)),
+        &EventContext::new(Duration::ZERO),
         &mut tree,
         &mut app_state,
         &mut view_state,
-        Duration::ZERO,
     );
     assert_eq!(app_state, AppState { a: 0, b: 0 });
     view.handle_event(
         &Event::TouchMoved(Point::new(5, 1)),
+        &EventContext::new(Duration::ZERO),
         &mut tree,
         &mut app_state,
         &mut view_state,
-        Duration::ZERO,
     );
     assert_eq!(app_state, AppState { a: 0, b: 0 });
     view.handle_event(
         &Event::TouchUp(Point::new(5, 1)),
+        &EventContext::new(Duration::ZERO),
         &mut tree,
         &mut app_state,
         &mut view_state,
-        Duration::ZERO,
     );
     assert_eq!(app_state, AppState { a: 1, b: 0 });
 }

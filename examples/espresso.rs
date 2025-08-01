@@ -6,12 +6,9 @@
 //! To run this example using the `embedded_graphics` simulator, you must have the `sdl2` package installed.
 //! See [SDL2](https://github.com/Rust-SDL2/rust-sdl2) for installation instructions.
 
-use std::thread::sleep;
 use std::time::{Duration, Instant};
 
-use buoyant::app::EventHandler;
-use buoyant::primitives::Seal;
-use buoyant::render_target::EmbeddedGraphicsRenderTarget;
+use buoyant::render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _};
 use buoyant::view::scroll_view::ScrollDirection;
 use buoyant::{animation::Animation, if_view, match_view, view::prelude::*};
 
@@ -78,9 +75,11 @@ fn main() {
     };
     let flush_fn = async |target: &mut EmbeddedGraphicsRenderTarget<_>, _, _| {
         window.lock().await.update(target.display());
+        // clear buffer for next frame
+        target.clear(color::Space::BLACK);
     };
 
-    let render_loop = buoyant::app::render_loop(
+    let render_loop = buoyant::render_loop::render_loop(
         &mut target,
         captures,
         color::Space::WHITE,
@@ -225,14 +224,6 @@ fn settings_tab(state: &AppState) -> impl View<color::Space, AppState> {
                     state.stop_on_weight = !state.stop_on_weight;
                 },
             ),
-            Text::new(
-                "This is a bunch of bullshit to make the view longer",
-                &font::CAPTION,
-            )
-            .multiline_text_alignment(HorizontalTextAlignment::Trailing)
-            .foreground_color(color::Space::WHITE)
-            .frame()
-            .with_width(90),
             toggle_text(
                 "Auto off",
                 state.auto_off,
@@ -248,7 +239,7 @@ fn settings_tab(state: &AppState) -> impl View<color::Space, AppState> {
         .padding(Edges::All, spacing::SECTION_MARGIN)
         .animated(Animation::linear(Duration::from_millis(200)), state.clone()),
     )
-    .with_overlapping_bar(true) // we already have padding
+    .with_overlapping_bar(true) // we already applied padding
 }
 
 fn toggle_text<C>(

@@ -1,9 +1,8 @@
 use core::cmp::max;
-use core::time::Duration;
 
 use crate::{
     environment::LayoutEnvironment,
-    event::EventResult,
+    event::{EventContext, EventResult},
     layout::{HorizontalAlignment, LayoutDirection, ResolvedLayout},
     primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions},
     view::{ViewLayout, ViewMarker},
@@ -299,14 +298,14 @@ macro_rules! impl_view_for_vstack {
             fn handle_event(
                 &self,
                 event: &crate::view::Event,
+                context: &EventContext,
                 render_tree: &mut Self::Renderables,
                 captures: &mut Captures,
                 state: &mut Self::State,
-                app_time: Duration,
             ) -> EventResult {
                 let mut result = EventResult::default();
                 $(
-                    result.merge(self.items.$n.handle_event(event, &mut render_tree.$n, captures, &mut state.$n, app_time));
+                    result.merge(self.items.$n.handle_event(event, context, &mut render_tree.$n, captures, &mut state.$n));
                     if result.handled {
                         return result;
                     }

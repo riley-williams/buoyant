@@ -1,7 +1,5 @@
-use core::time::Duration;
-
 use crate::{
-    event::EventResult,
+    event::{EventContext, EventResult},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
     render::{OneOf2, OneOf3},
@@ -280,17 +278,17 @@ where
     fn handle_event(
         &self,
         event: &crate::view::Event,
+        context: &EventContext,
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
-        app_time: Duration,
     ) -> EventResult {
         match (&self.branch, render_tree, state) {
             (Branch2::Variant0(v0), OneOf2::Variant0(t0), Branch2::Variant0(s0)) => {
-                v0.handle_event(event, t0, captures, s0, app_time)
+                v0.handle_event(event, context, t0, captures, s0)
             }
             (Branch2::Variant1(v1), OneOf2::Variant1(t1), Branch2::Variant1(s1)) => {
-                v1.handle_event(event, t1, captures, s1, app_time)
+                v1.handle_event(event, context, t1, captures, s1)
             }
             _ => {
                 assert!(
@@ -463,20 +461,20 @@ where
     fn handle_event(
         &self,
         event: &crate::view::Event,
+        context: &EventContext,
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
-        app_time: Duration,
     ) -> EventResult {
         match (&self.branch, render_tree, state) {
             (Branch3::Variant0(v0), OneOf3::Variant0(t0), Branch3::Variant0(s0)) => {
-                v0.handle_event(event, t0, captures, s0, app_time)
+                v0.handle_event(event, context, t0, captures, s0)
             }
             (Branch3::Variant1(v1), OneOf3::Variant1(t1), Branch3::Variant1(s1)) => {
-                v1.handle_event(event, t1, captures, s1, app_time)
+                v1.handle_event(event, context, t1, captures, s1)
             }
             (Branch3::Variant2(v2), OneOf3::Variant2(t2), Branch3::Variant2(s2)) => {
-                v2.handle_event(event, t2, captures, s2, app_time)
+                v2.handle_event(event, context, t2, captures, s2)
             }
             _ => {
                 assert!(

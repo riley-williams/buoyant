@@ -1,5 +1,3 @@
-use core::time::Duration;
-
 use crate::{
     animation::Animation,
     environment::LayoutEnvironment,
@@ -81,17 +79,17 @@ where
     fn handle_event(
         &self,
         event: &crate::view::Event,
+        context: &crate::event::EventContext,
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
-        app_time: Duration,
     ) -> EventResult {
         self.inner.handle_event(
             event,
+            context,
             &mut render_tree.subtree,
             captures,
             &mut state.1,
-            app_time,
         )
     }
 }

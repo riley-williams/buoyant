@@ -1,3 +1,5 @@
+use core::time::Duration;
+
 use crate::primitives::Point;
 
 /// An interaction event that can be handled by a view.
@@ -44,8 +46,8 @@ impl Event {
     }
 }
 
-#[cfg(feature = "simulator")]
-pub mod impl_eg {
+#[cfg(feature = "embedded-graphics-simulator")]
+mod simulator {
     use crate::primitives::Point;
 
     use super::Event;
@@ -135,5 +137,19 @@ impl EventResult {
             handled: self.handled || other.handled,
             recompute_view: self.recompute_view || other.recompute_view,
         }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct EventContext {
+    pub app_time: Duration,
+}
+
+impl EventContext {
+    /// Creates a new `EventContext` with the given application time.
+    #[must_use]
+    pub const fn new(app_time: Duration) -> Self {
+        Self { app_time }
     }
 }
