@@ -1,5 +1,6 @@
 use crate::{
     environment::LayoutEnvironment,
+    event::EventResult,
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimension, ProposedDimensions},
     render::{OneOf2, OneOf3, OneOf4},
@@ -163,15 +164,16 @@ where
     }
 
     fn handle_event(
-        &mut self,
+        &self,
         event: &crate::view::Event,
+        context: &crate::event::EventContext,
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
-    ) -> bool {
+    ) -> EventResult {
         self.choices
             .0
-            .handle_event(event, render_tree, captures, state)
+            .handle_event(event, context, render_tree, captures, state)
     }
 }
 
@@ -286,19 +288,22 @@ where
     }
 
     fn handle_event(
-        &mut self,
+        &self,
         event: &crate::view::Event,
+        context: &crate::event::EventContext,
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
-    ) -> bool {
+    ) -> EventResult {
         match (state, render_tree) {
-            (Branch2::Variant0(s0), OneOf2::Variant0(t0)) => {
-                self.choices.0.handle_event(event, t0, captures, s0)
-            }
-            (Branch2::Variant1(s1), OneOf2::Variant1(t1)) => {
-                self.choices.1.handle_event(event, t1, captures, s1)
-            }
+            (Branch2::Variant0(s0), OneOf2::Variant0(t0)) => self
+                .choices
+                .0
+                .handle_event(event, context, t0, captures, s0),
+            (Branch2::Variant1(s1), OneOf2::Variant1(t1)) => self
+                .choices
+                .1
+                .handle_event(event, context, t1, captures, s1),
             _ => {
                 // FIXME: I think it's better here to build new state, leaving to see what
                 // breaks...
@@ -436,22 +441,26 @@ where
     }
 
     fn handle_event(
-        &mut self,
+        &self,
         event: &crate::view::Event,
+        context: &crate::event::EventContext,
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
-    ) -> bool {
+    ) -> EventResult {
         match (state, render_tree) {
-            (Branch3::Variant0(s0), OneOf3::Variant0(t0)) => {
-                self.choices.0.handle_event(event, t0, captures, s0)
-            }
-            (Branch3::Variant1(s1), OneOf3::Variant1(t1)) => {
-                self.choices.1.handle_event(event, t1, captures, s1)
-            }
-            (Branch3::Variant2(s2), OneOf3::Variant2(t2)) => {
-                self.choices.2.handle_event(event, t2, captures, s2)
-            }
+            (Branch3::Variant0(s0), OneOf3::Variant0(t0)) => self
+                .choices
+                .0
+                .handle_event(event, context, t0, captures, s0),
+            (Branch3::Variant1(s1), OneOf3::Variant1(t1)) => self
+                .choices
+                .1
+                .handle_event(event, context, t1, captures, s1),
+            (Branch3::Variant2(s2), OneOf3::Variant2(t2)) => self
+                .choices
+                .2
+                .handle_event(event, context, t2, captures, s2),
             _ => {
                 // FIXME: I think it's better here to build new state
                 panic!("Layout/state branch mismatch");
@@ -619,25 +628,30 @@ where
     }
 
     fn handle_event(
-        &mut self,
+        &self,
         event: &crate::view::Event,
+        context: &crate::event::EventContext,
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
-    ) -> bool {
+    ) -> EventResult {
         match (state, render_tree) {
-            (Branch4::Variant0(s0), OneOf4::Variant0(t0)) => {
-                self.choices.0.handle_event(event, t0, captures, s0)
-            }
-            (Branch4::Variant1(s1), OneOf4::Variant1(t1)) => {
-                self.choices.1.handle_event(event, t1, captures, s1)
-            }
-            (Branch4::Variant2(s2), OneOf4::Variant2(t2)) => {
-                self.choices.2.handle_event(event, t2, captures, s2)
-            }
-            (Branch4::Variant3(s3), OneOf4::Variant3(t3)) => {
-                self.choices.3.handle_event(event, t3, captures, s3)
-            }
+            (Branch4::Variant0(s0), OneOf4::Variant0(t0)) => self
+                .choices
+                .0
+                .handle_event(event, context, t0, captures, s0),
+            (Branch4::Variant1(s1), OneOf4::Variant1(t1)) => self
+                .choices
+                .1
+                .handle_event(event, context, t1, captures, s1),
+            (Branch4::Variant2(s2), OneOf4::Variant2(t2)) => self
+                .choices
+                .2
+                .handle_event(event, context, t2, captures, s2),
+            (Branch4::Variant3(s3), OneOf4::Variant3(t3)) => self
+                .choices
+                .3
+                .handle_event(event, context, t3, captures, s3),
             _ => {
                 // FIXME: I think it's better here to build new state
                 panic!("Layout/state branch mismatch");

@@ -4,20 +4,17 @@ use crate::primitives::Point;
 macro_rules! impl_join_for_collections {
     ($(($n:tt, $type:ident)),+) => {
         impl<$($type: crate::render::AnimatedJoin),+> crate::render::AnimatedJoin for ($($type),+) {
-            fn join(
-                source: Self,
-                target: Self,
+            fn join_from(
+                &mut self,
+                source: &Self,
                 domain: &crate::render::AnimationDomain
-            ) -> Self {
-                (
-                    $(
-                        $type::join(
-                            source.$n,
-                            target.$n,
-                            domain
-                        ),
-                    )+
-                )
+            ) {
+                $(
+                    self.$n.join_from(
+                        &source.$n,
+                        domain
+                    );
+                )+
             }
         }
     };
@@ -37,14 +34,13 @@ mod impl_join {
 }
 
 impl<T: AnimatedJoin, const N: usize> AnimatedJoin for heapless::Vec<T, N> {
-    fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
-        source
-            .into_iter()
-            .zip(target)
-            .map(|(source, target)| T::join(source, target, domain))
-            .collect()
+    fn join_from(&mut self, source: &Self, domain: &AnimationDomain) {
+        self.iter_mut().zip(source).for_each(|(target, source)| {
+            target.join_from(source, domain);
+        });
     }
 }
+
 macro_rules! impl_render_for_collections {
     ($(($n:tt, $type:ident)),+) => {
         impl<Color, $($type: crate::render::Render<Color> ),+> crate::render::Render<Color> for ($($type),+) {
@@ -147,9 +143,7 @@ mod render_order_tests {
     }
 
     impl super::AnimatedJoin for OrderTracker {
-        fn join(source: Self, _target: Self, _domain: &AnimationDomain) -> Self {
-            source
-        }
+        fn join_from(&mut self, _source: &Self, _domain: &AnimationDomain) {}
     }
 
     impl Render<char> for OrderTracker {

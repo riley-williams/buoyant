@@ -72,6 +72,7 @@ impl<'a, T: AsRef<str>, F> Text<'a, T, F> {
         }
     }
 }
+
 impl<'a, F> Text<'a, (), F> {
     /// A convenience constructor for [`Text`] backed by an owned [`heapless::String<N>`]
     /// and formatted with the result of [`format_args!`].
@@ -112,7 +113,7 @@ impl<T: PartialEq, F> PartialEq for Text<'_, T, F> {
 }
 
 impl<'a, T: Clone, F> ViewMarker for Text<'a, T, F> {
-    type Renderables = render::Text<'a, T, F>;
+    type Renderables = render::Text<'a, T, F, 8>;
 }
 
 impl<Captures: ?Sized, T, F> ViewLayout<Captures> for Text<'_, T, F>
@@ -120,7 +121,7 @@ where
     T: AsRef<str> + Clone,
     F: Font,
 {
-    type Sublayout = ();
+    type Sublayout = heapless::Vec<crate::render::text::Line, 8>;
     type State = ();
 
     fn build_state(&self, _captures: &mut Captures) -> Self::State {}
@@ -136,7 +137,11 @@ where
         let line_height = metrics.default_line_height();
         let wrap = WhitespaceWrap::new(self.text.as_ref(), offer.width, &metrics);
         let mut size = Size::zero();
+        // TODO: actually calculate this
+        let line_ranges = heapless::Vec::new();
         for line in wrap {
+            // FIXME: WhitespaceWrap could return a `Line` type with more information
+            // it's already done a width calculation
             size.width = core::cmp::max(size.width, metrics.str_width(line));
             size.height += line_height;
             if ProposedDimension::Exact(size.height) >= offer.height {
@@ -145,7 +150,7 @@ where
         }
 
         ResolvedLayout {
-            sublayouts: (),
+            sublayouts: line_ranges,
             resolved_size: size.into(),
         }
     }
@@ -158,13 +163,14 @@ where
         _captures: &mut Captures,
         _state: &mut Self::State,
     ) -> Self::Renderables {
-        render::Text {
-            text: self.text.clone(),
-            font: self.font,
+        render::Text::new(
             origin,
-            size: layout.resolved_size.into(),
-            alignment: self.alignment,
-        }
+            layout.resolved_size.into(),
+            self.font,
+            self.text.clone(),
+            self.alignment,
+            layout.sublayouts.clone(),
+        )
     }
 }
 

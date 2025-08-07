@@ -3,10 +3,19 @@ use crate::primitives::{Interpolate as _, Point};
 use super::{AnimatedJoin, AnimationDomain};
 
 #[non_exhaustive]
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Image<'a, T: ?Sized> {
     pub origin: Point,
     pub image: &'a T,
+}
+
+impl<T: ?Sized> Clone for Image<'_, T> {
+    fn clone(&self) -> Self {
+        Self {
+            origin: self.origin,
+            image: self.image,
+        }
+    }
 }
 
 impl<'a, T: ?Sized> Image<'a, T> {
@@ -16,14 +25,9 @@ impl<'a, T: ?Sized> Image<'a, T> {
 }
 
 impl<T: ?Sized> AnimatedJoin for Image<'_, T> {
-    fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
-        if domain.factor == 0 {
-            return source;
-        }
-        Self {
-            origin: Point::interpolate(source.origin, target.origin, domain.factor),
-            image: target.image,
-        }
+    fn join_from(&mut self, source: &Self, domain: &AnimationDomain) {
+        // image content jumps
+        self.origin = Point::interpolate(source.origin, self.origin, domain.factor);
     }
 }
 
@@ -133,14 +137,16 @@ mod tests {
         };
 
         let source = Image::new(Point::new(0, 0), &source_image_data);
-        let target = Image::new(Point::new(50, 25), &target_image_data);
+        let original_target = Image::new(Point::new(50, 25), &target_image_data);
 
-        let result = AnimatedJoin::join(source.clone(), target.clone(), &animation_domain(0));
-        assert_eq!(result.origin, source.origin);
-        assert_eq!(result.image, source.image);
+        let mut target = original_target.clone();
+        target.join_from(&source, &animation_domain(0));
+        assert_eq!(target.origin, source.origin);
+        assert_eq!(target.image, target.image);
 
-        let result = AnimatedJoin::join(source.clone(), target.clone(), &animation_domain(255));
-        assert_eq!(result.origin, target.origin);
-        assert_eq!(result.image, target.image);
+        let mut target = original_target.clone();
+        target.join_from(&source, &animation_domain(255));
+        assert_eq!(target.origin, original_target.origin);
+        assert_eq!(target.image, original_target.image);
     }
 }

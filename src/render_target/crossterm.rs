@@ -34,6 +34,7 @@ use super::{Brush, Glyph, RenderTarget, Shape, Stroke};
 #[derive(Debug)]
 pub struct CrosstermRenderTarget {
     stdout: Stdout,
+    clip_rect: Rectangle,
 }
 
 impl CrosstermRenderTarget {
@@ -114,7 +115,12 @@ impl CrosstermRenderTarget {
 
 impl Default for CrosstermRenderTarget {
     fn default() -> Self {
-        Self { stdout: stdout() }
+        let stdout = stdout();
+        let size = crossterm::terminal::size()
+            .map(|(w, h)| Size::new(w.into(), h.into()))
+            .unwrap_or_default();
+        let clip_rect = Rectangle::new(Point::zero(), size);
+        Self { stdout, clip_rect }
     }
 }
 
@@ -137,14 +143,35 @@ impl RenderTarget for CrosstermRenderTarget {
         self.clear();
     }
 
+    fn clip_rect(&self) -> Rectangle {
+        self.clip_rect.clone()
+    }
+
+    fn set_clip_rect(&mut self, rect: Rectangle) -> Rectangle {
+        let old_rect = self.clip_rect.clone();
+        self.clip_rect = rect;
+        old_rect
+    }
+
     fn fill<C: Into<Self::ColorFormat>>(
         &mut self,
-        _transform_offset: Point,
+        transform_offset: Point,
         brush: &impl Brush<ColorFormat = C>,
         _brush_offset: Option<Point>,
         shape: &impl Shape,
     ) {
+        let mut shape_bounds = shape.bounding_box();
+        shape_bounds.origin += transform_offset;
+        if !shape_bounds.intersects(&self.clip_rect) {
+            return;
+        }
+
         if let Some(rect) = shape.as_rect() {
+            let origin = Point::new(
+                rect.origin.x + transform_offset.x,
+                rect.origin.y + transform_offset.y,
+            );
+            let rect = Rectangle::new(origin, rect.size);
             let Some(color) = brush.as_solid() else {
                 return;
             };
@@ -170,6 +197,11 @@ impl RenderTarget for CrosstermRenderTarget {
         _brush_offset: Option<Point>,
         shape: &impl Shape,
     ) {
+        let mut shape_bounds = shape.bounding_box();
+        shape_bounds.origin += transform_offset;
+        if !shape_bounds.intersects(&self.clip_rect) {
+            return;
+        }
         // FIXME: This implementation is untested and only partially correct
         if let Some(rect) = shape.as_rect() {
             let origin = Point::new(

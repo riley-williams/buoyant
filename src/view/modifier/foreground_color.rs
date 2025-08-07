@@ -1,5 +1,6 @@
 use crate::{
     environment::LayoutEnvironment,
+    event::EventResult,
     layout::ResolvedLayout,
     primitives::{Interpolate, Point, ProposedDimensions},
     render::ShadeSubtree,
@@ -19,7 +20,7 @@ impl<V, S> ForegroundStyle<V, S> {
     }
 }
 
-impl<Inner, Color> ViewMarker for ForegroundStyle<Inner, Color>
+impl<Inner, Color: Clone> ViewMarker for ForegroundStyle<Inner, Color>
 where
     Inner: ViewMarker,
 {
@@ -68,13 +69,14 @@ impl<Color: Interpolate, Captures: ?Sized, Inner: ViewLayout<Captures>> ViewLayo
     }
 
     fn handle_event(
-        &mut self,
+        &self,
         event: &crate::view::Event,
+        context: &crate::event::EventContext,
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
-    ) -> bool {
+    ) -> EventResult {
         self.inner
-            .handle_event(event, &mut render_tree.subtree, captures, state)
+            .handle_event(event, context, &mut render_tree.subtree, captures, state)
     }
 }

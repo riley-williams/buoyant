@@ -8,6 +8,7 @@ use super::{Brush, Glyph, RenderTarget, Shape, Stroke, Surface};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FixedTextBuffer<const W: usize, const H: usize> {
     pub text: [[char; W]; H],
+    pub clip_rect: Rectangle,
 }
 
 impl<const W: usize, const H: usize> FixedTextBuffer<W, H> {
@@ -16,8 +17,12 @@ impl<const W: usize, const H: usize> FixedTextBuffer<W, H> {
     }
 
     const fn draw_character(&mut self, point: Point, character: char) {
+        let x_start = self.clip_rect.origin.x;
+        let y_start = self.clip_rect.origin.y;
+        let x_end = x_start + self.clip_rect.size.width as i32;
+        let y_end = y_start + self.clip_rect.size.height as i32;
         #[allow(clippy::cast_sign_loss)]
-        if point.x < W as i32 && point.y < H as i32 && point.x >= 0 && point.y >= 0 {
+        if point.x < x_end && point.y < y_end && point.x >= x_start && point.y >= y_start {
             self.text[point.y as usize][point.x as usize] = character;
         }
     }
@@ -44,6 +49,7 @@ impl<const W: usize, const H: usize> Default for FixedTextBuffer<W, H> {
     fn default() -> Self {
         Self {
             text: [[' '; W]; H],
+            clip_rect: Rectangle::new(Point::zero(), Size::new(W as u32, H as u32)),
         }
     }
 }
@@ -59,6 +65,16 @@ impl<const W: usize, const H: usize> RenderTarget for FixedTextBuffer<W, H> {
         self.clear();
     }
 
+    fn set_clip_rect(&mut self, rect: Rectangle) -> Rectangle {
+        let old_rect = self.clip_rect.clone();
+        self.clip_rect = rect;
+        old_rect
+    }
+
+    fn clip_rect(&self) -> Rectangle {
+        self.clip_rect.clone()
+    }
+
     fn fill<C: Into<Self::ColorFormat>>(
         &mut self,
         transform_offset: Point,
@@ -66,6 +82,11 @@ impl<const W: usize, const H: usize> RenderTarget for FixedTextBuffer<W, H> {
         _brush_offset: Option<Point>,
         shape: &impl Shape,
     ) {
+        let mut shape_bounds = shape.bounding_box();
+        shape_bounds.origin += transform_offset;
+        if !shape_bounds.intersects(&self.clip_rect) {
+            return;
+        }
         if let Some(rect) = shape.as_rect() {
             let Some(color) = brush.as_solid() else {
                 return;
@@ -88,6 +109,11 @@ impl<const W: usize, const H: usize> RenderTarget for FixedTextBuffer<W, H> {
         _brush_offset: Option<Point>,
         shape: &impl Shape,
     ) {
+        let mut shape_bounds = shape.bounding_box();
+        shape_bounds.origin += transform_offset;
+        if !shape_bounds.intersects(&self.clip_rect) {
+            return;
+        }
         if let Some(rect) = shape.as_rect() {
             let origin = Point::new(
                 rect.origin.x + transform_offset.x,

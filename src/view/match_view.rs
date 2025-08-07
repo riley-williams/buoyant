@@ -1,4 +1,5 @@
 use crate::{
+    event::{EventContext, EventResult},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
     render::{OneOf2, OneOf3},
@@ -275,25 +276,26 @@ where
     }
 
     fn handle_event(
-        &mut self,
+        &self,
         event: &crate::view::Event,
+        context: &EventContext,
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
-    ) -> bool {
-        match (&mut self.branch, render_tree, state) {
+    ) -> EventResult {
+        match (&self.branch, render_tree, state) {
             (Branch2::Variant0(v0), OneOf2::Variant0(t0), Branch2::Variant0(s0)) => {
-                v0.handle_event(event, t0, captures, s0)
+                v0.handle_event(event, context, t0, captures, s0)
             }
             (Branch2::Variant1(v1), OneOf2::Variant1(t1), Branch2::Variant1(s1)) => {
-                v1.handle_event(event, t1, captures, s1)
+                v1.handle_event(event, context, t1, captures, s1)
             }
             _ => {
                 assert!(
                     !cfg!(debug_assertions),
                     "State branch does not match view branch, likely due to improper reuse of layout."
                 );
-                false
+                EventResult::default()
             }
         }
     }
@@ -415,15 +417,39 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> Self::Renderables {
-        match (&self.branch, &layout.sublayouts, state) {
-            (Branch3::Variant0(v0), Branch3::Variant0(l0), Branch3::Variant0(s0)) => {
-                OneOf3::Variant0(v0.render_tree(l0, origin, env, captures, s0))
+        match (&self.branch, &layout.sublayouts) {
+            (Branch3::Variant0(v0), Branch3::Variant0(l0)) => {
+                if let Branch3::Variant0(s0) = state {
+                    OneOf3::Variant0(v0.render_tree(l0, origin, env, captures, s0))
+                } else {
+                    let mut s0 = v0.build_state(captures);
+                    let renderables =
+                        OneOf3::Variant0(v0.render_tree(l0, origin, env, captures, &mut s0));
+                    *state = Branch3::Variant0(s0);
+                    renderables
+                }
             }
-            (Branch3::Variant1(v1), Branch3::Variant1(l1), Branch3::Variant1(s1)) => {
-                OneOf3::Variant1(v1.render_tree(l1, origin, env, captures, s1))
+            (Branch3::Variant1(v1), Branch3::Variant1(l1)) => {
+                if let Branch3::Variant1(s1) = state {
+                    OneOf3::Variant1(v1.render_tree(l1, origin, env, captures, s1))
+                } else {
+                    let mut s1 = v1.build_state(captures);
+                    let renderables =
+                        OneOf3::Variant1(v1.render_tree(l1, origin, env, captures, &mut s1));
+                    *state = Branch3::Variant1(s1);
+                    renderables
+                }
             }
-            (Branch3::Variant2(v2), Branch3::Variant2(l2), Branch3::Variant2(s2)) => {
-                OneOf3::Variant2(v2.render_tree(l2, origin, env, captures, s2))
+            (Branch3::Variant2(v2), Branch3::Variant2(l2)) => {
+                if let Branch3::Variant2(s2) = state {
+                    OneOf3::Variant2(v2.render_tree(l2, origin, env, captures, s2))
+                } else {
+                    let mut s2 = v2.build_state(captures);
+                    let renderables =
+                        OneOf3::Variant2(v2.render_tree(l2, origin, env, captures, &mut s2));
+                    *state = Branch3::Variant2(s2);
+                    renderables
+                }
             }
             // This is reachable if an old layout attempts to be reused
             _ => panic!(
@@ -433,28 +459,29 @@ where
     }
 
     fn handle_event(
-        &mut self,
+        &self,
         event: &crate::view::Event,
+        context: &EventContext,
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
-    ) -> bool {
-        match (&mut self.branch, render_tree, state) {
+    ) -> EventResult {
+        match (&self.branch, render_tree, state) {
             (Branch3::Variant0(v0), OneOf3::Variant0(t0), Branch3::Variant0(s0)) => {
-                v0.handle_event(event, t0, captures, s0)
+                v0.handle_event(event, context, t0, captures, s0)
             }
             (Branch3::Variant1(v1), OneOf3::Variant1(t1), Branch3::Variant1(s1)) => {
-                v1.handle_event(event, t1, captures, s1)
+                v1.handle_event(event, context, t1, captures, s1)
             }
             (Branch3::Variant2(v2), OneOf3::Variant2(t2), Branch3::Variant2(s2)) => {
-                v2.handle_event(event, t2, captures, s2)
+                v2.handle_event(event, context, t2, captures, s2)
             }
             _ => {
                 assert!(
-                    !cfg!(debug_assertions),
-                    "State branch does not match view branch, likely due to improper reuse of layout."
-                );
-                false
+                     !cfg!(debug_assertions),
+                     "State branch does not match view branch, likely due to improper reuse of layout."
+                 );
+                EventResult::default()
             }
         }
     }

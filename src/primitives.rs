@@ -1,7 +1,8 @@
 mod dimension;
 pub mod geometry;
-pub use dimension::*;
 mod interpolate;
+
+pub use dimension::*;
 pub use interpolate::Interpolate;
 
 use core::cmp::max;
@@ -97,6 +98,16 @@ impl Interpolate for Size {
 pub struct Point {
     pub x: i32,
     pub y: i32,
+}
+
+impl core::ops::Neg for Point {
+    type Output = Self;
+    fn neg(self) -> Self {
+        Self {
+            x: -self.x,
+            y: -self.y,
+        }
+    }
 }
 
 impl core::ops::Add for Point {

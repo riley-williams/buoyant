@@ -1,5 +1,6 @@
 use crate::{
     environment::LayoutEnvironment,
+    event::EventResult,
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
     render::Offset,
@@ -69,14 +70,14 @@ where
     }
 
     fn handle_event(
-        &mut self,
+        &self,
         event: &crate::view::Event,
+        context: &crate::event::EventContext,
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
-    ) -> bool {
-        // FIXME: Apply offset to the event
+    ) -> EventResult {
         self.inner
-            .handle_event(event, &mut render_tree.subtree, captures, state)
+            .handle_event(event, context, &mut render_tree.subtree, captures, state)
     }
 }

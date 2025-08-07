@@ -23,11 +23,9 @@ impl<T> Container<T> {
 }
 
 impl<T: AnimatedJoin> AnimatedJoin for Container<T> {
-    fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
-        Self {
-            frame: Frame::interpolate(source.frame, target.frame, domain.factor),
-            child: T::join(source.child, target.child, domain),
-        }
+    fn join_from(&mut self, source: &Self, domain: &AnimationDomain) {
+        self.frame = Frame::interpolate(source.frame, self.frame, domain.factor);
+        self.child.join_from(&source.child, domain);
     }
 }
 

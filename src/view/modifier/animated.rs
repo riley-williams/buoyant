@@ -1,6 +1,7 @@
 use crate::{
     animation::Animation,
     environment::LayoutEnvironment,
+    event::EventResult,
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
     render::Animate,
@@ -24,14 +25,14 @@ impl<InnerView, Value: PartialEq> Animated<InnerView, Value> {
     }
 }
 
-impl<InnerView: ViewMarker, U> ViewMarker for Animated<InnerView, U> {
+impl<InnerView: ViewMarker<Renderables: Clone>, U: Clone> ViewMarker for Animated<InnerView, U> {
     type Renderables = Animate<InnerView::Renderables, U>;
 }
 
 impl<Captures: ?Sized, InnerView, U: PartialEq + Clone> ViewLayout<Captures>
     for Animated<InnerView, U>
 where
-    InnerView: ViewLayout<Captures>,
+    InnerView: ViewLayout<Captures, Renderables: Clone>,
 {
     type State = (U, InnerView::State);
     type Sublayout = InnerView::Sublayout;
@@ -76,13 +77,19 @@ where
     }
 
     fn handle_event(
-        &mut self,
+        &self,
         event: &crate::view::Event,
+        context: &crate::event::EventContext,
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
-    ) -> bool {
-        self.inner
-            .handle_event(event, &mut render_tree.subtree, captures, &mut state.1)
+    ) -> EventResult {
+        self.inner.handle_event(
+            event,
+            context,
+            &mut render_tree.subtree,
+            captures,
+            &mut state.1,
+        )
     }
 }

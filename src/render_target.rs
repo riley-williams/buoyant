@@ -15,7 +15,10 @@ pub use fixed_text_buffer::FixedTextBuffer;
 use crate::{
     font::{self, FontMetrics as _},
     image::EmptyImage,
-    primitives::{geometry::Shape, Point, Size},
+    primitives::{
+        geometry::{Rectangle, Shape},
+        Point, Size,
+    },
     surface::Surface,
 };
 
@@ -27,6 +30,16 @@ pub trait RenderTarget {
 
     /// Clears the target using the provided color
     fn clear(&mut self, color: Self::ColorFormat);
+
+    /// Sets the clip area, returning the previous area.
+    ///
+    /// The render target may choose to reduce the clip area to fit within its drawable size.
+    #[must_use]
+    fn set_clip_rect(&mut self, rect: Rectangle) -> Rectangle;
+
+    /// Returns the current clip area.
+    #[must_use]
+    fn clip_rect(&self) -> Rectangle;
 
     /// Fills a shape using the specified style and brush.
     fn fill<C: Into<Self::ColorFormat>>(

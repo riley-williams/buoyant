@@ -1,5 +1,6 @@
 use crate::{
     environment::LayoutEnvironment,
+    event::EventResult,
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
     view::{ViewLayout, ViewMarker},
@@ -75,12 +76,14 @@ impl<T: ViewLayout<()>, Captures: ?Sized> ViewLayout<Captures> for EraseCaptures
     }
 
     fn handle_event(
-        &mut self,
+        &self,
         event: &crate::view::Event,
+        context: &crate::event::EventContext,
         render_tree: &mut Self::Renderables,
         _captures: &mut Captures,
         state: &mut Self::State,
-    ) -> bool {
-        self.inner.handle_event(event, render_tree, &mut (), state)
+    ) -> EventResult {
+        self.inner
+            .handle_event(event, context, render_tree, &mut (), state)
     }
 }

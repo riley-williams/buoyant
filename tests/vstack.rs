@@ -439,9 +439,43 @@ fn test_flexible_layout_fills_frame_10k() {
     let env = DefaultEnvironment::non_animated();
     let mut state = stack.build_state(&mut ());
     // The spacers in this view should always cause the stack size to equal the offer size
-    for width in 1..100 {
-        for height in 1..100 {
-            let size = Size::new(width, height);
+    let dimensions: [u32; 32] = [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        21,
+        27,
+        33,
+        64,
+        77,
+        97,
+        100,
+        177,
+        352,
+        768,
+        1_233,
+        2_753,
+        4_776,
+        7_777,
+        10_000,
+        123_876,
+        9_889_873,
+        45_976_111,
+        192_608_000,
+        1_000_000_000,
+        u32::MAX,
+    ];
+    for width in &dimensions {
+        for height in &dimensions {
+            let size = Size::new(*width, *height);
             let layout = stack.layout(&size.into(), &env, &mut (), &mut state);
             assert_eq!(size, layout.resolved_size.into());
         }
