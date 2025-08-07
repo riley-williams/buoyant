@@ -1,6 +1,10 @@
 //! Render primitives.
 //!
-//! If you are constructing views, this is probably not the module you want. Use [`ViewHandle`] instead.
+//! If you are constructing views, this is not the module you want. Use types under [`crate::view`] instead.
+//!
+//! Render primitives represent the minimal information required to render a view. Nodes in the
+//! render tree can be animated and joined with other trees of the same type to enable complex
+//! animations.
 
 use core::time::Duration;
 
@@ -15,9 +19,10 @@ mod image;
 mod offset;
 mod one_of;
 mod option;
+mod scroll_metadata;
 mod shade_subtree;
 pub mod shape;
-mod text;
+pub mod text;
 
 pub use animate::Animate;
 pub use container::Container;
@@ -25,6 +30,7 @@ pub use container::Container;
 pub use image::Image;
 pub use offset::Offset;
 pub use one_of::{OneOf2, OneOf3, OneOf4};
+pub use scroll_metadata::ScrollMetadata;
 pub use shade_subtree::ShadeSubtree;
 pub use shape::Capsule;
 pub use shape::Circle;
@@ -34,10 +40,11 @@ pub use shape::StrokedShape;
 pub use text::Text;
 
 pub trait AnimatedJoin {
-    /// Produces a new tree by consuming and interpolating between two partially animated trees
-    fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self;
+    /// Modifies a target tree by joining it with the source tree
+    fn join_from(&mut self, source: &Self, domain: &AnimationDomain);
 }
 
+/// A type that can be rendered to a target and animated
 pub trait Render<Color>: AnimatedJoin + Sized {
     /// Render the view to the screen
     fn render(
@@ -50,7 +57,7 @@ pub trait Render<Color>: AnimatedJoin + Sized {
     /// Render view and all subviews, animating from a source view to a target view
     ///
     /// The implementation of this method should match the implementation of
-    /// [`AnimatedJoin::join`] to get smooth continuous animations
+    /// [`AnimatedJoin::join_from`] to get smooth continuous animations
     fn render_animated(
         render_target: &mut impl RenderTarget<ColorFormat = Color>,
         source: &Self,

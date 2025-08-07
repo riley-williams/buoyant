@@ -8,17 +8,13 @@
 
 use std::time::{Duration, Instant};
 
-use buoyant::event::Event;
-use buoyant::render_target::EmbeddedGraphicsRenderTarget;
-use buoyant::{
-    animation::Animation,
-    environment::DefaultEnvironment,
-    if_view, match_view,
-    render::{AnimatedJoin, AnimationDomain, Render},
-    view::prelude::*,
-};
+use buoyant::render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _};
+use buoyant::view::scroll_view::ScrollDirection;
+use buoyant::{animation::Animation, if_view, match_view, view::prelude::*};
+
 use embedded_graphics::prelude::*;
-use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, SimulatorEvent, Window};
+use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
+use smol::lock::Mutex;
 
 #[allow(unused)]
 mod spacing {
@@ -34,15 +30,17 @@ mod spacing {
 
 #[allow(unused)]
 mod font {
+    use u8g2_fonts::{fonts, FontRenderer};
+
+    pub static MYSTERY_QUEST_28: FontRenderer =
+        FontRenderer::new::<fonts::u8g2_font_mystery_quest_28_tr>();
     /// Font for body text
-    pub const BODY: embedded_graphics::mono_font::MonoFont<'_> =
-        embedded_graphics::mono_font::ascii::FONT_10X20;
+    pub static BODY: FontRenderer = FontRenderer::new::<fonts::u8g2_font_fur14_tr>();
+    pub static BODY_BOLD: FontRenderer = FontRenderer::new::<fonts::u8g2_font_fur14_tr>();
+    pub static HEADING: FontRenderer = FontRenderer::new::<fonts::u8g2_font_bubble_tr>();
     /// Font for captions, smaller text
-    pub const CAPTION: embedded_graphics::mono_font::MonoFont<'_> =
-        embedded_graphics::mono_font::ascii::FONT_9X15;
-    /// Font for bold captions
-    pub const CAPTION_BOLD: embedded_graphics::mono_font::MonoFont<'_> =
-        embedded_graphics::mono_font::ascii::FONT_9X15_BOLD;
+    pub static CAPTION: FontRenderer = FontRenderer::new::<fonts::u8g2_font_fur11_tr>();
+    pub static CAPTION_BOLD: FontRenderer = FontRenderer::new::<fonts::u8g2_font_fub11_tr>();
 }
 
 #[allow(unused)]
@@ -62,81 +60,45 @@ fn main() {
     let size = Size::new(480, 320);
     let mut display: SimulatorDisplay<color::Space> = SimulatorDisplay::new(size);
     let mut target = EmbeddedGraphicsRenderTarget::new(&mut display);
-    let mut window = Window::new("Coffeeeee", &OutputSettings::default());
+    let window = Mutex::new(Window::new("Coffeeeee", &OutputSettings::default()));
     let app_start = Instant::now();
 
-    let mut captures = AppState::default();
-    let env = DefaultEnvironment::new(app_start.elapsed());
-    let mut view = root_view(&captures);
-    let mut state = view.build_state(&mut captures);
-    let layout = view.layout(&size.into(), &env, &mut captures, &mut state);
-    let mut source_tree = view.render_tree(
-        &layout,
-        buoyant::primitives::Point::zero(),
-        &env,
-        &mut captures,
-        &mut state,
+    let captures = AppState::default();
+
+    let app_time = || app_start.elapsed();
+
+    let view_fn = |app_data: &mut AppState, _, _| {
+        root_view(app_data).background(
+            Alignment::default(),
+            Rectangle.foreground_color(color::BACKGROUND),
+        )
+    };
+    let flush_fn = async |target: &mut EmbeddedGraphicsRenderTarget<_>, _, _| {
+        window.lock().await.update(target.display());
+        // clear buffer for next frame
+        target.clear(color::Space::BLACK);
+    };
+
+    let render_loop = buoyant::render_loop::render_loop(
+        &mut target,
+        captures,
+        color::Space::WHITE,
+        app_time,
+        view_fn,
+        flush_fn,
+        async |handler| {
+            window
+                .lock()
+                .await
+                .events()
+                .filter_map(|event| event.try_into().ok())
+                .for_each(|event| {
+                    println!("handled {event:?}");
+                    handler.handle_event(&event);
+                });
+        },
     );
-
-    let mut target_tree = view.render_tree(
-        &layout,
-        buoyant::primitives::Point::zero(),
-        &env,
-        &mut captures,
-        &mut state,
-    );
-
-    'running: loop {
-        target.display_mut().clear(color::BACKGROUND).unwrap();
-
-        // Render frame
-        Render::render_animated(
-            &mut target,
-            &source_tree,
-            &target_tree,
-            &color::Space::WHITE,
-            buoyant::primitives::Point::zero(),
-            &AnimationDomain::top_level(app_start.elapsed()),
-        );
-
-        // Flush to window
-        window.update(target.display());
-
-        for event in window.events() {
-            let app_event = match event {
-                SimulatorEvent::Quit => break 'running,
-                SimulatorEvent::MouseButtonDown {
-                    mouse_btn: _,
-                    point,
-                } => Some(Event::TouchDown(Point::new(point.x, point.y).into())),
-                SimulatorEvent::MouseButtonUp {
-                    mouse_btn: _,
-                    point,
-                } => Some(Event::TouchUp(Point::new(point.x, point.y).into())),
-                SimulatorEvent::MouseMove { point } => {
-                    Some(Event::TouchMoved(Point::new(point.x, point.y).into()))
-                }
-                _ => None,
-            };
-            if let Some(event) = app_event {
-                let time = app_start.elapsed();
-                source_tree =
-                    AnimatedJoin::join(source_tree, target_tree, &AnimationDomain::top_level(time));
-                view.handle_event(&event, &mut source_tree, &mut captures, &mut state);
-                view = root_view(&captures);
-                let env = DefaultEnvironment::new(time);
-                let layout = view.layout(&size.into(), &env, &mut captures, &mut state);
-
-                target_tree = view.render_tree(
-                    &layout,
-                    buoyant::primitives::Point::zero(),
-                    &env,
-                    &mut captures,
-                    &mut state,
-                );
-            }
-        }
-    }
+    smol::block_on(render_loop);
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Default)]
@@ -176,21 +138,21 @@ fn root_view(state: &AppState) -> impl View<color::Space, AppState> {
 
 fn tab_bar(tab: Tab) -> impl View<color::Space, Tab> {
     HStack::new((
-        tab_item("Brew", tab == Tab::Brew, |tab: &mut Tab| {
-            *tab = Tab::Brew;
+        tab_item("Brew", tab == Tab::Brew, |tab: &mut Seal<Tab>| {
+            *tab.as_mut() = Tab::Brew;
         }),
-        tab_item("Clean", tab == Tab::Clean, |tab: &mut Tab| {
-            *tab = Tab::Clean;
+        tab_item("Clean", tab == Tab::Clean, |tab: &mut Seal<Tab>| {
+            *tab.as_mut() = Tab::Clean;
         }),
-        tab_item("Settings", tab == Tab::Settings, |tab: &mut Tab| {
-            *tab = Tab::Settings;
+        tab_item("Settings", tab == Tab::Settings, |tab: &mut Seal<Tab>| {
+            *tab.as_mut() = Tab::Settings;
         }),
     ))
     .fixed_size(false, true)
     .animated(Animation::linear(Duration::from_millis(125)), tab)
 }
 
-fn tab_item<C, F: Fn(&mut C)>(
+fn tab_item<C, F: Fn(&mut Seal<C>)>(
     name: &'static str,
     is_selected: bool,
     on_tap: F,
@@ -209,7 +171,7 @@ fn tab_item<C, F: Fn(&mut C)>(
                 }),
                 VStack::new((
                     Circle.frame().with_width(15),
-                    Text::new(name, &font::CAPTION_BOLD),
+                    Text::new(name, &font::CAPTION),
                 ))
                 .with_spacing(spacing::ELEMENT)
                 .padding(Edges::All, spacing::ELEMENT),
@@ -223,55 +185,61 @@ fn tab_item<C, F: Fn(&mut C)>(
 }
 
 fn brew_tab<C>(_state: &AppState) -> impl View<color::Space, C> {
-    VStack::new((
-        Text::new("Good morning", &font::BODY),
-        Text::new(
-            "Use the arrow keys to navigate to the settings tab",
-            &font::CAPTION_BOLD,
-        )
-        .multiline_text_alignment(HorizontalTextAlignment::Leading),
-    ))
-    .with_spacing(spacing::COMPONENT)
-    .with_alignment(HorizontalAlignment::Leading)
-    .flex_infinite_width(HorizontalAlignment::Leading)
-    .padding(Edges::All, spacing::SECTION_MARGIN)
-    .foreground_color(color::Space::WHITE)
+    ScrollView::new(
+        VStack::new((
+            Text::new("Good morning", &font::HEADING),
+            Text::new(
+                "You can't brew coffee in a simulator, but you can pretend.",
+                &font::MYSTERY_QUEST_28,
+            )
+            .multiline_text_alignment(HorizontalTextAlignment::Center),
+        ))
+        .with_spacing(spacing::COMPONENT)
+        .with_alignment(HorizontalAlignment::Center)
+        .flex_infinite_width(HorizontalAlignment::Center)
+        .padding(Edges::All, spacing::SECTION_MARGIN)
+        .foreground_color(color::Space::WHITE),
+    )
+    .with_direction(ScrollDirection::Both)
 }
 
 fn settings_tab(state: &AppState) -> impl View<color::Space, AppState> {
-    VStack::new((
-        toggle_text(
-            "Auto (b)rew",
-            state.auto_brew,
-            "Automatically brew coffee at 7am",
-            true,
-            |state: &mut AppState| {
-                state.auto_brew = !state.auto_brew;
-            },
-        ),
-        toggle_text(
-            "Stop on (w)eight",
-            state.stop_on_weight,
-            "Stop the machine automatically when the target weight is reached",
-            false,
-            |state: &mut AppState| {
-                state.stop_on_weight = !state.stop_on_weight;
-            },
-        ),
-        toggle_text(
-            "Auto (o)ff",
-            state.auto_off,
-            "The display will go to sleep after 5 minutes of inactivity",
-            true,
-            |state: &mut AppState| {
-                state.auto_off = !state.auto_off;
-            },
-        ),
-    ))
-    .with_spacing(spacing::COMPONENT)
-    .with_alignment(HorizontalAlignment::Trailing)
-    .padding(Edges::All, spacing::SECTION_MARGIN)
-    .animated(Animation::linear(Duration::from_millis(200)), state.clone())
+    ScrollView::new(
+        VStack::new((
+            toggle_text(
+                "Auto brew",
+                state.auto_brew,
+                "Automatically brew coffee at 7am",
+                true,
+                |state: &mut Seal<AppState>| {
+                    state.auto_brew = !state.auto_brew;
+                },
+            ),
+            toggle_text(
+                "Stop on weight",
+                state.stop_on_weight,
+                "Stop the machine automatically when the target weight is reached",
+                false,
+                |state: &mut Seal<AppState>| {
+                    state.stop_on_weight = !state.stop_on_weight;
+                },
+            ),
+            toggle_text(
+                "Auto off",
+                state.auto_off,
+                "The display will go to sleep after 5 minutes of inactivity",
+                true,
+                |state: &mut Seal<AppState>| {
+                    state.auto_off = !state.auto_off;
+                },
+            ),
+        ))
+        .with_spacing(spacing::COMPONENT)
+        .with_alignment(HorizontalAlignment::Trailing)
+        .padding(Edges::All, spacing::SECTION_MARGIN)
+        .animated(Animation::linear(Duration::from_millis(200)), state.clone()),
+    )
+    .with_overlapping_bar(true) // we already applied padding
 }
 
 fn toggle_text<C>(
@@ -279,7 +247,7 @@ fn toggle_text<C>(
     is_on: bool,
     description: &'static str,
     hides_description: bool,
-    action: fn(&mut C),
+    action: fn(&mut Seal<C>),
 ) -> impl View<color::Space, C> {
     VStack::new((
         HStack::new((
@@ -298,7 +266,7 @@ fn toggle_text<C>(
     .flex_infinite_width(HorizontalAlignment::Trailing)
 }
 
-fn toggle_button<C>(is_on: bool, on_tap: fn(&mut C)) -> impl View<color::Space, C> {
+fn toggle_button<C>(is_on: bool, on_tap: fn(&mut Seal<C>)) -> impl View<color::Space, C> {
     let (color, alignment) = if is_on {
         (color::ACCENT, HorizontalAlignment::Trailing)
     } else {

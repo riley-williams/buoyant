@@ -131,3 +131,51 @@ fn test_clipped_text_trails_correctly() {
         assert_eq!(actual.iter().collect::<String>(), *expected);
     });
 }
+
+#[test]
+fn format_args_fits() {
+    let font = CharacterBufferFont {};
+    let mut buffer = FixedTextBuffer::<12, 1>::default();
+    let view = |a: u8, b: u8| {
+        Text::new_fmt::<12>(format_args!("{} + {} = {}", a, b, a + b), &font)
+            .multiline_text_alignment(HorizontalTextAlignment::Leading)
+            .foreground_color(' ')
+    };
+    for (a, b) in [(1, 1), (2, 3), (45, 6)] {
+        buffer.clear();
+        make_render_tree(&view(a, b), buffer.size(), &mut ()).render(
+            &mut buffer,
+            &' ',
+            Point::zero(),
+        );
+        assert_eq!(
+            buffer.text[0].iter().collect::<String>(),
+            format!("{} + {} = {}    ", a, b, a + b).get(0..12).unwrap()
+        );
+    }
+}
+
+#[test]
+fn undersized_format_args() {
+    let font = CharacterBufferFont {};
+    let mut buffer = FixedTextBuffer::<15, 8>::default();
+    let view = |a: u32, b: u32| {
+        VStack::new((
+            Text::new_fmt::<3>(format_args!("{}+{}={}", a, b, a + b), &font),
+            Text::new_fmt::<5>(format_args!("{}+{}={}", a, b, a + b), &font),
+            Text::new_fmt::<9>(format_args!("{}+{}={}", a, b, a + b), &font),
+            Text::new_fmt::<11>(format_args!("{}+{}={}", a, b, a + b), &font),
+        ))
+        .with_alignment(HorizontalAlignment::Leading)
+        .foreground_color(' ')
+    };
+    make_render_tree(&view(123, 456), buffer.size(), &mut ()).render(
+        &mut buffer,
+        &' ',
+        Point::zero(),
+    );
+    assert_eq!(buffer.text[0].iter().collect::<String>(), "123            ");
+    assert_eq!(buffer.text[1].iter().collect::<String>(), "123+           ");
+    assert_eq!(buffer.text[2].iter().collect::<String>(), "123+456=       ");
+    assert_eq!(buffer.text[3].iter().collect::<String>(), "123+456=579    ");
+}

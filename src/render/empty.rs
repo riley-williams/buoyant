@@ -3,7 +3,7 @@ use crate::{primitives::Point, render_target::RenderTarget};
 use super::{AnimatedJoin, AnimationDomain, Render};
 
 impl AnimatedJoin for () {
-    fn join(_source: Self, _target: Self, _: &AnimationDomain) -> Self {}
+    fn join_from(&mut self, _source: &Self, _domain: &AnimationDomain) {}
 }
 
 impl<C> Render<C> for () {

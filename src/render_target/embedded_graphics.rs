@@ -54,6 +54,7 @@ impl<D: DrawTarget> Surface for DrawTargetSurface<'_, D> {
 #[derive(Debug)]
 pub struct EmbeddedGraphicsRenderTarget<D> {
     surface: D,
+    clip_rect: Rectangle,
 }
 
 impl<'a, D> EmbeddedGraphicsRenderTarget<DrawTargetSurface<'a, D>>
@@ -64,8 +65,10 @@ where
     /// Initialize an `EmbeddedGraphicsRenderTarget` from a `DrawTarget`
     #[must_use]
     pub fn new(display: &'a mut D) -> Self {
+        let clip_rect = display.bounding_box().into();
         Self {
             surface: DrawTargetSurface(display),
+            clip_rect,
         }
     }
 
@@ -95,6 +98,16 @@ where
         let _ = self.surface.draw_target().clear(color);
     }
 
+    fn set_clip_rect(&mut self, rect: Rectangle) -> Rectangle {
+        let old_rect = self.clip_rect.clone();
+        self.clip_rect = rect;
+        old_rect
+    }
+
+    fn clip_rect(&self) -> Rectangle {
+        self.clip_rect.clone()
+    }
+
     fn fill<T: Into<Self::ColorFormat>>(
         &mut self,
         transform_offset: Point,
@@ -102,6 +115,12 @@ where
         _brush_offset: Option<Point>,
         shape: &impl Shape,
     ) {
+        let mut bounding_box = shape.bounding_box();
+        bounding_box.origin += transform_offset;
+        if !bounding_box.intersects(&self.clip_rect) {
+            return;
+        }
+
         // Convert the brush to the embedded_graphics color
         if let Some(color) = brush.as_solid().map(Into::into) {
             let style = PrimitiveStyleBuilder::new().fill_color(color).build();
@@ -138,6 +157,11 @@ where
         _brush_offset: Option<Point>,
         shape: &impl Shape,
     ) {
+        let mut bounding_box = shape.bounding_box();
+        bounding_box.origin += transform_offset;
+        if !bounding_box.intersects(&self.clip_rect) {
+            return;
+        }
         // Convert the brush to the embedded_graphics color.
         // Only solid strokes are implemented
         let Some(color) = brush.as_solid().map(Into::into) else {
@@ -172,10 +196,10 @@ where
         let Some(color) = brush.as_solid().map(Into::into) else {
             return;
         };
-        for glyph in glyphs {
+        glyphs.for_each(|glyph| {
             let mut surface = OffsetSurface::new(&mut self.surface, offset + glyph.offset);
             font.draw(glyph.character, color, &mut surface);
-        }
+        });
     }
 
     fn raw_surface(&mut self) -> &mut impl Surface<Color = Self::ColorFormat> {

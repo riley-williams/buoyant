@@ -1,3 +1,5 @@
+use core::time::Duration;
+
 use crate::primitives::Point;
 
 /// An interaction event that can be handled by a view.
@@ -21,6 +23,133 @@ pub enum Event {
     /// This event is triggered when the user moves their finger during
     /// a touch interaction or moves the mouse cursor while pressed.
     TouchMoved(Point),
+    TouchCancelled,
     Scroll(Point),
+    /// External state changed which may affect the view.
+    External,
+    /// The app should exit
     Exit,
+}
+
+impl Event {
+    /// Offsets the event's coordinates by the given point.
+    #[must_use]
+    pub fn offset(&self, offset: Point) -> Self {
+        let mut event = self.clone();
+        match &mut event {
+            Self::TouchDown(point) | Self::TouchUp(point) | Self::TouchMoved(point) => {
+                *point += offset;
+            }
+            _ => {}
+        }
+        event
+    }
+}
+
+#[cfg(feature = "embedded-graphics-simulator")]
+mod simulator {
+    use crate::primitives::Point;
+
+    use super::Event;
+    use embedded_graphics_simulator::SimulatorEvent;
+
+    impl TryFrom<SimulatorEvent> for Event {
+        type Error = ();
+
+        fn try_from(event: SimulatorEvent) -> Result<Self, Self::Error> {
+            match event {
+                SimulatorEvent::Quit => Ok(Self::Exit),
+                SimulatorEvent::MouseButtonDown {
+                    mouse_btn: _,
+                    point,
+                } => Ok(Self::TouchDown(Point::new(point.x, point.y))),
+                SimulatorEvent::MouseButtonUp {
+                    mouse_btn: _,
+                    point,
+                } => Ok(Self::TouchUp(Point::new(point.x, point.y))),
+                SimulatorEvent::MouseMove { point } => {
+                    Ok(Self::TouchMoved(Point::new(point.x, point.y)))
+                }
+                SimulatorEvent::MouseWheel {
+                    scroll_delta,
+                    direction,
+                } => {
+                    if direction == embedded_graphics_simulator::sdl2::MouseWheelDirection::Flipped
+                    {
+                        Ok(Self::Scroll(Point::new(
+                            scroll_delta.x * 4,
+                            scroll_delta.y * 4,
+                        )))
+                    } else {
+                        Ok(Self::Scroll(Point::new(
+                            -scroll_delta.x * 4,
+                            -scroll_delta.y * 4,
+                        )))
+                    }
+                }
+                SimulatorEvent::KeyDown {
+                    keycode: _,
+                    keymod: _,
+                    repeat: _,
+                }
+                | SimulatorEvent::KeyUp {
+                    keycode: _,
+                    keymod: _,
+                    repeat: _,
+                } => Err(()),
+            }
+        }
+    }
+}
+
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct EventResult {
+    /// Whether the event was handled by the view.
+    pub handled: bool,
+    /// Whether the view should be recomputed, and render trees joined.
+    pub recompute_view: bool,
+}
+
+impl EventResult {
+    /// Creates a new `EventResult` with the specified handled state and recompute flag.
+    #[must_use]
+    pub const fn new(handled: bool, recompute_view: bool) -> Self {
+        Self {
+            handled,
+            recompute_view,
+        }
+    }
+
+    /// merges another `EventResult` into this one.
+    // FIXME: Clippy is probably right
+    #[expect(clippy::needless_pass_by_value)]
+    pub fn merge(&mut self, other: Self) {
+        self.handled |= other.handled;
+        self.recompute_view |= other.recompute_view;
+    }
+
+    /// Returns the result of merging another `EventResult` into this one.
+    #[must_use]
+    // FIXME: Clippy is probably right
+    #[expect(clippy::needless_pass_by_value)]
+    pub fn merging(self, other: Self) -> Self {
+        Self {
+            handled: self.handled || other.handled,
+            recompute_view: self.recompute_view || other.recompute_view,
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct EventContext {
+    pub app_time: Duration,
+}
+
+impl EventContext {
+    /// Creates a new `EventContext` with the given application time.
+    #[must_use]
+    pub const fn new(app_time: Duration) -> Self {
+        Self { app_time }
+    }
 }

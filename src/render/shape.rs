@@ -44,11 +44,9 @@ impl<T: AnimatedJoin + Clone + AsShapePrimitive, C: Copy> Render<C> for T {
         offset: Point,
         domain: &AnimationDomain,
     ) {
-        AnimatedJoin::join(source.clone(), target.clone(), domain).render(
-            render_target,
-            style,
-            offset,
-        );
+        let mut joined_shape = target.clone();
+        joined_shape.join_from(source, domain);
+        joined_shape.render(render_target, style, offset);
     }
 }
 
@@ -68,10 +66,9 @@ impl<T> StrokedShape<T> {
 }
 
 impl<T: AnimatedJoin> AnimatedJoin for StrokedShape<T> {
-    fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
-        let shape = AnimatedJoin::join(source.shape, target.shape, domain);
-        let line_width = u32::interpolate(source.line_width, target.line_width, domain.factor);
-        Self { shape, line_width }
+    fn join_from(&mut self, source: &Self, domain: &AnimationDomain) {
+        self.shape.join_from(&source.shape, domain);
+        self.line_width = u32::interpolate(source.line_width, self.line_width, domain.factor);
     }
 }
 
@@ -101,11 +98,9 @@ impl<T: AnimatedJoin + Clone + AsShapePrimitive, C: Copy> Render<C> for StrokedS
         offset: Point,
         domain: &AnimationDomain,
     ) {
-        AnimatedJoin::join(source.clone(), target.clone(), domain).render(
-            render_target,
-            style,
-            offset,
-        );
+        let mut joined_shape = target.clone();
+        joined_shape.join_from(source, domain);
+        joined_shape.render(render_target, style, offset);
     }
 }
 
@@ -113,9 +108,10 @@ impl<T: AnimatedJoin + Clone + AsShapePrimitive, C: Copy> Render<C> for StrokedS
 mod tests {
     use super::*;
     use crate::render::Circle;
+    use core::time::Duration;
 
     #[test]
-    fn join_stroked_shape() {
+    fn join_stroked_circle() {
         let shape1 = StrokedShape::new(
             Circle {
                 origin: Point::new(0, 0),
@@ -130,11 +126,17 @@ mod tests {
             },
             4,
         );
-        let domain = AnimationDomain::new(128, core::time::Duration::from_millis(100));
 
-        let joined_shape = AnimatedJoin::join(shape1, shape2, &domain);
+        // start
+        let mut joined = shape2.clone();
+        joined.join_from(&shape1, &AnimationDomain::new(0, Duration::ZERO));
+        assert_eq!(joined, shape1);
+
+        // middle
+        let mut joined = shape2.clone();
+        joined.join_from(&shape1, &AnimationDomain::new(128, Duration::ZERO));
         assert_eq!(
-            joined_shape,
+            joined,
             StrokedShape::new(
                 Circle {
                     origin: Point::new(5, 5),
@@ -143,5 +145,10 @@ mod tests {
                 3
             )
         );
+
+        // end
+        let mut joined = shape2.clone();
+        joined.join_from(&shape1, &AnimationDomain::new(255, Duration::ZERO));
+        assert_eq!(joined, shape2);
     }
 }

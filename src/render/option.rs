@@ -7,11 +7,11 @@ use crate::{
 use super::AnimationDomain;
 
 impl<T: AnimatedJoin> AnimatedJoin for Option<T> {
-    fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
-        match (source, target) {
-            (Some(source), Some(target)) => Some(T::join(source, target, domain)),
-            (_, None) => None,
-            (None, Some(target)) => Some(target),
+    fn join_from(&mut self, source: &Self, domain: &AnimationDomain) {
+        match (source, self) {
+            (Some(source), Some(target)) => target.join_from(source, domain),
+            (_, None) => (),
+            (None, Some(_target)) => (),
         }
     }
 }
@@ -107,11 +107,11 @@ mod tests {
     #[test]
     fn animated_join_some_to_some() {
         let source = Some(Rect::new(Point::zero(), Size::new(10, 10)));
-        let target = Some(Rect::new(Point::new(20, 20), Size::new(30, 30)));
+        let mut target = Some(Rect::new(Point::new(20, 20), Size::new(30, 30)));
         let domain = AnimationDomain::new(128, Duration::from_millis(100));
-        let result = Option::join(source, target, &domain);
+        target.join_from(&source, &domain);
         assert_eq!(
-            result,
+            target,
             Some(Rect::new(Point::new(10, 10), Size::new(20, 20)))
         );
     }
@@ -119,23 +119,27 @@ mod tests {
     #[test]
     fn animated_join_some_to_none() {
         let source = Some(Rect::new(Point::zero(), Size::new(1, 1)));
+        let mut target = None;
         let domain = AnimationDomain::new(128, Duration::from_millis(100));
-        let result = Option::join(source, None, &domain);
-        assert_eq!(result, None);
+        target.join_from(&source, &domain);
+        assert_eq!(target, None);
     }
 
     #[test]
     fn animated_join_none_to_some() {
-        let target = Some(Rect::new(Point::zero(), Size::new(1, 1)));
+        let source = None;
+        let mut target = Some(Rect::new(Point::zero(), Size::new(1, 1)));
         let domain = AnimationDomain::new(128, Duration::from_millis(100));
-        let result = Option::join(None, target, &domain);
-        assert_eq!(result, Some(Rect::new(Point::zero(), Size::new(1, 1))));
+        target.join_from(&source, &domain);
+        assert_eq!(target, Some(Rect::new(Point::zero(), Size::new(1, 1))));
     }
 
     #[test]
     fn animated_join_none_to_none() {
+        let source = None;
+        let mut target = None;
         let domain = AnimationDomain::new(128, Duration::from_millis(100));
-        let result = Option::<Rect>::join(None, None, &domain);
-        assert_eq!(result, None);
+        Option::<Rect>::join_from(&mut target, &source, &domain);
+        assert_eq!(target, None);
     }
 }

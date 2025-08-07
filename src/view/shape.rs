@@ -1,3 +1,5 @@
+//! Shape primitives
+
 mod capsule;
 mod circle;
 mod rectangle;

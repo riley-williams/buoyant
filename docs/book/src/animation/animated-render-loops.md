@@ -91,18 +91,17 @@ let source_render_tree = source_view.render_tree(&source_layout, Point::zero(), 
 # let environment = DefaultEnvironment::new(app_time);
 # let target_view = view();
 # let target_layout = target_view.layout(&Size::new(200, 100).into(), &environment, &mut captures, &mut view_state);
-let target_render_tree = target_view.render_tree(&target_layout, Point::zero(), &environment, &mut captures, &mut view_state);
+let mut target_render_tree = target_view.render_tree(&target_layout, Point::zero(), &environment, &mut captures, &mut view_state);
 
-// Join two trees
-let joined_tree = AnimatedJoin::join(
-    source_render_tree,
-    target_render_tree,
+// Join two trees into the target
+target_render_tree.join_from(
+    &source_render_tree,
     &AnimationDomain::top_level(app_time),
 );
 
 // Calling render on the joined tree produces the same result as
 // the render_animated call above
-joined_tree.render(&mut target, &Rgb888::BLACK, Point::zero());
+target_render_tree.render(&mut target, &Rgb888::BLACK, Point::zero());
 #
 # fn view() -> impl View<Rgb888, ()> {
 #     EmptyView
@@ -187,13 +186,13 @@ fn main() {
 
         if rebuild_view {
             rebuild_view = false;
-            // Join source and target trees at the current time
+            // TODO: Swap pointers to source and target trees to avoid cloning
             let time = app_start.elapsed();
-            source_tree = AnimatedJoin::join(
-                source_tree,
-                target_tree,
+            target_tree.join_from(
+                &source_tree,
                 &AnimationDomain::top_level(time),
             );
+            source_tree = target_tree;
 
             view = root_view(&captures);
             let env = DefaultEnvironment::new(time);
@@ -209,7 +208,7 @@ fn main() {
         }
 
         for event in window.events() {
-            // handle view events
+            // TODO: handle view events by calling `view.handle_event(...)`
             // TODO: set rebuild_view = true on event
             if let embedded_graphics_simulator::SimulatorEvent::Quit = event {
                 break 'running;
@@ -221,7 +220,7 @@ fn main() {
 fn root_view(state: &AppState) -> impl View<Rgb888, AppState> {
     let counter = state.counter; // make sure the closure doesn't capture state
     Button::new(
-        |state: &mut AppState| state.counter += 1,
+        |state: &mut Seal<AppState>| state.counter += 1,
         move |_| {
             Text::new_fmt::<32>(
                 format_args!("Counter: {}", counter),

@@ -11,7 +11,7 @@ use super::AnimatedJoin;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
-pub struct Animate<T, U> {
+pub struct Animate<T, U: Clone> {
     pub subtree: T,
     /// Length of the animation
     pub animation: Animation,
@@ -24,7 +24,7 @@ pub struct Animate<T, U> {
     pub is_partial: bool,
 }
 
-impl<T, U: PartialEq> Animate<T, U> {
+impl<T, U: PartialEq + Clone> Animate<T, U> {
     #[must_use]
     pub const fn new(subtree: T, animation: Animation, frame_time: Duration, value: U) -> Self {
         Self {
@@ -37,12 +37,12 @@ impl<T, U: PartialEq> Animate<T, U> {
     }
 }
 
-impl<T: AnimatedJoin, U: PartialEq> AnimatedJoin for Animate<T, U> {
+impl<T: AnimatedJoin, U: PartialEq + Clone> AnimatedJoin for Animate<T, U> {
     #[expect(clippy::useless_let_if_seq)]
-    fn join(source: Self, target: Self, domain: &AnimationDomain) -> Self {
-        let (end_time, duration) = if source.value != target.value {
-            let duration = target.animation.duration;
-            (target.frame_time + duration, duration)
+    fn join_from(&mut self, source: &Self, domain: &AnimationDomain) {
+        let (end_time, duration) = if source.value != self.value {
+            let duration = self.animation.duration;
+            (self.frame_time + duration, duration)
         } else if source.is_partial {
             // continue source animation
             let duration = source.animation.duration;
@@ -75,17 +75,14 @@ impl<T: AnimatedJoin, U: PartialEq> AnimatedJoin for Animate<T, U> {
             };
         }
 
-        Self {
-            animation: target.animation.with_duration(new_duration),
-            subtree: T::join(source.subtree, target.subtree, &subdomain),
-            frame_time: domain.app_time,
-            value: target.value,
-            is_partial,
-        }
+        self.subtree.join_from(&source.subtree, &subdomain);
+        self.animation = self.animation.clone().with_duration(new_duration);
+        self.frame_time = domain.app_time;
+        self.is_partial = is_partial;
     }
 }
 
-impl<C, T: Render<C>, U: PartialEq> Render<C> for Animate<T, U> {
+impl<C, T: Render<C>, U: PartialEq + Clone> Render<C> for Animate<T, U> {
     fn render(
         &self,
         render_target: &mut impl RenderTarget<ColorFormat = C>,

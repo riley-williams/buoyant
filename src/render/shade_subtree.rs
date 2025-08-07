@@ -18,11 +18,9 @@ impl<C, T> ShadeSubtree<C, T> {
 }
 
 impl<C: Interpolate, T: AnimatedJoin> AnimatedJoin for ShadeSubtree<C, T> {
-    fn join(source: Self, target: Self, config: &AnimationDomain) -> Self {
-        Self {
-            style: Interpolate::interpolate(source.style, target.style, config.factor),
-            subtree: T::join(source.subtree, target.subtree, config),
-        }
+    fn join_from(&mut self, source: &Self, config: &AnimationDomain) {
+        self.style = Interpolate::interpolate(source.style, self.style, config.factor);
+        self.subtree.join_from(&source.subtree, config);
     }
 }
 
@@ -84,12 +82,12 @@ mod tests {
         };
 
         let source = ShadeSubtree::new(TestColor(50), circle);
-        let target = ShadeSubtree::new(TestColor(150), target_circle);
+        let mut target = ShadeSubtree::new(TestColor(150), target_circle);
 
-        let result = AnimatedJoin::join(source.clone(), target.clone(), &animation_domain(0));
+        target.join_from(&source, &animation_domain(0));
 
-        assert_eq!(result.style, source.style);
-        assert_eq!(result.subtree, source.subtree);
+        assert_eq!(target.style, source.style);
+        assert_eq!(target.subtree, source.subtree);
     }
 
     #[test]
@@ -104,11 +102,12 @@ mod tests {
         };
 
         let source = ShadeSubtree::new(TestColor(50), circle);
-        let target = ShadeSubtree::new(TestColor(150), target_circle);
+        let original_target = ShadeSubtree::new(TestColor(150), target_circle);
+        let mut target = original_target.clone();
 
-        let result = AnimatedJoin::join(source.clone(), target.clone(), &animation_domain(255));
+        target.join_from(&source, &animation_domain(255));
 
-        assert_eq!(result.style, target.style);
-        assert_eq!(result.subtree, target.subtree);
+        assert_eq!(target.style, original_target.style);
+        assert_eq!(target.subtree, original_target.subtree);
     }
 }
