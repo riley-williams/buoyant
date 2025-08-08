@@ -8,6 +8,7 @@ mod capturing;
 mod divider;
 mod empty_view;
 mod foreach;
+mod geometry_reader;
 mod hstack;
 #[cfg(feature = "embedded-graphics")]
 mod image;
@@ -30,6 +31,7 @@ pub use capturing::Lens;
 pub use divider::Divider;
 pub use empty_view::EmptyView;
 pub use foreach::ForEach;
+pub use geometry_reader::GeometryReader;
 pub use hstack::HStack;
 #[cfg(feature = "embedded-graphics")]
 pub use image::Image;
@@ -52,8 +54,8 @@ pub mod prelude {
     #[cfg(feature = "embedded-graphics")]
     pub use super::{AsDrawable, Image};
     pub use super::{
-        Button, Divider, EmptyView, ForEach, HStack, Lens, ScrollView, Spacer, Text, VStack, View,
-        ViewExt, ViewLayout, ViewThatFits, ZStack,
+        Button, Divider, EmptyView, ForEach, GeometryReader, HStack, Lens, ScrollView, Spacer,
+        Text, VStack, View, ViewExt, ViewLayout, ViewThatFits, ZStack,
     };
     pub use crate::animation::Animation;
     pub use crate::layout::{Alignment, HorizontalAlignment, VerticalAlignment};
