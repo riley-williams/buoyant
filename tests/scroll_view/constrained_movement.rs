@@ -8,7 +8,8 @@ use buoyant::{
     view::{prelude::*, scroll_view::ScrollDirection},
 };
 
-use super::helpers::tree;
+use crate::assert_str_grid_eq;
+use crate::common::helpers::tree;
 
 fn scroll_view<T>() -> impl View<char, T> {
     ScrollView::new(VStack::new((

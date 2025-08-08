@@ -1,3 +1,5 @@
+use crate::assert_str_grid_eq;
+use crate::common::helpers::tree;
 use core::time::Duration;
 
 use buoyant::{
@@ -7,8 +9,6 @@ use buoyant::{
     render_target::FixedTextBuffer,
     view::{prelude::*, scroll_view::ScrollDirection},
 };
-
-use super::helpers::tree;
 
 fn vertical_scroll_view<T>() -> impl View<char, T> {
     ScrollView::new(VStack::new((

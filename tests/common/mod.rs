@@ -1,3 +1,5 @@
+pub mod helpers;
+
 use std::time::Duration;
 
 use buoyant::{
