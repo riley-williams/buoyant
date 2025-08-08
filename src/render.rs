@@ -23,6 +23,7 @@ mod scroll_metadata;
 mod shade_subtree;
 pub mod shape;
 pub mod text;
+mod transition_option;
 
 pub use animate::Animate;
 pub use container::Container;
@@ -38,6 +39,7 @@ pub use shape::Rect;
 pub use shape::RoundedRect;
 pub use shape::StrokedShape;
 pub use text::Text;
+pub use transition_option::TransitionOption;
 
 pub trait AnimatedJoin {
     /// Modifies a target tree by joining it with the source tree
