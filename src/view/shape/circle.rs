@@ -2,6 +2,7 @@ use crate::{
     environment::LayoutEnvironment,
     layout::ResolvedLayout,
     primitives::{Dimensions, Point, ProposedDimensions},
+    transition::Opacity,
     view::{ViewLayout, ViewMarker},
 };
 
@@ -23,11 +24,16 @@ impl Circle {
 
 impl ViewMarker for Circle {
     type Renderables = crate::render::Circle;
+    type Transition = Opacity;
 }
 
 impl<Captures: ?Sized> ViewLayout<Captures> for Circle {
     type State = ();
     type Sublayout = ();
+
+    fn transition(&self) -> Self::Transition {
+        Opacity
+    }
 
     fn build_state(&self, _captures: &mut Captures) -> Self::State {}
 

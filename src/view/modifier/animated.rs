@@ -27,6 +27,7 @@ impl<InnerView, Value: PartialEq> Animated<InnerView, Value> {
 
 impl<InnerView: ViewMarker<Renderables: Clone>, U: Clone> ViewMarker for Animated<InnerView, U> {
     type Renderables = Animate<InnerView::Renderables, U>;
+    type Transition = InnerView::Transition;
 }
 
 impl<Captures: ?Sized, InnerView, U: PartialEq + Clone> ViewLayout<Captures>
@@ -43,6 +44,10 @@ where
 
     fn is_empty(&self) -> bool {
         self.inner.is_empty()
+    }
+
+    fn transition(&self) -> Self::Transition {
+        self.inner.transition()
     }
 
     fn build_state(&self, captures: &mut Captures) -> Self::State {

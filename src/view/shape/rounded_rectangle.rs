@@ -2,6 +2,7 @@ use crate::{
     environment::LayoutEnvironment,
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
+    transition::Opacity,
     view::{ViewLayout, ViewMarker},
 };
 
@@ -25,11 +26,16 @@ impl RoundedRectangle {
 
 impl ViewMarker for RoundedRectangle {
     type Renderables = crate::render::RoundedRect;
+    type Transition = Opacity;
 }
 
 impl<Captures: ?Sized> ViewLayout<Captures> for RoundedRectangle {
     type Sublayout = ();
     type State = ();
+
+    fn transition(&self) -> Self::Transition {
+        Opacity
+    }
 
     fn build_state(&self, _captures: &mut Captures) -> Self::State {}
 

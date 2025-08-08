@@ -5,6 +5,7 @@ use crate::{
     event::{EventContext, EventResult},
     layout::{HorizontalAlignment, LayoutDirection, ResolvedLayout},
     primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions},
+    transition::Opacity,
     view::{ViewLayout, ViewMarker},
 };
 
@@ -112,6 +113,7 @@ where
     V: ViewMarker,
 {
     type Renderables = heapless::Vec<V::Renderables, N>;
+    type Transition = Opacity;
 }
 
 impl<'a, const N: usize, I, V, F, Captures: ?Sized> ViewLayout<Captures>
@@ -122,6 +124,10 @@ where
 {
     type Sublayout = heapless::Vec<ResolvedLayout<V::Sublayout>, N>;
     type State = heapless::Vec<V::State, N>;
+
+    fn transition(&self) -> Self::Transition {
+        Opacity
+    }
 
     fn build_state(&self, captures: &mut Captures) -> Self::State {
         let mut state = heapless::Vec::new();

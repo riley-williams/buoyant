@@ -25,6 +25,7 @@ where
     Inner: ViewMarker,
 {
     type Renderables = ShadeSubtree<Color, Inner::Renderables>;
+    type Transition = Inner::Transition;
 }
 
 impl<Color: Interpolate, Captures: ?Sized, Inner: ViewLayout<Captures>> ViewLayout<Captures>
@@ -41,9 +42,14 @@ impl<Color: Interpolate, Captures: ?Sized, Inner: ViewLayout<Captures>> ViewLayo
         self.inner.is_empty()
     }
 
+    fn transition(&self) -> Self::Transition {
+        self.inner.transition()
+    }
+
     fn build_state(&self, captures: &mut Captures) -> Self::State {
         self.inner.build_state(captures)
     }
+
     fn layout(
         &self,
         offer: &ProposedDimensions,

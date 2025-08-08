@@ -18,6 +18,7 @@ use crate::{
         shape::{AsShapePrimitive, Inset},
         StrokedShape,
     },
+    transition::Opacity,
     view::{ViewLayout, ViewMarker},
 };
 
@@ -73,6 +74,7 @@ impl<T> Stroked<T> {
 
 impl<T: ViewMarker> ViewMarker for Stroked<T> {
     type Renderables = StrokedShape<T::Renderables>;
+    type Transition = Opacity;
 }
 
 impl<T, Captures: ?Sized> ViewLayout<Captures> for Stroked<T>
@@ -82,6 +84,10 @@ where
 {
     type Sublayout = T::Sublayout;
     type State = T::State;
+
+    fn transition(&self) -> Self::Transition {
+        Opacity
+    }
 
     fn build_state(&self, captures: &mut Captures) -> Self::State {
         self.shape.build_state(captures)

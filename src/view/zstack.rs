@@ -91,6 +91,7 @@ macro_rules! impl_view_for_zstack {
             $($type: ViewMarker),+
         {
             type Renderables = ($($type::Renderables),+);
+            type Transition = crate::transition::Opacity;
         }
 
         impl<Captures: ?Sized, $($type),+> ViewLayout<Captures> for ZStack<($($type),+)>
@@ -99,6 +100,10 @@ macro_rules! impl_view_for_zstack {
         {
             type Sublayout = ($(ResolvedLayout<$type::Sublayout>),+);
             type State = ($($type::State),+);
+
+            fn transition(&self) -> Self::Transition {
+                crate::transition::Opacity
+            }
 
             fn build_state(&self, captures: &mut Captures) -> Self::State {
                 ($(self.items.$n.build_state(captures)),+)

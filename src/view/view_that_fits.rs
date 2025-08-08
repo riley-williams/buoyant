@@ -4,6 +4,7 @@ use crate::{
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimension, ProposedDimensions},
     render::{OneOf2, OneOf3, OneOf4},
+    transition::Opacity,
     view::{ViewLayout, ViewMarker},
 };
 
@@ -128,6 +129,7 @@ derive_or!((1, T1), (2, T2)); // this derives the 4-tuple variant
 
 impl<T: ViewMarker> ViewMarker for ViewThatFits<(T,)> {
     type Renderables = T::Renderables;
+    type Transition = Opacity;
 }
 
 impl<T, Captures: ?Sized> ViewLayout<Captures> for ViewThatFits<(T,)>
@@ -137,9 +139,14 @@ where
     type Sublayout = T::Sublayout;
     type State = T::State;
 
+    fn transition(&self) -> Self::Transition {
+        Opacity
+    }
+
     fn build_state(&self, captures: &mut Captures) -> Self::State {
         self.choices.0.build_state(captures)
     }
+
     fn layout(
         &self,
         offer: &ProposedDimensions,
@@ -200,6 +207,7 @@ where
     T1: ViewMarker,
 {
     type Renderables = OneOf2<T0::Renderables, T1::Renderables>;
+    type Transition = Opacity;
 }
 
 impl<T0, T1, Captures: ?Sized> ViewLayout<Captures> for ViewThatFits<(T0, T1)>
@@ -209,6 +217,10 @@ where
 {
     type Sublayout = Branch2<ResolvedLayout<T0::Sublayout>, ResolvedLayout<T1::Sublayout>>;
     type State = Branch2<T0::State, T1::State>;
+
+    fn transition(&self) -> Self::Transition {
+        Opacity
+    }
 
     fn build_state(&self, captures: &mut Captures) -> Self::State {
         Branch2::Variant0(self.choices.0.build_state(captures))
@@ -320,6 +332,7 @@ where
     T2: ViewMarker,
 {
     type Renderables = OneOf3<T0::Renderables, T1::Renderables, T2::Renderables>;
+    type Transition = Opacity;
 }
 
 impl<T0, T1, T2, Captures: ?Sized> ViewLayout<Captures> for ViewThatFits<(T0, T1, T2)>
@@ -334,6 +347,10 @@ where
         ResolvedLayout<T2::Sublayout>,
     >;
     type State = Branch3<T0::State, T1::State, T2::State>;
+
+    fn transition(&self) -> Self::Transition {
+        Opacity
+    }
 
     fn build_state(&self, captures: &mut Captures) -> Self::State {
         Branch3::Variant0(self.choices.0.build_state(captures))
@@ -477,6 +494,7 @@ where
     T3: ViewMarker,
 {
     type Renderables = OneOf4<T0::Renderables, T1::Renderables, T2::Renderables, T3::Renderables>;
+    type Transition = Opacity;
 }
 
 impl<T0, T1, T2, T3, Captures: ?Sized> ViewLayout<Captures> for ViewThatFits<(T0, T1, T2, T3)>
@@ -494,9 +512,14 @@ where
     >;
     type State = Branch4<T0::State, T1::State, T2::State, T3::State>;
 
+    fn transition(&self) -> Self::Transition {
+        Opacity
+    }
+
     fn build_state(&self, captures: &mut Captures) -> Self::State {
         Branch4::Variant0(self.choices.0.build_state(captures))
     }
+
     fn layout(
         &self,
         offer: &ProposedDimensions,
