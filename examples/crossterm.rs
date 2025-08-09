@@ -2,16 +2,7 @@ use buoyant::environment::DefaultEnvironment;
 use buoyant::font::CharacterBufferFont;
 use buoyant::primitives::Point;
 use buoyant::render::Render;
-use buoyant::view::padding::Edges;
-use buoyant::view::View;
-use buoyant::view::ViewExt;
-use buoyant::{
-    layout::VerticalAlignment,
-    render_target::CrosstermRenderTarget,
-    view::{
-        shape::Rectangle, Divider, HStack, HorizontalTextAlignment, Spacer, Text, VStack, ZStack,
-    },
-};
+use buoyant::{render_target::CrosstermRenderTarget, view::prelude::*};
 use crossterm::event::{read, Event};
 use crossterm::style::Colors;
 

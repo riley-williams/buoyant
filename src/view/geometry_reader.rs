@@ -15,28 +15,27 @@ use crate::{
 /// as [`Rectangle`][`crate::view::shape::Rectangle`], which greedily expands to fill
 /// all the offered space.
 ///
-/// When proposed a [`Compact`][`crate::primitives::ProposedDimension::Compact`]
-/// dimension, such as when used inside a [`ScrollView`][`crate::view::ScrollView`] or
-/// [`fixed_size()`][`crate::view::ViewExt::fixed_size`] modifier, this view will shrink
-/// to only 1 pixel along the compact dimension because it has no "ideal" size.
+/// When proposed a [`Compact`] dimension, such as when used inside a [`ScrollView`] or
+/// [`ViewModifier::fixed_size()`] modifier, this view will shrink to only 1 pixel along
+/// the compact dimension because it has no "ideal" size.
 /// [`GeometryReader`] does not clip its children to its bounds, so when the size
 /// is misconfigured, the inner view may unexpectedly overlap other views.
 ///
 /// The contents of the inner view have absolutely no bearing on the frame that
 /// [`GeometryReader`] resolves to.
 ///
-/// The [`ViewExt::frame()`][`crate::view::ViewExt::frame()`] and [`ViewExt::flex_frame()`][`crate::view::ViewExt::flex_frame()`]
-/// modifiers are good tools when applied outside the [`GeometryReader`] to control the size of
+/// The [`ViewModifier::frame()`] and [`ViewModifier::flex_frame()`] modifiers are
+/// good tools when applied outside the [`GeometryReader`] to control the size of
 /// this view when it is presented in a compacting layout.
 ///
 /// If the inner view is larger or smaller than the geometry reader's frame, it will be
-/// placed with [`Alignment::TopLeading`][`crate::layout::Alignment::TopLeading`] alignment.
+/// placed with [`Alignment::TopLeading`] alignment.
 ///
 /// Examples:
 ///
 /// A capsule progress bar which is generic over color and captures.
 ///
-/// This will take on a height of 10 pixels when presented under a [`ScrollView`][`crate::view::ScrollView`],
+/// This will take on a height of 10 pixels when presented under a [`ScrollView`],
 /// but will expand to fill all the available space when used in a non-compacting layout.
 ///
 /// ```
@@ -62,6 +61,13 @@ use crate::{
 ///     .with_min_width(20)
 /// }
 /// ```
+///
+/// [`Compact`]: crate::primitives::ProposedDimension::Compact
+/// [`ViewModifier::fixed_size()`]: crate::view::ViewModifier::fixed_size
+/// [`ViewModifier::frame()`]: crate::view::ViewModifier::frame()
+/// [`ViewModifier::flex_frame()`]: crate::view::ViewModifier::flex_frame()
+/// [`Alignment::TopLeading`]: crate::layout::Alignment::TopLeading
+/// [`ScrollView`]: crate::view::ScrollView
 #[derive(Debug, Clone)]
 pub struct GeometryReader<ViewFn, Inner> {
     inner: ViewFn,
