@@ -22,6 +22,7 @@ where
     T: ViewMarker,
 {
     type Renderables = (); // Render nothing
+    type Transition = T::Transition;
 }
 
 impl<Captures: ?Sized, T> ViewLayout<Captures> for Hidden<T>
@@ -38,6 +39,10 @@ where
     fn is_empty(&self) -> bool {
         // This is still useful because the empty property affects stack spacing
         self.child.is_empty()
+    }
+
+    fn transition(&self) -> Self::Transition {
+        self.child.transition()
     }
 
     fn build_state(&self, captures: &mut Captures) -> Self::State {

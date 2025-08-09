@@ -3,6 +3,7 @@ use embedded_graphics::{image::ImageDrawable, prelude::OriginDimensions};
 use crate::{
     layout::ResolvedLayout,
     render::{self},
+    transition::Opacity,
     view::{ViewLayout, ViewMarker},
 };
 
@@ -25,6 +26,7 @@ impl<'a, T: ImageDrawable + ?Sized> Image<'a, T> {
 
 impl<'a, T: ?Sized> ViewMarker for Image<'a, T> {
     type Renderables = render::Image<'a, T>;
+    type Transition = Opacity;
 }
 
 impl<Captures: ?Sized, T> ViewLayout<Captures> for Image<'_, T>
@@ -34,7 +36,12 @@ where
     type Sublayout = ();
     type State = ();
 
+    fn transition(&self) -> Self::Transition {
+        Opacity
+    }
+
     fn build_state(&self, _captures: &mut Captures) -> Self::State {}
+
     fn layout(
         &self,
         _offer: &crate::primitives::ProposedDimensions,

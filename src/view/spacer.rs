@@ -2,6 +2,7 @@ use crate::{
     environment::LayoutEnvironment,
     layout::{LayoutDirection, ResolvedLayout},
     primitives::{Dimensions, Point, ProposedDimensions},
+    transition::Opacity,
     view::{ViewLayout, ViewMarker},
 };
 
@@ -17,6 +18,7 @@ pub struct Spacer {
 
 impl ViewMarker for Spacer {
     type Renderables = ();
+    type Transition = Opacity;
 }
 
 impl<Captures: ?Sized> ViewLayout<Captures> for Spacer {
@@ -26,6 +28,10 @@ impl<Captures: ?Sized> ViewLayout<Captures> for Spacer {
     fn priority(&self) -> i8 {
         // This view should take all the remaining space after other siblings have been laid out
         i8::MIN
+    }
+
+    fn transition(&self) -> Self::Transition {
+        Opacity
     }
 
     fn build_state(&self, _captures: &mut Captures) -> Self::State {}

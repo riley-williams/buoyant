@@ -61,6 +61,7 @@ pub mod prelude {
     pub use crate::view::shape::*;
 }
 
+use crate::transition::Transition;
 use crate::{
     environment::LayoutEnvironment,
     event::{Event, EventContext, EventResult},
@@ -103,6 +104,9 @@ pub trait ViewMarker: Sized {
     /// This is a concrete snapshot of the view which can be drawn to a render target and
     /// interpolated.
     type Renderables: Clone;
+
+    /// The transition to use when this subtree appears or disappears
+    type Transition: Transition;
 }
 
 /// Layout and state management behavior for views.
@@ -136,6 +140,9 @@ pub trait ViewLayout<Captures: ?Sized>: ViewMarker {
     fn is_empty(&self) -> bool {
         false
     }
+
+    /// The transition to use when this view appears or disappears.
+    fn transition(&self) -> Self::Transition;
 
     /// Constructs a default initial state before a view is presented.
     ///
@@ -186,6 +193,7 @@ where
     T: ViewMarker,
 {
     type Renderables = T::Renderables;
+    type Transition = T::Transition;
 }
 
 impl<T, Captures: ?Sized> ViewLayout<Captures> for &T
@@ -194,6 +202,10 @@ where
 {
     type State = T::State;
     type Sublayout = T::Sublayout;
+
+    fn transition(&self) -> Self::Transition {
+        (*self).transition()
+    }
 
     fn build_state(&self, captures: &mut Captures) -> Self::State {
         (*self).build_state(captures)

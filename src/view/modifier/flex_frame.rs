@@ -149,6 +149,7 @@ where
     V: ViewMarker,
 {
     type Renderables = V::Renderables;
+    type Transition = V::Transition;
 }
 
 impl<Captures: ?Sized, V> ViewLayout<Captures> for FlexFrame<V>
@@ -166,9 +167,14 @@ where
         self.child.is_empty()
     }
 
+    fn transition(&self) -> Self::Transition {
+        self.child.transition()
+    }
+
     fn build_state(&self, captures: &mut Captures) -> Self::State {
         self.child.build_state(captures)
     }
+
     fn layout(
         &self,
         offer: &ProposedDimensions,

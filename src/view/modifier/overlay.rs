@@ -31,6 +31,7 @@ where
     U: ViewMarker,
 {
     type Renderables = (T::Renderables, U::Renderables);
+    type Transition = T::Transition;
 }
 
 impl<Captures: ?Sized, T, U> ViewLayout<Captures> for OverlayView<T, U>
@@ -48,6 +49,10 @@ where
 
     fn is_empty(&self) -> bool {
         self.foreground.is_empty()
+    }
+
+    fn transition(&self) -> Self::Transition {
+        self.foreground.transition()
     }
 
     fn build_state(&self, captures: &mut Captures) -> Self::State {

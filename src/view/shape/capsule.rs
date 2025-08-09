@@ -2,6 +2,7 @@ use crate::{
     environment::LayoutEnvironment,
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
+    transition::Opacity,
     view::{ViewLayout, ViewMarker},
 };
 
@@ -15,11 +16,16 @@ pub struct Capsule;
 
 impl ViewMarker for Capsule {
     type Renderables = crate::render::Capsule;
+    type Transition = Opacity;
 }
 
 impl<Captures: ?Sized> ViewLayout<Captures> for Capsule {
     type State = ();
     type Sublayout = ();
+
+    fn transition(&self) -> Self::Transition {
+        Opacity
+    }
 
     fn build_state(&self, _captures: &mut Captures) -> Self::State {}
 

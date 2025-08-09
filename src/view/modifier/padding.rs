@@ -48,6 +48,7 @@ impl<T> PartialEq for Padding<T> {
 
 impl<V: ViewMarker> ViewMarker for Padding<V> {
     type Renderables = V::Renderables;
+    type Transition = V::Transition;
 }
 
 impl<Captures: ?Sized, V> ViewLayout<Captures> for Padding<V>
@@ -57,9 +58,22 @@ where
     type Sublayout = ResolvedLayout<V::Sublayout>;
     type State = V::State;
 
+    fn priority(&self) -> i8 {
+        self.inner.priority()
+    }
+
+    fn is_empty(&self) -> bool {
+        self.inner.is_empty()
+    }
+
+    fn transition(&self) -> Self::Transition {
+        self.inner.transition()
+    }
+
     fn build_state(&self, captures: &mut Captures) -> Self::State {
         self.inner.build_state(captures)
     }
+
     fn layout(
         &self,
         offer: &ProposedDimensions,

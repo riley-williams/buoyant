@@ -14,5 +14,6 @@ pub mod render;
 pub mod render_loop;
 pub mod render_target;
 pub mod surface;
+pub mod transition;
 #[warn(missing_docs)]
 pub mod view;

@@ -1,56 +1,11 @@
 use crate::{
     event::{EventContext, EventResult},
     layout::ResolvedLayout,
-    primitives::{Point, ProposedDimensions},
-    render::{OneOf2, OneOf3},
+    primitives::{Dimensions, Point, ProposedDimensions},
+    render::{OneOf2, OneOf3, TransitionOption},
+    transition::Opacity,
     view::{ViewLayout, ViewMarker},
 };
-
-/// A view that can conditionally render one of N subtrees based on the enum variant.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct MatchView<T> {
-    branch: T,
-}
-
-#[allow(missing_docs)]
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Branch2<V0, V1> {
-    Variant0(V0),
-    Variant1(V1),
-}
-
-#[allow(missing_docs)]
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Branch3<V0, V1, V2> {
-    Variant0(V0),
-    Variant1(V1),
-    Variant2(V2),
-}
-
-#[allow(missing_docs)]
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Branch4<V0, V1, V2, V3> {
-    Variant0(V0),
-    Variant1(V1),
-    Variant2(V2),
-    Variant3(V3),
-}
-
-// and so on...maybe up to N=10?
-
-impl<V0, V1> MatchView<Branch2<V0, V1>> {
-    /// Use the `if_view!` or `match_view!` macros instead of manually instantiating this struct.
-    pub const fn new(branch: Branch2<V0, V1>) -> Self {
-        Self { branch }
-    }
-}
-
-impl<V0, V1, V2> MatchView<Branch3<V0, V1, V2>> {
-    /// Use the `if_view!` or `match_view!` macros instead of manually instantiating this struct.
-    pub const fn new(branch: Branch3<V0, V1, V2>) -> Self {
-        Self { branch }
-    }
-}
 
 /// A view that conditionally renders its arms based on a boolean expression.
 ///
@@ -86,12 +41,11 @@ macro_rules! if_view {
             $view0:expr
         }
     ) => {{
-        let branch = if $value {
-            $crate::view::match_view::Branch2::Variant0($view0)
+        if $value {
+            Some($view0)
         } else {
-            $crate::view::match_view::Branch2::Variant1($crate::view::EmptyView)
-        };
-        $crate::view::match_view::MatchView::<$crate::view::match_view::Branch2<_, _>>::new(branch)
+            None
+        }
     }};
 
     (
@@ -101,12 +55,11 @@ macro_rules! if_view {
             $view1:expr
         }
     ) => {{
-        let branch = if $value {
+        if $value {
             $crate::view::match_view::Branch2::Variant0($view0)
         } else {
             $crate::view::match_view::Branch2::Variant1($view1)
-        };
-        $crate::view::match_view::MatchView::<$crate::view::match_view::Branch2<_, _>>::new(branch)
+        }
     }};
 }
 
@@ -145,11 +98,10 @@ macro_rules! match_view {
             $pattern1:pat => $view1:expr $(,)?
         }
     ) => {{
-        let branch = match $value {
+        match $value {
             $pattern0 => $crate::view::match_view::Branch2::Variant0($view0),
             $pattern1 => $crate::view::match_view::Branch2::Variant1($view1),
-        };
-        $crate::view::match_view::MatchView::<$crate::view::match_view::Branch2<_, _>>::new(branch)
+        }
     }};
 
     (
@@ -159,26 +111,160 @@ macro_rules! match_view {
             $pattern2:pat => $view2:expr $(,)?
         }
     ) => {{
-        let branch = match $value {
+        match $value {
             $pattern0 => $crate::view::match_view::Branch3::Variant0($view0),
             $pattern1 => $crate::view::match_view::Branch3::Variant1($view1),
             $pattern2 => $crate::view::match_view::Branch3::Variant2($view2),
-        };
-        $crate::view::match_view::MatchView::<$crate::view::match_view::Branch3<_, _, _>>::new(
-            branch,
-        )
+        }
     }};
 }
 
-impl<V0, V1> ViewMarker for MatchView<Branch2<V0, V1>>
+impl<V> ViewMarker for Option<V>
+where
+    V: ViewMarker,
+{
+    type Renderables = TransitionOption<V::Renderables, V::Transition>;
+    type Transition = Opacity;
+}
+
+impl<Captures, V> ViewLayout<Captures> for Option<V>
+where
+    V: ViewLayout<Captures>,
+    Captures: ?Sized,
+{
+    type Sublayout = Option<ResolvedLayout<V::Sublayout>>;
+    type State = Option<V::State>;
+
+    fn priority(&self) -> i8 {
+        self.as_ref().map_or(i8::MIN, ViewLayout::priority)
+    }
+
+    fn is_empty(&self) -> bool {
+        self.as_ref().is_none_or(ViewLayout::is_empty)
+    }
+
+    fn transition(&self) -> Self::Transition {
+        // transition is not inherited from a child
+        Opacity
+    }
+
+    fn build_state(&self, captures: &mut Captures) -> Self::State {
+        self.as_ref().map(|v| v.build_state(captures))
+    }
+
+    fn layout(
+        &self,
+        offer: &ProposedDimensions,
+        env: &impl crate::environment::LayoutEnvironment,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> ResolvedLayout<Self::Sublayout> {
+        self.as_ref().map_or(
+            ResolvedLayout {
+                sublayouts: None,
+                resolved_size: Dimensions::zero(),
+            },
+            |v| {
+                let s0 = if let Some(s) = state {
+                    s
+                } else {
+                    *state = Some(v.build_state(captures));
+                    let Some(s) = state else {
+                        unreachable!("Guaranteed to not be any other variant")
+                    };
+                    s
+                };
+
+                let child_layout = v.layout(offer, env, captures, s0);
+                let size = child_layout.resolved_size;
+                ResolvedLayout {
+                    sublayouts: Some(child_layout),
+                    resolved_size: size,
+                }
+            },
+        )
+    }
+
+    fn render_tree(
+        &self,
+        layout: &ResolvedLayout<Self::Sublayout>,
+        origin: Point,
+        env: &impl crate::environment::LayoutEnvironment,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> Self::Renderables {
+        match (self, &layout.sublayouts, state) {
+            (Some(v), Some(l0), Some(s0)) => TransitionOption::new_some(
+                v.render_tree(l0, origin, env, captures, s0),
+                l0.resolved_size.into(),
+                v.transition(),
+            ),
+            (None, _, _) => TransitionOption::None,
+            // This is reachable if an old layout attempts to be reused
+            _ => panic!(
+                "Layout/state branch mismatch in conditional view. Layouts cannot be reused."
+            ),
+        }
+    }
+
+    fn handle_event(
+        &self,
+        event: &crate::view::Event,
+        context: &EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> EventResult {
+        match (self, render_tree, state) {
+            (Some(v), TransitionOption::Some { subtree, .. }, Some(s)) => {
+                v.handle_event(event, context, subtree, captures, s)
+            }
+            (None, _, _) => EventResult::default(),
+            _ => {
+                assert!(
+                    !cfg!(debug_assertions),
+                    "State branch does not match view branch, likely due to improper reuse of layout."
+                );
+                EventResult::default()
+            }
+        }
+    }
+}
+
+/// A view that can conditionally render one of 2 subtrees
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Branch2<V0, V1> {
+    Variant0(V0),
+    Variant1(V1),
+}
+
+/// A view that can conditionally render one of 3 subtrees
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Branch3<V0, V1, V2> {
+    Variant0(V0),
+    Variant1(V1),
+    Variant2(V2),
+}
+
+/// A view that can conditionally render one of 4 subtrees
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Branch4<V0, V1, V2, V3> {
+    Variant0(V0),
+    Variant1(V1),
+    Variant2(V2),
+    Variant3(V3),
+}
+
+impl<V0, V1> ViewMarker for Branch2<V0, V1>
 where
     V0: ViewMarker,
     V1: ViewMarker,
 {
     type Renderables = OneOf2<V0::Renderables, V1::Renderables>;
+    type Transition = Opacity;
 }
 
-impl<Captures, V0, V1> ViewLayout<Captures> for MatchView<Branch2<V0, V1>>
+impl<Captures, V0, V1> ViewLayout<Captures> for Branch2<V0, V1>
 where
     V0: ViewLayout<Captures>,
     V1: ViewLayout<Captures>,
@@ -188,23 +274,27 @@ where
     type State = Branch2<V0::State, V1::State>;
 
     fn priority(&self) -> i8 {
-        match &self.branch {
-            Branch2::Variant0(v0) => v0.priority(),
-            Branch2::Variant1(v1) => v1.priority(),
+        match self {
+            Self::Variant0(v0) => v0.priority(),
+            Self::Variant1(v1) => v1.priority(),
         }
     }
 
     fn is_empty(&self) -> bool {
-        match &self.branch {
-            Branch2::Variant0(v0) => v0.is_empty(),
-            Branch2::Variant1(v1) => v1.is_empty(),
+        match self {
+            Self::Variant0(v0) => v0.is_empty(),
+            Self::Variant1(v1) => v1.is_empty(),
         }
     }
 
+    fn transition(&self) -> Self::Transition {
+        Opacity
+    }
+
     fn build_state(&self, captures: &mut Captures) -> Self::State {
-        match &self.branch {
-            Branch2::Variant0(v0) => Branch2::Variant0(v0.build_state(captures)),
-            Branch2::Variant1(v1) => Branch2::Variant1(v1.build_state(captures)),
+        match self {
+            Self::Variant0(v0) => Branch2::Variant0(v0.build_state(captures)),
+            Self::Variant1(v1) => Branch2::Variant1(v1.build_state(captures)),
         }
     }
     fn layout(
@@ -214,8 +304,8 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> ResolvedLayout<Self::Sublayout> {
-        match &self.branch {
-            Branch2::Variant0(v0) => {
+        match self {
+            Self::Variant0(v0) => {
                 let s0 = if let Branch2::Variant0(s) = state {
                     s
                 } else {
@@ -233,7 +323,7 @@ where
                     resolved_size: size,
                 }
             }
-            Branch2::Variant1(v1) => {
+            Self::Variant1(v1) => {
                 let s1 = if let Branch2::Variant1(s) = state {
                     s
                 } else {
@@ -261,11 +351,11 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> Self::Renderables {
-        match (&self.branch, &layout.sublayouts, state) {
-            (Branch2::Variant0(v0), Branch2::Variant0(l0), Branch2::Variant0(s0)) => {
+        match (self, &layout.sublayouts, state) {
+            (Self::Variant0(v0), Branch2::Variant0(l0), Branch2::Variant0(s0)) => {
                 OneOf2::Variant0(v0.render_tree(l0, origin, env, captures, s0))
             }
-            (Branch2::Variant1(v1), Branch2::Variant1(l1), Branch2::Variant1(s1)) => {
+            (Self::Variant1(v1), Branch2::Variant1(l1), Branch2::Variant1(s1)) => {
                 OneOf2::Variant1(v1.render_tree(l1, origin, env, captures, s1))
             }
             // This is reachable if an old layout attempts to be reused
@@ -283,11 +373,11 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> EventResult {
-        match (&self.branch, render_tree, state) {
-            (Branch2::Variant0(v0), OneOf2::Variant0(t0), Branch2::Variant0(s0)) => {
+        match (self, render_tree, state) {
+            (Self::Variant0(v0), OneOf2::Variant0(t0), Branch2::Variant0(s0)) => {
                 v0.handle_event(event, context, t0, captures, s0)
             }
-            (Branch2::Variant1(v1), OneOf2::Variant1(t1), Branch2::Variant1(s1)) => {
+            (Self::Variant1(v1), OneOf2::Variant1(t1), Branch2::Variant1(s1)) => {
                 v1.handle_event(event, context, t1, captures, s1)
             }
             _ => {
@@ -301,16 +391,17 @@ where
     }
 }
 
-impl<V0, V1, V2> ViewMarker for MatchView<Branch3<V0, V1, V2>>
+impl<V0, V1, V2> ViewMarker for Branch3<V0, V1, V2>
 where
     V0: ViewMarker,
     V1: ViewMarker,
     V2: ViewMarker,
 {
     type Renderables = OneOf3<V0::Renderables, V1::Renderables, V2::Renderables>;
+    type Transition = Opacity;
 }
 
-impl<Captures, V0, V1, V2> ViewLayout<Captures> for MatchView<Branch3<V0, V1, V2>>
+impl<Captures, V0, V1, V2> ViewLayout<Captures> for Branch3<V0, V1, V2>
 where
     V0: ViewLayout<Captures>,
     V1: ViewLayout<Captures>,
@@ -325,26 +416,30 @@ where
     type State = Branch3<V0::State, V1::State, V2::State>;
 
     fn priority(&self) -> i8 {
-        match &self.branch {
-            Branch3::Variant0(v0) => v0.priority(),
-            Branch3::Variant1(v1) => v1.priority(),
-            Branch3::Variant2(v2) => v2.priority(),
+        match self {
+            Self::Variant0(v0) => v0.priority(),
+            Self::Variant1(v1) => v1.priority(),
+            Self::Variant2(v2) => v2.priority(),
         }
     }
 
     fn is_empty(&self) -> bool {
-        match &self.branch {
-            Branch3::Variant0(v0) => v0.is_empty(),
-            Branch3::Variant1(v1) => v1.is_empty(),
-            Branch3::Variant2(v2) => v2.is_empty(),
+        match self {
+            Self::Variant0(v0) => v0.is_empty(),
+            Self::Variant1(v1) => v1.is_empty(),
+            Self::Variant2(v2) => v2.is_empty(),
         }
     }
 
+    fn transition(&self) -> Self::Transition {
+        Opacity
+    }
+
     fn build_state(&self, captures: &mut Captures) -> Self::State {
-        match &self.branch {
-            Branch3::Variant0(v0) => Branch3::Variant0(v0.build_state(captures)),
-            Branch3::Variant1(v1) => Branch3::Variant1(v1.build_state(captures)),
-            Branch3::Variant2(v2) => Branch3::Variant2(v2.build_state(captures)),
+        match self {
+            Self::Variant0(v0) => Branch3::Variant0(v0.build_state(captures)),
+            Self::Variant1(v1) => Branch3::Variant1(v1.build_state(captures)),
+            Self::Variant2(v2) => Branch3::Variant2(v2.build_state(captures)),
         }
     }
     fn layout(
@@ -354,8 +449,8 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> ResolvedLayout<Self::Sublayout> {
-        match &self.branch {
-            Branch3::Variant0(v0) => {
+        match self {
+            Self::Variant0(v0) => {
                 let s0 = if let Branch3::Variant0(s) = state {
                     s
                 } else {
@@ -372,7 +467,7 @@ where
                     resolved_size: size,
                 }
             }
-            Branch3::Variant1(v1) => {
+            Self::Variant1(v1) => {
                 let s1 = if let Branch3::Variant1(s) = state {
                     s
                 } else {
@@ -389,7 +484,7 @@ where
                     resolved_size: size,
                 }
             }
-            Branch3::Variant2(v2) => {
+            Self::Variant2(v2) => {
                 let s2 = if let Branch3::Variant2(s) = state {
                     s
                 } else {
@@ -417,8 +512,8 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> Self::Renderables {
-        match (&self.branch, &layout.sublayouts) {
-            (Branch3::Variant0(v0), Branch3::Variant0(l0)) => {
+        match (self, &layout.sublayouts) {
+            (Self::Variant0(v0), Branch3::Variant0(l0)) => {
                 if let Branch3::Variant0(s0) = state {
                     OneOf3::Variant0(v0.render_tree(l0, origin, env, captures, s0))
                 } else {
@@ -429,7 +524,7 @@ where
                     renderables
                 }
             }
-            (Branch3::Variant1(v1), Branch3::Variant1(l1)) => {
+            (Self::Variant1(v1), Branch3::Variant1(l1)) => {
                 if let Branch3::Variant1(s1) = state {
                     OneOf3::Variant1(v1.render_tree(l1, origin, env, captures, s1))
                 } else {
@@ -440,7 +535,7 @@ where
                     renderables
                 }
             }
-            (Branch3::Variant2(v2), Branch3::Variant2(l2)) => {
+            (Self::Variant2(v2), Branch3::Variant2(l2)) => {
                 if let Branch3::Variant2(s2) = state {
                     OneOf3::Variant2(v2.render_tree(l2, origin, env, captures, s2))
                 } else {
@@ -466,14 +561,14 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> EventResult {
-        match (&self.branch, render_tree, state) {
-            (Branch3::Variant0(v0), OneOf3::Variant0(t0), Branch3::Variant0(s0)) => {
+        match (self, render_tree, state) {
+            (Self::Variant0(v0), OneOf3::Variant0(t0), Branch3::Variant0(s0)) => {
                 v0.handle_event(event, context, t0, captures, s0)
             }
-            (Branch3::Variant1(v1), OneOf3::Variant1(t1), Branch3::Variant1(s1)) => {
+            (Self::Variant1(v1), OneOf3::Variant1(t1), Branch3::Variant1(s1)) => {
                 v1.handle_event(event, context, t1, captures, s1)
             }
-            (Branch3::Variant2(v2), OneOf3::Variant2(t2), Branch3::Variant2(s2)) => {
+            (Self::Variant2(v2), OneOf3::Variant2(t2), Branch3::Variant2(s2)) => {
                 v2.handle_event(event, context, t2, captures, s2)
             }
             _ => {
@@ -498,7 +593,7 @@ mod tests {
             _ => 1,
         });
 
-        assert_eq!(view.branch, Branch2::<_, u8>::Variant1(1));
+        assert_eq!(view, Branch2::<_, u8>::Variant1(1));
     }
 
     #[test]
@@ -514,7 +609,7 @@ mod tests {
             MyEnum::B => 1,
         });
 
-        assert_eq!(view.branch, Variant0(0));
+        assert_eq!(view, Variant0(0));
     }
 
     #[test]
@@ -529,7 +624,7 @@ mod tests {
             MyEnum::A(x) => x,
             MyEnum::B(y) => y,
         });
-        assert_eq!(view.branch, Variant1(3.0));
+        assert_eq!(view, Variant1(3.0));
     }
 
     #[test]
@@ -547,6 +642,6 @@ mod tests {
             ThreeState::Third => 3,
         });
 
-        assert_eq!(view.branch, super::Branch3::Variant1(2));
+        assert_eq!(view, super::Branch3::Variant1(2));
     }
 }

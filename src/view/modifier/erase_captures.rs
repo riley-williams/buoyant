@@ -36,6 +36,7 @@ where
     T: ViewMarker,
 {
     type Renderables = T::Renderables;
+    type Transition = T::Transition;
 }
 
 impl<T: ViewLayout<()>, Captures: ?Sized> ViewLayout<Captures> for EraseCaptures<T> {
@@ -48,6 +49,10 @@ impl<T: ViewLayout<()>, Captures: ?Sized> ViewLayout<Captures> for EraseCaptures
 
     fn is_empty(&self) -> bool {
         self.inner.is_empty()
+    }
+
+    fn transition(&self) -> Self::Transition {
+        self.inner.transition()
     }
 
     fn build_state(&self, _captures: &mut Captures) -> Self::State {

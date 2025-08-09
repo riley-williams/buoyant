@@ -6,6 +6,7 @@ use crate::{
     layout::ResolvedLayout,
     primitives::{Frame, ProposedDimensions, Size},
     render::Container,
+    transition::Opacity,
     view::{Event, ViewLayout, ViewMarker},
 };
 
@@ -87,6 +88,7 @@ impl<ViewFn: Fn(Size) -> Inner, Inner> GeometryReader<ViewFn, Inner> {
 
 impl<ViewFn, Inner: ViewMarker> ViewMarker for GeometryReader<ViewFn, Inner> {
     type Renderables = Container<Inner::Renderables>;
+    type Transition = Opacity;
 }
 
 impl<Captures, Inner, ViewFn> ViewLayout<Captures> for GeometryReader<ViewFn, Inner>
@@ -97,6 +99,10 @@ where
 {
     type State = Option<Inner::State>;
     type Sublayout = ();
+
+    fn transition(&self) -> Self::Transition {
+        Opacity
+    }
 
     fn build_state(&self, _captures: &mut Captures) -> Self::State {
         None

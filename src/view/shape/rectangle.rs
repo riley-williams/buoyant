@@ -2,6 +2,7 @@ use crate::{
     environment::LayoutEnvironment,
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
+    transition::Opacity,
     view::{ViewLayout, ViewMarker},
 };
 
@@ -26,11 +27,16 @@ impl Rectangle {
 
 impl ViewMarker for Rectangle {
     type Renderables = crate::render::Rect;
+    type Transition = Opacity;
 }
 
 impl<Captures: ?Sized> ViewLayout<Captures> for Rectangle {
     type State = ();
     type Sublayout = ();
+
+    fn transition(&self) -> Self::Transition {
+        Opacity
+    }
 
     fn build_state(&self, _captures: &mut Captures) -> Self::State {}
 

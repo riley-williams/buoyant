@@ -65,22 +65,22 @@ transitions. You should be able to construct most desired layouts and animations
 - ✅ Text (embedded-graphics Monospace and [u8g2](https://crates.io/crates/u8g2-fonts) fonts)
 - ✅ Images (fixed size)
 - ✅ Interruptible Animations + Curves
-- ✅ Common embedded-graphics shape primitives
+- 🚧 Transitions (partially implemented)
 - ✅ Shape stroke+fill
-- 🚧 Custom sizing with GeometryView
+- ✅ Common embedded-graphics shape primitives
+- ✅ Custom sizing with GeometryView
 - 💤 Charts
 - 💤 Canvas for arbitrary path/shape/raster drawing
 - 💤 Simulated alpha and antialiasing
-- 💤 Transitions
 - 💤 Shape styles (e.g. gradients)
 
 ### Interactivity
 
 Interactivity is under active development, and is not yet feature-complete.
 
-- 🚧 State management
+- ✅ State management
 - 🚧 Click/tap routing
-- 🚧 Button
+- ✅ Button
 - 🚧 ScrollView
 - 💤 Focus management + keyboard input
 - 💤 TextField

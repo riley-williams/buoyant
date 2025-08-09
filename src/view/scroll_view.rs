@@ -8,6 +8,7 @@ use crate::{
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimension, ProposedDimensions, Size},
     render::{Animate, Capsule, Offset, ScrollMetadata},
+    transition::Opacity,
     view::{ViewLayout, ViewMarker},
 };
 
@@ -204,11 +205,16 @@ pub struct ScrollViewState<InnerState> {
 
 impl<Inner: ViewMarker> ViewMarker for ScrollView<Inner> {
     type Renderables = ScrollMetadata<Inner::Renderables>;
+    type Transition = Opacity;
 }
 
 impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<Inner> {
     type State = ScrollViewState<Inner::State>;
     type Sublayout = ResolvedLayout<Inner::Sublayout>;
+
+    fn transition(&self) -> Self::Transition {
+        Opacity
+    }
 
     fn build_state(&self, captures: &mut Captures) -> Self::State {
         Self::State {
