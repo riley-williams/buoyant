@@ -3,50 +3,54 @@ use crate::{
     event::EventResult,
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
-    render::Offset,
     view::{ViewLayout, ViewMarker},
 };
 
-#[derive(Debug, Clone)]
-pub struct GeometryGroup<InnerView> {
-    inner: InnerView,
+/// Modifies the transition used to transition this view tree.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Transition<V, T> {
+    child: V,
+    transition: T,
 }
 
-impl<InnerView> GeometryGroup<InnerView> {
-    pub const fn new(view: InnerView) -> Self {
-        Self { inner: view }
+impl<V, T> Transition<V, T> {
+    #[allow(missing_docs)]
+    pub const fn new(transition: T, child: V) -> Self {
+        Self { child, transition }
     }
 }
 
-impl<InnerView> ViewMarker for GeometryGroup<InnerView>
+impl<V, T> ViewMarker for Transition<V, T>
 where
-    InnerView: ViewMarker,
+    V: ViewMarker,
+    T: crate::transition::Transition,
 {
-    type Renderables = Offset<InnerView::Renderables>;
-    type Transition = InnerView::Transition;
+    type Renderables = V::Renderables;
+    type Transition = T;
 }
 
-impl<Captures: ?Sized, InnerView> ViewLayout<Captures> for GeometryGroup<InnerView>
+impl<Captures: ?Sized, V, T> ViewLayout<Captures> for Transition<V, T>
 where
-    InnerView: ViewLayout<Captures>,
+    V: ViewLayout<Captures>,
+    T: crate::transition::Transition,
 {
-    type Sublayout = InnerView::Sublayout;
-    type State = InnerView::State;
+    type Sublayout = V::Sublayout;
+    type State = V::State;
 
     fn priority(&self) -> i8 {
-        self.inner.priority()
+        self.child.priority()
     }
 
     fn is_empty(&self) -> bool {
-        self.inner.is_empty()
+        self.child.is_empty()
     }
 
     fn transition(&self) -> Self::Transition {
-        self.inner.transition()
+        self.transition.clone()
     }
 
     fn build_state(&self, captures: &mut Captures) -> Self::State {
-        self.inner.build_state(captures)
+        self.child.build_state(captures)
     }
 
     fn layout(
@@ -56,7 +60,7 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> ResolvedLayout<Self::Sublayout> {
-        self.inner.layout(offer, env, captures, state)
+        self.child.layout(offer, env, captures, state)
     }
 
     fn render_tree(
@@ -67,12 +71,7 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> Self::Renderables {
-        // Store the offset, and render subtrees from zero
-        Offset::new(
-            origin,
-            self.inner
-                .render_tree(layout, Point::zero(), env, captures, state),
-        )
+        self.child.render_tree(layout, origin, env, captures, state)
     }
 
     fn handle_event(
@@ -83,7 +82,7 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> EventResult {
-        self.inner
-            .handle_event(event, context, &mut render_tree.subtree, captures, state)
+        self.child
+            .handle_event(event, context, render_tree, captures, state)
     }
 }

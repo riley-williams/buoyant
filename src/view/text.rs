@@ -4,6 +4,7 @@ use crate::{
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimension, ProposedDimensions, Size},
     render::{self},
+    transition::Opacity,
     view::{ViewLayout, ViewMarker},
 };
 use core::{fmt::Write as _, marker::PhantomData};
@@ -114,6 +115,7 @@ impl<T: PartialEq, F> PartialEq for Text<'_, T, F> {
 
 impl<'a, T: Clone, F> ViewMarker for Text<'a, T, F> {
     type Renderables = render::Text<'a, T, F, 8>;
+    type Transition = Opacity;
 }
 
 impl<Captures: ?Sized, T, F> ViewLayout<Captures> for Text<'_, T, F>
@@ -123,6 +125,10 @@ where
 {
     type Sublayout = heapless::Vec<crate::render::text::Line, 8>;
     type State = ();
+
+    fn transition(&self) -> Self::Transition {
+        Opacity
+    }
 
     fn build_state(&self, _captures: &mut Captures) -> Self::State {}
 

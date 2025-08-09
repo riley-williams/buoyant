@@ -1,17 +1,16 @@
+//! This module implements a non-transitioning Option<T>
+//! For a transition-capable version, use [`crate::render::TransitionOption`].
+
 use crate::{
     primitives::Point,
-    render::{AnimatedJoin, Render},
+    render::{AnimatedJoin, AnimationDomain, Render},
     render_target::RenderTarget,
 };
 
-use super::AnimationDomain;
-
 impl<T: AnimatedJoin> AnimatedJoin for Option<T> {
     fn join_from(&mut self, source: &Self, domain: &AnimationDomain) {
-        match (source, self) {
-            (Some(source), Some(target)) => target.join_from(source, domain),
-            (_, None) => (),
-            (None, Some(_target)) => (),
+        if let (Some(source), Some(target)) = (source, self) {
+            target.join_from(source, domain);
         }
     }
 }

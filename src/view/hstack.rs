@@ -219,6 +219,7 @@ macro_rules! impl_view_for_hstack {
             $($type: ViewMarker),+
         {
             type Renderables = ($($type::Renderables),+);
+            type Transition = crate::transition::Opacity;
         }
 
         impl<$($type),+, Captures: ?Sized> ViewLayout<Captures> for HStack<($($type),+)>
@@ -227,6 +228,10 @@ macro_rules! impl_view_for_hstack {
         {
             type State = ($($type::State),+);
             type Sublayout = ($(ResolvedLayout<$type::Sublayout>),+);
+
+            fn transition(&self) -> Self::Transition {
+                crate::transition::Opacity
+            }
 
             fn build_state(&self, captures: &mut Captures) -> Self::State {
                 ($(self.items.$n.build_state(captures)),+)

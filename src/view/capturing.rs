@@ -3,6 +3,7 @@ use crate::{
     event::{EventContext, EventResult},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
+    transition::Opacity,
     view::{ViewLayout, ViewMarker},
 };
 
@@ -30,6 +31,7 @@ where
     InnerView: ViewMarker,
 {
     type Renderables = InnerView::Renderables;
+    type Transition = Opacity;
 }
 
 impl<
@@ -48,6 +50,10 @@ impl<
 
     fn is_empty(&self) -> bool {
         self.inner.is_empty()
+    }
+
+    fn transition(&self) -> Self::Transition {
+        Opacity
     }
 
     fn build_state(&self, captures: &mut Captures) -> Self::State {

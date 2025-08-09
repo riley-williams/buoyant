@@ -8,6 +8,7 @@ use crate::{
     layout::ResolvedLayout,
     primitives::{Frame, ProposedDimensions},
     render::Container,
+    transition::Opacity,
     view::{Event, ViewLayout, ViewMarker},
 };
 
@@ -106,6 +107,7 @@ impl<ViewFn, Inner, Action> Button<ViewFn, Inner, Action> {
 
 impl<ViewFn, Inner: ViewMarker, Action> ViewMarker for Button<ViewFn, Inner, Action> {
     type Renderables = Container<Inner::Renderables>;
+    type Transition = Opacity;
 }
 
 impl<Captures, Inner, ViewFn, Action> ViewLayout<Captures> for Button<ViewFn, Inner, Action>
@@ -117,6 +119,10 @@ where
 {
     type State = (ButtonState, Inner::State);
     type Sublayout = Inner::Sublayout;
+
+    fn transition(&self) -> Self::Transition {
+        Opacity
+    }
 
     fn build_state(&self, captures: &mut Captures) -> Self::State {
         (

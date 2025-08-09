@@ -9,6 +9,7 @@
 use std::time::{Duration, Instant};
 
 use buoyant::render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _};
+use buoyant::transition::{Edge, Move};
 use buoyant::view::scroll_view::ScrollDirection;
 use buoyant::{animation::Animation, if_view, match_view, view::prelude::*};
 
@@ -259,6 +260,7 @@ fn toggle_text<C>(
             Text::new(description, &font::CAPTION)
                 .multiline_text_alignment(HorizontalTextAlignment::Trailing)
                 .foreground_color(color::Space::WHITE)
+                .transition(Move::new(Edge::Trailing))
         }),
     ))
     .with_spacing(spacing::ELEMENT)

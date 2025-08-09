@@ -2,6 +2,7 @@ use crate::{
     environment::LayoutEnvironment,
     layout::ResolvedLayout,
     primitives::{Dimensions, Point, ProposedDimensions},
+    transition::Opacity,
     view::{ViewLayout, ViewMarker},
 };
 
@@ -43,6 +44,7 @@ pub struct EmptyView;
 
 impl ViewMarker for EmptyView {
     type Renderables = ();
+    type Transition = Opacity;
 }
 
 impl<Captures: ?Sized> ViewLayout<Captures> for EmptyView {
@@ -55,6 +57,10 @@ impl<Captures: ?Sized> ViewLayout<Captures> for EmptyView {
 
     fn is_empty(&self) -> bool {
         true
+    }
+
+    fn transition(&self) -> Self::Transition {
+        Opacity
     }
 
     fn build_state(&self, _captures: &mut Captures) -> Self::State {}

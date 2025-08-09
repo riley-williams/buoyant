@@ -24,6 +24,7 @@ where
     T: ViewMarker,
 {
     type Renderables = T::Renderables;
+    type Transition = T::Transition;
 }
 
 impl<Captures: ?Sized, T> ViewLayout<Captures> for Offset<T>
@@ -41,9 +42,14 @@ where
         self.child.is_empty()
     }
 
+    fn transition(&self) -> Self::Transition {
+        self.child.transition()
+    }
+
     fn build_state(&self, captures: &mut Captures) -> Self::State {
         self.child.build_state(captures)
     }
+
     fn layout(
         &self,
         offer: &ProposedDimensions,

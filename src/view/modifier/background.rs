@@ -31,6 +31,7 @@ where
     U: ViewMarker,
 {
     type Renderables = (U::Renderables, T::Renderables);
+    type Transition = T::Transition;
 }
 
 impl<Captures: ?Sized, T, U> ViewLayout<Captures> for BackgroundView<T, U>
@@ -50,12 +51,17 @@ where
         self.foreground.is_empty()
     }
 
+    fn transition(&self) -> Self::Transition {
+        self.foreground.transition()
+    }
+
     fn build_state(&self, captures: &mut Captures) -> Self::State {
         (
             self.foreground.build_state(captures),
             self.background.build_state(captures),
         )
     }
+
     fn layout(
         &self,
         offer: &ProposedDimensions,

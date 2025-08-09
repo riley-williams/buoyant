@@ -20,6 +20,7 @@ mod overlay;
 #[allow(missing_docs)]
 pub mod padding;
 mod priority;
+mod transition;
 
 pub(crate) use animated::Animated;
 pub(crate) use aspect_ratio::AspectRatio;
@@ -35,6 +36,7 @@ pub(crate) use offset::Offset;
 pub(crate) use overlay::OverlayView;
 pub(crate) use padding::Padding;
 pub(crate) use priority::Priority;
+pub(crate) use transition::Transition;
 
 use crate::{
     animation::Animation,
@@ -449,5 +451,42 @@ pub trait ViewModifier: Sized {
     /// stack offering the remaining width divided by the number of views in the group.
     fn priority(self, priority: i8) -> Priority<Self> {
         Priority::new(priority, self)
+    }
+
+    /// Sets the transition to use when the view is added or removed.
+    ///
+    /// Views use [`Opacity`][`crate::transition::Opacity`] transitions by default.
+    ///
+    /// Transitions are driven by some parent [`animation()`], and apply to the entire
+    /// subtree underneath the forking view.
+    ///
+    /// For transitions like [`Move`][`crate::transition::Move`], the size of the forked
+    /// tree is used to determine the starting and ending points of the transition.
+    /// Not the size of the subtree the [`transition()`] modifier is applied to.
+    ///
+    /// # Examples
+    ///
+    /// A 100x100 rectangle that slides in from its leading edge
+    /// and out to its trailing edge:
+    ///
+    /// ```
+    /// use core::time::Duration;
+    /// use buoyant::{
+    ///     view::prelude::*,
+    ///     transition::Slide,
+    ///     if_view,
+    /// };
+    /// use embedded_graphics::pixelcolor::Rgb888;
+    ///
+    /// fn sliding_view(is_visible: bool) -> impl View<Rgb888, ()> {
+    ///     if_view!((is_visible) {
+    ///         Rectangle
+    ///             .transition(Slide::leading())
+    ///             .frame_sized(100, 100)
+    ///     }).animated(Animation::linear(Duration::from_millis(300)), is_visible)
+    /// }
+    /// ```
+    fn transition<T: crate::transition::Transition>(self, transition: T) -> Transition<Self, T> {
+        Transition::new(transition, self)
     }
 }

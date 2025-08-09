@@ -2,6 +2,7 @@ use crate::{
     environment::LayoutEnvironment,
     layout::{LayoutDirection, ResolvedLayout},
     primitives::{Dimensions, Point, ProposedDimensions},
+    transition::Opacity,
     view::{ViewLayout, ViewMarker},
 };
 
@@ -35,6 +36,7 @@ impl PartialEq for Divider {
 
 impl ViewMarker for Divider {
     type Renderables = crate::render::Rect;
+    type Transition = Opacity;
 }
 
 impl<Captures: ?Sized> ViewLayout<Captures> for Divider {
@@ -43,6 +45,10 @@ impl<Captures: ?Sized> ViewLayout<Captures> for Divider {
 
     fn priority(&self) -> i8 {
         i8::MAX
+    }
+
+    fn transition(&self) -> Self::Transition {
+        Opacity
     }
 
     fn build_state(&self, _captures: &mut Captures) -> Self::State {}
