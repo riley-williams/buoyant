@@ -6,7 +6,6 @@ use crate::{
 
 /// A view that can be converted into an embedded-graphics drawable.
 pub trait AsDrawable<Color, Captures: ?Sized> {
-    #[allow(clippy::doc_markdown)]
     /// Converts a view into an object that can be drawn with the [embedded_graphics]
     /// crate.
     ///
@@ -30,6 +29,8 @@ pub trait AsDrawable<Color, Captures: ?Sized> {
     ///     .draw(&mut display)
     ///     .unwrap();
     /// ```
+    ///
+    /// [embedded_graphics]: https://docs.rs/embedded_graphics
     fn as_drawable(
         &self,
         size: impl Into<ProposedDimensions>,

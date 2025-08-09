@@ -16,8 +16,7 @@ use paste::paste;
 ///
 /// ```rust
 /// use buoyant::font::CharacterBufferFont;
-/// use buoyant::layout::Alignment;
-/// use buoyant::view::{ZStack, shape::Rectangle, Text, ViewExt as _};
+/// use buoyant::view::prelude::*;
 ///
 /// /// A fish at the bottom right corner of an 'o'cean
 /// let font = CharacterBufferFont {};

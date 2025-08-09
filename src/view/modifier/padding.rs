@@ -7,7 +7,6 @@ use crate::{
 };
 
 /// Describes a set of edges
-#[allow(missing_docs)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Edges {
     All,

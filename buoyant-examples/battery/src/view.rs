@@ -1,7 +1,4 @@
-use buoyant::{
-    match_view,
-    view::{padding::Edges, View, ViewExt},
-};
+use buoyant::{match_view, view::prelude::*};
 
 use crate::{color::ColorFormat, state::BatteryStatus};
 
