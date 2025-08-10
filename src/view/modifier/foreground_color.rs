@@ -28,7 +28,7 @@ where
     type Transition = Inner::Transition;
 }
 
-impl<Color: Interpolate, Captures: ?Sized, Inner: ViewLayout<Captures>> ViewLayout<Captures>
+impl<Color: Interpolate + Clone, Captures: ?Sized, Inner: ViewLayout<Captures>> ViewLayout<Captures>
     for ForegroundStyle<Inner, Color>
 {
     type Sublayout = Inner::Sublayout;
@@ -69,7 +69,7 @@ impl<Color: Interpolate, Captures: ?Sized, Inner: ViewLayout<Captures>> ViewLayo
         state: &mut Self::State,
     ) -> Self::Renderables {
         ShadeSubtree::new(
-            self.style,
+            self.style.clone(),
             self.inner.render_tree(layout, origin, env, captures, state),
         )
     }

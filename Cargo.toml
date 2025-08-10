@@ -37,6 +37,8 @@ u8g2-fonts = { version = "0.7.0", optional = true, features = [
   "embedded_graphics_textstyle",
 ] }
 heapless = "^0.8"
+fixed = "^1.29"
+fixed-macro = "^1.2.0"
 paste = "1.0.15"
 embedded-graphics-simulator = { version = "0.7.0", default-features = false, features = [
   "with-sdl",

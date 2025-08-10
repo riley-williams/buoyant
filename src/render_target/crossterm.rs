@@ -9,7 +9,12 @@ use crossterm::{
 use std::io::{stdout, Stdout, Write};
 
 use crate::{
-    primitives::{geometry::Rectangle, Pixel, Point, Size},
+    primitives::{
+        geometry::Rectangle,
+        transform::{CoordinateSpaceTransform, LinearTransform},
+        Pixel, Point, Size,
+    },
+    render_target::{LayerConfig, LayerHandle},
     surface::Surface,
 };
 
@@ -34,7 +39,7 @@ use super::{Brush, Glyph, RenderTarget, Shape, Stroke};
 #[derive(Debug)]
 pub struct CrosstermRenderTarget {
     stdout: Stdout,
-    clip_rect: Rectangle,
+    active_layer: LayerConfig,
 }
 
 impl CrosstermRenderTarget {
@@ -120,7 +125,10 @@ impl Default for CrosstermRenderTarget {
             .map(|(w, h)| Size::new(w.into(), h.into()))
             .unwrap_or_default();
         let clip_rect = Rectangle::new(Point::zero(), size);
-        Self { stdout, clip_rect }
+        Self {
+            stdout,
+            active_layer: LayerConfig::new_clip(clip_rect),
+        }
     }
 }
 
@@ -144,32 +152,41 @@ impl RenderTarget for CrosstermRenderTarget {
     }
 
     fn clip_rect(&self) -> Rectangle {
-        self.clip_rect.clone()
+        self.active_layer
+            .clip_rect
+            .applying_inverse(&self.active_layer.transform)
     }
 
-    fn set_clip_rect(&mut self, rect: Rectangle) -> Rectangle {
-        let old_rect = self.clip_rect.clone();
-        self.clip_rect = rect;
-        old_rect
+    fn with_layer<LayerFn, DrawFn>(&mut self, layer_fn: LayerFn, draw_fn: DrawFn)
+    where
+        LayerFn: FnOnce(LayerHandle) -> LayerHandle,
+        DrawFn: FnOnce(&mut Self),
+    {
+        let layer = self.active_layer.clone();
+        let mut new_layer = self.active_layer.clone();
+        layer_fn(LayerHandle::new(&mut new_layer));
+        self.active_layer = new_layer;
+        draw_fn(self);
+        self.active_layer = layer;
     }
 
     fn fill<C: Into<Self::ColorFormat>>(
         &mut self,
-        transform_offset: Point,
+        transform: impl Into<LinearTransform>,
         brush: &impl Brush<ColorFormat = C>,
         _brush_offset: Option<Point>,
         shape: &impl Shape,
     ) {
-        let mut shape_bounds = shape.bounding_box();
-        shape_bounds.origin += transform_offset;
-        if !shape_bounds.intersects(&self.clip_rect) {
+        let transform = transform.into().applying(&self.active_layer.transform);
+        let bounding_box = shape.bounding_box().applying(&transform);
+        if !bounding_box.intersects(&self.active_layer.clip_rect) {
             return;
         }
 
         if let Some(rect) = shape.as_rect() {
             let origin = Point::new(
-                rect.origin.x + transform_offset.x,
-                rect.origin.y + transform_offset.y,
+                rect.origin.x + transform.offset.x,
+                rect.origin.y + transform.offset.y,
             );
             let rect = Rectangle::new(origin, rect.size);
             let Some(color) = brush.as_solid() else {
@@ -183,7 +200,9 @@ impl RenderTarget for CrosstermRenderTarget {
                     if point.x >= size.width as i32 || point.y >= size.height as i32 {
                         continue;
                     }
-                    self.draw_color(point, color);
+                    if self.active_layer.clip_rect.contains(&point) {
+                        self.draw_color(point, color);
+                    }
                 }
             }
         }
@@ -192,21 +211,21 @@ impl RenderTarget for CrosstermRenderTarget {
     fn stroke<C: Into<Self::ColorFormat>>(
         &mut self,
         _stroke: &Stroke,
-        transform_offset: Point,
+        transform: impl Into<LinearTransform>,
         brush: &impl Brush<ColorFormat = C>,
         _brush_offset: Option<Point>,
         shape: &impl Shape,
     ) {
-        let mut shape_bounds = shape.bounding_box();
-        shape_bounds.origin += transform_offset;
-        if !shape_bounds.intersects(&self.clip_rect) {
+        let transform = transform.into().applying(&self.active_layer.transform);
+        let bounding_box = shape.bounding_box().applying(&transform);
+        if !bounding_box.intersects(&self.active_layer.clip_rect) {
             return;
         }
         // FIXME: This implementation is untested and only partially correct
         if let Some(rect) = shape.as_rect() {
             let origin = Point::new(
-                rect.origin.x + transform_offset.x,
-                rect.origin.y + transform_offset.y,
+                rect.origin.x + transform.offset.x,
+                rect.origin.y + transform.offset.y,
             );
             let rect = Rectangle::new(origin, rect.size);
             let Some(color) = brush.as_solid() else {
@@ -214,17 +233,25 @@ impl RenderTarget for CrosstermRenderTarget {
             };
             let color = color.into();
             for y in 0..rect.size.height as i32 {
-                if y == 0 || y == rect.size.height as i32 {
+                if y == 0 || y == rect.size.height as i32 - 1 {
                     for x in 0..rect.size.width as i32 {
                         let point = Point::new(rect.origin.x + x, rect.origin.y + y);
-                        self.draw_color(point, color);
+                        if self.active_layer.clip_rect.contains(&point) {
+                            self.draw_color(point, color);
+                        }
                     }
                 } else {
                     let point = Point::new(rect.origin.x, rect.origin.y + y);
-                    self.draw_color(point, color);
-                    let point =
-                        Point::new(rect.origin.x + rect.size.width as i32, rect.origin.y + y);
-                    self.draw_color(point, color);
+                    if self.active_layer.clip_rect.contains(&point) {
+                        self.draw_color(point, color);
+                    }
+                    let point = Point::new(
+                        rect.origin.x + rect.size.width as i32 - 1,
+                        rect.origin.y + y,
+                    );
+                    if self.active_layer.clip_rect.contains(&point) {
+                        self.draw_color(point, color);
+                    }
                 }
             }
         }
@@ -237,11 +264,15 @@ impl RenderTarget for CrosstermRenderTarget {
         glyphs: impl Iterator<Item = Glyph>,
         _font: &impl crate::font::FontRender<Self::ColorFormat>,
     ) {
+        let offset = offset.applying(&self.active_layer.transform);
         let Some(color) = brush.as_solid().map(Into::into) else {
             return;
         };
         for glyph in glyphs {
-            self.draw_character(offset + glyph.offset, glyph.character, color);
+            let point = offset + glyph.offset;
+            if self.active_layer.clip_rect.contains(&point) {
+                self.draw_character(point, glyph.character, color);
+            }
         }
     }
 

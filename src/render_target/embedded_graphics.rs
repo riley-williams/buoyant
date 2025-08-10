@@ -1,5 +1,7 @@
 use crate::font::FontRender;
-use crate::primitives::{Interpolate, Pixel};
+use crate::primitives::transform::CoordinateSpaceTransform;
+use crate::primitives::{transform::LinearTransform, Interpolate, Pixel};
+use crate::render_target::{LayerConfig, LayerHandle};
 use crate::surface::{AsDrawTarget, OffsetSurface};
 use crate::{
     primitives::{
@@ -54,7 +56,7 @@ impl<D: DrawTarget> Surface for DrawTargetSurface<'_, D> {
 #[derive(Debug)]
 pub struct EmbeddedGraphicsRenderTarget<D> {
     surface: D,
-    clip_rect: Rectangle,
+    active_layer: LayerConfig,
 }
 
 impl<'a, D> EmbeddedGraphicsRenderTarget<DrawTargetSurface<'a, D>>
@@ -65,10 +67,10 @@ where
     /// Initialize an `EmbeddedGraphicsRenderTarget` from a `DrawTarget`
     #[must_use]
     pub fn new(display: &'a mut D) -> Self {
-        let clip_rect = display.bounding_box().into();
+        let clip_rect = display.bounding_box();
         Self {
             surface: DrawTargetSurface(display),
-            clip_rect,
+            active_layer: LayerConfig::new_clip(clip_rect),
         }
     }
 
@@ -98,26 +100,35 @@ where
         let _ = self.surface.draw_target().clear(color);
     }
 
-    fn set_clip_rect(&mut self, rect: Rectangle) -> Rectangle {
-        let old_rect = self.clip_rect.clone();
-        self.clip_rect = rect;
-        old_rect
+    fn with_layer<LayerFn, DrawFn>(&mut self, layer_fn: LayerFn, draw_fn: DrawFn)
+    where
+        LayerFn: FnOnce(LayerHandle) -> LayerHandle,
+        DrawFn: FnOnce(&mut Self),
+    {
+        let layer = self.active_layer.clone();
+        let mut new_layer = self.active_layer.clone();
+        layer_fn(LayerHandle::new(&mut new_layer));
+        self.active_layer = new_layer;
+        draw_fn(self);
+        self.active_layer = layer;
     }
 
     fn clip_rect(&self) -> Rectangle {
-        self.clip_rect.clone()
+        self.active_layer
+            .clip_rect
+            .applying_inverse(&self.active_layer.transform)
     }
 
     fn fill<T: Into<Self::ColorFormat>>(
         &mut self,
-        transform_offset: Point,
+        transform: impl Into<LinearTransform>,
         brush: &impl Brush<ColorFormat = T>,
         _brush_offset: Option<Point>,
         shape: &impl Shape,
     ) {
-        let mut bounding_box = shape.bounding_box();
-        bounding_box.origin += transform_offset;
-        if !bounding_box.intersects(&self.clip_rect) {
+        let transform = transform.into().applying(&self.active_layer.transform);
+        let bounding_box = shape.bounding_box().applying(&transform);
+        if !bounding_box.intersects(&self.active_layer.clip_rect) {
             return;
         }
 
@@ -127,16 +138,16 @@ where
 
             // Handle different shape types
             if let Some(line) = shape.as_line() {
-                self.draw_line(&line, transform_offset, &style);
+                self.draw_line(&line, &transform, &style);
             } else if let Some(rect) = shape.as_rect() {
-                self.draw_rectangle(&rect, transform_offset, &style);
+                self.draw_rectangle(&rect, &transform, &style);
             } else if let Some(circle) = shape.as_circle() {
-                self.draw_circle(&circle, transform_offset, &style);
+                self.draw_circle(&circle, &transform, &style);
             } else if let Some(rounded_rect) = shape.as_rounded_rect() {
-                self.draw_rounded_rectangle(&rounded_rect, transform_offset, &style);
+                self.draw_rounded_rectangle(&rounded_rect, &transform, &style);
             } else {
                 // For generic shapes, convert the path elements to lines
-                self.draw_path_shape(shape, transform_offset, &style);
+                self.draw_path_shape(shape, transform.offset, &style);
             }
         } else if let Some(image) = brush.as_image() {
             // only support rectangles for now
@@ -152,14 +163,14 @@ where
     fn stroke<T: Into<Self::ColorFormat>>(
         &mut self,
         stroke: &Stroke,
-        transform_offset: Point,
+        transform: impl Into<LinearTransform>,
         brush: &impl Brush<ColorFormat = T>,
         _brush_offset: Option<Point>,
         shape: &impl Shape,
     ) {
-        let mut bounding_box = shape.bounding_box();
-        bounding_box.origin += transform_offset;
-        if !bounding_box.intersects(&self.clip_rect) {
+        let transform = transform.into().applying(&self.active_layer.transform);
+        let bounding_box = shape.bounding_box().applying(&transform);
+        if !bounding_box.intersects(&self.active_layer.clip_rect) {
             return;
         }
         // Convert the brush to the embedded_graphics color.
@@ -174,15 +185,15 @@ where
             .build();
 
         if let Some(line) = shape.as_line() {
-            self.draw_line(&line, transform_offset, &style);
+            self.draw_line(&line, &transform, &style);
         } else if let Some(rect) = shape.as_rect() {
-            self.draw_rectangle(&rect, transform_offset, &style);
+            self.draw_rectangle(&rect, &transform, &style);
         } else if let Some(circle) = shape.as_circle() {
-            self.draw_circle(&circle, transform_offset, &style);
+            self.draw_circle(&circle, &transform, &style);
         } else if let Some(rounded_rect) = shape.as_rounded_rect() {
-            self.draw_rounded_rectangle(&rounded_rect, transform_offset, &style);
+            self.draw_rounded_rectangle(&rounded_rect, &transform, &style);
         } else {
-            self.draw_path_shape(shape, transform_offset, &style);
+            self.draw_path_shape(shape, transform.offset, &style);
         }
     }
 
@@ -212,44 +223,49 @@ where
     D: Surface<Color = C>,
     C: PixelColor,
 {
-    fn draw_line(&mut self, line: &Line, offset: Point, style: &PrimitiveStyle<C>) {
-        let start = EgPoint::new(line.start.x + offset.x, line.start.y + offset.y);
-        let end = EgPoint::new(line.end.x + offset.x, line.end.y + offset.y);
-
-        let eg_line = EgLine::new(start, end).into_styled(*style);
-        let _ = eg_line.draw(&mut self.surface.draw_target());
+    fn draw_line(&mut self, line: &Line, transform: &LinearTransform, style: &PrimitiveStyle<C>) {
+        let line: EgLine = line.applying(transform).into();
+        _ = line
+            .into_styled(*style)
+            .draw(&mut self.surface.draw_target());
     }
 
-    fn draw_rectangle(&mut self, rect: &Rectangle, offset: Point, style: &PrimitiveStyle<C>) {
-        let top_left = EgPoint::new(rect.origin.x + offset.x, rect.origin.y + offset.y);
-
-        let eg_rect = EgRectangle::new(top_left, rect.size.into()).into_styled(*style);
-        let _ = eg_rect.draw(&mut self.surface.draw_target());
+    fn draw_rectangle(
+        &mut self,
+        rect: &Rectangle,
+        transform: &LinearTransform,
+        style: &PrimitiveStyle<C>,
+    ) {
+        let eg_rect: EgRectangle = rect.applying(transform).into();
+        let _ = eg_rect
+            .into_styled(*style)
+            .draw(&mut self.surface.draw_target());
     }
 
     fn draw_rounded_rectangle(
         &mut self,
         rect: &RoundedRectangle,
-        offset: Point,
+        transform: &LinearTransform,
         style: &PrimitiveStyle<C>,
     ) {
-        let top_left = EgPoint::new(rect.origin.x + offset.x, rect.origin.y + offset.y);
-        let eg_rect = EgRectangle::new(top_left, rect.size.into());
-        let corner_radius = rect.radius;
+        let eg_rounded_rect: EgRoundedRectangle = rect.applying(transform).into();
 
-        let eg_rounded_rect = EgRoundedRectangle::new(
-            eg_rect,
-            embedded_graphics::primitives::CornerRadii::new((corner_radius, corner_radius).into()),
-        )
-        .into_styled(*style);
-        let _ = eg_rounded_rect.draw(&mut self.surface.draw_target());
+        let _ = eg_rounded_rect
+            .into_styled(*style)
+            .draw(&mut self.surface.draw_target());
     }
 
-    fn draw_circle(&mut self, circle: &Circle, offset: Point, style: &PrimitiveStyle<C>) {
-        let top_left = EgPoint::new(circle.origin.x + offset.x, circle.origin.y + offset.y);
+    fn draw_circle(
+        &mut self,
+        circle: &Circle,
+        transform: &LinearTransform,
+        style: &PrimitiveStyle<C>,
+    ) {
+        let circle: EgCircle = circle.applying(transform).into();
 
-        let eg_circle = EgCircle::new(top_left, circle.diameter).into_styled(*style);
-        let _ = eg_circle.draw(&mut self.surface.draw_target());
+        _ = circle
+            .into_styled(*style)
+            .draw(&mut self.surface.draw_target());
     }
 
     fn draw_path_shape(&mut self, shape: &impl Shape, offset: Point, style: &PrimitiveStyle<C>) {

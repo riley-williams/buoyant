@@ -17,6 +17,7 @@ use crate::{
     image::EmptyImage,
     primitives::{
         geometry::{Rectangle, Shape},
+        transform::{CoordinateSpaceTransform as _, LinearTransform, ScaleFactor},
         Point, Size,
     },
     surface::Surface,
@@ -31,20 +32,22 @@ pub trait RenderTarget {
     /// Clears the target using the provided color
     fn clear(&mut self, color: Self::ColorFormat);
 
-    /// Sets the clip area, returning the previous area.
-    ///
-    /// The render target may choose to reduce the clip area to fit within its drawable size.
-    #[must_use]
-    fn set_clip_rect(&mut self, rect: Rectangle) -> Rectangle;
-
     /// Returns the current clip area.
     #[must_use]
     fn clip_rect(&self) -> Rectangle;
 
+    /// Sets the clip area and transform within a scoped function
+    ///
+    /// The render target may choose to reduce the clip area to fit within its drawable size.
+    fn with_layer<LayerFn, DrawFn>(&mut self, layer_fn: LayerFn, draw_fn: DrawFn)
+    where
+        LayerFn: FnOnce(LayerHandle) -> LayerHandle,
+        DrawFn: FnOnce(&mut Self);
+
     /// Fills a shape using the specified style and brush.
     fn fill<C: Into<Self::ColorFormat>>(
         &mut self,
-        transform_offset: Point,
+        transform: impl Into<LinearTransform>,
         brush: &impl Brush<ColorFormat = C>,
         brush_offset: Option<Point>,
         shape: &impl Shape,
@@ -54,7 +57,7 @@ pub trait RenderTarget {
     fn stroke<C: Into<Self::ColorFormat>>(
         &mut self,
         stroke: &Stroke,
-        transform_offset: Point,
+        transform: impl Into<LinearTransform>,
         brush: &impl Brush<ColorFormat = C>,
         brush_offset: Option<Point>,
         shape: &impl Shape,
@@ -192,5 +195,263 @@ impl Stroke {
     #[must_use]
     pub const fn new(width: u32) -> Self {
         Self { width }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LayerConfig {
+    /// The alpha value for this layer.
+    pub alpha: u8,
+    pub transform: LinearTransform,
+    /// The clip rectangle for this layer.
+    pub clip_rect: Rectangle,
+}
+
+impl LayerConfig {
+    #[must_use]
+    pub const fn new(alpha: u8, transform: LinearTransform, clip_rect: Rectangle) -> Self {
+        Self {
+            alpha,
+            transform,
+            clip_rect,
+        }
+    }
+
+    #[must_use]
+    pub fn new_sized(size: Size) -> Self {
+        Self {
+            alpha: 255,
+            transform: LinearTransform::default(),
+            clip_rect: Rectangle::new(Point::zero(), size),
+        }
+    }
+
+    #[must_use]
+    pub fn new_clip(clip_rect: impl Into<Rectangle>) -> Self {
+        Self {
+            alpha: 255,
+            transform: LinearTransform::default(),
+            clip_rect: clip_rect.into(),
+        }
+    }
+}
+
+/// Provides a safe abstraction for modifying a layer configuration.
+#[derive(Debug)]
+pub struct LayerHandle<'a> {
+    layer: &'a mut LayerConfig,
+}
+
+#[allow(clippy::must_use_candidate, clippy::return_self_not_must_use)]
+impl<'a> LayerHandle<'a> {
+    /// Creates a new layer handle for the given layer configuration.
+    pub fn new(layer: &'a mut LayerConfig) -> Self {
+        Self { layer }
+    }
+
+    pub fn opacity(self, alpha: u8) -> Self {
+        self.layer.alpha = ((u16::from(self.layer.alpha) * u16::from(alpha)) / 255) as u8;
+        self
+    }
+
+    pub fn transform(self, transform: &LinearTransform) -> Self {
+        self.layer.transform = self.layer.transform.applying(transform);
+        self
+    }
+
+    pub fn offset(self, offset: Point) -> Self {
+        self.layer.transform.offset.x +=
+            (offset.x * self.layer.transform.scale.cast_signed()).to_num::<i32>();
+        self.layer.transform.offset.y +=
+            (offset.y * self.layer.transform.scale.cast_signed()).to_num::<i32>();
+        self
+    }
+
+    pub fn scale(self, scale: ScaleFactor) -> Self {
+        self.layer.transform.scale *= scale;
+        self
+    }
+
+    pub fn clip(self, clip_rect: &Rectangle) -> Self {
+        // maintain clip rect in global coordinate space
+        // use zero-sized rectangle if the intersection is empty
+        self.layer.clip_rect = clip_rect
+            .applying_inverse(&self.layer.transform)
+            .intersection(&self.layer.clip_rect)
+            .unwrap_or_else(|| Rectangle::new(Point::zero(), Size::new(0, 0)));
+        self
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::primitives::Point;
+
+    #[test]
+    fn layer_config_new_sized() {
+        let size = Size::new(640, 480);
+        let layer = LayerConfig::new_sized(size);
+
+        assert_eq!(layer.alpha, 255);
+        assert_eq!(layer.transform, LinearTransform::default());
+        assert_eq!(layer.clip_rect, Rectangle::new(Point::zero(), size));
+    }
+
+    #[test]
+    fn layer_config_new_clip() {
+        let clip_rect = Rectangle::new(Point::new(10, 15), Size::new(50, 75));
+        let layer = LayerConfig::new_clip(clip_rect.clone());
+
+        assert_eq!(layer.alpha, 255);
+        assert_eq!(layer.transform, LinearTransform::default());
+        assert_eq!(layer.clip_rect, clip_rect);
+    }
+
+    #[test]
+    fn apply_layer_handle_alpha() {
+        let mut layer = LayerConfig::new_sized(Size::new(100, 100));
+        assert_eq!(layer.alpha, 255);
+
+        LayerHandle::new(&mut layer).opacity(255);
+        assert_eq!(layer.alpha, 255);
+
+        LayerHandle::new(&mut layer).opacity(128);
+        assert_eq!(layer.alpha, 128);
+
+        LayerHandle::new(&mut layer).opacity(128);
+        assert_eq!(layer.alpha, 64);
+
+        LayerHandle::new(&mut layer).opacity(255);
+        assert_eq!(layer.alpha, 64);
+
+        LayerHandle::new(&mut layer).opacity(0);
+        assert_eq!(layer.alpha, 0);
+    }
+
+    #[test]
+    fn apply_layer_handle_transform() {
+        let mut layer = LayerConfig::new_sized(Size::new(100, 100));
+        let new_transform = LinearTransform::new(Point::new(10, 20), 2.0);
+        let expected_transform = layer.transform.applying(&new_transform);
+
+        LayerHandle::new(&mut layer).transform(&new_transform);
+
+        assert_eq!(layer.transform, expected_transform);
+    }
+
+    #[test]
+    fn apply_layer_handle_offset() {
+        let mut layer = LayerConfig::new(
+            255,
+            LinearTransform::new(Point::new(0, 0), 2.0),
+            Rectangle::new(Point::zero(), Size::new(100, 100)),
+        );
+        let offset = Point::new(10, 20);
+
+        LayerHandle::new(&mut layer).offset(offset);
+
+        // Offset should be scaled by the layer's transform scale (2.0)
+        // So offset (10, 20) * 2.0 = (20, 40)
+        assert_eq!(layer.transform.offset, Point::new(20, 40));
+    }
+
+    #[test]
+    fn apply_layer_handle_scale() {
+        let mut layer = LayerConfig::new(
+            255,
+            LinearTransform::new(Point::new(0, 0), 2.0),
+            Rectangle::new(Point::zero(), Size::new(100, 100)),
+        );
+        let additional_scale = ScaleFactor::from_num(1.5);
+
+        LayerHandle::new(&mut layer).scale(additional_scale);
+
+        // Scale should be multiplied: 2.0 * 1.5 = 3.0
+        assert_eq!(layer.transform.scale, ScaleFactor::from_num(3.0));
+    }
+
+    #[test]
+    fn clip_rect_intersection() {
+        let mut layer = LayerConfig::new(
+            255,
+            LinearTransform::identity(),
+            Rectangle::new(Point::new(0, 0), Size::new(100, 100)),
+        );
+        let new_clip = Rectangle::new(Point::new(25, 25), Size::new(50, 50));
+
+        LayerHandle::new(&mut layer).clip(&new_clip);
+
+        let expected_clip = Rectangle::new(Point::new(25, 25), Size::new(50, 50));
+        assert_eq!(layer.clip_rect, expected_clip);
+    }
+
+    #[test]
+    fn clip_rect_intersection_with_transform() {
+        let mut layer = LayerConfig::new(
+            255,
+            LinearTransform::new(Point::new(4, 8), 2.0),
+            Rectangle::new(Point::zero(), Size::new(100, 100)),
+        );
+        let new_clip = Rectangle::new(Point::new(10, 20), Size::new(50, 60));
+
+        LayerHandle::new(&mut layer).clip(&new_clip);
+
+        // New clip rect should be inverse transformed, then intersected with existing clip rect
+        let transformed_clip =
+            new_clip.applying_inverse(&LinearTransform::new(Point::new(4, 8), 2.0));
+        let expected_clip = transformed_clip
+            .intersection(&Rectangle::new(Point::zero(), Size::new(100, 100)))
+            .unwrap();
+        assert_eq!(layer.clip_rect, expected_clip);
+    }
+
+    #[test]
+    fn clip_rect_no_intersection() {
+        let mut layer = LayerConfig::new(
+            255,
+            LinearTransform::identity(),
+            Rectangle::new(Point::new(0, 0), Size::new(50, 50)),
+        );
+        let new_clip = Rectangle::new(Point::new(100, 100), Size::new(50, 50));
+
+        LayerHandle::new(&mut layer).clip(&new_clip);
+
+        // Should result in zero-sized rectangle when there's no intersection
+        let expected_clip = Rectangle::new(Point::zero(), Size::new(0, 0));
+        assert_eq!(layer.clip_rect, expected_clip);
+    }
+
+    #[test]
+    fn clip_rect_partial_intersection() {
+        let mut layer = LayerConfig::new(
+            255,
+            LinearTransform::identity(),
+            Rectangle::new(Point::new(0, 0), Size::new(100, 100)),
+        );
+        let new_clip = Rectangle::new(Point::new(50, 50), Size::new(100, 100));
+
+        LayerHandle::new(&mut layer).clip(&new_clip);
+
+        let expected_clip = Rectangle::new(Point::new(50, 50), Size::new(50, 50));
+        assert_eq!(layer.clip_rect, expected_clip);
+    }
+
+    #[test]
+    fn chaining() {
+        let mut layer = LayerConfig::new_sized(Size::new(100, 100));
+        let transform = LinearTransform::new(Point::new(5, 10), 1.5);
+        let offset = Point::new(20, 30);
+        let clip_rect = Rectangle::new(Point::new(10, 15), Size::new(80, 90));
+
+        LayerHandle::new(&mut layer)
+            .opacity(200)
+            .transform(&transform)
+            .offset(offset)
+            .scale(ScaleFactor::from_num(2.0))
+            .clip(&clip_rect);
+
+        assert_eq!(layer.alpha, 200);
+        assert_eq!(layer.transform.scale, ScaleFactor::from_num(3.0));
     }
 }

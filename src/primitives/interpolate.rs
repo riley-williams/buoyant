@@ -1,4 +1,4 @@
-pub trait Interpolate: Copy + PartialEq {
+pub trait Interpolate: Sized + PartialEq {
     /// Interpolate between two colors
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
         if amount < 127 {
@@ -34,6 +34,20 @@ impl Interpolate for u32 {
     }
 }
 
+impl Interpolate for f32 {
+    fn interpolate(from: Self, to: Self, amount: u8) -> Self {
+        let amount = Self::from(amount) / 255.0;
+        from * (1.0 - amount) + to * amount
+    }
+}
+
+impl Interpolate for f64 {
+    fn interpolate(from: Self, to: Self, amount: u8) -> Self {
+        let amount = Self::from(amount) / 255.0;
+        from * (1.0 - amount) + to * amount
+    }
+}
+
 impl Interpolate for char {
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
         if amount < 127 {
@@ -41,6 +55,18 @@ impl Interpolate for char {
         } else {
             to
         }
+    }
+}
+
+impl Interpolate for fixed::types::U18F14 {
+    fn interpolate(from: Self, to: Self, amount: u8) -> Self {
+        to * (Self::from(amount) / 255) + from * (Self::from(255 - amount) / 255)
+    }
+}
+
+impl Interpolate for fixed::types::I18F14 {
+    fn interpolate(from: Self, to: Self, amount: u8) -> Self {
+        from + (to - from) * (Self::from(amount) / 255)
     }
 }
 
@@ -159,8 +185,101 @@ mod embedded_graphics_impl {
     }
 }
 
-#[cfg(all(test, feature = "embedded-graphics"))]
+#[cfg(test)]
 mod tests {
+    use super::Interpolate;
+    use fixed::types::{I18F14, U18F14};
+    use paste::paste;
+
+    fn fp_interpolate<T: fixed::traits::Fixed>(start: T, end: T, amount: f32) -> T {
+        T::from_num(
+            start.to_num::<f32>() + ((end.to_num::<f32>() - start.to_num::<f32>()) * amount),
+        )
+    }
+
+    macro_rules! test_fixed_i_interpolate_approx_fp {
+        ($type:ty) => {
+            paste! {
+                #[test]
+                #[expect(non_snake_case)]
+                fn [<interpolate_ $type _approximates_fp>]() {
+                    for start in [$type::from_num(-100.123), $type::from_num(0.0), $type::from_num(12.0), $type::from_num(87654)] {
+                        for end in [$type::from_num(-6644.7), $type::from_num(22.3), $type::from_num(0.0), $type::from_num(1.0)] {
+                            for amount in 0u8..=255u8 {
+                                let precision: f32 = (start.to_num::<f32>() - end.to_num::<f32>()).abs() / 2.0f32.powf(8.0);
+                                let expected = fp_interpolate(start, end, f32::from(amount) / 255.0);
+                                let interpolation = <$type>::interpolate(start, end, amount);
+                                let diff = interpolation.abs_diff(expected);
+                                assert!(diff <= precision,
+                                    "Interpolation of {} and {} at {} ({}): expected {}, got {}, diff: {} (max dev. {})",
+                                    start, end, amount, f32::from(amount) / 255.0, expected, interpolation, diff, precision
+                                );
+                            }
+                            // The start and end should be exact
+                            assert_eq!(<$type>::interpolate(start, end, 0), start);
+                            assert_eq!(<$type>::interpolate(start, end, 255), end);
+                        }
+                    }
+                }
+            }
+        };
+    }
+
+    macro_rules! test_fixed_u_interpolate_approx_fp {
+        ($type:ty) => {
+            paste! {
+                #[test]
+                #[expect(non_snake_case)]
+                fn [<interpolate_ $type _approximates_fp>]() {
+                    for start in [$type::from_num(100.123), $type::from_num(0.0), $type::from_num(12.0), $type::from_num(87654)] {
+                        for end in [$type::from_num(6644.7), $type::from_num(22.3), $type::from_num(0.0), $type::from_num(1.0)] {
+                            for amount in 0u8..=255u8 {
+                                let precision: f32 = (start.to_num::<f32>() - end.to_num::<f32>()).abs() / 2.0f32.powf(8.0);
+                                let expected = fp_interpolate(start, end, f32::from(amount) / 255.0);
+                                let interpolation = <$type>::interpolate(start, end, amount);
+                                let diff = interpolation.abs_diff(expected);
+                                assert!(diff <= precision,
+                                    "Interpolation of {} and {} at {} ({}): expected {}, got {}, diff: {} (max dev. {})",
+                                    start, end, amount, f32::from(amount) / 255.0, expected, interpolation, diff, precision
+                                );
+                            }
+                            // The start and end should be exact
+                            assert_eq!(<$type>::interpolate(start, end, 0), start);
+                            assert_eq!(<$type>::interpolate(start, end, 255), end);
+                        }
+                    }
+                }
+            }
+        };
+    }
+
+    test_fixed_u_interpolate_approx_fp!(U18F14);
+    test_fixed_i_interpolate_approx_fp!(I18F14);
+
+    macro_rules! test_fp_ends {
+        ($type:ty) => {
+            paste! {
+                #[test]
+                #[expect(clippy::float_cmp, reason = "Should match exactly at start and end")]
+                fn [<interpolate_ $type _ends>]() {
+                    for start in [100.123, 0.0, 12.0, 87654.0] {
+                        for end in [6644.7, 22.3, 0.0, 1.0] {
+                            // The start and end should exactly match
+                            assert_eq!(<$type>::interpolate(start, end, 0), start);
+                            assert_eq!(<$type>::interpolate(start, end, 255), end);
+                        }
+                    }
+                }
+            }
+        };
+    }
+
+    test_fp_ends!(f32);
+    test_fp_ends!(f64);
+}
+
+#[cfg(all(test, feature = "embedded-graphics"))]
+mod rgb_tests {
     use super::Interpolate;
     use embedded_graphics::{
         pixelcolor::{Rgb555, Rgb565, Rgb666, Rgb888},
@@ -186,7 +305,7 @@ mod tests {
         (r, g, b)
     }
 
-    macro_rules! test_interpolate_approximates_fp {
+    macro_rules! test_rgb_interpolate_approx_fp {
         ($type:ty, $start:expr, $end:expr) => {
             paste! {
                 #[test]
@@ -204,10 +323,10 @@ mod tests {
         };
     }
 
-    test_interpolate_approximates_fp!(Rgb555, Rgb555::new(0, 255, 127), Rgb555::new(255, 0, 200));
-    test_interpolate_approximates_fp!(Rgb565, Rgb565::new(0, 255, 127), Rgb565::new(255, 0, 200));
-    test_interpolate_approximates_fp!(Rgb666, Rgb666::new(0, 255, 127), Rgb666::new(255, 0, 200));
-    test_interpolate_approximates_fp!(Rgb888, Rgb888::new(0, 255, 127), Rgb888::new(255, 0, 200));
+    test_rgb_interpolate_approx_fp!(Rgb555, Rgb555::new(0, 255, 127), Rgb555::new(255, 0, 200));
+    test_rgb_interpolate_approx_fp!(Rgb565, Rgb565::new(0, 255, 127), Rgb565::new(255, 0, 200));
+    test_rgb_interpolate_approx_fp!(Rgb666, Rgb666::new(0, 255, 127), Rgb666::new(255, 0, 200));
+    test_rgb_interpolate_approx_fp!(Rgb888, Rgb888::new(0, 255, 127), Rgb888::new(255, 0, 200));
 
     macro_rules! test_interpolate_start_end_match {
         ($type:ty) => {
