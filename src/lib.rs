@@ -4,6 +4,7 @@
 extern crate std;
 
 pub mod animation;
+pub mod color;
 pub mod environment;
 pub mod event;
 pub mod font;

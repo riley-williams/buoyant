@@ -39,7 +39,7 @@ use super::{Brush, Glyph, RenderTarget, Shape, Stroke};
 #[derive(Debug)]
 pub struct CrosstermRenderTarget {
     stdout: Stdout,
-    active_layer: LayerConfig,
+    active_layer: LayerConfig<Colors>,
 }
 
 impl CrosstermRenderTarget {
@@ -159,7 +159,7 @@ impl RenderTarget for CrosstermRenderTarget {
 
     fn with_layer<LayerFn, DrawFn>(&mut self, layer_fn: LayerFn, draw_fn: DrawFn)
     where
-        LayerFn: FnOnce(LayerHandle) -> LayerHandle,
+        LayerFn: FnOnce(LayerHandle<Self::ColorFormat>) -> LayerHandle<Self::ColorFormat>,
         DrawFn: FnOnce(&mut Self),
     {
         let layer = self.active_layer.clone();
@@ -168,6 +168,10 @@ impl RenderTarget for CrosstermRenderTarget {
         self.active_layer = new_layer;
         draw_fn(self);
         self.active_layer = layer;
+    }
+
+    fn alpha(&self) -> u8 {
+        self.active_layer.alpha
     }
 
     fn fill<C: Into<Self::ColorFormat>>(
