@@ -1,5 +1,5 @@
 use crate::{
-    primitives::Size,
+    primitives::{Interpolate, Size},
     render::{AnimatedJoin, Render},
     render_target::RenderTarget,
     transition::{Direction, Transition},
@@ -50,7 +50,7 @@ impl<Subtree: AnimatedJoin + Clone, T: Transition> AnimatedJoin for TransitionOp
     }
 }
 
-impl<Subtree: Render<Color> + Clone, T: Transition, Color> Render<Color>
+impl<Subtree: Render<Color> + Clone, T: Transition, Color: Interpolate + Copy> Render<Color>
     for TransitionOption<Subtree, T>
 {
     fn render(&self, render_target: &mut impl RenderTarget<ColorFormat = Color>, style: &Color) {
@@ -87,9 +87,10 @@ impl<Subtree: Render<Color> + Clone, T: Transition, Color> Render<Color>
                 Self::None,
             ) => {
                 if !domain.is_complete() {
+                    let opacity = transition.opacity(Direction::Out, domain.factor);
                     let offset = transition.transform(Direction::Out, domain.factor, *size);
                     render_target.with_layer(
-                        |l| l.offset(offset),
+                        |l| l.offset(offset).opacity(opacity),
                         |render_target| {
                             source_subtree.render(render_target, style);
                         },
@@ -108,9 +109,10 @@ impl<Subtree: Render<Color> + Clone, T: Transition, Color> Render<Color>
                 if domain.is_complete() {
                     target_subtree.render(render_target, style);
                 } else {
+                    let alpha = transition.opacity(Direction::In, domain.factor);
                     let offset = transition.transform(Direction::In, domain.factor, *size);
                     render_target.with_layer(
-                        |l| l.offset(offset),
+                        |l| l.offset(offset).opacity(alpha),
                         |render_target| {
                             target_subtree.render(render_target, style);
                         },

@@ -8,6 +8,7 @@ mod animated;
 #[allow(missing_docs)]
 pub mod aspect_ratio;
 mod background;
+mod background_color;
 mod erase_captures;
 mod fixed_frame;
 mod fixed_size;
@@ -15,6 +16,7 @@ mod flex_frame;
 mod foreground_color;
 mod geometry_group;
 mod hidden;
+mod hint_background;
 mod offset;
 mod overlay;
 #[allow(missing_docs)]
@@ -26,6 +28,7 @@ mod transition;
 pub(crate) use animated::Animated;
 pub(crate) use aspect_ratio::AspectRatio;
 pub(crate) use background::BackgroundView;
+pub(crate) use background_color::BackgroundColor;
 pub(crate) use erase_captures::EraseCaptures;
 use fixed::traits::ToFixed;
 pub(crate) use fixed_frame::FixedFrame;
@@ -34,6 +37,7 @@ pub(crate) use flex_frame::FlexFrame;
 pub(crate) use foreground_color::ForegroundStyle;
 pub(crate) use geometry_group::GeometryGroup;
 pub(crate) use hidden::Hidden;
+pub(crate) use hint_background::HintBackground;
 pub(crate) use offset::Offset;
 pub(crate) use overlay::OverlayView;
 pub(crate) use padding::Padding;
@@ -45,7 +49,7 @@ use crate::{
     animation::Animation,
     layout::{Alignment, HorizontalAlignment, VerticalAlignment},
     primitives::{Point, UnitPoint},
-    view::ViewMarker,
+    view::{shape::Shape, ViewMarker},
 };
 
 impl<T> ViewModifier for T where T: ViewMarker {}
@@ -146,6 +150,9 @@ pub trait ViewModifier: Sized {
 
     /// Adds content behind the modified view, laid out within the modified view's bounds.
     ///
+    /// To add a solid background with a specific shape, [`ViewModifier::background_color`]
+    /// provides a more concise API.
+    ///
     /// # Examples
     ///
     /// ```
@@ -161,6 +168,40 @@ pub trait ViewModifier: Sized {
     /// ```
     fn background<U>(self, alignment: Alignment, background: U) -> BackgroundView<Self, U> {
         BackgroundView::new(self, background, alignment)
+    }
+
+    /// Adds a background color in the specified shape, laid out within the modified
+    /// view's bounds.
+    ///
+    /// # Examples
+    ///
+    /// A text view with a capsule background:
+    ///
+    /// ```
+    /// use buoyant::view::prelude::*;
+    /// use embedded_graphics::{prelude::*, pixelcolor::Rgb565, mono_font::ascii::FONT_9X15_BOLD};
+    ///
+    /// fn capsule_text() -> impl View<Rgb565, ()> {
+    ///     Text::new("Foreground", &FONT_9X15_BOLD)
+    ///         .foreground_color(Rgb565::WHITE)
+    ///         .padding(Edges::All, 6)
+    ///         .background_color(Rgb565::BLUE, Capsule)
+    /// }
+    ///
+    /// // An equivalent, but more verbose, way to achieve the same effect:
+    ///
+    /// fn capsule_text_verbose() -> impl View<Rgb565, ()> {
+    ///     Text::new("Foreground", &FONT_9X15_BOLD)
+    ///         .foreground_color(Rgb565::WHITE)
+    ///         .padding(Edges::All, 6)
+    ///         .background(
+    ///             Alignment::default(),
+    ///             Capsule.foreground_color(Rgb565::BLUE)
+    ///          )
+    /// }
+    /// ```
+    fn background_color<C, S: Shape>(self, color: C, in_shape: S) -> BackgroundColor<Self, C, S> {
+        BackgroundColor::new(self, color, in_shape)
     }
 
     /// Converts the captures of a parent view to [`()`]
@@ -385,6 +426,11 @@ pub trait ViewModifier: Sized {
     /// memory or computation during rendering / animation.
     fn hidden(self) -> Hidden<Self> {
         Hidden::new(self)
+    }
+
+    /// Hints the background color of the view, which is used to simulate alpha blending
+    fn hint_background_color<C>(self, color: C) -> HintBackground<Self, C> {
+        HintBackground::new(self, color)
     }
 
     /// Offsets a view by the specified values.

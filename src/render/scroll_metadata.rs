@@ -1,5 +1,5 @@
 use crate::{
-    primitives::{geometry::Rectangle, Interpolate as _, Point, Size},
+    primitives::{geometry::Rectangle, Interpolate, Point, Size},
     render::{Animate, AnimatedJoin, Capsule, Offset, Render},
     render_target::RenderTarget,
 };
@@ -56,7 +56,7 @@ impl<T: AnimatedJoin> AnimatedJoin for ScrollMetadata<T> {
     }
 }
 
-impl<T: Render<C>, C: Copy> Render<C> for ScrollMetadata<T> {
+impl<T: Render<C>, C: Interpolate + Copy> Render<C> for ScrollMetadata<T> {
     fn render(&self, render_target: &mut impl RenderTarget<ColorFormat = C>, style: &C) {
         render_target.with_layer(
             |l| l.clip(&Rectangle::new(self.inner.offset, self.scroll_size)),

@@ -1,5 +1,5 @@
 use crate::{
-    primitives::{transform::LinearTransform, Interpolate as _},
+    primitives::{transform::LinearTransform, Interpolate},
     render::{AnimatedJoin, AnimationDomain, Render},
 };
 
@@ -28,7 +28,7 @@ impl<T: AnimatedJoin> AnimatedJoin for Transform<T> {
     }
 }
 
-impl<T: Render<C>, C: Copy> Render<C> for Transform<T> {
+impl<T: Render<C>, C: Interpolate + Copy> Render<C> for Transform<T> {
     fn render(
         &self,
         render_target: &mut impl crate::render_target::RenderTarget<ColorFormat = C>,

@@ -1,5 +1,5 @@
 use crate::{
-    primitives::{Interpolate as _, Point},
+    primitives::{Interpolate, Point},
     render_target::RenderTarget,
 };
 
@@ -27,7 +27,7 @@ impl<T: AnimatedJoin> AnimatedJoin for Offset<T> {
     }
 }
 
-impl<T: Render<C>, C> Render<C> for Offset<T> {
+impl<T: Render<C>, C: Interpolate + Copy> Render<C> for Offset<T> {
     fn render(&self, render_target: &mut impl RenderTarget<ColorFormat = C>, style: &C) {
         render_target.with_layer(
             |l| l.offset(self.offset),

@@ -60,7 +60,7 @@ mod color {
 fn main() {
     let size = Size::new(480, 320);
     let mut display: SimulatorDisplay<color::Space> = SimulatorDisplay::new(size);
-    let mut target = EmbeddedGraphicsRenderTarget::new(&mut display);
+    let mut target = EmbeddedGraphicsRenderTarget::new_hinted(&mut display, color::BACKGROUND);
     let window = Mutex::new(Window::new("Coffeeeee", &OutputSettings::default()));
     let app_start = Instant::now();
 

@@ -18,7 +18,7 @@ use crate::{
     primitives::{
         geometry::{Rectangle, Shape},
         transform::{CoordinateSpaceTransform as _, LinearTransform, ScaleFactor},
-        Point, Size,
+        Interpolate, Point, Size,
     },
     surface::Surface,
 };
@@ -41,8 +41,10 @@ pub trait RenderTarget {
     /// The render target may choose to reduce the clip area to fit within its drawable size.
     fn with_layer<LayerFn, DrawFn>(&mut self, layer_fn: LayerFn, draw_fn: DrawFn)
     where
-        LayerFn: FnOnce(LayerHandle) -> LayerHandle,
+        LayerFn: FnOnce(LayerHandle<Self::ColorFormat>) -> LayerHandle<Self::ColorFormat>,
         DrawFn: FnOnce(&mut Self);
+
+    fn alpha(&self) -> u8;
 
     /// Fills a shape using the specified style and brush.
     fn fill<C: Into<Self::ColorFormat>>(
@@ -198,30 +200,39 @@ impl Stroke {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct LayerConfig {
+pub struct LayerConfig<C> {
     /// The alpha value for this layer.
     pub alpha: u8,
+    /// A background color hint to simulate alpha blending.
+    pub background_hint: Option<C>,
     /// The transform from local to global coordinate space
     pub transform: LinearTransform,
     /// The clip rectangle for this layer, in the global coordinate space.
     pub clip_rect: Rectangle,
 }
 
-impl LayerConfig {
+impl<C> LayerConfig<C> {
     #[must_use]
-    pub const fn new(alpha: u8, transform: LinearTransform, clip_rect: Rectangle) -> Self {
+    pub const fn new(
+        alpha: u8,
+        background_hint: Option<C>,
+        transform: LinearTransform,
+        clip_rect: Rectangle,
+    ) -> Self {
         Self {
             alpha,
+            background_hint,
             transform,
             clip_rect,
         }
     }
 
     #[must_use]
-    pub fn new_sized(size: Size) -> Self {
+    pub const fn new_sized(size: Size) -> Self {
         Self {
             alpha: 255,
-            transform: LinearTransform::default(),
+            background_hint: None,
+            transform: LinearTransform::identity(),
             clip_rect: Rectangle::new(Point::zero(), size),
         }
     }
@@ -230,27 +241,54 @@ impl LayerConfig {
     pub fn new_clip(clip_rect: impl Into<Rectangle>) -> Self {
         Self {
             alpha: 255,
+            background_hint: None,
             transform: LinearTransform::default(),
             clip_rect: clip_rect.into(),
         }
+    }
+
+    #[must_use]
+    pub fn with_background_hint(mut self, color: C) -> Self {
+        self.background_hint = Some(color);
+        self
     }
 }
 
 /// Provides a safe abstraction for modifying a layer configuration.
 #[derive(Debug)]
-pub struct LayerHandle<'a> {
-    layer: &'a mut LayerConfig,
+pub struct LayerHandle<'a, C> {
+    layer: &'a mut LayerConfig<C>,
 }
 
 #[allow(clippy::must_use_candidate, clippy::return_self_not_must_use)]
-impl<'a> LayerHandle<'a> {
+impl<'a, C: Interpolate + Clone> LayerHandle<'a, C> {
     /// Creates a new layer handle for the given layer configuration.
-    pub fn new(layer: &'a mut LayerConfig) -> Self {
+    #[must_use]
+    pub fn new(layer: &'a mut LayerConfig<C>) -> Self {
         Self { layer }
     }
 
-    pub fn opacity(self, alpha: u8) -> Self {
-        self.layer.alpha = ((u16::from(self.layer.alpha) * u16::from(alpha)) / 255) as u8;
+    /// Sets the layer opacity.
+    ///
+    /// Depending on the render target, a background color hint may need to be set
+    /// to see the effect of the opacity.
+    ///
+    /// See: [`hint_background`]
+    pub fn opacity(self, opacity: u8) -> Self {
+        self.layer.alpha = ((u16::from(self.layer.alpha) * u16::from(opacity)) / 255) as u8;
+        self
+    }
+
+    #[must_use]
+    pub fn hint_background(self, color: C) -> Self {
+        let adjusted_color = if self.layer.alpha == 255 {
+            color
+        } else if let Some(background_hint) = &self.layer.background_hint {
+            C::interpolate(background_hint.clone(), color, self.layer.alpha)
+        } else {
+            color
+        };
+        self.layer.background_hint = Some(adjusted_color);
         self
     }
 
@@ -291,7 +329,7 @@ mod tests {
     #[test]
     fn layer_config_new_sized() {
         let size = Size::new(640, 480);
-        let layer = LayerConfig::new_sized(size);
+        let layer = LayerConfig::<u8>::new_sized(size);
 
         assert_eq!(layer.alpha, 255);
         assert_eq!(layer.transform, LinearTransform::default());
@@ -301,7 +339,7 @@ mod tests {
     #[test]
     fn layer_config_new_clip() {
         let clip_rect = Rectangle::new(Point::new(10, 15), Size::new(50, 75));
-        let layer = LayerConfig::new_clip(clip_rect.clone());
+        let layer = LayerConfig::<u8>::new_clip(clip_rect.clone());
 
         assert_eq!(layer.alpha, 255);
         assert_eq!(layer.transform, LinearTransform::default());
@@ -310,7 +348,7 @@ mod tests {
 
     #[test]
     fn apply_layer_handle_alpha() {
-        let mut layer = LayerConfig::new_sized(Size::new(100, 100));
+        let mut layer = LayerConfig::<u8>::new_sized(Size::new(100, 100));
         assert_eq!(layer.alpha, 255);
 
         LayerHandle::new(&mut layer).opacity(255);
@@ -331,7 +369,7 @@ mod tests {
 
     #[test]
     fn apply_layer_handle_transform() {
-        let mut layer = LayerConfig::new_sized(Size::new(100, 100));
+        let mut layer = LayerConfig::<u8>::new_sized(Size::new(100, 100));
         let new_transform = LinearTransform::new(Point::new(10, 20), 2.0);
         let expected_transform = layer.transform.applying(&new_transform);
 
@@ -342,8 +380,9 @@ mod tests {
 
     #[test]
     fn apply_layer_handle_offset() {
-        let mut layer = LayerConfig::new(
+        let mut layer = LayerConfig::<u8>::new(
             255,
+            None,
             LinearTransform::new(Point::new(0, 0), 2.0),
             Rectangle::new(Point::zero(), Size::new(100, 100)),
         );
@@ -358,8 +397,9 @@ mod tests {
 
     #[test]
     fn apply_layer_handle_scale() {
-        let mut layer = LayerConfig::new(
+        let mut layer = LayerConfig::<u8>::new(
             255,
+            None,
             LinearTransform::new(Point::new(0, 0), 2.0),
             Rectangle::new(Point::zero(), Size::new(100, 100)),
         );
@@ -375,6 +415,7 @@ mod tests {
     fn clip_rect_intersection() {
         let mut layer = LayerConfig::new(
             255,
+            Option::<u8>::None,
             LinearTransform::identity(),
             Rectangle::new(Point::new(0, 0), Size::new(100, 100)),
         );
@@ -390,6 +431,7 @@ mod tests {
     fn clip_rect_intersection_with_transform() {
         let mut layer = LayerConfig::new(
             255,
+            Option::<u8>::None,
             LinearTransform::new(Point::new(4, 8), 2.0),
             Rectangle::new(Point::zero(), Size::new(100, 100)),
         );
@@ -410,6 +452,7 @@ mod tests {
     fn clip_rect_no_intersection() {
         let mut layer = LayerConfig::new(
             255,
+            Option::<u8>::None,
             LinearTransform::identity(),
             Rectangle::new(Point::new(0, 0), Size::new(50, 50)),
         );
@@ -426,6 +469,7 @@ mod tests {
     fn clip_rect_partial_intersection() {
         let mut layer = LayerConfig::new(
             255,
+            Option::<u8>::None,
             LinearTransform::identity(),
             Rectangle::new(Point::new(0, 0), Size::new(100, 100)),
         );
@@ -439,7 +483,7 @@ mod tests {
 
     #[test]
     fn chaining() {
-        let mut layer = LayerConfig::new_sized(Size::new(100, 100));
+        let mut layer = LayerConfig::<u8>::new_sized(Size::new(100, 100));
         let transform = LinearTransform::new(Point::new(5, 10), 1.5);
         let offset = Point::new(20, 30);
         let clip_rect = Rectangle::new(Point::new(10, 15), Size::new(80, 90));

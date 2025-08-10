@@ -14,7 +14,7 @@ impl<T: AnimatedJoin> AnimatedJoin for Option<T> {
     }
 }
 
-impl<T: Render<Color>, Color> Render<Color> for Option<T> {
+impl<T: Render<Color>, Color: Copy> Render<Color> for Option<T> {
     fn render(&self, render_target: &mut impl RenderTarget<ColorFormat = Color>, style: &Color) {
         if let Some(view) = self {
             view.render(render_target, style);

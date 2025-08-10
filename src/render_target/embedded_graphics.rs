@@ -1,3 +1,4 @@
+use crate::color::AlphaColor;
 use crate::font::FontRender;
 use crate::primitives::transform::CoordinateSpaceTransform;
 use crate::primitives::{transform::LinearTransform, Interpolate, Pixel};
@@ -10,6 +11,7 @@ use crate::{
     },
     render_target::{Brush, RenderTarget, Shape},
 };
+
 use embedded_graphics::{
     draw_target::DrawTarget,
     geometry::Point as EgPoint,
@@ -54,15 +56,15 @@ impl<D: DrawTarget> Surface for DrawTargetSurface<'_, D> {
 }
 
 #[derive(Debug)]
-pub struct EmbeddedGraphicsRenderTarget<D> {
+pub struct EmbeddedGraphicsRenderTarget<D: Surface> {
     surface: D,
-    active_layer: LayerConfig,
+    active_layer: LayerConfig<D::Color>,
 }
 
 impl<'a, D> EmbeddedGraphicsRenderTarget<DrawTargetSurface<'a, D>>
 where
     D: DrawTarget,
-    D::Color: PixelColor + Interpolate,
+    D::Color: PixelColor + Interpolate + AlphaColor,
 {
     /// Initialize an `EmbeddedGraphicsRenderTarget` from a `DrawTarget`
     #[must_use]
@@ -71,6 +73,16 @@ where
         Self {
             surface: DrawTargetSurface(display),
             active_layer: LayerConfig::new_clip(clip_rect),
+        }
+    }
+
+    /// Initialize an `EmbeddedGraphicsRenderTarget` from a `DrawTarget`, using the provided hint for the background color.
+    #[must_use]
+    pub fn new_hinted(display: &'a mut D, background_hint: D::Color) -> Self {
+        let clip_rect = display.bounding_box();
+        Self {
+            surface: DrawTargetSurface(display),
+            active_layer: LayerConfig::new_clip(clip_rect).with_background_hint(background_hint),
         }
     }
 
@@ -88,7 +100,7 @@ where
 impl<D, C> RenderTarget for EmbeddedGraphicsRenderTarget<D>
 where
     D: Surface<Color = C>,
-    C: PixelColor + Interpolate,
+    C: PixelColor + Interpolate + AlphaColor,
 {
     type ColorFormat = C;
 
@@ -102,7 +114,7 @@ where
 
     fn with_layer<LayerFn, DrawFn>(&mut self, layer_fn: LayerFn, draw_fn: DrawFn)
     where
-        LayerFn: FnOnce(LayerHandle) -> LayerHandle,
+        LayerFn: FnOnce(LayerHandle<Self::ColorFormat>) -> LayerHandle<Self::ColorFormat>,
         DrawFn: FnOnce(&mut Self),
     {
         let layer = self.active_layer.clone();
@@ -117,6 +129,10 @@ where
         self.active_layer
             .clip_rect
             .applying_inverse(&self.active_layer.transform)
+    }
+
+    fn alpha(&self) -> u8 {
+        self.active_layer.alpha
     }
 
     fn fill<T: Into<Self::ColorFormat>>(
@@ -134,6 +150,16 @@ where
 
         // Convert the brush to the embedded_graphics color
         if let Some(color) = brush.as_solid().map(Into::into) {
+            let color = self
+                .active_layer
+                .background_hint
+                .map_or(color, |background| {
+                    if self.active_layer.alpha < 255 {
+                        Interpolate::interpolate(background, color, self.active_layer.alpha)
+                    } else {
+                        color
+                    }
+                });
             let style = PrimitiveStyleBuilder::new().fill_color(color).build();
 
             // Handle different shape types
@@ -173,11 +199,22 @@ where
         if !bounding_box.intersects(&self.active_layer.clip_rect) {
             return;
         }
+
         // Convert the brush to the embedded_graphics color.
         // Only solid strokes are implemented
         let Some(color) = brush.as_solid().map(Into::into) else {
             return;
         };
+        let color = self
+            .active_layer
+            .background_hint
+            .map_or(color, |background| {
+                if self.active_layer.alpha < 255 {
+                    Interpolate::interpolate(background, color, self.active_layer.alpha)
+                } else {
+                    color
+                }
+            });
 
         let style = PrimitiveStyleBuilder::new()
             .stroke_width(stroke.width)
@@ -208,6 +245,16 @@ where
         let Some(color) = brush.as_solid().map(Into::into) else {
             return;
         };
+        let color = self
+            .active_layer
+            .background_hint
+            .map_or(color, |background| {
+                if self.active_layer.alpha < 255 {
+                    Interpolate::interpolate(background, color, self.active_layer.alpha)
+                } else {
+                    color
+                }
+            });
         glyphs.for_each(|glyph| {
             let mut surface = OffsetSurface::new(&mut self.surface, offset + glyph.offset);
             font.draw(glyph.character, color, &mut surface);

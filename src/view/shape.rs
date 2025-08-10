@@ -23,7 +23,9 @@ use crate::{
 };
 
 /// Extension trait for shapes that provides methods to draw them with a stroke.
-pub trait ShapeExt: ViewMarker<Renderables: Inset + AsShapePrimitive> {
+pub trait Shape:
+    ViewMarker<Renderables: Inset + AsShapePrimitive> + ViewLayout<(), State = ()>
+{
     /// Draws a shape with a stroke instead of filling it.
     #[must_use]
     fn stroked(self, line_width: u32) -> Stroked<Self> {
@@ -39,7 +41,10 @@ pub trait ShapeExt: ViewMarker<Renderables: Inset + AsShapePrimitive> {
     }
 }
 
-impl<T: ViewMarker<Renderables: Inset + AsShapePrimitive>> ShapeExt for T {}
+impl<T: ViewMarker<Renderables: Inset + AsShapePrimitive> + ViewLayout<(), State = ()>> Shape
+    for T
+{
+}
 
 /// How the stroke should be drawn relative to the shape bounds.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
