@@ -1,5 +1,5 @@
 use crate::{
-    primitives::{Interpolate, Point},
+    primitives::Interpolate,
     render::{AnimationDomain, Render, RenderTarget},
 };
 
@@ -26,8 +26,8 @@ impl<C: Interpolate + Clone, T: AnimatedJoin> AnimatedJoin for ShadeSubtree<C, T
 }
 
 impl<C: Interpolate + Clone, T: Render<C>> Render<C> for ShadeSubtree<C, T> {
-    fn render(&self, render_target: &mut impl RenderTarget<ColorFormat = C>, _: &C, offset: Point) {
-        self.subtree.render(render_target, &self.style, offset);
+    fn render(&self, render_target: &mut impl RenderTarget<ColorFormat = C>, _: &C) {
+        self.subtree.render(render_target, &self.style);
     }
 
     fn render_animated(
@@ -35,7 +35,6 @@ impl<C: Interpolate + Clone, T: Render<C>> Render<C> for ShadeSubtree<C, T> {
         source: &Self,
         target: &Self,
         _: &C,
-        offset: Point,
         domain: &AnimationDomain,
     ) {
         let style =
@@ -45,7 +44,6 @@ impl<C: Interpolate + Clone, T: Render<C>> Render<C> for ShadeSubtree<C, T> {
             &source.subtree,
             &target.subtree,
             &style,
-            offset,
             domain,
         );
     }

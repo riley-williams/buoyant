@@ -69,14 +69,10 @@ impl<T: AsRef<str>, F, const N: usize> AnimatedJoin for Text<'_, T, F, N> {
 impl<C: Copy, T: AsRef<str> + Clone, F: FontRender<C>, const LINE_BREAKS: usize> Render<C>
     for Text<'_, T, F, LINE_BREAKS>
 {
-    fn render(
-        &self,
-        render_target: &mut impl RenderTarget<ColorFormat = C>,
-        style: &C,
-        offset: Point,
-    ) {
-        let bounding_box = Rectangle::new(self.origin + offset, self.size);
-        if self.size.area() == 0 || !bounding_box.intersects(&render_target.clip_rect()) {
+    fn render(&self, render_target: &mut impl RenderTarget<ColorFormat = C>, style: &C) {
+        let clip_rect = render_target.clip_rect();
+        let bounding_box = Rectangle::new(self.origin, self.size);
+        if self.size.area() == 0 || !bounding_box.intersects(&clip_rect) {
             return;
         }
 
@@ -84,7 +80,6 @@ impl<C: Copy, T: AsRef<str> + Clone, F: FontRender<C>, const LINE_BREAKS: usize>
 
         let brush = SolidBrush::new(*style);
 
-        let origin = self.origin + offset;
         let line_height = metrics.default_line_height();
 
         let mut height = 0;
@@ -93,14 +88,15 @@ impl<C: Copy, T: AsRef<str> + Clone, F: FontRender<C>, const LINE_BREAKS: usize>
             let line_x = self
                 .alignment
                 .align(self.size.width as i32, line.pixel_width as i32)
-                + origin.x;
+                + self.origin.x;
 
             let mut x = 0;
 
-            let line_offset = Point::new(line_x, origin.y + height);
+            let line_offset = Point::new(line_x, self.origin.y + height);
             let line_bounding_box =
                 Rectangle::new(line_offset, Size::new(line.pixel_width, line_height));
-            if !line_bounding_box.intersects(&render_target.clip_rect()) {
+
+            if !line_bounding_box.intersects(&clip_rect) {
                 height += line_height as i32;
                 if height >= self.size.height as i32 {
                     break;
@@ -140,14 +136,15 @@ impl<C: Copy, T: AsRef<str> + Clone, F: FontRender<C>, const LINE_BREAKS: usize>
         let wrap = WhitespaceWrap::new(remaining_text, self.size.width, &metrics);
 
         let clip_rect = render_target.clip_rect();
+
         for line in wrap {
             // TODO: WhitespaceWrap should also return the width of the line
             let width = metrics.str_width(line);
 
-            let line_x = self.alignment.align(self.size.width as i32, width as i32) + origin.x;
+            let line_x = self.alignment.align(self.size.width as i32, width as i32) + self.origin.x;
             let mut x = 0;
 
-            let line_offset = Point::new(line_x, origin.y + height);
+            let line_offset = Point::new(line_x, self.origin.y + height);
             let line_bounding_box = Rectangle::new(line_offset, Size::new(width, line_height));
             if line_bounding_box.origin.y > clip_rect.origin.y + clip_rect.size.height as i32 {
                 break;
@@ -188,7 +185,6 @@ impl<C: Copy, T: AsRef<str> + Clone, F: FontRender<C>, const LINE_BREAKS: usize>
         source: &Self,
         target: &Self,
         style: &C,
-        offset: Point,
         domain: &AnimationDomain,
     ) {
         let origin = Interpolate::interpolate(source.origin, target.origin, domain.factor);
@@ -201,7 +197,7 @@ impl<C: Copy, T: AsRef<str> + Clone, F: FontRender<C>, const LINE_BREAKS: usize>
             alignment: target.alignment,
             lines: target.lines.clone(),
         }
-        .render(render_target, style, offset);
+        .render(render_target, style);
     }
 }
 

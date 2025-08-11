@@ -28,14 +28,13 @@ impl<T: AnimatedJoin> AnimatedJoin for Offset<T> {
 }
 
 impl<T: Render<C>, C> Render<C> for Offset<T> {
-    fn render(
-        &self,
-        render_target: &mut impl RenderTarget<ColorFormat = C>,
-        style: &C,
-        offset: Point,
-    ) {
-        self.subtree
-            .render(render_target, style, self.offset + offset);
+    fn render(&self, render_target: &mut impl RenderTarget<ColorFormat = C>, style: &C) {
+        render_target.with_layer(
+            |l| l.offset(self.offset),
+            |render_target| {
+                self.subtree.render(render_target, style);
+            },
+        );
     }
 
     fn render_animated(
@@ -43,16 +42,20 @@ impl<T: Render<C>, C> Render<C> for Offset<T> {
         source: &Self,
         target: &Self,
         style: &C,
-        offset: Point,
         domain: &super::AnimationDomain,
     ) {
-        T::render_animated(
-            render_target,
-            &source.subtree,
-            &target.subtree,
-            style,
-            Point::interpolate(source.offset, target.offset, domain.factor) + offset,
-            domain,
+        let offset = Point::interpolate(source.offset, target.offset, domain.factor);
+        render_target.with_layer(
+            |l| l.offset(offset),
+            |render_target| {
+                T::render_animated(
+                    render_target,
+                    &source.subtree,
+                    &target.subtree,
+                    style,
+                    domain,
+                );
+            },
         );
     }
 }

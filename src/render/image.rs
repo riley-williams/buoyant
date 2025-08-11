@@ -78,15 +78,13 @@ mod embedded_graphics {
             &self,
             render_target: &mut impl RenderTarget<ColorFormat = I::Color>,
             _style: &I::Color,
-            offset: crate::primitives::Point,
         ) {
             // TODO: Only render a sub-image if the image is clipped?
-            let origin = self.origin + offset;
             _ = self.image.draw(
                 &mut render_target
                     .raw_surface()
                     .draw_target()
-                    .translated(origin.into()),
+                    .translated(self.origin.into()),
             );
         }
 
@@ -94,15 +92,24 @@ mod embedded_graphics {
             render_target: &mut impl RenderTarget<ColorFormat = I::Color>,
             source: &Self,
             target: &Self,
-            style: &I::Color,
-            offset: crate::primitives::Point,
+            _style: &I::Color,
             domain: &super::AnimationDomain,
         ) {
-            let origin = offset + Point::interpolate(source.origin, target.origin, domain.factor);
+            let offset = Point::interpolate(source.origin, target.origin, domain.factor);
             if domain.factor == 0 {
-                source.render(render_target, style, origin);
+                _ = source.image.draw(
+                    &mut render_target
+                        .raw_surface()
+                        .draw_target()
+                        .translated(offset.into()),
+                );
             } else {
-                target.render(render_target, style, origin);
+                _ = target.image.draw(
+                    &mut render_target
+                        .raw_surface()
+                        .draw_target()
+                        .translated(offset.into()),
+                );
             }
         }
     }

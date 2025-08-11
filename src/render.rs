@@ -8,7 +8,7 @@
 
 use core::time::Duration;
 
-use crate::{primitives::Point, render_target::RenderTarget};
+use crate::render_target::RenderTarget;
 
 mod animate;
 pub mod collections;
@@ -49,12 +49,7 @@ pub trait AnimatedJoin {
 /// A type that can be rendered to a target and animated
 pub trait Render<Color>: AnimatedJoin + Sized {
     /// Render the view to the screen
-    fn render(
-        &self,
-        render_target: &mut impl RenderTarget<ColorFormat = Color>,
-        style: &Color,
-        offset: Point,
-    );
+    fn render(&self, render_target: &mut impl RenderTarget<ColorFormat = Color>, style: &Color);
 
     /// Render view and all subviews, animating from a source view to a target view
     ///
@@ -65,7 +60,6 @@ pub trait Render<Color>: AnimatedJoin + Sized {
         source: &Self,
         target: &Self,
         style: &Color,
-        offset: Point,
         domain: &AnimationDomain,
     );
 }

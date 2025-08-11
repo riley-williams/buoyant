@@ -1,7 +1,4 @@
-use crate::{
-    primitives::Point,
-    render::{Render, RenderTarget},
-};
+use crate::render::{Render, RenderTarget};
 
 use super::AnimatedJoin;
 
@@ -66,10 +63,10 @@ where
     V0: Render<C>,
     V1: Render<C>,
 {
-    fn render(&self, target: &mut impl RenderTarget<ColorFormat = C>, color: &C, offset: Point) {
+    fn render(&self, target: &mut impl RenderTarget<ColorFormat = C>, color: &C) {
         match self {
-            Self::Variant0(v0) => v0.render(target, color, offset),
-            Self::Variant1(v1) => v1.render(target, color, offset),
+            Self::Variant0(v0) => v0.render(target, color),
+            Self::Variant1(v1) => v1.render(target, color),
         }
     }
 
@@ -78,19 +75,17 @@ where
         source: &Self,
         target: &Self,
         style: &C,
-        offset: Point,
-
         domain: &crate::render::AnimationDomain,
     ) {
         match (source, target) {
             (Self::Variant0(source), Self::Variant0(target)) => {
-                V0::render_animated(render_target, source, target, style, offset, domain);
+                V0::render_animated(render_target, source, target, style, domain);
             }
             (Self::Variant1(source), Self::Variant1(target)) => {
-                V1::render_animated(render_target, source, target, style, offset, domain);
+                V1::render_animated(render_target, source, target, style, domain);
             }
             (_, target) => {
-                target.render(render_target, style, offset);
+                target.render(render_target, style);
             }
         }
     }
@@ -102,11 +97,11 @@ where
     V1: Render<C>,
     V2: Render<C>,
 {
-    fn render(&self, target: &mut impl RenderTarget<ColorFormat = C>, color: &C, offset: Point) {
+    fn render(&self, target: &mut impl RenderTarget<ColorFormat = C>, color: &C) {
         match self {
-            Self::Variant0(v0) => v0.render(target, color, offset),
-            Self::Variant1(v1) => v1.render(target, color, offset),
-            Self::Variant2(v2) => v2.render(target, color, offset),
+            Self::Variant0(v0) => v0.render(target, color),
+            Self::Variant1(v1) => v1.render(target, color),
+            Self::Variant2(v2) => v2.render(target, color),
         }
     }
 
@@ -115,22 +110,20 @@ where
         source: &Self,
         target: &Self,
         style: &C,
-        offset: Point,
-
         domain: &crate::render::AnimationDomain,
     ) {
         match (source, target) {
             (Self::Variant0(source), Self::Variant0(target)) => {
-                V0::render_animated(render_target, source, target, style, offset, domain);
+                V0::render_animated(render_target, source, target, style, domain);
             }
             (Self::Variant1(source), Self::Variant1(target)) => {
-                V1::render_animated(render_target, source, target, style, offset, domain);
+                V1::render_animated(render_target, source, target, style, domain);
             }
             (Self::Variant2(source), Self::Variant2(target)) => {
-                V2::render_animated(render_target, source, target, style, offset, domain);
+                V2::render_animated(render_target, source, target, style, domain);
             }
             (_, target) => {
-                target.render(render_target, style, offset);
+                target.render(render_target, style);
             }
         }
     }
@@ -143,12 +136,12 @@ where
     V2: Render<C>,
     V3: Render<C>,
 {
-    fn render(&self, target: &mut impl RenderTarget<ColorFormat = C>, color: &C, offset: Point) {
+    fn render(&self, target: &mut impl RenderTarget<ColorFormat = C>, color: &C) {
         match self {
-            Self::Variant0(v0) => v0.render(target, color, offset),
-            Self::Variant1(v1) => v1.render(target, color, offset),
-            Self::Variant2(v2) => v2.render(target, color, offset),
-            Self::Variant3(v3) => v3.render(target, color, offset),
+            Self::Variant0(v0) => v0.render(target, color),
+            Self::Variant1(v1) => v1.render(target, color),
+            Self::Variant2(v2) => v2.render(target, color),
+            Self::Variant3(v3) => v3.render(target, color),
         }
     }
 
@@ -157,25 +150,23 @@ where
         source: &Self,
         target: &Self,
         style: &C,
-        offset: Point,
-
         domain: &crate::render::AnimationDomain,
     ) {
         match (source, target) {
             (Self::Variant0(source), Self::Variant0(target)) => {
-                V0::render_animated(render_target, source, target, style, offset, domain);
+                V0::render_animated(render_target, source, target, style, domain);
             }
             (Self::Variant1(source), Self::Variant1(target)) => {
-                V1::render_animated(render_target, source, target, style, offset, domain);
+                V1::render_animated(render_target, source, target, style, domain);
             }
             (Self::Variant2(source), Self::Variant2(target)) => {
-                V2::render_animated(render_target, source, target, style, offset, domain);
+                V2::render_animated(render_target, source, target, style, domain);
             }
             (Self::Variant3(source), Self::Variant3(target)) => {
-                V3::render_animated(render_target, source, target, style, offset, domain);
+                V3::render_animated(render_target, source, target, style, domain);
             }
             (_, target) => {
-                target.render(render_target, style, offset);
+                target.render(render_target, style);
             }
         }
     }

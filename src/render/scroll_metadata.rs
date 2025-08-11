@@ -1,6 +1,7 @@
 use crate::{
     primitives::{geometry::Rectangle, Interpolate as _, Point, Size},
     render::{Animate, AnimatedJoin, Capsule, Offset, Render},
+    render_target::RenderTarget,
 };
 
 // This hacks together scroll functionality from existing primitives, but
@@ -56,49 +57,26 @@ impl<T: AnimatedJoin> AnimatedJoin for ScrollMetadata<T> {
 }
 
 impl<T: Render<C>, C: Copy> Render<C> for ScrollMetadata<T> {
-    fn render(
-        &self,
-        render_target: &mut impl crate::render_target::RenderTarget<ColorFormat = C>,
-        style: &C,
-        offset: crate::primitives::Point,
-    ) {
+    fn render(&self, render_target: &mut impl RenderTarget<ColorFormat = C>, style: &C) {
         render_target.with_layer(
-            |l| {
-                l.clip(&Rectangle::new(
-                    offset + self.inner.offset,
-                    self.scroll_size,
-                ))
-            },
+            |l| l.clip(&Rectangle::new(self.inner.offset, self.scroll_size)),
             |target| {
-                self.inner.render(target, style, offset);
+                self.inner.render(target, style);
             },
         );
     }
 
     fn render_animated(
-        render_target: &mut impl crate::render_target::RenderTarget<ColorFormat = C>,
+        render_target: &mut impl RenderTarget<ColorFormat = C>,
         source: &Self,
         target: &Self,
         style: &C,
-        offset: crate::primitives::Point,
         domain: &crate::render::AnimationDomain,
     ) {
         render_target.with_layer(
-            |l| {
-                l.clip(&Rectangle::new(
-                    offset + target.inner.offset,
-                    target.scroll_size,
-                ))
-            },
+            |l| l.clip(&Rectangle::new(target.inner.offset, target.scroll_size)),
             |render_target| {
-                Render::render_animated(
-                    render_target,
-                    &source.inner,
-                    &target.inner,
-                    style,
-                    offset,
-                    domain,
-                );
+                Render::render_animated(render_target, &source.inner, &target.inner, style, domain);
             },
         );
     }

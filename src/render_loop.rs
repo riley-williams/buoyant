@@ -44,14 +44,7 @@ pub async fn render_loop<C, V, F, R, P, T, D, TimeFn>(
         let time = app_time();
         // render
         let domain = AnimationDomain::top_level(time);
-        Render::render_animated(
-            target,
-            source_tree,
-            target_tree,
-            &default_style,
-            Point::zero(),
-            &domain,
-        );
+        Render::render_animated(target, source_tree, target_tree, &default_style, &domain);
         render_duration = app_time() - time;
 
         let view_size = target.size();

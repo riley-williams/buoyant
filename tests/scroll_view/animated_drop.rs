@@ -36,7 +36,7 @@ fn scroll_down_animates_back() {
         size,
     );
 
-    render_tree.render(&mut buffer, &' ', Point::zero());
+    render_tree.render(&mut buffer, &' ');
 
     assert_str_grid_eq!(
         [
@@ -104,7 +104,6 @@ fn scroll_down_animates_back() {
         &render_tree,
         &new_tree,
         &' ',
-        Point::zero(),
         &AnimationDomain::top_level(Duration::from_millis(1550)),
     );
     assert_str_grid_eq!(
@@ -124,7 +123,6 @@ fn scroll_down_animates_back() {
         &render_tree,
         &new_tree,
         &' ',
-        Point::zero(),
         &AnimationDomain::top_level(Duration::from_millis(5000)),
     );
     assert_str_grid_eq!(

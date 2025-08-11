@@ -3,7 +3,7 @@ use core::fmt::{Display, Formatter, Result};
 use crate::{
     primitives::{
         geometry::Rectangle,
-        transform::{CoordinateSpaceTransform, LinearTransform},
+        transform::{CoordinateSpaceTransform as _, LinearTransform},
         Pixel, Point, Size,
     },
     render_target::{LayerConfig, LayerHandle},

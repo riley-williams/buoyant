@@ -2,7 +2,6 @@ use core::time::Duration;
 
 use crate::{
     animation::Animation,
-    primitives::Point,
     render::{AnimationDomain, Render},
     render_target::RenderTarget,
 };
@@ -83,13 +82,8 @@ impl<T: AnimatedJoin, U: PartialEq + Clone> AnimatedJoin for Animate<T, U> {
 }
 
 impl<C, T: Render<C>, U: PartialEq + Clone> Render<C> for Animate<T, U> {
-    fn render(
-        &self,
-        render_target: &mut impl RenderTarget<ColorFormat = C>,
-        style: &C,
-        offset: Point,
-    ) {
-        self.subtree.render(render_target, style, offset);
+    fn render(&self, render_target: &mut impl RenderTarget<ColorFormat = C>, style: &C) {
+        self.subtree.render(render_target, style);
     }
 
     fn render_animated(
@@ -97,7 +91,6 @@ impl<C, T: Render<C>, U: PartialEq + Clone> Render<C> for Animate<T, U> {
         source: &Self,
         target: &Self,
         style: &C,
-        offset: Point,
         domain: &AnimationDomain,
     ) {
         let (end_time, duration) = if source.value != target.value {
@@ -133,7 +126,6 @@ impl<C, T: Render<C>, U: PartialEq + Clone> Render<C> for Animate<T, U> {
             &source.subtree,
             &target.subtree,
             style,
-            offset,
             &subdomain,
         );
     }

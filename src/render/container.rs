@@ -1,5 +1,5 @@
 use crate::{
-    primitives::{Frame, Interpolate, Point},
+    primitives::{Frame, Interpolate},
     render::{AnimatedJoin, Render},
     render_target::RenderTarget,
 };
@@ -30,13 +30,8 @@ impl<T: AnimatedJoin> AnimatedJoin for Container<T> {
 }
 
 impl<T: Render<Color>, Color> Render<Color> for Container<T> {
-    fn render(
-        &self,
-        render_target: &mut impl RenderTarget<ColorFormat = Color>,
-        style: &Color,
-        offset: Point,
-    ) {
-        self.child.render(render_target, style, offset);
+    fn render(&self, render_target: &mut impl RenderTarget<ColorFormat = Color>, style: &Color) {
+        self.child.render(render_target, style);
     }
 
     fn render_animated(
@@ -44,16 +39,8 @@ impl<T: Render<Color>, Color> Render<Color> for Container<T> {
         source: &Self,
         target: &Self,
         style: &Color,
-        offset: Point,
         domain: &AnimationDomain,
     ) {
-        T::render_animated(
-            render_target,
-            &source.child,
-            &target.child,
-            style,
-            offset,
-            domain,
-        );
+        T::render_animated(render_target, &source.child, &target.child, style, domain);
     }
 }
