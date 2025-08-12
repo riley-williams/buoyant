@@ -26,7 +26,7 @@ fn test_conditional_view_layout() {
     let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
     assert_eq!(layout.resolved_size, Size::new(4, 2).into());
     let tree = view.render_tree(&layout, Point::zero(), &env, &mut (), &mut state);
-    tree.render(&mut buffer, &env.foreground_color, Point::zero());
+    tree.render(&mut buffer, &env.foreground_color);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "true ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "!!!  ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "     ");
@@ -37,7 +37,7 @@ fn test_conditional_view_layout() {
     let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
     assert_eq!(layout.resolved_size, Size::new(1, 1).into());
     let tree = view.render_tree(&layout, Point::zero(), &env, &mut (), &mut state);
-    tree.render(&mut buffer, &env.foreground_color, Point::zero());
+    tree.render(&mut buffer, &env.foreground_color);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "f    ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "     ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "     ");
@@ -60,7 +60,7 @@ fn one_arm_if() {
     let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
     assert_eq!(layout.resolved_size, Size::new(4, 2).into());
     let tree = view.render_tree(&layout, Point::zero(), &env, &mut (), &mut state);
-    tree.render(&mut buffer, &env.foreground_color, Point::zero());
+    tree.render(&mut buffer, &env.foreground_color);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "true ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "!!!  ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "     ");
@@ -72,7 +72,7 @@ fn one_arm_if() {
     let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
     assert_eq!(layout.resolved_size, Size::new(0, 0).into());
     let tree = view.render_tree(&layout, Point::zero(), &env, &mut (), &mut state);
-    tree.render(&mut buffer, &env.foreground_color, Point::zero());
+    tree.render(&mut buffer, &env.foreground_color);
     assert_eq!(buffer.text[0].iter().collect::<String>(), "     ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "     ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "     ");

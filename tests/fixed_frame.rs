@@ -1,7 +1,7 @@
 use buoyant::{
     font::CharacterBufferFont,
     layout::{Alignment, HorizontalAlignment, VerticalAlignment},
-    primitives::{Dimensions, Point, ProposedDimension, ProposedDimensions, Size},
+    primitives::{Dimensions, ProposedDimension, ProposedDimensions, Size},
     render::Render,
     render_target::FixedTextBuffer,
     view::prelude::*,
@@ -159,7 +159,7 @@ fn test_render_frame_top_leading_alignment() {
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&content, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aa    ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "bb    ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "cc    ");
@@ -176,7 +176,7 @@ fn test_render_frame_top_center_alignment() {
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&content, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "  aa  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "  bb  ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "  cc  ");
@@ -193,7 +193,7 @@ fn test_render_frame_top_trailing_alignment() {
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&content, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "    aa");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "    bb");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "    cc");
@@ -210,7 +210,7 @@ fn test_render_frame_center_leading_alignment() {
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&content, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "aa    ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "bb    ");
@@ -226,7 +226,7 @@ fn test_render_frame_center_center_alignment() {
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&content, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "  aa  ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "  bb  ");
@@ -243,7 +243,7 @@ fn test_render_frame_center_trailing_alignment() {
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&content, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "    aa");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "    bb");
@@ -262,7 +262,7 @@ fn test_render_frame_bottom_leading_alignment() {
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&content, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "aa    ");
@@ -279,7 +279,7 @@ fn test_render_frame_bottom_center_alignment() {
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&content, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "  aa  ");
@@ -296,7 +296,7 @@ fn test_render_frame_bottom_trailing_alignment() {
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&content, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "    aa");

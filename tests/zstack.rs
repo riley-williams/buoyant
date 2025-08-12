@@ -1,6 +1,6 @@
 use buoyant::environment::DefaultEnvironment;
 use buoyant::font::CharacterBufferFont;
-use buoyant::primitives::{Dimensions, Point, Size};
+use buoyant::primitives::{Dimensions, Size};
 use buoyant::render::Render;
 use buoyant::render_target::FixedTextBuffer;
 use buoyant::view::prelude::*;
@@ -35,7 +35,7 @@ fn test_render_two_centered_overlap() {
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&stack, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), " aa   ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "test  ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), " cc   ");
@@ -50,7 +50,7 @@ fn test_render_two_centered() {
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&stack, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), " aa   ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "tbbt  ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), " cc   ");
@@ -69,7 +69,7 @@ fn test_render_two_top_center_alignment() {
     .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&stack, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "axxxa ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "b b b ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "c c c ");
@@ -88,7 +88,7 @@ fn test_render_two_top_leading_alignment() {
     .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&stack, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "xxx a ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "b b b ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "c c c ");
@@ -107,7 +107,7 @@ fn test_render_two_top_trailing_alignment() {
     .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&stack, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "a xxx ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "b b b ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "c c c ");
@@ -126,7 +126,7 @@ fn test_render_two_center_leading_alignment() {
     .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&stack, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "a a a ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "xxx b ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "c c c ");
@@ -145,7 +145,7 @@ fn test_render_two_center_trailing_alignment() {
     .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&stack, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "a a a ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "b xxx ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "c c c ");
@@ -164,7 +164,7 @@ fn test_render_two_bottom_leading_alignment() {
     .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&stack, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "a a a ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "b b b ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "xxx c ");
@@ -183,7 +183,7 @@ fn test_render_two_bottom_center_alignment() {
     .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&stack, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "a a a ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "b b b ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "cxxxc ");
@@ -202,7 +202,7 @@ fn test_render_two_bottom_trailing_alignment() {
     .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&stack, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "a a a ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "b b b ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "c xxx ");
@@ -226,7 +226,7 @@ fn compact_proposal_offers_max_child_dimension() {
     // This needs to be bigger than the magic number (10)
     let mut buffer = FixedTextBuffer::<15, 15>::default();
     let tree = make_render_tree(&stack, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "xxxxxxxxxxxxxxx");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "xxxxxxxxxxxxxxx");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "xxxxxxxxxxxxxxx");

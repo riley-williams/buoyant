@@ -1,6 +1,5 @@
 use std::iter::zip;
 
-use buoyant::primitives::Point;
 use buoyant::render::Render;
 use buoyant::view::padding::Edges;
 use buoyant::{
@@ -31,7 +30,7 @@ fn test_clipped_text_trails_correctly() {
 
     let tree = make_render_tree(&view, buffer.size(), &mut ());
 
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
 
     let lines = [
         "                              ",
@@ -65,7 +64,7 @@ fn test_zero_padding_has_no_effect() {
 
     let mut buffer = FixedTextBuffer::<20, 5>::default();
     let tree = make_render_tree(&view, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
 
     let lines = [
         "XXXXXXXXXXXXXXXXXXXX",
@@ -85,7 +84,7 @@ fn test_padding_all() {
 
     let mut buffer = FixedTextBuffer::<20, 5>::default();
     let tree = make_render_tree(&view, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
 
     let lines = [
         "                    ",
@@ -107,7 +106,7 @@ fn test_padding_horizontal() {
 
     let mut buffer = FixedTextBuffer::<20, 5>::default();
     let tree = make_render_tree(&view, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
 
     let lines = [
         "   XXXXXXXXXXXXXX   ",
@@ -127,7 +126,7 @@ fn test_padding_vertical() {
 
     let mut buffer = FixedTextBuffer::<20, 5>::default();
     let tree = make_render_tree(&view, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
 
     let lines = [
         "                    ",
@@ -147,7 +146,7 @@ fn test_padding_top() {
 
     let mut buffer = FixedTextBuffer::<20, 5>::default();
     let tree = make_render_tree(&view, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
 
     let lines = [
         "                    ",
@@ -167,7 +166,7 @@ fn test_padding_bottom() {
 
     let mut buffer = FixedTextBuffer::<20, 5>::default();
     let tree = make_render_tree(&view, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
 
     let lines = [
         "XXXXXXXXXXXXXXXXXXXX",
@@ -187,7 +186,7 @@ fn test_padding_leading() {
 
     let mut buffer = FixedTextBuffer::<20, 5>::default();
     let tree = make_render_tree(&view, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
 
     let lines = [
         "     XXXXXXXXXXXXXXX",
@@ -207,7 +206,7 @@ fn test_padding_trailing() {
 
     let mut buffer = FixedTextBuffer::<20, 5>::default();
     let tree = make_render_tree(&view, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
 
     let lines = [
         "XXXXXXXXXXXXXXXXXXX ",

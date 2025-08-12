@@ -1,6 +1,6 @@
 use buoyant::{
-    font::CharacterBufferFont, primitives::Point, render::Render as _,
-    render_target::FixedTextBuffer, view::prelude::*,
+    font::CharacterBufferFont, render::Render as _, render_target::FixedTextBuffer,
+    view::prelude::*,
 };
 mod common;
 use common::make_render_tree;
@@ -16,7 +16,7 @@ fn geometry_group_retains_text_offset() {
     .geometry_group();
     let mut buffer = FixedTextBuffer::<6, 4>::default();
     let tree = make_render_tree(&content, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aa aa ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), " bb   ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), " ccc  ");
@@ -37,7 +37,7 @@ fn geometry_group_retains_fill_offset() {
     .geometry_group();
     let mut buffer = FixedTextBuffer::<6, 4>::default();
     let tree = make_render_tree(&content, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aa aa ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), " bb   ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), " ccc  ");

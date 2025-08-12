@@ -69,7 +69,7 @@ fn scroll_down_animates_back() {
     assert!(event_result.handled);
 
     buffer.clear();
-    render_tree.render(&mut buffer, &' ', Point::zero());
+    render_tree.render(&mut buffer, &' ');
     assert_str_grid_eq!(
         [
             "            ",

@@ -1,6 +1,6 @@
 use buoyant::environment::DefaultEnvironment;
 use buoyant::font::CharacterBufferFont;
-use buoyant::primitives::{Dimensions, Point, ProposedDimension, ProposedDimensions, Size};
+use buoyant::primitives::{Dimensions, ProposedDimension, ProposedDimensions, Size};
 use buoyant::render::Render;
 use buoyant::render_target::FixedTextBuffer;
 use buoyant::view::padding::Edges;
@@ -132,7 +132,7 @@ fn test_undersized_layout_3_bottom_pad() {
     assert_eq!(layout.resolved_size, Dimensions::new(1, 10));
     let mut buffer = FixedTextBuffer::<1, 10>::default();
     let tree = make_render_tree(&vstack, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "1");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "2");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "3");
@@ -162,7 +162,7 @@ fn test_undersized_layout_3_right_pad_space() {
     assert_eq!(layout.resolved_size, Dimensions::new(1, 10));
     let mut buffer = FixedTextBuffer::<1, 10>::default();
     let tree = make_render_tree(&vstack, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(collect_text(&buffer), "  234 5678");
 }
 
@@ -184,7 +184,7 @@ fn test_oversized_layout_3_right_pad_space() {
     assert_eq!(layout.resolved_size, Dimensions::new(1, 10));
     let mut buffer = FixedTextBuffer::<1, 10>::default();
     let tree = make_render_tree(&vstack, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(collect_text(&buffer), " 234 56789");
 }
 
@@ -206,7 +206,7 @@ fn test_oversized_layout_3_middle_pad_space() {
     assert_eq!(layout.resolved_size, Dimensions::new(1, 10));
     let mut buffer = FixedTextBuffer::<1, 10>::default();
     let tree = make_render_tree(&vstack, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(collect_text(&buffer), "234  56789");
 }
 
@@ -228,7 +228,7 @@ fn test_oversized_layout_3_trailing_pad_space() {
     assert_eq!(layout.resolved_size, Dimensions::new(1, 10));
     let mut buffer = FixedTextBuffer::<1, 10>::default();
     let tree = make_render_tree(&vstack, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(collect_text(&buffer), "234 56789 ");
 }
 
@@ -248,7 +248,7 @@ fn test_undersized_layout_3_middle_pad() {
     assert_eq!(layout.resolved_size, Dimensions::new(1, 10));
     let mut buffer = FixedTextBuffer::<1, 10>::default();
     let tree = make_render_tree(&vstack, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(collect_text(&buffer), "234   5678");
 }
 
@@ -266,22 +266,22 @@ fn test_layout_3_remainder_allocation() {
     let mut buffer = FixedTextBuffer::<1, 10>::default();
     let offer = Size::new(1, 7);
     let tree = make_render_tree(&vstack, offer, &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(collect_text(&buffer), "aaabbcc   ");
 
     let offer = Size::new(1, 8);
     let tree = make_render_tree(&vstack, offer, &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(collect_text(&buffer), "aaabbbcc  ");
 
     let offer = Size::new(1, 9);
     let tree = make_render_tree(&vstack, offer, &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(collect_text(&buffer), "aaabbbccc ");
 
     let offer = Size::new(1, 10);
     let tree = make_render_tree(&vstack, offer, &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(collect_text(&buffer), "aaabbbccc ");
 }
 
@@ -316,7 +316,7 @@ fn test_layout_3_horizontal_alignment_trailing() {
     .with_spacing(1);
     let mut buffer = FixedTextBuffer::<6, 7>::default();
     let tree = make_render_tree(&vstack, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "   aaa");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "------");
@@ -339,7 +339,7 @@ fn test_layout_3_alignment_center() {
     .with_alignment(HorizontalAlignment::Center);
     let mut buffer = FixedTextBuffer::<7, 5>::default();
     let tree = make_render_tree(&vstack, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "  aaa  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "-------");
     assert_eq!(buffer.text[2].iter().collect::<String>(), " cccc  ");
@@ -360,7 +360,7 @@ fn test_layout_3_alignment_leading() {
     .with_spacing(1);
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&vstack, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aaa   ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "      ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "------");
@@ -379,7 +379,7 @@ fn test_layout_direction_is_set_inner_hstack() {
     ));
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&vstack, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "------");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "|     ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "|     ");
@@ -396,7 +396,7 @@ fn test_layout_direction_is_set_inner_vstack() {
     ));
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let tree = make_render_tree(&hstack, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "|----|");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "|    |");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "|    |");
@@ -494,7 +494,7 @@ fn test_layout_3_extra_space_allocation() {
     .with_spacing(0);
     let mut buffer = FixedTextBuffer::<6, 10>::default();
     let tree = make_render_tree(&vstack, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "xxxxxx");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "xxxxxx");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "xxxxxx");
@@ -518,7 +518,7 @@ fn empty_view_does_not_receive_spacing() {
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<7, 5>::default();
     let tree = make_render_tree(&vstack, buffer.size(), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "a      ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "       ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "c      ");

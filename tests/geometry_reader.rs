@@ -44,7 +44,7 @@ fn progress_bar_integration_0() {
         Duration::default(),
         buffer.size(),
     )
-    .render(&mut buffer, &' ', Point::zero());
+    .render(&mut buffer, &' ');
 
     assert_str_grid_eq!(
         [
@@ -71,7 +71,7 @@ fn progress_bar_integration_50() {
         Duration::default(),
         buffer.size(),
     )
-    .render(&mut buffer, &' ', Point::zero());
+    .render(&mut buffer, &' ');
 
     assert_str_grid_eq!(
         [
@@ -98,7 +98,7 @@ fn progress_bar_integration_100() {
         Duration::default(),
         buffer.size(),
     )
-    .render(&mut buffer, &' ', Point::zero());
+    .render(&mut buffer, &' ');
 
     assert_str_grid_eq!(
         [
@@ -140,7 +140,7 @@ fn overdraw_top_leading_aligned() {
         Duration::default(),
         ProposedDimensions::compact(),
     )
-    .render(&mut buffer, &'+', Point::zero());
+    .render(&mut buffer, &'+');
 
     assert_str_grid_eq!(
         [
@@ -168,7 +168,7 @@ fn undersized_top_leading_aligned() {
         Duration::default(),
         buffer.size(),
     )
-    .render(&mut buffer, &'+', Point::zero());
+    .render(&mut buffer, &'+');
 
     assert_str_grid_eq!(
         [
@@ -212,7 +212,7 @@ fn preserves_inner_state() {
         Duration::default(),
         buffer.size(),
     );
-    render_tree.render(&mut buffer, &' ', Point::zero());
+    render_tree.render(&mut buffer, &' ');
 
     assert_eq!(state, Some((ButtonState::AtRest, ())));
     assert_str_grid_eq!(
@@ -241,7 +241,7 @@ fn preserves_inner_state() {
         Duration::default(),
         buffer.size(),
     );
-    render_tree.render(&mut buffer, &' ', Point::zero());
+    render_tree.render(&mut buffer, &' ');
 
     assert_eq!(state, Some((ButtonState::CaptivePressed, ())));
     assert_str_grid_eq!(
@@ -270,7 +270,7 @@ fn preserves_inner_state() {
         Duration::default(),
         buffer.size(),
     );
-    render_tree.render(&mut buffer, &' ', Point::zero());
+    render_tree.render(&mut buffer, &' ');
 
     assert_eq!(state, Some((ButtonState::Captive, ())));
     assert_str_grid_eq!(
