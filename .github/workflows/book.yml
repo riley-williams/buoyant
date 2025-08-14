@@ -27,12 +27,24 @@ jobs:
         run: |
           cd docs/book
           mdbook build
+      - name: Check for prerelease version
+        id: cargo_version
+        run: |
+          version=$(grep '^version' Cargo.toml | head -n1 | awk -F\" '{print $2}')
+          if [[ "$version" == *alpha* || "$version" == *beta* ]]; then
+            echo "skip_build=true" >> $GITHUB_ENV
+          else
+            echo "skip_build=false" >> $GITHUB_ENV
+          fi
       - name: Setup Pages
+        if: env.skip_build == 'false'
         uses: actions/configure-pages@v4
       - name: Upload artifact
+        if: env.skip_build == 'false'
         uses: actions/upload-pages-artifact@v3
         with:
           path: "docs/book/book"
       - name: Deploy to GitHub Pages
+        if: env.skip_build == 'false'
         id: deployment
         uses: actions/deploy-pages@v4
