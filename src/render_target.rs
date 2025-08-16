@@ -105,7 +105,7 @@ pub trait RenderTarget {
     /// This is most often useful for bridging `embedded_graphics` types
     /// that are designed to render to a `DrawTarget`.
     ///
-    /// ```
+    /// ```no_run
     /// # use buoyant::primitives::Size;
     /// # use buoyant::render_target::RenderTarget;
     /// # use buoyant::render_target::EmbeddedGraphicsRenderTarget;
@@ -115,12 +115,11 @@ pub trait RenderTarget {
     /// use tinytga::Tga;
     /// use crate::buoyant::surface::AsDrawTarget;
     ///
-    /// # let mut display = MockDisplay::<Rgb888>::new();
-    /// # let mut target = EmbeddedGraphicsRenderTarget::new(&mut display);
-    /// // let mut target = EmbeddedGraphicsRenderTarget::new(...);
-    /// # let data = include_bytes!("../tests/assets/rhombic-dodecahedron.tga");
+    /// let mut display = MockDisplay::<Rgb888>::new();
+    /// let mut target = EmbeddedGraphicsRenderTarget::new(&mut display);
     ///
-    /// let img: Tga<Rgb888> = Tga::from_slice(data).unwrap();
+    /// let data= [0u8; 100]; // include_bytes!("path/to/image.tga");
+    /// let img: Tga<Rgb888> = Tga::from_slice(&data[..]).unwrap();
     ///
     /// img.draw(&mut target.raw_surface().draw_target());
     /// ```

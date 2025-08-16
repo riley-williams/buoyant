@@ -20,12 +20,14 @@ mod overlay;
 #[allow(missing_docs)]
 pub mod padding;
 mod priority;
+mod scale_effect;
 mod transition;
 
 pub(crate) use animated::Animated;
 pub(crate) use aspect_ratio::AspectRatio;
 pub(crate) use background::BackgroundView;
 pub(crate) use erase_captures::EraseCaptures;
+use fixed::traits::ToFixed;
 pub(crate) use fixed_frame::FixedFrame;
 pub(crate) use fixed_size::FixedSize;
 pub(crate) use flex_frame::FlexFrame;
@@ -36,12 +38,13 @@ pub(crate) use offset::Offset;
 pub(crate) use overlay::OverlayView;
 pub(crate) use padding::Padding;
 pub(crate) use priority::Priority;
+pub(crate) use scale_effect::ScaleEffect;
 pub(crate) use transition::Transition;
 
 use crate::{
     animation::Animation,
     layout::{Alignment, HorizontalAlignment, VerticalAlignment},
-    primitives::Point,
+    primitives::{Point, UnitPoint},
     view::ViewMarker,
 };
 
@@ -451,6 +454,37 @@ pub trait ViewModifier: Sized {
     /// stack offering the remaining width divided by the number of views in the group.
     fn priority(self, priority: i8) -> Priority<Self> {
         Priority::new(priority, self)
+    }
+
+    /// Applies a scale effect to the view at render-time. The layout is unaffected.
+    ///
+    /// Note not all render targets support scaling, and the effect may not be visible
+    /// for some objects, such as text.
+    ///
+    /// # Examples
+    ///
+    /// A button that expands slightly when pressed.
+    ///
+    /// ```
+    /// use core::time::Duration;
+    /// use buoyant::{
+    ///     view::prelude::*,
+    ///     primitives::UnitPoint,
+    /// };
+    /// use embedded_graphics::pixelcolor::Rgb888;
+    ///
+    /// fn expanding_button() -> impl View<Rgb888, ()> {
+    ///     Button::new(|_: &mut Seal<()>| {
+    ///         // do something when pressed
+    ///     }, |is_pressed| {
+    ///         Rectangle
+    ///             .scale_effect(if is_pressed { 1.2 } else { 1.0 }, UnitPoint::center())
+    ///             .animated(Animation::linear(Duration::from_millis(150)), is_pressed)
+    ///     })
+    /// }
+    /// ```
+    fn scale_effect(self, scale: impl ToFixed, anchor: UnitPoint) -> ScaleEffect<Self> {
+        ScaleEffect::new(self, scale.to_fixed(), anchor)
     }
 
     /// Sets the transition to use when the view is added or removed.

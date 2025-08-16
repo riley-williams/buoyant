@@ -8,6 +8,7 @@
 
 use std::time::{Duration, Instant};
 
+use buoyant::primitives::UnitPoint;
 use buoyant::render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _};
 use buoyant::transition::{Edge, Move};
 use buoyant::view::scroll_view::ScrollDirection;
@@ -283,6 +284,7 @@ fn toggle_button<C>(is_on: bool, on_tap: fn(&mut Seal<C>)) -> impl View<color::S
                 } else {
                     color::Space::WHITE
                 })
+                .scale_effect(if is_pressed { 1.5 } else { 1.0 }, UnitPoint::center())
                 .padding(Edges::All, 2)
                 .animated(Animation::linear(Duration::from_millis(125)), is_on),
         ))
