@@ -15,7 +15,7 @@ use super::{Brush, Glyph, RenderTarget, Shape, Stroke, Surface};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FixedTextBuffer<const W: usize, const H: usize> {
     pub text: [[char; W]; H],
-    pub active_layer: LayerConfig,
+    pub active_layer: LayerConfig<char>,
 }
 
 impl<const W: usize, const H: usize> FixedTextBuffer<W, H> {
@@ -69,7 +69,7 @@ impl<const W: usize, const H: usize> RenderTarget for FixedTextBuffer<W, H> {
 
     fn with_layer<LayerFn, DrawFn>(&mut self, layer_fn: LayerFn, draw_fn: DrawFn)
     where
-        LayerFn: FnOnce(LayerHandle) -> LayerHandle,
+        LayerFn: FnOnce(LayerHandle<Self::ColorFormat>) -> LayerHandle<Self::ColorFormat>,
         DrawFn: FnOnce(&mut Self),
     {
         let layer = self.active_layer.clone();
@@ -86,6 +86,10 @@ impl<const W: usize, const H: usize> RenderTarget for FixedTextBuffer<W, H> {
             .applying_inverse(&self.active_layer.transform)
     }
 
+    fn alpha(&self) -> u8 {
+        255
+    }
+
     fn fill<C: Into<Self::ColorFormat>>(
         &mut self,
         transform: impl Into<LinearTransform>,
@@ -98,6 +102,7 @@ impl<const W: usize, const H: usize> RenderTarget for FixedTextBuffer<W, H> {
         if !bounding_box.intersects(&self.active_layer.clip_rect) {
             return;
         }
+
         if let Some(rect) = shape.as_rect() {
             let Some(color) = brush.as_solid() else {
                 return;
@@ -125,6 +130,7 @@ impl<const W: usize, const H: usize> RenderTarget for FixedTextBuffer<W, H> {
         if !bounding_box.intersects(&self.active_layer.clip_rect) {
             return;
         }
+
         if let Some(rect) = shape.as_rect() {
             let origin = Point::new(
                 rect.origin.x + transform.offset.x,

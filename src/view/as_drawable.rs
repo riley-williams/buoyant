@@ -1,6 +1,10 @@
+use embedded_graphics_core::{draw_target::DrawTarget, pixelcolor::PixelColor, Drawable};
+
 use crate::{
+    color::AlphaColor,
     primitives::{Interpolate, ProposedDimensions},
     render::Render,
+    render_target::EmbeddedGraphicsRenderTarget,
     view::View,
 };
 
@@ -36,12 +40,12 @@ pub trait AsDrawable<Color, Captures: ?Sized> {
         size: impl Into<ProposedDimensions>,
         default_color: Color,
         captures: &mut Captures,
-    ) -> impl embedded_graphics_core::Drawable<Color = Color, Output = ()>;
+    ) -> impl Drawable<Color = Color, Output = ()>;
 }
 
 impl<Color, Captures: ?Sized, T> AsDrawable<Color, Captures> for T
 where
-    Color: embedded_graphics_core::pixelcolor::PixelColor + Interpolate,
+    Color: PixelColor + Interpolate + AlphaColor,
     T: View<Color, Captures>,
 {
     fn as_drawable(
@@ -49,7 +53,7 @@ where
         size: impl Into<ProposedDimensions>,
         default_color: Color,
         captures: &mut Captures,
-    ) -> impl embedded_graphics_core::Drawable<Color = Color, Output = ()> {
+    ) -> impl Drawable<Color = Color, Output = ()> {
         use crate::{environment::DefaultEnvironment, primitives::Point};
 
         let env = DefaultEnvironment::non_animated();
@@ -68,18 +72,20 @@ struct DrawableView<T, C> {
     default_color: C,
 }
 
-impl<T: Render<C>, C: embedded_graphics_core::pixelcolor::PixelColor + Interpolate>
-    embedded_graphics_core::Drawable for DrawableView<T, C>
+impl<T, C> Drawable for DrawableView<T, C>
+where
+    T: Render<C>,
+    C: PixelColor + Interpolate + AlphaColor,
 {
     type Color = C;
     type Output = ();
 
     fn draw<D>(&self, target: &mut D) -> Result<Self::Output, D::Error>
     where
-        D: embedded_graphics_core::draw_target::DrawTarget<Color = Self::Color>,
+        D: DrawTarget<Color = Self::Color>,
     {
         // create a temporary embedded graphics render target
-        let mut embedded_target = crate::render_target::EmbeddedGraphicsRenderTarget::new(target);
+        let mut embedded_target = EmbeddedGraphicsRenderTarget::new(target);
         self.render_tree
             .render(&mut embedded_target, &self.default_color);
         Ok(())

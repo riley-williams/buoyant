@@ -31,7 +31,7 @@ fn main() {
     // Size::new(110, 310)
     let mut display: SimulatorDisplay<color::ColorFormat> =
         SimulatorDisplay::new(Size::new(210, 110));
-    let mut target = EmbeddedGraphicsRenderTarget::new(&mut display);
+    let mut target = EmbeddedGraphicsRenderTarget::new_hinted(&mut display, color::BACKGROUND);
     let app_start = Instant::now();
 
     let simulator = ChargeSim::new(1.0);

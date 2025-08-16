@@ -36,8 +36,12 @@ impl Transition for Opacity {
         Point::zero()
     }
 
-    fn opacity(&self, _direction: Direction, factor: u8) -> u8 {
-        255 - factor
+    fn opacity(&self, direction: Direction, factor: u8) -> u8 {
+        if direction == Direction::In {
+            factor
+        } else {
+            255 - factor
+        }
     }
 }
 
@@ -224,9 +228,9 @@ mod tests {
         }
 
         // Test opacity values
-        assert_eq!(transition.opacity(In, 0), 255);
-        assert_eq!(transition.opacity(In, 128), 127);
-        assert_eq!(transition.opacity(In, 255), 0);
+        assert_eq!(transition.opacity(In, 0), 0);
+        assert_eq!(transition.opacity(In, 128), 128);
+        assert_eq!(transition.opacity(In, 255), 255);
         assert_eq!(transition.opacity(Out, 0), 255);
         assert_eq!(transition.opacity(Out, 128), 127);
         assert_eq!(transition.opacity(Out, 255), 0);
