@@ -109,10 +109,10 @@ impl<Subtree: Render<Color> + Clone, T: Transition, Color: Interpolate + Copy> R
                 if domain.is_complete() {
                     target_subtree.render(render_target, style);
                 } else {
-                    let alpha = transition.opacity(Direction::In, domain.factor);
+                    let opacity = transition.opacity(Direction::In, domain.factor);
                     let offset = transition.transform(Direction::In, domain.factor, *size);
                     render_target.with_layer(
-                        |l| l.offset(offset).opacity(alpha),
+                        |l| l.offset(offset).opacity(opacity),
                         |render_target| {
                             target_subtree.render(render_target, style);
                         },

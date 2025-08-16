@@ -216,8 +216,9 @@ where
                 }
             });
 
+        let scaled_stroke_width = (stroke.width * transform.scale).to_num();
         let style = PrimitiveStyleBuilder::new()
-            .stroke_width(stroke.width)
+            .stroke_width(scaled_stroke_width)
             .stroke_color(color)
             .build();
 

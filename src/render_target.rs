@@ -261,7 +261,7 @@ pub struct LayerHandle<'a, C> {
 }
 
 #[allow(clippy::must_use_candidate, clippy::return_self_not_must_use)]
-impl<'a, C: Interpolate + Clone> LayerHandle<'a, C> {
+impl<'a, C: Interpolate + Copy> LayerHandle<'a, C> {
     /// Creates a new layer handle for the given layer configuration.
     #[must_use]
     pub fn new(layer: &'a mut LayerConfig<C>) -> Self {
@@ -279,12 +279,15 @@ impl<'a, C: Interpolate + Clone> LayerHandle<'a, C> {
         self
     }
 
-    #[must_use]
+    /// Sets a background color hint for the layer.
+    ///
+    /// This is used to simulate alpha blending by interpolating the background color
+    /// with the specified color based on the layer's alpha value.
     pub fn hint_background(self, color: C) -> Self {
         let adjusted_color = if self.layer.alpha == 255 {
             color
-        } else if let Some(background_hint) = &self.layer.background_hint {
-            C::interpolate(background_hint.clone(), color, self.layer.alpha)
+        } else if let Some(background_hint) = self.layer.background_hint {
+            C::interpolate(background_hint, color, self.layer.alpha)
         } else {
             color
         };
@@ -497,5 +500,47 @@ mod tests {
 
         assert_eq!(layer.alpha, 200);
         assert_eq!(layer.transform.scale, ScaleFactor::from_num(3.0));
+    }
+
+    #[test]
+    fn background_hint_full_opacity() {
+        let mut layer = LayerConfig::<u8>::new_sized(Size::new(100, 100));
+        assert_eq!(layer.background_hint, None);
+
+        LayerHandle::new(&mut layer).hint_background(128);
+
+        // With full opacity, the color should be used as-is
+        assert_eq!(layer.background_hint, Some(128));
+    }
+
+    #[test]
+    fn background_hint_partial_opacity_no_existing() {
+        let mut layer = LayerConfig::new(
+            128,
+            Option::<u8>::None,
+            LinearTransform::identity(),
+            Rectangle::new(Point::zero(), Size::new(100, 100)),
+        );
+
+        LayerHandle::new(&mut layer).hint_background(200);
+
+        // With partial opacity and no existing hint, should use the color directly
+        assert_eq!(layer.background_hint, Some(200));
+    }
+
+    #[test]
+    fn background_hint_partial_opacity_with_existing() {
+        let mut layer = LayerConfig::new(
+            12,
+            Some(100u8),
+            LinearTransform::identity(),
+            Rectangle::new(Point::zero(), Size::new(100, 100)),
+        );
+
+        LayerHandle::new(&mut layer).hint_background(200);
+
+        // With partial opacity and existing hint, should interpolate
+        let expected = u8::interpolate(100, 200, 12);
+        assert_eq!(layer.background_hint, Some(expected));
     }
 }

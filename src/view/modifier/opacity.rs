@@ -7,35 +7,26 @@ use crate::{
     view::{ViewLayout, ViewMarker},
 };
 
-/// A view modifier that adds a background color hint for fast simulated blending
-#[derive(Debug, Clone)]
-pub struct HintBackground<T, C> {
-    inner: T,
-    hint_color: C,
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Opacity<V> {
+    pub inner: V,
+    pub opacity: u8,
 }
 
-impl<T, C> HintBackground<T, C> {
-    pub const fn new(inner: T, hint_color: C) -> Self {
-        Self { inner, hint_color }
-    }
-}
-
-impl<T, C> ViewMarker for HintBackground<T, C>
+impl<V> ViewMarker for Opacity<V>
 where
-    T: ViewMarker,
-    C: Clone,
+    V: ViewMarker,
 {
-    type Renderables = render::HintBackground<T::Renderables, C>;
-    type Transition = T::Transition;
+    type Renderables = render::Opacity<V::Renderables>;
+    type Transition = V::Transition;
 }
 
-impl<Captures: ?Sized, T, C> ViewLayout<Captures> for HintBackground<T, C>
+impl<Captures: ?Sized, V> ViewLayout<Captures> for Opacity<V>
 where
-    T: ViewLayout<Captures>,
-    C: Clone,
+    V: ViewLayout<Captures>,
 {
-    type Sublayout = T::Sublayout;
-    type State = T::State;
+    type Sublayout = V::Sublayout;
+    type State = V::State;
 
     fn priority(&self) -> i8 {
         self.inner.priority()
@@ -71,9 +62,9 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> Self::Renderables {
-        render::HintBackground::new(
+        render::Opacity::new(
             self.inner.render_tree(layout, origin, env, captures, state),
-            self.hint_color.clone(),
+            self.opacity,
         )
     }
 

@@ -18,6 +18,7 @@ mod geometry_group;
 mod hidden;
 mod hint_background;
 mod offset;
+mod opacity;
 mod overlay;
 #[allow(missing_docs)]
 pub mod padding;
@@ -39,6 +40,7 @@ pub(crate) use geometry_group::GeometryGroup;
 pub(crate) use hidden::Hidden;
 pub(crate) use hint_background::HintBackground;
 pub(crate) use offset::Offset;
+pub(crate) use opacity::Opacity;
 pub(crate) use overlay::OverlayView;
 pub(crate) use padding::Padding;
 pub(crate) use priority::Priority;
@@ -171,7 +173,8 @@ pub trait ViewModifier: Sized {
     }
 
     /// Adds a background color in the specified shape, laid out within the modified
-    /// view's bounds.
+    /// view's bounds. The color is also set as the background hint on the modified
+    /// view.
     ///
     /// # Examples
     ///
@@ -194,6 +197,7 @@ pub trait ViewModifier: Sized {
     ///     Text::new("Foreground", &FONT_9X15_BOLD)
     ///         .foreground_color(Rgb565::WHITE)
     ///         .padding(Edges::All, 6)
+    ///         .hint_background_color(Rgb565::BLUE)
     ///         .background(
     ///             Alignment::default(),
     ///             Capsule.foreground_color(Rgb565::BLUE)
@@ -428,7 +432,10 @@ pub trait ViewModifier: Sized {
         Hidden::new(self)
     }
 
-    /// Hints the background color of the view, which is used to simulate alpha blending
+    /// Hints the background color of the view, which is used to simulate alpha blending.
+    ///
+    /// This color hint may be used by the render target when rendering the view with transparency
+    /// such as with the [`ViewModifier::opacity`] modifier or during a [`ViewModifier::transition`].
     fn hint_background_color<C>(self, color: C) -> HintBackground<Self, C> {
         HintBackground::new(self, color)
     }
@@ -438,6 +445,29 @@ pub trait ViewModifier: Sized {
     /// This does not affect size calculations, and is only applied when rendering the view.
     fn offset(self, x: i32, y: i32) -> Offset<Self> {
         Offset::new(self, Point::new(x, y))
+    }
+
+    /// Sets the opacity of the view.
+    ///
+    /// The opacity value should be between 0 (fully transparent) and 255 (fully opaque).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use buoyant::view::prelude::*;
+    /// use embedded_graphics::{prelude::*, pixelcolor::Rgb888};
+    ///
+    /// fn semi_transparent_circle() -> impl View<Rgb888, ()> {
+    ///     Circle
+    ///         .foreground_color(Rgb888::RED)
+    ///         .opacity(128) // 50% opacity
+    /// }
+    /// ```
+    fn opacity(self, opacity: u8) -> Opacity<Self> {
+        opacity::Opacity {
+            inner: self,
+            opacity,
+        }
     }
 
     /// Overlay uses the modified view to compute bounds, and renders the overlay
