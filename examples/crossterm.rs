@@ -120,7 +120,6 @@ fn render_view(target: &mut CrosstermRenderTarget, view: &impl View<Colors, ()>)
             }),
             background: None,
         },
-        Point::zero(),
     );
     target.flush();
 }

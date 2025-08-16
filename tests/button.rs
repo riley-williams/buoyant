@@ -66,7 +66,7 @@ fn increment_single_frame() {
 
     let mut buffer = FixedTextBuffer::<10, 6>::default();
     let mut tree = rebuild_tree(&mut app_state, &mut view_state, counter_view, buffer.size());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "count: 0  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "Increment ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "Decrement ");
@@ -94,7 +94,7 @@ fn increment_single_frame() {
 
     let mut buffer = FixedTextBuffer::<10, 6>::default();
     let tree = rebuild_tree(&mut app_state, &mut view_state, counter_view, buffer.size());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "count: 1  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "Increment ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "Decrement ");

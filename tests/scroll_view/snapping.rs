@@ -85,7 +85,7 @@ fn scroll_down_snaps_back() {
 
     let mut render_tree = tree(&view, &mut captures, &mut state, Duration::default(), size);
 
-    render_tree.render(&mut buffer, &' ', Point::zero());
+    render_tree.render(&mut buffer, &' ');
 
     assert_str_grid_eq!(
         [
@@ -117,7 +117,7 @@ fn scroll_down_snaps_back() {
     assert!(event_result.handled);
 
     buffer.clear();
-    render_tree.render(&mut buffer, &' ', Point::zero());
+    render_tree.render(&mut buffer, &' ');
     assert_str_grid_eq!(
         [
             "            ",
@@ -139,7 +139,7 @@ fn scroll_down_snaps_back() {
     assert!(event_result.handled);
 
     buffer.clear();
-    render_tree.render(&mut buffer, &' ', Point::zero());
+    render_tree.render(&mut buffer, &' ');
     assert_str_grid_eq!(
         [
             "            ",
@@ -154,7 +154,7 @@ fn scroll_down_snaps_back() {
     // View should snap back after releasing
     let render_tree = tree(&view, &mut captures, &mut state, Duration::default(), size);
     buffer.clear();
-    render_tree.render(&mut buffer, &' ', Point::zero());
+    render_tree.render(&mut buffer, &' ');
     assert_str_grid_eq!(
         [
             "            ",
@@ -199,7 +199,7 @@ fn scroll_up_past_bottom_snaps_back() {
     assert!(event_result.handled);
 
     buffer.clear();
-    render_tree.render(&mut buffer, &' ', Point::zero());
+    render_tree.render(&mut buffer, &' ');
     assert_str_grid_eq!(
         [
             "            ",
@@ -222,7 +222,7 @@ fn scroll_up_past_bottom_snaps_back() {
     assert!(event_result.handled);
 
     buffer.clear();
-    render_tree.render(&mut buffer, &' ', Point::zero());
+    render_tree.render(&mut buffer, &' ');
     assert_str_grid_eq!(
         [
             "            ",
@@ -246,7 +246,7 @@ fn scroll_up_past_bottom_snaps_back() {
 
     // We're modifying the target tree, so it should retain the scroll position
     buffer.clear();
-    render_tree.render(&mut buffer, &' ', Point::zero());
+    render_tree.render(&mut buffer, &' ');
     assert_str_grid_eq!(
         [
             "            ",
@@ -262,7 +262,7 @@ fn scroll_up_past_bottom_snaps_back() {
     let render_tree = tree(&view, &mut captures, &mut state, Duration::default(), size);
 
     buffer.clear();
-    render_tree.render(&mut buffer, &' ', Point::zero());
+    render_tree.render(&mut buffer, &' ');
     assert_str_grid_eq!(
         [
             "            ",
@@ -286,7 +286,7 @@ fn horizontal_scroll_right_snaps_back() {
 
     let mut render_tree = tree(&view, &mut captures, &mut state, Duration::default(), size);
 
-    render_tree.render(&mut buffer, &' ', Point::zero());
+    render_tree.render(&mut buffer, &' ');
 
     assert_str_grid_eq!(
         [
@@ -318,7 +318,7 @@ fn horizontal_scroll_right_snaps_back() {
     assert!(event_result.handled);
 
     buffer.clear();
-    render_tree.render(&mut buffer, &' ', Point::zero());
+    render_tree.render(&mut buffer, &' ');
     assert_str_grid_eq!(
         [
             "            ",
@@ -340,7 +340,7 @@ fn horizontal_scroll_right_snaps_back() {
     assert!(event_result.handled);
 
     buffer.clear();
-    render_tree.render(&mut buffer, &' ', Point::zero());
+    render_tree.render(&mut buffer, &' ');
     assert_str_grid_eq!(
         [
             "            ",
@@ -355,7 +355,7 @@ fn horizontal_scroll_right_snaps_back() {
     // View should snap back after releasing
     let render_tree = tree(&view, &mut captures, &mut state, Duration::default(), size);
     buffer.clear();
-    render_tree.render(&mut buffer, &' ', Point::zero());
+    render_tree.render(&mut buffer, &' ');
     assert_str_grid_eq!(
         [
             "            ",
@@ -379,7 +379,7 @@ fn both_direction_scroll_diagonal_snaps_back_up_left() {
 
     let mut render_tree = tree(&view, &mut captures, &mut state, Duration::default(), size);
 
-    render_tree.render(&mut buffer, &' ', Point::zero());
+    render_tree.render(&mut buffer, &' ');
 
     // Initial view shows top-left corner
     assert_str_grid_eq!(
@@ -413,7 +413,7 @@ fn both_direction_scroll_diagonal_snaps_back_up_left() {
     assert!(event_result.handled);
 
     buffer.clear();
-    render_tree.render(&mut buffer, &' ', Point::zero());
+    render_tree.render(&mut buffer, &' ');
     // Should show content pulled past bounds with resistance
     assert_str_grid_eq!(
         [
@@ -436,7 +436,7 @@ fn both_direction_scroll_diagonal_snaps_back_up_left() {
     assert!(event_result.handled);
 
     buffer.clear();
-    render_tree.render(&mut buffer, &' ', Point::zero());
+    render_tree.render(&mut buffer, &' ');
     // Should still show the over-scrolled position before snapping
     assert_str_grid_eq!(
         [
@@ -452,7 +452,7 @@ fn both_direction_scroll_diagonal_snaps_back_up_left() {
     // View should snap back to normal position after releasing
     let render_tree = tree(&view, &mut captures, &mut state, Duration::default(), size);
     buffer.clear();
-    render_tree.render(&mut buffer, &' ', Point::zero());
+    render_tree.render(&mut buffer, &' ');
     assert_str_grid_eq!(
         [
             "            ",
@@ -497,7 +497,7 @@ fn both_direction_scroll_bottom_right_snaps_back() {
     assert!(event_result.handled);
 
     buffer.clear();
-    render_tree.render(&mut buffer, &' ', Point::zero());
+    render_tree.render(&mut buffer, &' ');
     // Should show bottom-right content
     assert_str_grid_eq!(
         [
@@ -521,7 +521,7 @@ fn both_direction_scroll_bottom_right_snaps_back() {
     assert!(event_result.handled);
 
     buffer.clear();
-    render_tree.render(&mut buffer, &' ', Point::zero());
+    render_tree.render(&mut buffer, &' ');
     // Should show content pulled past bounds with resistance
     assert_str_grid_eq!(
         [
@@ -544,7 +544,7 @@ fn both_direction_scroll_bottom_right_snaps_back() {
     assert!(event_result.handled);
 
     buffer.clear();
-    render_tree.render(&mut buffer, &' ', Point::zero());
+    render_tree.render(&mut buffer, &' ');
     // Should still show the over-scrolled position before snapping
     assert_str_grid_eq!(
         [
@@ -560,7 +560,7 @@ fn both_direction_scroll_bottom_right_snaps_back() {
     // View should snap back to bottom-right corner after releasing
     let render_tree = tree(&view, &mut captures, &mut state, Duration::default(), size);
     buffer.clear();
-    render_tree.render(&mut buffer, &' ', Point::zero());
+    render_tree.render(&mut buffer, &' ');
     assert_str_grid_eq!(
         [
             "            ",
@@ -605,7 +605,7 @@ fn horizontal_scroll_left_past_right_edge_snaps_back() {
     assert!(event_result.handled);
 
     buffer.clear();
-    render_tree.render(&mut buffer, &' ', Point::zero());
+    render_tree.render(&mut buffer, &' ');
     assert_str_grid_eq!(
         [
             "            ",
@@ -628,7 +628,7 @@ fn horizontal_scroll_left_past_right_edge_snaps_back() {
     assert!(event_result.handled);
 
     buffer.clear();
-    render_tree.render(&mut buffer, &' ', Point::zero());
+    render_tree.render(&mut buffer, &' ');
     assert_str_grid_eq!(
         [
             "            ",
@@ -652,7 +652,7 @@ fn horizontal_scroll_left_past_right_edge_snaps_back() {
 
     // We're modifying the target tree, so it should retain the scroll position
     buffer.clear();
-    render_tree.render(&mut buffer, &' ', Point::zero());
+    render_tree.render(&mut buffer, &' ');
     assert_str_grid_eq!(
         [
             "            ",
@@ -668,7 +668,7 @@ fn horizontal_scroll_left_past_right_edge_snaps_back() {
     let render_tree = tree(&view, &mut captures, &mut state, Duration::default(), size);
 
     buffer.clear();
-    render_tree.render(&mut buffer, &' ', Point::zero());
+    render_tree.render(&mut buffer, &' ');
     assert_str_grid_eq!(
         [
             "            ",

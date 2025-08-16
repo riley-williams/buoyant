@@ -47,7 +47,7 @@ fn single_variant_fits() {
     let mut state = view.build_state(&mut ());
     let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
     let tree = view.render_tree(&layout, Point::zero(), &env, &mut (), &mut state);
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "Single variant");
 }
@@ -62,7 +62,7 @@ fn single_variant_clipped() {
     let mut state = view.build_state(&mut ());
     let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
     let tree = view.render_tree(&layout, Point::zero(), &env, &mut (), &mut state);
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "Single    ");
 }
@@ -77,7 +77,7 @@ fn two_variant_first_fits() {
     let mut state = view.build_state(&mut ());
     let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
     let tree = view.render_tree(&layout, Point::zero(), &env, &mut (), &mut state);
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
 
     assert_eq!(
         buffer.text[0].iter().collect::<String>(),
@@ -95,7 +95,7 @@ fn two_variant_first_wraps() {
     let mut state = view.build_state(&mut ());
     let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
     let tree = view.render_tree(&layout, Point::zero(), &env, &mut (), &mut state);
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "This is the  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "first variant");
@@ -111,7 +111,7 @@ fn two_variant_second_chosen() {
     let mut state = view.build_state(&mut ());
     let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
     let tree = view.render_tree(&layout, Point::zero(), &env, &mut (), &mut state);
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "Second variant");
 }
@@ -126,7 +126,7 @@ fn two_variant_second_clipped() {
     let mut state = view.build_state(&mut ());
     let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
     let tree = view.render_tree(&layout, Point::zero(), &env, &mut (), &mut state);
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "Second    ");
 }
@@ -142,7 +142,7 @@ fn three_variant_first_fits() {
     let mut state = view.build_state(&mut ());
     let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
     let tree = view.render_tree(&layout, Point::zero(), &env, &mut (), &mut state);
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
 
     assert_eq!(
         buffer.text[0].iter().collect::<String>(),
@@ -160,7 +160,7 @@ fn three_variant_second_chosen() {
     let mut state = view.build_state(&mut ());
     let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
     let tree = view.render_tree(&layout, Point::zero(), &env, &mut (), &mut state);
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "Medium length ");
 }
@@ -175,7 +175,7 @@ fn three_variant_third_chosen() {
     let mut state = view.build_state(&mut ());
     let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
     let tree = view.render_tree(&layout, Point::zero(), &env, &mut (), &mut state);
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "Short");
 }
@@ -190,7 +190,7 @@ fn three_variant_third_clipped() {
     let mut state = view.build_state(&mut ());
     let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
     let tree = view.render_tree(&layout, Point::zero(), &env, &mut (), &mut state);
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "Sho");
 }
@@ -206,7 +206,7 @@ fn four_variant_vertical_first_fully_fits() {
     let mut state = view.build_state(&mut ());
     let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
     let tree = view.render_tree(&layout, Point::zero(), &env, &mut (), &mut state);
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
 
     assert_eq!(
         buffer.text[0].iter().collect::<String>(),
@@ -233,7 +233,7 @@ fn four_variant_vertical_wrapping_first() {
     let mut state = view.build_state(&mut ());
     let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
     let tree = view.render_tree(&layout, Point::zero(), &env, &mut (), &mut state);
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "12 hours, 16");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "minutes, and");
@@ -251,7 +251,7 @@ fn four_variant_vertical_second() {
     let mut state = view.build_state(&mut ());
     let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
     let tree = view.render_tree(&layout, Point::zero(), &env, &mut (), &mut state);
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "12h 16m 3s ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "remaining  ");
@@ -269,7 +269,7 @@ fn four_variant_vertical_third() {
     let mut state = view.build_state(&mut ());
     let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
     let tree = view.render_tree(&layout, Point::zero(), &env, &mut (), &mut state);
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "12h  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "16m  ");
@@ -287,7 +287,7 @@ fn four_variant_vertical_fourth() {
     let mut state = view.build_state(&mut ());
     let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
     let tree = view.render_tree(&layout, Point::zero(), &env, &mut (), &mut state);
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "~12h  ");
 }
@@ -303,7 +303,7 @@ fn four_variant_vertical_fourth_clipping() {
     let mut state = view.build_state(&mut ());
     let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
     let tree = view.render_tree(&layout, Point::zero(), &env, &mut (), &mut state);
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "~12");
 }
@@ -374,7 +374,7 @@ fn fit_rects_abc() {
     let mut state = view.build_state(&mut ());
     let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
     let tree = view.render_tree(&layout, Point::zero(), &env, &mut (), &mut state);
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aaaabb");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "aaaabb");
@@ -395,7 +395,7 @@ fn fit_rects_ac() {
     let mut state = view.build_state(&mut ());
     let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
     let tree = view.render_tree(&layout, Point::zero(), &env, &mut (), &mut state);
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aaaaa");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "aaaaa");
@@ -414,7 +414,7 @@ fn fit_rects_ab() {
     let mut state = view.build_state(&mut ());
     let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
     let tree = view.render_tree(&layout, Point::zero(), &env, &mut (), &mut state);
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aaaabb");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "aaaabb");
@@ -432,7 +432,7 @@ fn fit_rects_a() {
     let mut state = view.build_state(&mut ());
     let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
     let tree = view.render_tree(&layout, Point::zero(), &env, &mut (), &mut state);
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aaaaa");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "aaaaa");
@@ -450,7 +450,7 @@ fn fit_rects_a_clip() {
     let mut state = view.build_state(&mut ());
     let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
     let tree = view.render_tree(&layout, Point::zero(), &env, &mut (), &mut state);
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aa");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "aa");
@@ -473,7 +473,7 @@ fn oversized_height_ignored_for_horizontal() {
     let mut state = view.build_state(&mut ());
     let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
     let tree = view.render_tree(&layout, Point::zero(), &env, &mut (), &mut state);
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aaaa");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "aaaa");
@@ -496,7 +496,7 @@ fn oversized_width_ignored_for_vertical() {
     let mut state = view.build_state(&mut ());
     let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
     let tree = view.render_tree(&layout, Point::zero(), &env, &mut (), &mut state);
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aaa");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "aaa");

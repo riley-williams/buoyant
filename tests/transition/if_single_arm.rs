@@ -2,7 +2,6 @@ use core::time::Duration;
 
 use buoyant::{
     if_view,
-    primitives::Point,
     render::{AnimatedJoin, AnimationDomain, Render},
     render_target::FixedTextBuffer,
     transition::Move,
@@ -61,14 +60,7 @@ fn move_out_and_back_in() {
     );
 
     let domain = AnimationDomain::top_level(Duration::from_millis(100));
-    Render::render_animated(
-        &mut buffer,
-        &source_tree,
-        &target_tree,
-        &' ',
-        Point::zero(),
-        &domain,
-    );
+    Render::render_animated(&mut buffer, &source_tree, &target_tree, &' ', &domain);
 
     assert_str_grid_eq!(
         [
@@ -95,14 +87,7 @@ fn move_out_and_back_in() {
     );
 
     let domain = AnimationDomain::top_level(Duration::from_millis(200));
-    Render::render_animated(
-        &mut buffer,
-        &source_tree,
-        &target_tree,
-        &' ',
-        Point::zero(),
-        &domain,
-    );
+    Render::render_animated(&mut buffer, &source_tree, &target_tree, &' ', &domain);
 
     assert_str_grid_eq!(
         [
@@ -117,14 +102,7 @@ fn move_out_and_back_in() {
     buffer.clear();
 
     let domain = AnimationDomain::top_level(Duration::from_millis(250));
-    Render::render_animated(
-        &mut buffer,
-        &source_tree,
-        &target_tree,
-        &' ',
-        Point::zero(),
-        &domain,
-    );
+    Render::render_animated(&mut buffer, &source_tree, &target_tree, &' ', &domain);
 
     assert_str_grid_eq!(
         [
@@ -139,14 +117,7 @@ fn move_out_and_back_in() {
     buffer.clear();
 
     let domain = AnimationDomain::top_level(Duration::from_millis(299));
-    Render::render_animated(
-        &mut buffer,
-        &source_tree,
-        &target_tree,
-        &' ',
-        Point::zero(),
-        &domain,
-    );
+    Render::render_animated(&mut buffer, &source_tree, &target_tree, &' ', &domain);
 
     assert_str_grid_eq!(
         [
@@ -161,14 +132,7 @@ fn move_out_and_back_in() {
     buffer.clear();
 
     let domain = AnimationDomain::top_level(Duration::from_millis(300));
-    Render::render_animated(
-        &mut buffer,
-        &source_tree,
-        &target_tree,
-        &' ',
-        Point::zero(),
-        &domain,
-    );
+    Render::render_animated(&mut buffer, &source_tree, &target_tree, &' ', &domain);
 
     assert_str_grid_eq!(
         [
@@ -197,14 +161,7 @@ fn move_out_and_back_in() {
     );
 
     let domain = AnimationDomain::top_level(Duration::from_millis(300));
-    Render::render_animated(
-        &mut buffer,
-        &source_tree,
-        &target_tree,
-        &' ',
-        Point::zero(),
-        &domain,
-    );
+    Render::render_animated(&mut buffer, &source_tree, &target_tree, &' ', &domain);
 
     assert_str_grid_eq!(
         [
@@ -219,14 +176,7 @@ fn move_out_and_back_in() {
     buffer.clear();
 
     let domain = AnimationDomain::top_level(Duration::from_millis(350));
-    Render::render_animated(
-        &mut buffer,
-        &source_tree,
-        &target_tree,
-        &' ',
-        Point::zero(),
-        &domain,
-    );
+    Render::render_animated(&mut buffer, &source_tree, &target_tree, &' ', &domain);
 
     assert_str_grid_eq!(
         [
@@ -241,14 +191,7 @@ fn move_out_and_back_in() {
     buffer.clear();
 
     let domain = AnimationDomain::top_level(Duration::from_millis(400));
-    Render::render_animated(
-        &mut buffer,
-        &source_tree,
-        &target_tree,
-        &' ',
-        Point::zero(),
-        &domain,
-    );
+    Render::render_animated(&mut buffer, &source_tree, &target_tree, &' ', &domain);
 
     assert_str_grid_eq!(
         [

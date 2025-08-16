@@ -1,6 +1,4 @@
-use buoyant::{
-    primitives::Point, render::Render as _, render_target::FixedTextBuffer, view::prelude::*,
-};
+use buoyant::{render::Render as _, render_target::FixedTextBuffer, view::prelude::*};
 mod common;
 use common::make_render_tree;
 
@@ -14,7 +12,7 @@ fn fixed_aspect_ratio_rect_fills_space() {
 
     let tree = make_render_tree(&view, buffer.size(), &mut ());
 
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "xxxxxxxxxxxx");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "xxxxxxxxxxxx");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "xxxxxxxxxxxx");
@@ -35,7 +33,7 @@ fn ideal_ratio_takes_child_ratio() {
 
     let tree = make_render_tree(&view, buffer.size(), &mut ());
 
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "xxxxxxxxxxxx");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "xxxxxxxxxxxx");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "xxxxxxxxxxxx");
@@ -61,7 +59,7 @@ fn stacked_aspect_ratios_fill_space() {
 
     let tree = make_render_tree(&view, buffer.size(), &mut ());
 
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "        yyyy");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "        yyyy");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "xxxxxxxxyyyy");

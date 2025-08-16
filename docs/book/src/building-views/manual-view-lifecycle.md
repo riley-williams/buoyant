@@ -41,7 +41,7 @@ fn main() {
     let layout = view.layout(&size.into(), &environment, &mut app_data, &mut app_state);
     let render_tree = view.render_tree(&layout, origin, &environment, &mut app_data, &mut app_state);
 
-    render_tree.render(&mut target, &DEFAULT_COLOR, origin);
+    render_tree.render(&mut target, &DEFAULT_COLOR);
 
     window.show_static(target.display());
 }

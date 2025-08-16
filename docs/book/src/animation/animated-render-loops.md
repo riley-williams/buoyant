@@ -41,7 +41,6 @@ Render::render_animated(
     &source_render_tree,
     &target_render_tree,
     &Rgb888::BLACK,
-    Point::zero(),
     &AnimationDomain::top_level(app_time),
 );
 #
@@ -101,7 +100,7 @@ target_render_tree.join_from(
 
 // Calling render on the joined tree produces the same result as
 // the render_animated call above
-target_render_tree.render(&mut target, &Rgb888::BLACK, Point::zero());
+target_render_tree.render(&mut target, &Rgb888::BLACK);
 #
 # fn view() -> impl View<Rgb888, ()> {
 #     EmptyView
@@ -178,7 +177,6 @@ fn main() {
             &source_tree,
             &target_tree,
             &Rgb888::WHITE,
-            Point::zero(),
             &AnimationDomain::top_level(app_start.elapsed()),
         );
 

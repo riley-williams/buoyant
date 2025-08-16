@@ -204,6 +204,7 @@ where
         glyphs: impl Iterator<Item = Glyph>,
         font: &impl FontRender<Self::ColorFormat>,
     ) {
+        let offset = offset.applying(&self.active_layer.transform);
         let Some(color) = brush.as_solid().map(Into::into) else {
             return;
         };

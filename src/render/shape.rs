@@ -9,7 +9,7 @@ pub use rect::Rect;
 pub use rounded_rect::RoundedRect;
 
 use crate::{
-    primitives::{geometry::Shape, Interpolate, Point},
+    primitives::{geometry::Shape, transform::LinearTransform, Interpolate},
     render::{AnimatedJoin, AnimationDomain, Render},
     render_target::{RenderTarget, SolidBrush, Stroke},
 };
@@ -27,13 +27,13 @@ pub trait AsShapePrimitive {
 
 // Implements fill for all shape primitive types
 impl<T: AnimatedJoin + Clone + AsShapePrimitive, C: Copy> Render<C> for T {
-    fn render(
-        &self,
-        render_target: &mut impl RenderTarget<ColorFormat = C>,
-        style: &C,
-        offset: Point,
-    ) {
-        render_target.fill(offset, &SolidBrush::new(*style), None, &self.as_shape());
+    fn render(&self, render_target: &mut impl RenderTarget<ColorFormat = C>, style: &C) {
+        render_target.fill(
+            LinearTransform::default(),
+            &SolidBrush::new(*style),
+            None,
+            &self.as_shape(),
+        );
     }
 
     fn render_animated(
@@ -41,12 +41,11 @@ impl<T: AnimatedJoin + Clone + AsShapePrimitive, C: Copy> Render<C> for T {
         source: &Self,
         target: &Self,
         style: &C,
-        offset: Point,
         domain: &AnimationDomain,
     ) {
         let mut joined_shape = target.clone();
         joined_shape.join_from(source, domain);
-        joined_shape.render(render_target, style, offset);
+        joined_shape.render(render_target, style);
     }
 }
 
@@ -73,17 +72,12 @@ impl<T: AnimatedJoin> AnimatedJoin for StrokedShape<T> {
 }
 
 impl<T: AnimatedJoin + Clone + AsShapePrimitive, C: Copy> Render<C> for StrokedShape<T> {
-    fn render(
-        &self,
-        render_target: &mut impl RenderTarget<ColorFormat = C>,
-        style: &C,
-        offset: Point,
-    ) {
+    fn render(&self, render_target: &mut impl RenderTarget<ColorFormat = C>, style: &C) {
         render_target.stroke(
             &Stroke {
                 width: self.line_width,
             },
-            offset,
+            LinearTransform::default(),
             &SolidBrush::new(*style),
             None,
             &self.shape.as_shape(),
@@ -95,19 +89,18 @@ impl<T: AnimatedJoin + Clone + AsShapePrimitive, C: Copy> Render<C> for StrokedS
         source: &Self,
         target: &Self,
         style: &C,
-        offset: Point,
         domain: &AnimationDomain,
     ) {
         let mut joined_shape = target.clone();
         joined_shape.join_from(source, domain);
-        joined_shape.render(render_target, style, offset);
+        joined_shape.render(render_target, style);
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::render::Circle;
+    use crate::{primitives::Point, render::Circle};
     use core::time::Duration;
 
     #[test]

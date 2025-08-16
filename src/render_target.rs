@@ -32,7 +32,7 @@ pub trait RenderTarget {
     /// Clears the target using the provided color
     fn clear(&mut self, color: Self::ColorFormat);
 
-    /// Returns the current clip area.
+    /// Returns the current clip area in the local (transformed) coordinate space.
     #[must_use]
     fn clip_rect(&self) -> Rectangle;
 
@@ -202,8 +202,9 @@ impl Stroke {
 pub struct LayerConfig {
     /// The alpha value for this layer.
     pub alpha: u8,
+    /// The transform from local to global coordinate space
     pub transform: LinearTransform,
-    /// The clip rectangle for this layer.
+    /// The clip rectangle for this layer, in the global coordinate space.
     pub clip_rect: Rectangle,
 }
 

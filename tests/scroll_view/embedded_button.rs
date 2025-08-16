@@ -33,7 +33,7 @@ fn vertical_scroll_does_not_move_horizontally() {
 
     let mut tree = tree(&view, &mut captures, &mut state, Duration::default(), size);
 
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
 
     assert_str_grid_eq!(
         [
@@ -61,7 +61,7 @@ fn vertical_scroll_does_not_move_horizontally() {
         &mut state,
     );
 
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_str_grid_eq!(
         [
             "            ",
@@ -81,7 +81,7 @@ fn vertical_scroll_does_not_move_horizontally() {
         &mut state,
     );
 
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_str_grid_eq!(
         [
             "            ",
@@ -101,7 +101,7 @@ fn vertical_scroll_does_not_move_horizontally() {
         &mut state,
     );
 
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
     assert_str_grid_eq!(
         [
             "            ",

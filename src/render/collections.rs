@@ -1,5 +1,4 @@
 use super::{AnimatedJoin, AnimationDomain, Render, RenderTarget};
-use crate::primitives::Point;
 
 macro_rules! impl_join_for_collections {
     ($(($n:tt, $type:ident)),+) => {
@@ -48,10 +47,9 @@ macro_rules! impl_render_for_collections {
                 &self,
                 target: &mut impl crate::render_target::RenderTarget<ColorFormat = Color>,
                 style: &Color,
-                offset: crate::primitives::Point
             ) {
                 $(
-                    self.$n.render(target, style, offset);
+                    self.$n.render(target, style);
                 )+
             }
 
@@ -60,7 +58,6 @@ macro_rules! impl_render_for_collections {
                 source: &Self,
                 target: &Self,
                 style: &Color,
-                offset: crate::primitives::Point,
                 domain: &crate::render::AnimationDomain,
             ) {
                 $(
@@ -69,7 +66,6 @@ macro_rules! impl_render_for_collections {
                         &source.$n,
                         &target.$n,
                         style,
-                        offset,
                         domain,
                     );
                 )+
@@ -92,14 +88,9 @@ macro_rules! impl_render_for_collections {
     }
 
 impl<Color, T: Render<Color>, const N: usize> Render<Color> for heapless::Vec<T, N> {
-    fn render(
-        &self,
-        render_target: &mut impl RenderTarget<ColorFormat = Color>,
-        style: &Color,
-        offset: Point,
-    ) {
+    fn render(&self, render_target: &mut impl RenderTarget<ColorFormat = Color>, style: &Color) {
         self.iter()
-            .for_each(|item| item.render(render_target, style, offset));
+            .for_each(|item| item.render(render_target, style));
     }
 
     fn render_animated(
@@ -107,14 +98,13 @@ impl<Color, T: Render<Color>, const N: usize> Render<Color> for heapless::Vec<T,
         source: &Self,
         target: &Self,
         style: &Color,
-        offset: Point,
         domain: &AnimationDomain,
     ) {
         source
             .iter()
             .zip(target.iter())
             .for_each(|(source, target)| {
-                T::render_animated(render_target, source, target, style, offset, domain);
+                T::render_animated(render_target, source, target, style, domain);
             });
     }
 }
@@ -122,10 +112,7 @@ impl<Color, T: Render<Color>, const N: usize> Render<Color> for heapless::Vec<T,
 /// Make sure tuples render in the correct order
 #[cfg(test)]
 mod render_order_tests {
-    use crate::{
-        primitives::Point,
-        render::{AnimationDomain, Render},
-    };
+    use crate::render::{AnimationDomain, Render};
     use std;
     use std::vec;
     use std::{cell::RefCell, rc::Rc, vec::Vec};
@@ -151,7 +138,6 @@ mod render_order_tests {
             &self,
             _render_target: &mut impl crate::render_target::RenderTarget<ColorFormat = char>,
             _style: &char,
-            _offset: Point,
         ) {
             self.order.borrow_mut().push(self.id);
         }
@@ -161,7 +147,6 @@ mod render_order_tests {
             source: &Self,
             target: &Self,
             _style: &char,
-            _offset: Point,
             _domain: &AnimationDomain,
         ) {
             source.order.borrow_mut().push(source.id);
@@ -182,7 +167,7 @@ mod render_order_tests {
                     );
 
                     let mut mock_target = crate::render_target::FixedTextBuffer::<10, 10>::default();
-                    tuple.render(&mut mock_target, &'x', Point::zero());
+                    tuple.render(&mut mock_target, &'x');
 
                     let expected_order: Vec<usize> = vec![$($n),+];
                     assert_eq!(*order.borrow(), expected_order);
@@ -211,7 +196,6 @@ mod render_order_tests {
                         &source_tuple,
                         &target_tuple,
                         &'x',
-                        Point::zero(),
                         &domain,
                     );
 

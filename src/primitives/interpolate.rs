@@ -1,3 +1,5 @@
+use fixed_macro::fixed;
+
 pub trait Interpolate: Sized + PartialEq {
     /// Interpolate between two colors
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
@@ -60,7 +62,8 @@ impl Interpolate for char {
 
 impl Interpolate for fixed::types::U18F14 {
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
-        to * (Self::from(amount) / 255) + from * (Self::from(255 - amount) / 255)
+        let factor = Self::from(amount) / 255;
+        to * factor + from * (fixed!(1:U18F14) - factor)
     }
 }
 
@@ -203,7 +206,7 @@ mod tests {
                 #[test]
                 #[expect(non_snake_case)]
                 fn [<interpolate_ $type _approximates_fp>]() {
-                    for start in [$type::from_num(-100.123), $type::from_num(0.0), $type::from_num(12.0), $type::from_num(87654)] {
+                    for start in [$type::from_num(-100.123), $type::from_num(0.0), $type::from_num(1.0), $type::from_num(12.0), $type::from_num(87654)] {
                         for end in [$type::from_num(-6644.7), $type::from_num(22.3), $type::from_num(0.0), $type::from_num(1.0)] {
                             for amount in 0u8..=255u8 {
                                 let precision: f32 = (start.to_num::<f32>() - end.to_num::<f32>()).abs() / 2.0f32.powf(8.0);
@@ -231,7 +234,7 @@ mod tests {
                 #[test]
                 #[expect(non_snake_case)]
                 fn [<interpolate_ $type _approximates_fp>]() {
-                    for start in [$type::from_num(100.123), $type::from_num(0.0), $type::from_num(12.0), $type::from_num(87654)] {
+                    for start in [$type::from_num(100.123), $type::from_num(0.0), $type::from_num(1.0), $type::from_num(12.0), $type::from_num(87654)] {
                         for end in [$type::from_num(6644.7), $type::from_num(22.3), $type::from_num(0.0), $type::from_num(1.0)] {
                             for amount in 0u8..=255u8 {
                                 let precision: f32 = (start.to_num::<f32>() - end.to_num::<f32>()).abs() / 2.0f32.powf(8.0);

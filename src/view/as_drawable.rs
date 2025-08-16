@@ -79,11 +79,9 @@ impl<T: Render<C>, C: embedded_graphics_core::pixelcolor::PixelColor + Interpola
         D: embedded_graphics_core::draw_target::DrawTarget<Color = Self::Color>,
     {
         // create a temporary embedded graphics render target
-
-        use crate::primitives::Point;
         let mut embedded_target = crate::render_target::EmbeddedGraphicsRenderTarget::new(target);
         self.render_tree
-            .render(&mut embedded_target, &self.default_color, Point::zero());
+            .render(&mut embedded_target, &self.default_color);
         Ok(())
     }
 }

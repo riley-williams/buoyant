@@ -74,7 +74,6 @@ fn main() {
             &source_tree,
             &target_tree,
             &color::WHITE,
-            buoyant::primitives::Point::zero(),
             &AnimationDomain::top_level(app_start.elapsed()),
         );
 

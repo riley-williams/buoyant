@@ -16,7 +16,7 @@ fn test_render_wrapping_leading() {
     let font = CharacterBufferFont {};
     let mut buffer = FixedTextBuffer::<6, 5>::default();
     let text = Text::new("This is a lengthy text here", &font).foreground_color(' ');
-    make_render_tree(&text, buffer.size(), &mut ()).render(&mut buffer, &' ', Point::zero());
+    make_render_tree(&text, buffer.size(), &mut ()).render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "This  ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "is a  ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "length");
@@ -31,7 +31,7 @@ fn test_render_wrapping_center_even() {
     let text = Text::new("This is a lengthy text here", &font)
         .multiline_text_alignment(HorizontalTextAlignment::Center)
         .foreground_color(' ');
-    make_render_tree(&text, buffer.size(), &mut ()).render(&mut buffer, &' ', Point::zero());
+    make_render_tree(&text, buffer.size(), &mut ()).render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), " This ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), " is a ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "length");
@@ -46,7 +46,7 @@ fn test_render_wrapping_center_odd() {
     let text = Text::new("This is a lengthy text 12345", &font)
         .multiline_text_alignment(HorizontalTextAlignment::Center)
         .foreground_color(' ');
-    make_render_tree(&text, buffer.size(), &mut ()).render(&mut buffer, &' ', Point::zero());
+    make_render_tree(&text, buffer.size(), &mut ()).render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), " This ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), " is a ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "length");
@@ -61,7 +61,7 @@ fn test_render_wrapping_trailing() {
     let text = Text::new("This is a lengthy text here", &font)
         .multiline_text_alignment(HorizontalTextAlignment::Trailing)
         .foreground_color(' ');
-    make_render_tree(&text, buffer.size(), &mut ()).render(&mut buffer, &' ', Point::zero());
+    make_render_tree(&text, buffer.size(), &mut ()).render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "  This");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "  is a");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "length");
@@ -88,7 +88,7 @@ fn test_clipped_text_is_centered_correctly() {
     assert_eq!(layout.resolved_size, Dimensions::new(13, 2));
 
     let tree = view.render_tree(&layout, Point::zero(), &env, &mut (), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
 
     let lines = [
         "Several lines                           ",
@@ -120,7 +120,7 @@ fn test_clipped_text_trails_correctly() {
     assert_eq!(layout.resolved_size, Dimensions::new(13, 2));
 
     let tree = view.render_tree(&layout, Point::zero(), &env, &mut (), &mut ());
-    tree.render(&mut buffer, &' ', Point::zero());
+    tree.render(&mut buffer, &' ');
 
     let lines = [
         "Several lines                           ",
@@ -143,11 +143,7 @@ fn format_args_fits() {
     };
     for (a, b) in [(1, 1), (2, 3), (45, 6)] {
         buffer.clear();
-        make_render_tree(&view(a, b), buffer.size(), &mut ()).render(
-            &mut buffer,
-            &' ',
-            Point::zero(),
-        );
+        make_render_tree(&view(a, b), buffer.size(), &mut ()).render(&mut buffer, &' ');
         assert_eq!(
             buffer.text[0].iter().collect::<String>(),
             format!("{} + {} = {}    ", a, b, a + b).get(0..12).unwrap()
@@ -169,11 +165,7 @@ fn undersized_format_args() {
         .with_alignment(HorizontalAlignment::Leading)
         .foreground_color(' ')
     };
-    make_render_tree(&view(123, 456), buffer.size(), &mut ()).render(
-        &mut buffer,
-        &' ',
-        Point::zero(),
-    );
+    make_render_tree(&view(123, 456), buffer.size(), &mut ()).render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "123            ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "123+           ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "123+456=       ");

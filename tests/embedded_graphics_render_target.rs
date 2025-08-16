@@ -33,7 +33,7 @@ mod embedded_graphics {
         let mut state = view.build_state(&mut ());
         let layout = view.layout(&target.size().into(), &env, &mut (), &mut state);
         let tree = view.render_tree(&layout, Point::zero(), &env, &mut (), &mut state);
-        tree.render(&mut target, &Rgb888::WHITE, Point::zero());
+        tree.render(&mut target, &Rgb888::WHITE);
 
         display
     }

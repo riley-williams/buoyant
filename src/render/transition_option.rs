@@ -1,5 +1,5 @@
 use crate::{
-    primitives::{Point, Size},
+    primitives::Size,
     render::{AnimatedJoin, Render},
     render_target::RenderTarget,
     transition::{Direction, Transition},
@@ -53,14 +53,9 @@ impl<Subtree: AnimatedJoin + Clone, T: Transition> AnimatedJoin for TransitionOp
 impl<Subtree: Render<Color> + Clone, T: Transition, Color> Render<Color>
     for TransitionOption<Subtree, T>
 {
-    fn render(
-        &self,
-        render_target: &mut impl RenderTarget<ColorFormat = Color>,
-        style: &Color,
-        offset: Point,
-    ) {
+    fn render(&self, render_target: &mut impl RenderTarget<ColorFormat = Color>, style: &Color) {
         if let Self::Some { subtree, .. } = self {
-            subtree.render(render_target, style, offset);
+            subtree.render(render_target, style);
         }
     }
 
@@ -69,7 +64,6 @@ impl<Subtree: Render<Color> + Clone, T: Transition, Color> Render<Color>
         source: &Self,
         target: &Self,
         style: &Color,
-        mut offset: Point,
         domain: &AnimationDomain,
     ) {
         match (source, target) {
@@ -81,7 +75,7 @@ impl<Subtree: Render<Color> + Clone, T: Transition, Color> Render<Color>
                     subtree: target, ..
                 },
             ) => {
-                Subtree::render_animated(render_target, source, target, style, offset, domain);
+                Subtree::render_animated(render_target, source, target, style, domain);
             }
             (
                 Self::Some {
@@ -93,8 +87,13 @@ impl<Subtree: Render<Color> + Clone, T: Transition, Color> Render<Color>
                 Self::None,
             ) => {
                 if !domain.is_complete() {
-                    offset += transition.transform(Direction::Out, domain.factor, *size);
-                    source_subtree.render(render_target, style, offset);
+                    let offset = transition.transform(Direction::Out, domain.factor, *size);
+                    render_target.with_layer(
+                        |l| l.offset(offset),
+                        |render_target| {
+                            source_subtree.render(render_target, style);
+                        },
+                    );
                 }
             }
             (
@@ -107,10 +106,15 @@ impl<Subtree: Render<Color> + Clone, T: Transition, Color> Render<Color>
                 },
             ) => {
                 if domain.is_complete() {
-                    target_subtree.render(render_target, style, offset);
+                    target_subtree.render(render_target, style);
                 } else {
-                    offset += transition.transform(Direction::In, domain.factor, *size);
-                    target_subtree.render(render_target, style, offset);
+                    let offset = transition.transform(Direction::In, domain.factor, *size);
+                    render_target.with_layer(
+                        |l| l.offset(offset),
+                        |render_target| {
+                            target_subtree.render(render_target, style);
+                        },
+                    );
                 }
             }
             (Self::None, Self::None) => {}

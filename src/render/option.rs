@@ -2,7 +2,6 @@
 //! For a transition-capable version, use [`crate::render::TransitionOption`].
 
 use crate::{
-    primitives::Point,
     render::{AnimatedJoin, AnimationDomain, Render},
     render_target::RenderTarget,
 };
@@ -16,14 +15,9 @@ impl<T: AnimatedJoin> AnimatedJoin for Option<T> {
 }
 
 impl<T: Render<Color>, Color> Render<Color> for Option<T> {
-    fn render(
-        &self,
-        render_target: &mut impl RenderTarget<ColorFormat = Color>,
-        style: &Color,
-        offset: Point,
-    ) {
+    fn render(&self, render_target: &mut impl RenderTarget<ColorFormat = Color>, style: &Color) {
         if let Some(view) = self {
-            view.render(render_target, style, offset);
+            view.render(render_target, style);
         }
     }
 
@@ -32,16 +26,15 @@ impl<T: Render<Color>, Color> Render<Color> for Option<T> {
         source: &Self,
         target: &Self,
         style: &Color,
-        offset: Point,
         domain: &AnimationDomain,
     ) {
         match (source, target) {
             (Some(source), Some(target)) => {
-                T::render_animated(render_target, source, target, style, offset, domain);
+                T::render_animated(render_target, source, target, style, domain);
             }
             (_, None) => {}
             (None, Some(target)) => {
-                target.render(render_target, style, offset);
+                target.render(render_target, style);
             }
         }
     }
@@ -50,20 +43,24 @@ impl<T: Render<Color>, Color> Render<Color> for Option<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{primitives::Size, render::shape::Rect, render_target::FixedTextBuffer};
+    use crate::{
+        primitives::{Point, Size},
+        render::shape::Rect,
+        render_target::FixedTextBuffer,
+    };
     use std::{string::String, string::ToString, time::Duration};
 
     #[test]
     fn some_option_renders() {
         let mut buffer = FixedTextBuffer::<1, 1>::default();
-        Some(Rect::new(Point::zero(), Size::new(1, 1))).render(&mut buffer, &'X', Point::zero());
+        Some(Rect::new(Point::zero(), Size::new(1, 1))).render(&mut buffer, &'X');
         assert_eq!(buffer.text[0][0], 'X');
     }
 
     #[test]
     fn none_option_does_not_render() {
         let mut buffer = FixedTextBuffer::<1, 1>::default();
-        Option::<Rect>::None.render(&mut buffer, &'X', Point::zero());
+        Option::<Rect>::None.render(&mut buffer, &'X');
         assert_eq!(buffer.text[0][0], ' ');
     }
 
@@ -73,7 +70,7 @@ mod tests {
         let source = Some(Rect::new(Point::zero(), Size::new(1, 1)));
         let target = Some(Rect::new(Point::new(2, 0), Size::new(1, 1)));
         let domain = AnimationDomain::new(128, Duration::from_millis(100));
-        Option::render_animated(&mut buffer, &source, &target, &'O', Point::zero(), &domain);
+        Option::render_animated(&mut buffer, &source, &target, &'O', &domain);
         assert_eq!(buffer.text[0].iter().collect::<String>(), " O ".to_string());
     }
 
@@ -82,7 +79,7 @@ mod tests {
         let mut buffer = FixedTextBuffer::<1, 1>::default();
         let source = Some(Rect::new(Point::zero(), Size::new(1, 1)));
         let domain = AnimationDomain::new(128, Duration::from_millis(100));
-        Option::render_animated(&mut buffer, &source, &None, &'X', Point::zero(), &domain);
+        Option::render_animated(&mut buffer, &source, &None, &'X', &domain);
         assert_eq!(buffer.text[0][0], ' ');
     }
 
@@ -91,7 +88,7 @@ mod tests {
         let mut buffer = FixedTextBuffer::<1, 1>::default();
         let target = Some(Rect::new(Point::zero(), Size::new(1, 1)));
         let domain = AnimationDomain::new(128, Duration::from_millis(100));
-        Option::render_animated(&mut buffer, &None, &target, &'Y', Point::zero(), &domain);
+        Option::render_animated(&mut buffer, &None, &target, &'Y', &domain);
         assert_eq!(buffer.text[0][0], 'Y');
     }
 
@@ -99,7 +96,7 @@ mod tests {
     fn animated_render_none_to_none() {
         let mut buffer = FixedTextBuffer::<1, 1>::default();
         let domain = AnimationDomain::new(128, Duration::from_millis(100));
-        Option::<Rect>::render_animated(&mut buffer, &None, &None, &'Z', Point::zero(), &domain);
+        Option::<Rect>::render_animated(&mut buffer, &None, &None, &'Z', &domain);
         assert_eq!(buffer.text[0][0], ' ');
     }
 
