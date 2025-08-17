@@ -14,10 +14,12 @@ mod animate;
 pub mod collections;
 mod container;
 mod empty;
+mod hint_background;
 #[cfg(feature = "embedded-graphics")]
 mod image;
 mod offset;
 mod one_of;
+mod opacity;
 mod option;
 mod scroll_metadata;
 mod shade_subtree;
@@ -28,10 +30,12 @@ mod transition_option;
 
 pub use animate::Animate;
 pub use container::Container;
+pub use hint_background::HintBackground;
 #[cfg(feature = "embedded-graphics")]
 pub use image::Image;
 pub use offset::Offset;
 pub use one_of::{OneOf2, OneOf3, OneOf4};
+pub use opacity::Opacity;
 pub use scroll_metadata::ScrollMetadata;
 pub use shade_subtree::ShadeSubtree;
 pub use shape::Capsule;

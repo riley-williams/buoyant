@@ -17,15 +17,14 @@ impl<C, T> ShadeSubtree<C, T> {
     }
 }
 
-impl<C: Interpolate + Clone, T: AnimatedJoin> AnimatedJoin for ShadeSubtree<C, T> {
+impl<C: Interpolate + Copy, T: AnimatedJoin> AnimatedJoin for ShadeSubtree<C, T> {
     fn join_from(&mut self, source: &Self, config: &AnimationDomain) {
-        self.style =
-            Interpolate::interpolate(source.style.clone(), self.style.clone(), config.factor);
+        self.style = Interpolate::interpolate(source.style, self.style, config.factor);
         self.subtree.join_from(&source.subtree, config);
     }
 }
 
-impl<C: Interpolate + Clone, T: Render<C>> Render<C> for ShadeSubtree<C, T> {
+impl<C: Interpolate + Copy, T: Render<C>> Render<C> for ShadeSubtree<C, T> {
     fn render(&self, render_target: &mut impl RenderTarget<ColorFormat = C>, _: &C) {
         self.subtree.render(render_target, &self.style);
     }
@@ -37,8 +36,7 @@ impl<C: Interpolate + Clone, T: Render<C>> Render<C> for ShadeSubtree<C, T> {
         _: &C,
         domain: &AnimationDomain,
     ) {
-        let style =
-            Interpolate::interpolate(source.style.clone(), target.style.clone(), domain.factor);
+        let style = Interpolate::interpolate(source.style, target.style, domain.factor);
         T::render_animated(
             render_target,
             &source.subtree,
