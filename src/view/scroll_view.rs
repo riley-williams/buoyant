@@ -7,7 +7,7 @@ use crate::{
     event::{Event, EventContext, EventResult},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimension, ProposedDimensions, Size},
-    render::{Animate, Capsule, Offset, ScrollMetadata},
+    render::{Animate, Capsule, Offset, ScrollRenderable},
     transition::Opacity,
     view::{ViewLayout, ViewMarker},
 };
@@ -204,7 +204,7 @@ pub struct ScrollViewState<InnerState> {
 }
 
 impl<Inner: ViewMarker> ViewMarker for ScrollView<Inner> {
-    type Renderables = ScrollMetadata<Inner::Renderables>;
+    type Renderables = ScrollRenderable<Inner::Renderables>;
     type Transition = Opacity;
 }
 
@@ -344,7 +344,7 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
             Duration::from_millis(300)
         };
 
-        ScrollMetadata::new(
+        ScrollRenderable::new(
             Size::new(scroll_view_width, scroll_view_height),
             Size::new(inner_view_width, inner_view_height),
             Offset::new(
