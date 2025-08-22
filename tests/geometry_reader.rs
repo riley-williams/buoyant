@@ -186,7 +186,7 @@ fn preserves_inner_state() {
     let button_geometry = || {
         GeometryReader::new(|size: Size| {
             Button::new(
-                |_: &mut Seal<()>| {},
+                |(): &mut ()| {},
                 move |is_pressed: bool| {
                     Rectangle
                         .foreground_color(if is_pressed { 'x' } else { '-' })
