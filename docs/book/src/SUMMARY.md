@@ -15,5 +15,7 @@
 - [Animation](./animation.md)
   - [Render Trees](./animation/render-trees.md)
   - [Compound Animation](./animation/compound-animation.md)
-  - [Animated Render Loops](./animation/animated-render-loops.md)
   - [Transitions](./animation/transitions.md)
+  - [Animated Render Loops](./animation/animated-render-loops.md)
+- [Interactivity](./interactivity.md)
+  - [Event Loops](./interactivity/event-loops.md)
