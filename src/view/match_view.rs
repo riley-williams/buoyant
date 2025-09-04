@@ -77,17 +77,48 @@ macro_rules! if_view {
 /// let font = CharacterBufferFont;
 ///
 /// let view = |state| {
-///     match_view!(state => {
+///     match_view!(state, {
 ///         State::Message(msg) => Text::new(msg, &font),
 ///         State::Error => Text::new("Uh oh", &font),
 ///         State::Redacted => Rectangle,
 ///     })
 /// };
 /// ```
+///
+/// Using 4 or more branches will generate an error. If you need more, consider
+/// opening a PR to add macro-derived implementations of more.
+///
+/// ```compile_fail
+/// use buoyant::match_view;
+/// use buoyant::view::Rectangle;
+///
+/// enum FourState {
+///     First,
+///     Second,
+///     Third,
+///     Fourth,
+/// }
+///
+/// let view = match_view!(FourState::First, {
+///     FourState::First => Rectangle,
+///     FourState::Second => Rectangle,
+///     FourState::Third => Rectangle,
+///     FourState::Fourth => Rectangle,
+/// });
+/// ```
 #[macro_export]
 macro_rules! match_view {
     (
         $value:expr => {
+            $pattern0:pat => $view0:expr,
+            $($pattern:pat => $view:expr),* $(,)?
+        }
+    ) => {{
+        compile_error!("Deprecated syntax. Use `match_view!(expr, { ... => ..., })` instead.");
+    }};
+
+    (
+        $value:expr, {
             $pattern0:pat => $view0:expr,
             $pattern1:pat => $view1:expr $(,)?
         }
@@ -99,7 +130,7 @@ macro_rules! match_view {
     }};
 
     (
-        $value:expr => {
+        $value:expr, {
             $pattern0:pat => $view0:expr,
             $pattern1:pat => $view1:expr,
             $pattern2:pat => $view2:expr $(,)?
@@ -110,6 +141,17 @@ macro_rules! match_view {
             $pattern1 => $crate::view::match_view::Branch3::Variant1($view1),
             $pattern2 => $crate::view::match_view::Branch3::Variant2($view2),
         }
+    }};
+    (
+        $value:expr, {
+            $pattern0:pat => $view0:expr,
+            $pattern1:pat => $view1:expr,
+            $pattern2:pat => $view2:expr,
+            $pattern3:pat => $view3:expr,
+            $($pattern:pat => $view:expr),*
+        }
+    ) => {{
+        compile_error!("match_view! implements up to 3 branches.");
     }};
 }
 
@@ -582,7 +624,7 @@ mod tests {
 
     #[test]
     fn match_view() {
-        let view = match_view!(1 => {
+        let view = match_view!(1, {
             0 => 0,
             _ => 1,
         });
@@ -598,7 +640,7 @@ mod tests {
             B,
         }
 
-        let view = match_view!(MyEnum::A => {
+        let view = match_view!(MyEnum::A, {
             MyEnum::A => 0,
             MyEnum::B => 1,
         });
@@ -614,7 +656,7 @@ mod tests {
             B(f32),
         }
 
-        let view = match_view!(MyEnum::B(3.0) => {
+        let view = match_view!(MyEnum::B(3.0), {
             MyEnum::A(x) => x,
             MyEnum::B(y) => y,
         });
@@ -630,7 +672,7 @@ mod tests {
             Third,
         }
 
-        let view = match_view!(ThreeState::Second => {
+        let view = match_view!(ThreeState::Second, {
             ThreeState::First => 1,
             ThreeState::Second => 2,
             ThreeState::Third => 3,

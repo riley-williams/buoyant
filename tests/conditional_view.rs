@@ -6,6 +6,8 @@ use buoyant::render_target::FixedTextBuffer;
 use buoyant::view::prelude::*;
 use common::TestEnv;
 
+use crate::common::tap;
+
 mod common;
 
 #[test]
@@ -76,4 +78,27 @@ fn one_arm_if() {
     assert_eq!(buffer.text[0].iter().collect::<String>(), "     ");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "     ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "     ");
+}
+
+fn if_else_view(condition: bool) -> impl View<char, i32> {
+    if_view!((condition) {
+        Button::new(|x: &mut i32| *x += 1, |_| Rectangle)
+    } else {
+        Button::new(|x: &mut i32| *x -= 1, |_| Rectangle)
+    })
+}
+
+#[test]
+fn if_else_event_routing() {
+    let view = if_else_view(true);
+    let mut x = 0;
+    let mut state = view.build_state(&mut x);
+    let size = Size::new(3, 3);
+
+    tap(&view, &mut x, &mut state, size, 1, 1);
+    assert_eq!(x, 1);
+
+    let view = if_else_view(false);
+    tap(&view, &mut x, &mut state, size, 1, 1);
+    assert_eq!(x, 0);
 }

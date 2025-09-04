@@ -31,7 +31,7 @@ use crate::{
 /// let view = |state| {
 ///     VStack::new((
 ///         Text::new("First", &FONT_9X15),
-///         match_view!(state => {
+///         match_view!(state, {
 ///             State::Message(msg) => Text::new(msg, &FONT_9X15),
 ///             State::Nothing => EmptyView,
 ///         }),

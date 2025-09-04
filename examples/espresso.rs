@@ -117,7 +117,7 @@ struct AppState {
 fn root_view(state: &AppState) -> impl View<color::Space, AppState> + use<> {
     VStack::new((
         Lens::new(tab_bar(state.tab), |state: &mut AppState| &mut state.tab),
-        match_view!(state.tab => {
+        match_view!(state.tab, {
             Tab::Brew => {
                 brew_tab(state)
             },

@@ -7,11 +7,14 @@ use buoyant::render_target::FixedTextBuffer;
 use buoyant::view::{View, prelude::*};
 use std::string::String;
 
+mod common;
+use crate::common::tap;
+
 #[test]
 fn test_match_view_two_variants() {
     let font = CharacterBufferFont;
     let make_view = |state| {
-        match_view!(state => {
+        match_view!(state, {
             0 => Text::new("zero\n!!!", &font),
             _ => Text::new("other", &font).foreground_color(' '),
         })
@@ -54,7 +57,7 @@ fn test_match_view_three_variants() {
     let font = CharacterBufferFont;
 
     let make_view = |state| {
-        match_view!(state => {
+        match_view!(state, {
             State::A => Text::new("AAA", &font),
             State::B(msg) => Text::new(msg, &font),
             State::C => Text::new("CCC", &font),
@@ -111,7 +114,7 @@ fn test_match_view_borrow() {
         s: &'a State,
         font: &'a CharacterBufferFont,
     ) -> impl View<char, ()> + use<'a> {
-        match_view!(s => {
+        match_view!(s, {
             State::A => Text::new("AAA", font),
             State::B(msg) => Text::new(msg, font),
             State::C => Text::new("CCC", font),
@@ -144,7 +147,7 @@ fn test_match_view_borrow() {
 fn test_match_view_two_variants_invalid_layout() {
     let font = CharacterBufferFont;
     let make_view = |state| {
-        match_view!(state => {
+        match_view!(state, {
             0 => Text::new("zero\n!!!", &font),
             _ => Text::new("other", &font).foreground_color(' '),
         })
@@ -162,4 +165,31 @@ fn test_match_view_two_variants_invalid_layout() {
     assert_eq!(buffer.text[0].iter().collect::<String>(), "other");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "     ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "     ");
+}
+
+fn match_3_view(condition: u32) -> impl View<char, i32> {
+    match_view!(condition, {
+        0 => Button::new(|x: &mut i32| *x += 1, |_| Rectangle),
+        1 => Button::new(|x: &mut i32| *x -= 1, |_| Rectangle),
+        _ => Button::new(|x: &mut i32| *x *= 2, |_| Rectangle),
+    })
+}
+
+#[test]
+fn match_3_event_routing() {
+    let view = match_3_view(0);
+    let mut x = 10;
+    let mut state = view.build_state(&mut x);
+    let size = Size::new(3, 3);
+
+    tap(&view, &mut x, &mut state, size, 1, 1);
+    assert_eq!(x, 11);
+
+    let view = match_3_view(1);
+    tap(&view, &mut x, &mut state, size, 1, 1);
+    assert_eq!(x, 10);
+
+    let view = match_3_view(2);
+    tap(&view, &mut x, &mut state, size, 1, 1);
+    assert_eq!(x, 20);
 }
