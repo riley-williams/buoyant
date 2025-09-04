@@ -1,9 +1,9 @@
 use buoyant::{
-    font::CharacterBufferFont, render::Render as _, render_target::FixedTextBuffer,
-    view::prelude::*,
+    font::CharacterBufferFont, primitives::Size, render::Render as _,
+    render_target::FixedTextBuffer, view::prelude::*,
 };
 mod common;
-use common::make_render_tree;
+use common::{make_render_tree, tap};
 
 #[test]
 fn geometry_group_retains_text_offset() {
@@ -42,4 +42,26 @@ fn geometry_group_retains_fill_offset() {
     assert_eq!(buffer.text[1].iter().collect::<String>(), " bb   ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), " ccc  ");
     assert_eq!(buffer.text[3].iter().collect::<String>(), "      ");
+}
+
+#[test]
+fn event_offset_is_preserved() {
+    let view = Button::new(|x: &mut u32| *x += 1, |_| Rectangle)
+        .geometry_group()
+        .offset(3, 3);
+    let mut x = 0;
+    let mut state = view.build_state(&mut x);
+    let size = Size::new(3, 3);
+
+    tap(&view, &mut x, &mut state, size, 0, 0);
+    assert_eq!(x, 0);
+
+    tap(&view, &mut x, &mut state, size, 1, 1);
+    assert_eq!(x, 0);
+
+    tap(&view, &mut x, &mut state, size, 3, 3);
+    assert_eq!(x, 1);
+
+    tap(&view, &mut x, &mut state, size, 6, 3);
+    assert_eq!(x, 1);
 }

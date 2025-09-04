@@ -1,9 +1,10 @@
 mod common;
 use crate::common::helpers::tree;
+use crate::common::{touch_down, touch_move};
 
 use buoyant::{
     environment::DefaultEnvironment,
-    event::{Event, EventContext},
+    event::EventContext,
     primitives::{Dimensions, Point, ProposedDimensions, Size},
     render::Render,
     render_target::FixedTextBuffer,
@@ -226,13 +227,13 @@ fn preserves_inner_state() {
     );
 
     view.handle_event(
-        &Event::TouchDown(Point::new(1, 1)),
+        &touch_down(Point::new(1, 1)),
         &EventContext::new(Duration::ZERO),
         &mut render_tree,
         &mut captures,
         &mut state,
     );
-    assert_eq!(state, Some((ButtonState::CaptivePressed, ())));
+    assert_eq!(state, Some((ButtonState::CaptivePressed(0), ())));
 
     render_tree = tree(
         &view,
@@ -243,7 +244,7 @@ fn preserves_inner_state() {
     );
     render_tree.render(&mut buffer, &' ');
 
-    assert_eq!(state, Some((ButtonState::CaptivePressed, ())));
+    assert_eq!(state, Some((ButtonState::CaptivePressed(0), ())));
     assert_str_grid_eq!(
         [
             "xxx         ",
@@ -255,13 +256,13 @@ fn preserves_inner_state() {
     );
 
     view.handle_event(
-        &Event::TouchMoved(Point::new(2, 20)),
+        &touch_move(Point::new(2, 20)),
         &EventContext::new(Duration::ZERO),
         &mut render_tree,
         &mut captures,
         &mut state,
     );
-    assert_eq!(state, Some((ButtonState::Captive, ())));
+    assert_eq!(state, Some((ButtonState::Captive(0), ())));
 
     render_tree = tree(
         &view,
@@ -272,7 +273,7 @@ fn preserves_inner_state() {
     );
     render_tree.render(&mut buffer, &' ');
 
-    assert_eq!(state, Some((ButtonState::Captive, ())));
+    assert_eq!(state, Some((ButtonState::Captive(0), ())));
     assert_str_grid_eq!(
         [
             "---         ",

@@ -83,7 +83,8 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> EventResult {
+        let event = event.offset(-render_tree.offset);
         self.inner
-            .handle_event(event, context, &mut render_tree.subtree, captures, state)
+            .handle_event(&event, context, &mut render_tree.subtree, captures, state)
     }
 }
