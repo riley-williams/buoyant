@@ -88,19 +88,18 @@ fn port_power_row(port_name: &str, power: i32) -> impl View<ColorFormat, ()> + u
             .padding(Edges::All, 5)
             .flex_infinite_width(HorizontalAlignment::Trailing)
             .with_infinite_max_height()
-            .background(Alignment::default(), {
-                RoundedRectangle::new(5).foreground_color(match power {
+            .background_color(
+                match power {
                     p if p > 0 => color::BLUE,
                     p if p < 0 => color::GREEN,
                     _ => color::SECONDARY_BACKGROUND,
-                })
-            }),
+                },
+                RoundedRectangle::new(5),
+            ),
     ))
     .with_spacing(SPACING * 2)
     .padding(Edges::All, 3)
-    .background(Alignment::default(), {
-        RoundedRectangle::new(8).foreground_color(color::SECONDARY_BACKGROUND)
-    })
+    .background_color(color::SECONDARY_BACKGROUND, RoundedRectangle::new(8))
 }
 
 fn format_charge_time(battery: &BatteryStatus) -> heapless::String<16> {

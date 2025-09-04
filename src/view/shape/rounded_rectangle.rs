@@ -17,7 +17,7 @@ pub struct RoundedRectangle {
 }
 
 impl RoundedRectangle {
-    #[allow(missing_docs)]
+    /// A flexible rounded rectangle with the specified corner radius.
     #[must_use]
     pub const fn new(corner_radius: u16) -> Self {
         Self { corner_radius }

@@ -511,7 +511,7 @@ pub trait ViewModifier: Sized {
     ///     Text::new(label, &FONT_9X15_BOLD)
     ///         .foreground_color(Rgb888::WHITE)
     ///         .padding(Edges::All, 4)
-    ///         .background(Alignment::Center, Capsule.foreground_color(Rgb888::RED))
+    ///         .background_color(Rgb888::RED, Capsule)
     /// }
     /// ```
     fn overlay<U>(self, alignment: Alignment, overlay: U) -> OverlayView<Self, U> {
