@@ -1,15 +1,15 @@
 use core::time::Duration;
 
 use buoyant::{
-    event::{Event, EventContext},
+    event::EventContext,
     primitives::{Point, Size},
     render::{AnimationDomain, Render},
     render_target::FixedTextBuffer,
     view::{prelude::*, scroll_view::ScrollDirection},
 };
 
-use crate::assert_str_grid_eq;
-use crate::common::helpers::tree;
+use crate::common::{helpers::tree, touch_down, touch_up};
+use crate::{assert_str_grid_eq, common::touch_move};
 
 fn vertical_scroll_view<T>() -> impl View<char, T> {
     ScrollView::new(Rectangle.frame().with_height(2).foreground_color('a'))
@@ -50,7 +50,7 @@ fn scroll_down_animates_back() {
     );
     // picking times much greater than the scroll animation duration
     let event_result = view.handle_event(
-        &Event::TouchDown(Point::new(2, 4)),
+        &touch_down(Point::new(2, 4)),
         &EventContext::new(Duration::from_millis(500)),
         &mut render_tree,
         &mut captures,
@@ -60,7 +60,7 @@ fn scroll_down_animates_back() {
 
     // Pull down just offscreen and release
     let event_result = view.handle_event(
-        &Event::TouchMoved(Point::new(2, 10)),
+        &touch_move(Point::new(2, 10)),
         &EventContext::new(Duration::from_millis(1000)),
         &mut render_tree,
         &mut captures,
@@ -82,7 +82,7 @@ fn scroll_down_animates_back() {
     );
 
     let event_result = view.handle_event(
-        &Event::TouchUp(Point::new(2, 8)),
+        &touch_up(Point::new(2, 8)),
         &EventContext::new(Duration::from_millis(1500)),
         &mut render_tree,
         &mut captures,

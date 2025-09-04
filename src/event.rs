@@ -4,101 +4,31 @@ use crate::primitives::Point;
 
 /// An interaction event that can be handled by a view.
 #[non_exhaustive]
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Event {
-    /// A touch or click which started at the specified point.
-    ///
-    /// This event is triggered when the user begins a touch interaction
-    /// or presses a mouse button at the given coordinates.
-    TouchDown(Point),
-
-    /// A touch or click ended at the specified point.
-    ///
-    /// This event is triggered when the user ends a touch interaction
-    /// or releases a mouse button at the given coordinates.
-    TouchUp(Point),
-
-    /// A touch or mouse cursor moved to the specified point.
-    ///
-    /// This event is triggered when the user moves their finger during
-    /// a touch interaction or moves the mouse cursor while pressed.
-    TouchMoved(Point),
-    TouchCancelled,
+    Touch(embedded_touch::Touch),
+    /// A scroll event with the given offset.
     Scroll(Point),
     /// External state changed which may affect the view.
+    ///
+    /// The view should be recomputed in response to this event.
     External,
     /// The app should exit
     Exit,
 }
 
 impl Event {
-    /// Offsets the event's coordinates by the given point.
+    /// Returns a new event with the specified offset applied to any point-based data.
     #[must_use]
     pub fn offset(&self, offset: Point) -> Self {
         let mut event = self.clone();
         match &mut event {
-            Self::TouchDown(point) | Self::TouchUp(point) | Self::TouchMoved(point) => {
-                *point += offset;
+            Self::Touch(touch) => {
+                touch.location += offset.into();
             }
-            _ => {}
+            Self::Scroll(_) | Self::External | Self::Exit => {}
         }
         event
-    }
-}
-
-#[cfg(feature = "embedded-graphics-simulator")]
-mod simulator {
-    use crate::primitives::Point;
-
-    use super::Event;
-    use embedded_graphics_simulator::SimulatorEvent;
-
-    impl TryFrom<SimulatorEvent> for Event {
-        type Error = ();
-
-        fn try_from(event: SimulatorEvent) -> Result<Self, Self::Error> {
-            match event {
-                SimulatorEvent::Quit => Ok(Self::Exit),
-                SimulatorEvent::MouseButtonDown {
-                    mouse_btn: _,
-                    point,
-                } => Ok(Self::TouchDown(Point::new(point.x, point.y))),
-                SimulatorEvent::MouseButtonUp {
-                    mouse_btn: _,
-                    point,
-                } => Ok(Self::TouchUp(Point::new(point.x, point.y))),
-                SimulatorEvent::MouseMove { point } => {
-                    Ok(Self::TouchMoved(Point::new(point.x, point.y)))
-                }
-                SimulatorEvent::MouseWheel {
-                    scroll_delta,
-                    direction,
-                } => {
-                    if direction == embedded_graphics_simulator::sdl2::MouseWheelDirection::Flipped
-                    {
-                        Ok(Self::Scroll(Point::new(
-                            scroll_delta.x * 4,
-                            scroll_delta.y * 4,
-                        )))
-                    } else {
-                        Ok(Self::Scroll(Point::new(
-                            -scroll_delta.x * 4,
-                            -scroll_delta.y * 4,
-                        )))
-                    }
-                }
-                SimulatorEvent::KeyDown {
-                    keycode: _,
-                    keymod: _,
-                    repeat: _,
-                }
-                | SimulatorEvent::KeyUp {
-                    keycode: _,
-                    keymod: _,
-                    repeat: _,
-                } => Err(()),
-            }
-        }
     }
 }
 
@@ -121,7 +51,6 @@ impl EventResult {
     }
 
     /// merges another `EventResult` into this one.
-    // FIXME: Clippy is probably right
     #[expect(clippy::needless_pass_by_value)]
     pub fn merge(&mut self, other: Self) {
         self.handled |= other.handled;
@@ -130,7 +59,6 @@ impl EventResult {
 
     /// Returns the result of merging another `EventResult` into this one.
     #[must_use]
-    // FIXME: Clippy is probably right
     #[expect(clippy::needless_pass_by_value)]
     pub fn merging(self, other: Self) -> Self {
         Self {
@@ -151,5 +79,102 @@ impl EventContext {
     #[must_use]
     pub const fn new(app_time: Duration) -> Self {
         Self { app_time }
+    }
+}
+
+#[cfg(feature = "embedded-graphics-simulator")]
+pub mod simulator {
+    use crate::primitives::Point;
+
+    use super::Event;
+    use embedded_graphics_simulator::SimulatorEvent;
+    use embedded_touch::{Phase, PointerButton, Tool, Touch, TouchPoint};
+
+    #[derive(Debug, Default)]
+    pub struct MouseTracker {
+        touch: Option<Touch>,
+    }
+
+    impl MouseTracker {
+        #[must_use]
+        pub fn new() -> Self {
+            Self { touch: None }
+        }
+
+        pub fn process_event(&mut self, event: SimulatorEvent) -> Option<Event> {
+            match event {
+                SimulatorEvent::MouseButtonDown { point, mouse_btn } => {
+                    let touch = Touch {
+                        id: 0,
+                        location: TouchPoint::new(point.x, point.y),
+                        phase: Phase::Started,
+                        tool: Tool::Pointer {
+                            button: map_button(mouse_btn),
+                        },
+                    };
+                    self.touch = Some(touch.clone());
+                    Some(Event::Touch(touch))
+                }
+                SimulatorEvent::MouseButtonUp { point, mouse_btn } => {
+                    let touch = Touch {
+                        id: 0,
+                        location: TouchPoint::new(point.x, point.y),
+                        phase: Phase::Ended,
+                        tool: Tool::Pointer {
+                            button: map_button(mouse_btn),
+                        },
+                    };
+
+                    self.touch = None;
+                    Some(Event::Touch(touch))
+                }
+                SimulatorEvent::MouseMove { point } => {
+                    if let Some(touch) = &mut self.touch {
+                        touch.location = TouchPoint::new(point.x, point.y);
+                        touch.phase = Phase::Moved;
+                        Some(Event::Touch(touch.clone()))
+                    } else {
+                        let touch = Touch {
+                            id: 0,
+                            location: TouchPoint::new(point.x, point.y),
+                            phase: Phase::Hovering(None),
+                            tool: Tool::Pointer {
+                                button: PointerButton::None,
+                            },
+                        };
+
+                        Some(Event::Touch(touch))
+                    }
+                }
+                SimulatorEvent::MouseWheel {
+                    scroll_delta,
+                    direction,
+                } => {
+                    if direction == embedded_graphics_simulator::sdl2::MouseWheelDirection::Flipped
+                    {
+                        Some(Event::Scroll(Point::new(
+                            scroll_delta.x * 4,
+                            scroll_delta.y * 4,
+                        )))
+                    } else {
+                        Some(Event::Scroll(Point::new(
+                            -scroll_delta.x * 4,
+                            -scroll_delta.y * 4,
+                        )))
+                    }
+                }
+                SimulatorEvent::Quit => Some(Event::Exit),
+                SimulatorEvent::KeyDown { .. } | SimulatorEvent::KeyUp { .. } => None,
+            }
+        }
+    }
+
+    fn map_button(mouse_btn: embedded_graphics_simulator::sdl2::MouseButton) -> PointerButton {
+        match mouse_btn {
+            embedded_graphics_simulator::sdl2::MouseButton::Left => PointerButton::Primary,
+            embedded_graphics_simulator::sdl2::MouseButton::Right => PointerButton::Secondary,
+            embedded_graphics_simulator::sdl2::MouseButton::Middle => PointerButton::Tertiary,
+            _ => PointerButton::None,
+        }
     }
 }

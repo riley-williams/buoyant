@@ -1,15 +1,15 @@
 use std::time::Duration;
 
 use buoyant::{
-    event::{Event, EventContext},
+    event::EventContext,
     primitives::{Point, Size},
     render::Render,
     render_target::FixedTextBuffer,
     view::{prelude::*, scroll_view::ScrollDirection},
 };
 
-use crate::assert_str_grid_eq;
-use crate::common::helpers::tree;
+use crate::common::{helpers::tree, touch_move, touch_up};
+use crate::{assert_str_grid_eq, common::touch_down};
 
 fn scroll_view<T>() -> impl View<char, T> {
     ScrollView::new(VStack::new((
@@ -46,7 +46,7 @@ fn vertical_scroll_does_not_move_horizontally() {
         &buffer.text
     );
     view.handle_event(
-        &Event::TouchDown(Point::new(2, 3)),
+        &touch_down(Point::new(2, 3)),
         &EventContext::new(Duration::ZERO),
         &mut tree,
         &mut captures,
@@ -54,27 +54,7 @@ fn vertical_scroll_does_not_move_horizontally() {
     );
 
     view.handle_event(
-        &Event::TouchMoved(Point::new(20, 3)),
-        &EventContext::new(Duration::ZERO),
-        &mut tree,
-        &mut captures,
-        &mut state,
-    );
-
-    tree.render(&mut buffer, &' ');
-    assert_str_grid_eq!(
-        [
-            "            ",
-            " aaaaaaaaaa ",
-            " aaaaaaaaaa ",
-            " aaaaaaaaaa ",
-            "            ",
-        ],
-        &buffer.text
-    );
-
-    view.handle_event(
-        &Event::TouchMoved(Point::new(-20, 2)),
+        &touch_move(Point::new(20, 3)),
         &EventContext::new(Duration::ZERO),
         &mut tree,
         &mut captures,
@@ -94,7 +74,27 @@ fn vertical_scroll_does_not_move_horizontally() {
     );
 
     view.handle_event(
-        &Event::TouchUp(Point::new(1, 1)),
+        &touch_move(Point::new(-20, 2)),
+        &EventContext::new(Duration::ZERO),
+        &mut tree,
+        &mut captures,
+        &mut state,
+    );
+
+    tree.render(&mut buffer, &' ');
+    assert_str_grid_eq!(
+        [
+            "            ",
+            " aaaaaaaaaa ",
+            " aaaaaaaaaa ",
+            " aaaaaaaaaa ",
+            "            ",
+        ],
+        &buffer.text
+    );
+
+    view.handle_event(
+        &touch_up(Point::new(1, 1)),
         &EventContext::new(Duration::ZERO),
         &mut tree,
         &mut captures,
