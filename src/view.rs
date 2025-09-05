@@ -47,7 +47,6 @@ pub use zstack::ZStack;
 /// A collection of commonly used types for building views.
 pub mod prelude {
     pub use super::aspect_ratio::{ContentMode, Ratio};
-    pub use super::button::Seal;
     pub use super::modifier::ViewModifier;
     pub use super::{padding::Edges, FitAxis, HorizontalTextAlignment};
     #[cfg(feature = "embedded-graphics")]

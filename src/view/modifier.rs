@@ -549,8 +549,8 @@ pub trait ViewModifier: Sized {
     /// };
     /// use embedded_graphics::pixelcolor::Rgb888;
     ///
-    /// fn expanding_button() -> impl View<Rgb888, ()> {
-    ///     Button::new(|_: &mut Seal<()>| {
+    /// fn expanding_button() -> impl View<Rgb888, i32> {
+    ///     Button::new(|_: &mut i32| {
     ///         // do something when pressed
     ///     }, |is_pressed| {
     ///         Rectangle

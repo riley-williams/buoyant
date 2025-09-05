@@ -218,7 +218,7 @@ fn main() {
 fn root_view(state: &AppState) -> impl View<Rgb888, AppState> {
     let counter = state.counter; // make sure the closure doesn't capture state
     Button::new(
-        |state: &mut Seal<AppState>| state.counter += 1,
+        |state: &mut AppState| state.counter += 1,
         move |_| {
             Text::new_fmt::<32>(
                 format_args!("Counter: {}", counter),

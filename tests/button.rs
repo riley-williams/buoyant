@@ -32,14 +32,14 @@ fn count_view(count: i32) -> impl View<char, i32> {
     VStack::new((
         Text::new_fmt::<16>(format_args!("count: {count}"), &CharacterBufferFont),
         Button::new(
-            |count: &mut Seal<i32>| {
-                *count.as_mut() += 1;
+            |count: &mut i32| {
+                *count += 1;
             },
             |_| Text::new("Increment", &CharacterBufferFont),
         ),
         Button::new(
-            |count: &mut Seal<i32>| {
-                *count.as_mut() -= 1;
+            |count: &mut i32| {
+                *count -= 1;
             },
             |_| Text::new("Decrement", &CharacterBufferFont),
         ),
