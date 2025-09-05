@@ -94,7 +94,6 @@ fn main() {
                 .events()
                 .filter_map(|event| event.try_into().ok())
                 .for_each(|event| {
-                    println!("handled {event:?}");
                     handler.handle_event(&event);
                 });
         },
