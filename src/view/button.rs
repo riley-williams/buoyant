@@ -197,8 +197,10 @@ where
                 }
             }
             Phase::Ended => {
-                if render_tree.frame.contains(&point) && state.0 != ButtonState::AtRest {
-                    (self.action)(captures);
+                if state.0 != ButtonState::AtRest {
+                    if render_tree.frame.contains(&point) {
+                        (self.action)(captures);
+                    }
                     state.0 = ButtonState::AtRest;
                     result.recompute_view = true;
                     result.handled = true;
