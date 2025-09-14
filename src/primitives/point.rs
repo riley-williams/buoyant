@@ -11,6 +11,18 @@ pub struct Point {
     pub y: i32,
 }
 
+impl Point {
+    #[must_use]
+    pub const fn new(x: i32, y: i32) -> Self {
+        Self { x, y }
+    }
+
+    #[must_use]
+    pub const fn zero() -> Self {
+        Self { x: 0, y: 0 }
+    }
+}
+
 impl core::ops::Neg for Point {
     type Output = Self;
     fn neg(self) -> Self {
@@ -65,18 +77,6 @@ impl core::ops::Add<Size> for Point {
     }
 }
 
-impl Point {
-    #[must_use]
-    pub const fn new(x: i32, y: i32) -> Self {
-        Self { x, y }
-    }
-
-    #[must_use]
-    pub const fn zero() -> Self {
-        Self { x: 0, y: 0 }
-    }
-}
-
 impl Interpolate for Point {
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
         Self {
@@ -101,6 +101,24 @@ impl CoordinateSpaceTransform for Point {
                 .to_num::<i32>(),
             y: (p.y.to_fixed::<fixed::types::I18F14>() / transform.scale.cast_signed())
                 .to_num::<i32>(),
+        }
+    }
+}
+
+impl From<embedded_touch::TouchPoint> for Point {
+    fn from(value: embedded_touch::TouchPoint) -> Self {
+        Self {
+            x: value.x,
+            y: value.y,
+        }
+    }
+}
+
+impl From<Point> for embedded_touch::TouchPoint {
+    fn from(value: Point) -> Self {
+        Self {
+            x: value.x,
+            y: value.y,
         }
     }
 }

@@ -4,11 +4,13 @@ use std::time::Duration;
 
 use buoyant::{
     environment::{DefaultEnvironment, LayoutEnvironment},
+    event::Event,
     layout::{Alignment, LayoutDirection},
-    primitives::{Point, Size},
+    primitives::{Point, ProposedDimensions, Size},
     render_target::FixedTextBuffer,
     view::View,
 };
+use embedded_touch::{Phase, PointerButton, Tool, Touch};
 
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
@@ -79,4 +81,92 @@ where
     let mut state = view.build_state(captures);
     let layout = view.layout(&size.into(), &env, captures, &mut state);
     view.render_tree(&layout, Point::zero(), &env, captures, &mut state)
+}
+
+#[allow(dead_code)]
+pub fn touch_down(p: Point) -> Event {
+    Event::Touch(Touch {
+        id: 0,
+        location: p.into(),
+        phase: Phase::Started,
+        tool: Tool::Pointer {
+            button: PointerButton::Primary,
+        },
+    })
+}
+
+#[allow(dead_code)]
+pub fn touch_up(p: Point) -> Event {
+    Event::Touch(Touch {
+        id: 0,
+        location: p.into(),
+        phase: Phase::Ended,
+        tool: Tool::Pointer {
+            button: PointerButton::Primary,
+        },
+    })
+}
+
+#[allow(dead_code)]
+pub fn touch_move(p: Point) -> Event {
+    Event::Touch(Touch {
+        id: 0,
+        location: p.into(),
+        phase: Phase::Moved,
+        tool: Tool::Pointer {
+            button: PointerButton::Primary,
+        },
+    })
+}
+
+/// Tap at the given coordinates on the view.
+#[allow(dead_code)]
+pub fn tap<V: View<char, Data>, Data: ?Sized>(
+    view: &V,
+    captures: &mut Data,
+    state: &mut V::State,
+    size: impl Into<ProposedDimensions>,
+    x: i32,
+    y: i32,
+) {
+    let layout = view.layout(
+        &size.into(),
+        &DefaultEnvironment::default(),
+        captures,
+        state,
+    );
+
+    let mut tree = view.render_tree(
+        &layout,
+        Point::zero(),
+        &DefaultEnvironment::default(),
+        captures,
+        state,
+    );
+
+    view.handle_event(
+        &Event::Touch(Touch::new(
+            0,
+            Point::new(x, y).into(),
+            embedded_touch::Phase::Started,
+            Tool::Finger,
+        )),
+        &buoyant::event::EventContext::new(Duration::ZERO),
+        &mut tree,
+        captures,
+        state,
+    );
+
+    view.handle_event(
+        &Event::Touch(Touch::new(
+            0,
+            Point::new(x, y).into(),
+            embedded_touch::Phase::Ended,
+            Tool::Finger,
+        )),
+        &buoyant::event::EventContext::new(Duration::ZERO),
+        &mut tree,
+        captures,
+        state,
+    );
 }

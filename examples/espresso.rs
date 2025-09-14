@@ -8,6 +8,7 @@
 
 use std::time::{Duration, Instant};
 
+use buoyant::event::simulator::MouseTracker;
 use buoyant::primitives::UnitPoint;
 use buoyant::render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _};
 use buoyant::transition::{Edge, Move};
@@ -63,6 +64,7 @@ fn main() {
     let mut target = EmbeddedGraphicsRenderTarget::new_hinted(&mut display, color::BACKGROUND);
     let window = Mutex::new(Window::new("Coffeeeee", &OutputSettings::default()));
     let app_start = Instant::now();
+    let mut touch_tracker = MouseTracker::new();
 
     let captures = AppState::default();
 
@@ -87,7 +89,7 @@ fn main() {
                 .lock()
                 .await
                 .events()
-                .filter_map(|event| event.try_into().ok())
+                .filter_map(|event| touch_tracker.process_event(event))
                 .for_each(|event| {
                     handler.handle_event(&event);
                 });
