@@ -21,7 +21,7 @@ use buoyant::{
 };
 use embedded_graphics::prelude::*;
 use embedded_graphics_simulator::{
-    sdl2::Keycode, OutputSettings, SimulatorDisplay, SimulatorEvent, Window,
+    OutputSettings, SimulatorDisplay, SimulatorEvent, Window, sdl2::Keycode,
 };
 
 fn main() {

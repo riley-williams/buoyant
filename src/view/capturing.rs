@@ -35,11 +35,11 @@ where
 }
 
 impl<
-        InnerView: ViewLayout<InnerCaptures>,
-        Captures: ?Sized,
-        F: for<'a> Fn(&'a mut Captures) -> &'a mut InnerCaptures,
-        InnerCaptures,
-    > ViewLayout<Captures> for Lens<InnerView, F>
+    InnerView: ViewLayout<InnerCaptures>,
+    Captures: ?Sized,
+    F: for<'a> Fn(&'a mut Captures) -> &'a mut InnerCaptures,
+    InnerCaptures,
+> ViewLayout<Captures> for Lens<InnerView, F>
 {
     type State = InnerView::State;
     type Sublayout = InnerView::Sublayout;

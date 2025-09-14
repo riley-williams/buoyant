@@ -3,7 +3,7 @@ use buoyant::font::CharacterBufferFont;
 use buoyant::primitives::Point;
 use buoyant::render::Render;
 use buoyant::{render_target::CrosstermRenderTarget, view::prelude::*};
-use crossterm::event::{read, Event};
+use crossterm::event::{Event, read};
 use crossterm::style::Colors;
 
 const FONT: CharacterBufferFont = CharacterBufferFont;

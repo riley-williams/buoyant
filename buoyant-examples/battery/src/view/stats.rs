@@ -7,7 +7,7 @@ use crate::{
 };
 
 #[must_use]
-pub fn view(_battery: &BatteryStatus) -> impl View<ColorFormat, ()> {
+pub fn view(_battery: &BatteryStatus) -> impl View<ColorFormat, ()> + use<> {
     ViewThatFits::new(FitAxis::Vertical, {
         VStack::new((
             labeled_pair("Temperature", "23 C / 73 F", HorizontalAlignment::Leading),

@@ -1,9 +1,9 @@
 use fixed::traits::ToFixed as _;
 
 use crate::primitives::{
+    Point, Size,
     geometry::{PathEl, Rectangle, Shape, ShapePathIter},
     transform::{CoordinateSpaceTransform, LinearTransform, ScaleFactor},
-    Point, Size,
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]

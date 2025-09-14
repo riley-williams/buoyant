@@ -31,7 +31,7 @@ mod spacing {
 
 #[allow(unused)]
 mod font {
-    use u8g2_fonts::{fonts, FontRenderer};
+    use u8g2_fonts::{FontRenderer, fonts};
 
     pub static MYSTERY_QUEST_28: FontRenderer =
         FontRenderer::new::<fonts::u8g2_font_mystery_quest_28_tr>();
@@ -68,12 +68,7 @@ fn main() {
 
     let app_time = || app_start.elapsed();
 
-    let view_fn = |app_data: &mut AppState, _, _| {
-        root_view(app_data).background(
-            Alignment::default(),
-            Rectangle.foreground_color(color::BACKGROUND),
-        )
-    };
+    let view_fn = |app_data: &mut AppState, _, _| root_view(app_data);
     let flush_fn = async |target: &mut EmbeddedGraphicsRenderTarget<_>, _, _| {
         window.lock().await.update(target.display());
         // clear buffer for next frame
@@ -117,7 +112,7 @@ struct AppState {
     pub auto_brew: bool,
 }
 
-fn root_view(state: &AppState) -> impl View<color::Space, AppState> {
+fn root_view(state: &AppState) -> impl View<color::Space, AppState> + use<> {
     VStack::new((
         Lens::new(tab_bar(state.tab), |state: &mut AppState| &mut state.tab),
         match_view!(state.tab => {
@@ -136,7 +131,7 @@ fn root_view(state: &AppState) -> impl View<color::Space, AppState> {
     ))
 }
 
-fn tab_bar(tab: Tab) -> impl View<color::Space, Tab> {
+fn tab_bar(tab: Tab) -> impl View<color::Space, Tab> + use<> {
     HStack::new((
         tab_item("Brew", tab == Tab::Brew, |tab: &mut Tab| {
             *tab = Tab::Brew;
@@ -156,7 +151,7 @@ fn tab_item<C, F: Fn(&mut C)>(
     name: &'static str,
     is_selected: bool,
     on_tap: F,
-) -> impl View<color::Space, C> {
+) -> impl View<color::Space, C> + use<C, F> {
     let (text_color, bar_height) = if is_selected {
         (color::ACCENT, 4)
     } else {
@@ -184,7 +179,7 @@ fn tab_item<C, F: Fn(&mut C)>(
     })
 }
 
-fn brew_tab<C>(_state: &AppState) -> impl View<color::Space, C> {
+fn brew_tab<C>(_state: &AppState) -> impl View<color::Space, C> + use<C> {
     ScrollView::new(
         VStack::new((
             Text::new("Good morning", &font::HEADING),
@@ -203,7 +198,7 @@ fn brew_tab<C>(_state: &AppState) -> impl View<color::Space, C> {
     .with_direction(ScrollDirection::Both)
 }
 
-fn settings_tab(state: &AppState) -> impl View<color::Space, AppState> {
+fn settings_tab(state: &AppState) -> impl View<color::Space, AppState> + use<> {
     ScrollView::new(
         VStack::new((
             toggle_text(
@@ -248,7 +243,7 @@ fn toggle_text<C>(
     description: &'static str,
     hides_description: bool,
     action: fn(&mut C),
-) -> impl View<color::Space, C> {
+) -> impl View<color::Space, C> + use<C> {
     VStack::new((
         HStack::new((
             Text::new(label, &font::BODY).foreground_color(color::Space::WHITE),
@@ -267,7 +262,7 @@ fn toggle_text<C>(
     .flex_infinite_width(HorizontalAlignment::Trailing)
 }
 
-fn toggle_button<C>(is_on: bool, on_tap: fn(&mut C)) -> impl View<color::Space, C> {
+fn toggle_button<C>(is_on: bool, on_tap: fn(&mut C)) -> impl View<color::Space, C> + use<C> {
     let (color, alignment) = if is_on {
         (color::ACCENT, HorizontalAlignment::Trailing)
     } else {

@@ -29,7 +29,7 @@ pub fn root_view(
     screen: Screen,
     battery: &BatteryStatus,
     auto_off: bool,
-) -> impl View<ColorFormat, ()> {
+) -> impl View<ColorFormat, ()> + use<> {
     match_view!(screen => {
         Screen::Charge => charge::view(battery),
         Screen::Settings => screen_setting::view(auto_off),

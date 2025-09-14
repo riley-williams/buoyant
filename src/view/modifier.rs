@@ -51,7 +51,7 @@ use crate::{
     animation::Animation,
     layout::{Alignment, HorizontalAlignment, VerticalAlignment},
     primitives::{Point, UnitPoint},
-    view::{shape::Shape, ViewMarker},
+    view::{ViewMarker, shape::Shape},
 };
 
 impl<T> ViewModifier for T where T: ViewMarker {}

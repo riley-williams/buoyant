@@ -1,4 +1,4 @@
-use crate::primitives::{geometry::Rectangle, Pixel, Point, Size};
+use crate::primitives::{Pixel, Point, Size, geometry::Rectangle};
 
 /// This trait is a less restrictive version of `embedded_graphics::DrawTarget`.
 ///

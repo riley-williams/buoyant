@@ -50,7 +50,7 @@ jobs:
       - uses: actions-rust-lang/setup-rust-toolchain@v1
       - uses: Swatinem/rust-cache@v2
       - name: Rustfmt
-        run: rustfmt **/*.rs --check --edition 2021
+        run: rustfmt **/*.rs --check --edition 2024
 
   lint-markdown:
     runs-on: ubuntu-latest

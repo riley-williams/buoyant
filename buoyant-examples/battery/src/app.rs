@@ -75,7 +75,7 @@ impl App {
         &self,
         dimensions: ProposedDimensions,
         app_time: Duration,
-    ) -> impl Render<color::ColorFormat> {
+    ) -> impl Render<color::ColorFormat> + use<> {
         let env = DefaultEnvironment::new(app_time);
         let view = crate::view::root_view(
             self.state.screen,

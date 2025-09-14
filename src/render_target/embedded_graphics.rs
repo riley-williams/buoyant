@@ -1,18 +1,19 @@
 use crate::color::AlphaColor;
 use crate::font::FontRender;
 use crate::primitives::transform::CoordinateSpaceTransform;
-use crate::primitives::{transform::LinearTransform, Interpolate, Pixel};
+use crate::primitives::{Interpolate, Pixel, transform::LinearTransform};
 use crate::render_target::{LayerConfig, LayerHandle};
 use crate::surface::{AsDrawTarget, OffsetSurface};
 use crate::{
     primitives::{
-        geometry::{Circle, Line, PathEl, Rectangle, RoundedRectangle},
         Point,
+        geometry::{Circle, Line, PathEl, Rectangle, RoundedRectangle},
     },
     render_target::{Brush, RenderTarget, Shape},
 };
 
 use embedded_graphics::{
+    Drawable,
     draw_target::DrawTarget,
     geometry::Point as EgPoint,
     pixelcolor::PixelColor,
@@ -21,7 +22,6 @@ use embedded_graphics::{
         Circle as EgCircle, Line as EgLine, PrimitiveStyle, PrimitiveStyleBuilder,
         Rectangle as EgRectangle, RoundedRectangle as EgRoundedRectangle,
     },
-    Drawable,
 };
 
 use super::{Glyph, ImageBrush, Stroke, Surface};

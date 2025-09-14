@@ -2,7 +2,7 @@
 name = "buoyant"
 version = "0.6.0-alpha.0"
 authors = ["Riley Williams"]
-edition = "2021"
+edition = "2024"
 license = "MIT OR Apache-2.0"
 description = "SwiftUI-like UIs in Rust for embedded devices"
 readme = "README.md"

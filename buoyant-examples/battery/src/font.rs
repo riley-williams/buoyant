@@ -1,9 +1,9 @@
 use u8g2_fonts::{
+    FontRenderer,
     fonts::{
         u8g2_font_helvB12_tr, u8g2_font_helvB14_tr, u8g2_font_helvB18_tr, u8g2_font_helvR08_tr,
         u8g2_font_helvR12_tr, u8g2_font_helvR18_tr,
     },
-    FontRenderer,
 };
 
 pub static TITLE: FontRenderer = FontRenderer::new::<u8g2_font_helvR18_tr>();

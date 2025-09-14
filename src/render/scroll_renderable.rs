@@ -1,5 +1,5 @@
 use crate::{
-    primitives::{geometry::Rectangle, Interpolate, Point, Size},
+    primitives::{Interpolate, Point, Size, geometry::Rectangle},
     render::{Animate, AnimatedJoin, Capsule, Offset, Render},
     render_target::RenderTarget,
 };

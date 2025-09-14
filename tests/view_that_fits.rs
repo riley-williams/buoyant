@@ -4,7 +4,7 @@ use buoyant::{
     primitives::Point,
     render::Render as _,
     render_target::FixedTextBuffer,
-    view::{prelude::*, View},
+    view::{View, prelude::*},
 };
 
 fn single_variant_view() -> impl View<char, ()> {

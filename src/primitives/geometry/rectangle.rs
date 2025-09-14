@@ -1,6 +1,6 @@
 use crate::primitives::{
-    transform::{CoordinateSpaceTransform, LinearTransform},
     Point, Size,
+    transform::{CoordinateSpaceTransform, LinearTransform},
 };
 
 use super::{PathEl, Shape, ShapePathIter};

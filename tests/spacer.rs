@@ -4,7 +4,7 @@ use buoyant::primitives::{Dimension, Dimensions, ProposedDimension, ProposedDime
 use buoyant::render::Render;
 use buoyant::render_target::FixedTextBuffer;
 use buoyant::view::prelude::*;
-use common::{collect_text, TestEnv};
+use common::{TestEnv, collect_text};
 
 mod common;
 use common::make_render_tree;

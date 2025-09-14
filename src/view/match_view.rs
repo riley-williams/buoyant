@@ -40,13 +40,7 @@ macro_rules! if_view {
         ($value:expr) {
             $view0:expr
         }
-    ) => {{
-        if $value {
-            Some($view0)
-        } else {
-            None
-        }
-    }};
+    ) => {{ if $value { Some($view0) } else { None } }};
 
     (
         ($value:expr) {
@@ -573,9 +567,9 @@ where
             }
             _ => {
                 assert!(
-                     !cfg!(debug_assertions),
-                     "State branch does not match view branch, likely due to improper reuse of layout."
-                 );
+                    !cfg!(debug_assertions),
+                    "State branch does not match view branch, likely due to improper reuse of layout."
+                );
                 EventResult::default()
             }
         }
