@@ -10,7 +10,7 @@ use crate::{
 const SPACING: u32 = 3;
 
 #[must_use]
-pub fn view(battery: &BatteryStatus) -> impl View<ColorFormat, ()> {
+pub fn view(battery: &BatteryStatus) -> impl View<ColorFormat, ()> + use<> {
     ViewThatFits::new(FitAxis::Vertical, {
         VStack::new((
             VStack::new((
@@ -37,7 +37,7 @@ pub fn view(battery: &BatteryStatus) -> impl View<ColorFormat, ()> {
     })
 }
 
-fn charge_gauge(charge: f32) -> impl View<ColorFormat, ()> {
+fn charge_gauge(charge: f32) -> impl View<ColorFormat, ()> + use<> {
     let mut formatted_charge = heapless::String::<8>::new();
     _ = write!(formatted_charge, "{charge:.0}"); // ignore write failure
     ZStack::new((
@@ -51,7 +51,7 @@ fn charge_gauge(charge: f32) -> impl View<ColorFormat, ()> {
     ))
 }
 
-fn port_power_view(power: &PortState) -> impl View<ColorFormat, ()> {
+fn port_power_view(power: &PortState) -> impl View<ColorFormat, ()> + use<> {
     VStack::new((
         port_power_row("C1", power.usbc1_power as i32),
         port_power_row("C2", power.usbc2_power as i32),

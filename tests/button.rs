@@ -16,7 +16,7 @@ struct AppState {
     pub b: i32,
 }
 
-fn counter_view(state: &AppState) -> impl View<char, AppState> {
+fn counter_view(state: &AppState) -> impl View<char, AppState> + use<> {
     VStack::new((
         Lens::new(count_view(state.a), |captures: &mut AppState| {
             &mut captures.a
@@ -46,12 +46,16 @@ fn count_view(count: i32) -> impl View<char, i32> {
     ))
 }
 
-fn rebuild_tree<V: View<char, AppState>>(
+fn rebuild_tree<V, F>(
     app_state: &mut AppState,
     view_state: &mut V::State,
-    view: fn(&AppState) -> V,
+    view: F,
     size: Size,
-) -> V::Renderables {
+) -> V::Renderables
+where
+    V: View<char, AppState>,
+    F: Fn(&AppState) -> V,
+{
     let env = DefaultEnvironment::default();
     let view = (view)(app_state);
     let layout = view.layout(&size.into(), &env, app_state, view_state);

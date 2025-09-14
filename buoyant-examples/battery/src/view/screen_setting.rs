@@ -8,7 +8,7 @@ use crate::{
 };
 
 #[must_use]
-pub fn view(auto_off: bool) -> impl View<ColorFormat, ()> {
+pub fn view(auto_off: bool) -> impl View<ColorFormat, ()> + use<> {
     VStack::new((
         Text::new("Auto Screen Off", &font::SUBTITLE)
             .multiline_text_alignment(HorizontalTextAlignment::Center),
@@ -19,7 +19,7 @@ pub fn view(auto_off: bool) -> impl View<ColorFormat, ()> {
     .with_spacing(5)
 }
 
-fn toggle(is_on: bool) -> impl View<ColorFormat, ()> {
+fn toggle(is_on: bool) -> impl View<ColorFormat, ()> + use<> {
     let (txt_lhs, txt_rhs) = if is_on {
         (color::GREEN, color::BLACK)
     } else {
