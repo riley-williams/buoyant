@@ -8,7 +8,7 @@ use crate::{
     animation::Animation,
     event::{Event, EventContext, EventResult},
     layout::ResolvedLayout,
-    primitives::{Point, ProposedDimension, ProposedDimensions, Size},
+    primitives::{Point, ProposedDimension, ProposedDimensions, Size, geometry::Rectangle},
     render::{Animate, Capsule, Offset, ScrollRenderable},
     transition::Opacity,
     view::{ViewLayout, ViewMarker},
@@ -396,16 +396,33 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
                             is_exclusive: false,
                             touch_id: touch.id,
                         };
-                        (
-                            EventResult::new(true, true).merging(self.inner.handle_event(
-                                &event.offset(-render_tree.offset() - render_tree.inner.offset),
-                                context,
-                                render_tree.inner_mut(),
-                                captures,
-                                &mut state.inner_state,
-                            )),
-                            Point::zero(),
-                        )
+                        let bounds =
+                            Rectangle::new(render_tree.inner.offset, render_tree.inner_size);
+                        if bounds.contains(&point) {
+                            (
+                                EventResult::new(true, true).merging(self.inner.handle_event(
+                                    &event.offset(-render_tree.offset() - render_tree.inner.offset),
+                                    context,
+                                    render_tree.inner_mut(),
+                                    captures,
+                                    &mut state.inner_state,
+                                )),
+                                Point::zero(),
+                            )
+                        } else {
+                            // TODO: Is it really possible to start a touch outside the bounds for any inner view?
+                            // Inner views are clipped
+                            (
+                                self.inner.handle_event(
+                                    &event.offset(-render_tree.offset() - render_tree.inner.offset),
+                                    context,
+                                    render_tree.inner_mut(),
+                                    captures,
+                                    &mut state.inner_state,
+                                ),
+                                Point::zero(),
+                            )
+                        }
                     }
                     Phase::Moved => match &mut state.interaction {
                         ScrollInteraction::Dragging {
