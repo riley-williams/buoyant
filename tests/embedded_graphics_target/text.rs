@@ -1,14 +1,14 @@
 use buoyant::{primitives::Point, view::prelude::*};
 use embedded_graphics::{
+    Drawable,
     geometry::Point as EgPoint,
     mock_display::MockDisplay,
-    mono_font::{ascii::FONT_7X13, MonoTextStyle},
+    mono_font::{MonoTextStyle, ascii::FONT_7X13},
     pixelcolor::Rgb888,
     prelude::WebColors,
     text::Text as EgText,
-    Drawable,
 };
-use u8g2_fonts::{fonts, types::FontColor, FontRenderer};
+use u8g2_fonts::{FontRenderer, fonts, types::FontColor};
 
 use super::render_to_mock;
 

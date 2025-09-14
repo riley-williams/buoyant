@@ -1,7 +1,7 @@
 use crate::primitives::{
+    Point, Size,
     geometry::{PathEl, Rectangle, Shape, ShapePathIter},
     transform::{CoordinateSpaceTransform, LinearTransform},
-    Point, Size,
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]

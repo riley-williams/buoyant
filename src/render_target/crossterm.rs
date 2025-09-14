@@ -1,18 +1,17 @@
 use crossterm::{
-    cursor, execute,
+    ExecutableCommand as _, QueueableCommand, cursor, execute,
     style::{self, Colors, Stylize},
     terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
-    ExecutableCommand as _, QueueableCommand,
 };
 
 #[cfg(feature = "std")]
-use std::io::{stdout, Stdout, Write};
+use std::io::{Stdout, Write, stdout};
 
 use crate::{
     primitives::{
+        Pixel, Point, Size,
         geometry::Rectangle,
         transform::{CoordinateSpaceTransform, LinearTransform},
-        Pixel, Point, Size,
     },
     render_target::{LayerConfig, LayerHandle},
     surface::Surface,

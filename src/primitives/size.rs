@@ -3,8 +3,8 @@ use core::cmp::max;
 use fixed::traits::ToFixed as _;
 
 use crate::primitives::{
-    transform::{CoordinateSpaceTransform, ScaleFactor},
     Interpolate, Point,
+    transform::{CoordinateSpaceTransform, ScaleFactor},
 };
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]

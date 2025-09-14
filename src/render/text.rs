@@ -4,7 +4,7 @@ use heapless::Vec;
 
 use crate::{
     font::{FontMetrics, FontRender},
-    primitives::{geometry::Rectangle, Interpolate, Point, Size},
+    primitives::{Interpolate, Point, Size, geometry::Rectangle},
     render::{AnimatedJoin, AnimationDomain, Render},
     render_target::{Glyph, RenderTarget, SolidBrush},
     view::{HorizontalTextAlignment, WhitespaceWrap},

@@ -1,4 +1,4 @@
-use embedded_graphics_core::{draw_target::DrawTarget, pixelcolor::PixelColor, Drawable};
+use embedded_graphics_core::{Drawable, draw_target::DrawTarget, pixelcolor::PixelColor};
 
 use crate::{
     color::AlphaColor,

@@ -48,13 +48,13 @@ pub use zstack::ZStack;
 pub mod prelude {
     pub use super::aspect_ratio::{ContentMode, Ratio};
     pub use super::modifier::ViewModifier;
-    pub use super::{padding::Edges, FitAxis, HorizontalTextAlignment};
     #[cfg(feature = "embedded-graphics")]
     pub use super::{AsDrawable, Image};
     pub use super::{
         Button, Divider, EmptyView, ForEach, GeometryReader, HStack, Lens, ScrollView, Spacer,
         Text, VStack, View, ViewLayout, ViewThatFits, ZStack,
     };
+    pub use super::{FitAxis, HorizontalTextAlignment, padding::Edges};
     pub use crate::animation::Animation;
     pub use crate::layout::{Alignment, HorizontalAlignment, VerticalAlignment};
     pub use crate::view::shape::*;

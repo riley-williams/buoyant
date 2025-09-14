@@ -4,7 +4,7 @@ use crate::{
     layout::{HorizontalAlignment, ResolvedLayout, VerticalAlignment},
     primitives::{Point, ProposedDimensions},
     render::{HintBackground, ShadeSubtree},
-    view::{shape::Shape, ViewLayout, ViewMarker},
+    view::{ViewLayout, ViewMarker, shape::Shape},
 };
 
 /// A view that uses the layout of the foreground view, rendering a background shape

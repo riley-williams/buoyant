@@ -1,7 +1,7 @@
 use embedded_graphics::prelude::{PixelColor, Point as EgPoint};
 use u8g2_fonts::{
-    types::{FontColor, VerticalPosition},
     FontRenderer,
+    types::{FontColor, VerticalPosition},
 };
 
 use crate::primitives::{Point, Size};

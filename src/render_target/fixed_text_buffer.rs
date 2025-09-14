@@ -2,9 +2,9 @@ use core::fmt::{Display, Formatter, Result};
 
 use crate::{
     primitives::{
+        Pixel, Point, Size,
         geometry::Rectangle,
         transform::{CoordinateSpaceTransform as _, LinearTransform},
-        Pixel, Point, Size,
     },
     render_target::{LayerConfig, LayerHandle},
 };

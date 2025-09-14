@@ -506,7 +506,7 @@ fn nested_toggle_animation() {
     // subtext should jump
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      #____");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "     1#____"); // toggle 1 subtext is
-                                                                          // overwritten by toggle 2
+    // overwritten by toggle 2
     assert_eq!(buffer.text[2].iter().collect::<String>(), "        123");
     assert_eq!(buffer.text[3].iter().collect::<String>(), "           ");
     assert_eq!(buffer.text[4].iter().collect::<String>(), "        xxx");

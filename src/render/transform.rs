@@ -1,5 +1,5 @@
 use crate::{
-    primitives::{transform::LinearTransform, Interpolate},
+    primitives::{Interpolate, transform::LinearTransform},
     render::{AnimatedJoin, AnimationDomain, Render},
 };
 

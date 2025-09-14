@@ -9,7 +9,7 @@ pub use rect::Rect;
 pub use rounded_rect::RoundedRect;
 
 use crate::{
-    primitives::{geometry::Shape, transform::LinearTransform, Interpolate},
+    primitives::{Interpolate, geometry::Shape, transform::LinearTransform},
     render::{AnimatedJoin, AnimationDomain, Render},
     render_target::{RenderTarget, SolidBrush, Stroke},
 };

@@ -16,9 +16,9 @@ use crate::{
     font::{self, FontMetrics as _},
     image::EmptyImage,
     primitives::{
+        Interpolate, Point, Size,
         geometry::{Rectangle, Shape},
         transform::{CoordinateSpaceTransform as _, LinearTransform, ScaleFactor},
-        Interpolate, Point, Size,
     },
     surface::Surface,
 };

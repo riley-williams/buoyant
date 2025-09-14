@@ -1,6 +1,6 @@
 use crate::surface::AsDrawTarget as _;
-use embedded_graphics::mono_font::MonoFont;
 use embedded_graphics::Drawable;
+use embedded_graphics::mono_font::MonoFont;
 use embedded_graphics::{
     mono_font::MonoTextStyleBuilder,
     prelude::{PixelColor, Point},

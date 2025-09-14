@@ -1,8 +1,8 @@
 use crate::{
-    primitives::{geometry::RoundedRectangle, Interpolate, Point, Size},
+    primitives::{Interpolate, Point, Size, geometry::RoundedRectangle},
     render::{
-        shape::{AsShapePrimitive, Inset},
         AnimatedJoin, AnimationDomain,
+        shape::{AsShapePrimitive, Inset},
     },
 };
 

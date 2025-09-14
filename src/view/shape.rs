@@ -15,8 +15,8 @@ use crate::{
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
     render::{
-        shape::{AsShapePrimitive, Inset},
         StrokedShape,
+        shape::{AsShapePrimitive, Inset},
     },
     transition::Opacity,
     view::{ViewLayout, ViewMarker},

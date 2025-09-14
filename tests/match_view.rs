@@ -4,7 +4,7 @@ use buoyant::match_view;
 use buoyant::primitives::{Point, Size};
 use buoyant::render::Render;
 use buoyant::render_target::FixedTextBuffer;
-use buoyant::view::{prelude::*, View};
+use buoyant::view::{View, prelude::*};
 use std::string::String;
 
 #[test]

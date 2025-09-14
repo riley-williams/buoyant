@@ -3,11 +3,7 @@ use fixed_macro::fixed;
 pub trait Interpolate: Sized + PartialEq {
     /// Interpolate between two colors
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
-        if amount < 127 {
-            from
-        } else {
-            to
-        }
+        if amount < 127 { from } else { to }
     }
 }
 
@@ -59,11 +55,7 @@ impl Interpolate for f64 {
 
 impl Interpolate for char {
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
-        if amount < 127 {
-            from
-        } else {
-            to
-        }
+        if amount < 127 { from } else { to }
     }
 }
 

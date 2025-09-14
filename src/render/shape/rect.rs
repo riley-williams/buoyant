@@ -1,8 +1,8 @@
-use crate::primitives::geometry::Rectangle;
 use crate::primitives::Interpolate;
+use crate::primitives::geometry::Rectangle;
 use crate::primitives::{Point, Size};
-use crate::render::shape::{AsShapePrimitive, Inset};
 use crate::render::AnimationDomain;
+use crate::render::shape::{AsShapePrimitive, Inset};
 
 use super::AnimatedJoin;
 

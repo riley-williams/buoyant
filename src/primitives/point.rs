@@ -1,8 +1,8 @@
 use fixed::traits::ToFixed as _;
 
 use crate::primitives::{
-    transform::{CoordinateSpaceTransform, LinearTransform},
     Interpolate, Size,
+    transform::{CoordinateSpaceTransform, LinearTransform},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
