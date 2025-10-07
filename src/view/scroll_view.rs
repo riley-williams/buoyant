@@ -400,7 +400,7 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
                             Rectangle::new(render_tree.inner.offset, render_tree.inner_size);
                         if bounds.contains(&point) {
                             (
-                                EventResult::new(true, true).merging(self.inner.handle_event(
+                                EventResult::new(true, false).merging(self.inner.handle_event(
                                     &event.offset(-render_tree.offset() - render_tree.inner.offset),
                                     context,
                                     render_tree.inner_mut(),
@@ -436,15 +436,16 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
                             *last_point = point;
                             let total_scroll = point - *drag_start;
 
+                            // 4 pixels of wiggle without cancelling inner
                             if !*is_exclusive
-                                && (total_scroll.x.abs() >= 3 || total_scroll.y.abs() >= 3)
+                                && (total_scroll.x.abs() >= 4 || total_scroll.y.abs() >= 4)
                             {
                                 // cancel inner interaction once we're sure the user intended to scroll
                                 *is_exclusive = true;
                                 let mut cancel_event = touch.clone();
                                 cancel_event.phase = Phase::Cancelled;
                                 (
-                                    EventResult::new(true, true).merging(self.inner.handle_event(
+                                    EventResult::new(true, false).merging(self.inner.handle_event(
                                         &Event::Touch(cancel_event),
                                         context,
                                         render_tree.inner_mut(),
@@ -454,7 +455,7 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
                                     delta,
                                 )
                             } else {
-                                (EventResult::new(true, true), delta)
+                                (EventResult::new(true, false), delta)
                             }
                         }
                         ScrollInteraction::Idle => (EventResult::default(), Point::zero()),
@@ -472,8 +473,7 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
 
                             if is_exclusive {
                                 // If we don't set this, the scroll view will not animate the
-                                // snap back because the frame time is old
-                                render_tree.inner.subtree.frame_time = context.app_time;
+                                // snap back
                                 render_tree.inner.subtree.value = true;
                                 (EventResult::new(true, true), delta)
                             } else {
@@ -541,21 +541,19 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
             ),
         };
 
-        match self.direction {
-            ScrollDirection::Vertical => {
-                state.scroll_offset.y += delta.y;
-            }
-            ScrollDirection::Horizontal => {
-                state.scroll_offset.x += delta.x;
-            }
-            ScrollDirection::Both => {
-                state.scroll_offset.x += delta.x;
-                state.scroll_offset.y += delta.y;
-            }
-        }
+        // Constrain delta to configured axis
+        let delta = match self.direction {
+            ScrollDirection::Vertical => Point::new(0, delta.y),
+            ScrollDirection::Horizontal => Point::new(delta.x, 0),
+            ScrollDirection::Both => delta,
+        };
+        state.scroll_offset += delta;
 
-        // Recompute scroll bars
-        if delta != Point::zero() {
+        // Recompute scroll bars and manually update the target tree.
+        // This is used to avoid recomputing the entire view tree every time the
+        // scroll position changes. If there's scroll jank it's probably related
+        // to this optimization.
+        if delta != Point::zero() && !result.recompute_view {
             let subview_offset = {
                 let permitted_offset_x = render_tree
                     .inner_size

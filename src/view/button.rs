@@ -92,7 +92,10 @@ pub struct Button<ViewFn, Inner, Action> {
 
 impl<ViewFn, Inner, Action> Button<ViewFn, Inner, Action> {
     #[allow(missing_docs)]
-    pub fn new(action: Action, view: ViewFn) -> Self {
+    pub fn new(action: Action, view: ViewFn) -> Self
+    where
+        ViewFn: Fn(bool) -> Inner,
+    {
         Self {
             view,
             action,

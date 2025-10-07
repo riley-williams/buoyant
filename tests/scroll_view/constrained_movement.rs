@@ -8,7 +8,7 @@ use buoyant::{
     view::{prelude::*, scroll_view::ScrollDirection},
 };
 
-use crate::common::{helpers::tree, touch_move, touch_up};
+use crate::common::{helpers, touch_move, touch_up};
 use crate::{assert_str_grid_eq, common::touch_down};
 
 fn scroll_view<T>() -> impl View<char, T> {
@@ -31,7 +31,13 @@ fn vertical_scroll_does_not_move_horizontally() {
     let view = scroll_view();
     let mut state = view.build_state(&mut captures);
 
-    let mut tree = tree(&view, &mut captures, &mut state, Duration::default(), size);
+    let mut tree = helpers::tree(
+        &view,
+        &mut captures,
+        &mut state,
+        Duration::from_secs(1),
+        size,
+    );
 
     tree.render(&mut buffer, &' ');
 
@@ -45,21 +51,24 @@ fn vertical_scroll_does_not_move_horizontally() {
         ],
         &buffer.text
     );
+
     view.handle_event(
         &touch_down(Point::new(2, 3)),
-        &EventContext::new(Duration::ZERO),
+        &EventContext::new(Duration::from_secs(2)),
         &mut tree,
         &mut captures,
         &mut state,
     );
 
-    view.handle_event(
+    let result = view.handle_event(
         &touch_move(Point::new(20, 3)),
-        &EventContext::new(Duration::ZERO),
+        &EventContext::new(Duration::from_secs(3)),
         &mut tree,
         &mut captures,
         &mut state,
     );
+
+    assert!(!result.recompute_view);
 
     tree.render(&mut buffer, &' ');
     assert_str_grid_eq!(
@@ -73,13 +82,16 @@ fn vertical_scroll_does_not_move_horizontally() {
         &buffer.text
     );
 
-    view.handle_event(
+    let result = view.handle_event(
         &touch_move(Point::new(-20, 2)),
-        &EventContext::new(Duration::ZERO),
+        &EventContext::new(Duration::from_secs(4)),
         &mut tree,
         &mut captures,
         &mut state,
     );
+
+    // Tree manually updated, no view recomputation
+    assert!(!result.recompute_view);
 
     tree.render(&mut buffer, &' ');
     assert_str_grid_eq!(
@@ -93,12 +105,22 @@ fn vertical_scroll_does_not_move_horizontally() {
         &buffer.text
     );
 
-    view.handle_event(
+    let result = view.handle_event(
         &touch_up(Point::new(1, 1)),
-        &EventContext::new(Duration::ZERO),
+        &EventContext::new(Duration::from_secs(5)),
         &mut tree,
         &mut captures,
         &mut state,
+    );
+
+    assert!(result.recompute_view);
+
+    tree = helpers::tree(
+        &view,
+        &mut captures,
+        &mut state,
+        Duration::from_secs(5),
+        size,
     );
 
     tree.render(&mut buffer, &' ');

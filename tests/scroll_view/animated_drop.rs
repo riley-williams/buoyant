@@ -50,7 +50,7 @@ fn scroll_down_animates_back() {
     );
     // picking times much greater than the scroll animation duration
     let event_result = view.handle_event(
-        &touch_down(Point::new(2, 4)),
+        &touch_down(Point::new(2, 2)),
         &EventContext::new(Duration::from_millis(500)),
         &mut render_tree,
         &mut captures,
@@ -60,7 +60,7 @@ fn scroll_down_animates_back() {
 
     // Pull down just offscreen and release
     let event_result = view.handle_event(
-        &touch_move(Point::new(2, 10)),
+        &touch_move(Point::new(2, 8)),
         &EventContext::new(Duration::from_millis(1000)),
         &mut render_tree,
         &mut captures,
@@ -82,7 +82,7 @@ fn scroll_down_animates_back() {
     );
 
     let event_result = view.handle_event(
-        &touch_up(Point::new(2, 8)),
+        &touch_up(Point::new(2, 6)),
         &EventContext::new(Duration::from_millis(1500)),
         &mut render_tree,
         &mut captures,
