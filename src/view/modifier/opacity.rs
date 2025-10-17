@@ -76,6 +76,9 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> EventResult {
+        if self.opacity == 0 {
+            return EventResult::default();
+        }
         self.inner
             .handle_event(event, context, &mut render_tree.subtree, captures, state)
     }

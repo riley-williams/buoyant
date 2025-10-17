@@ -203,6 +203,7 @@ dependencies = [
  "embedded-graphics",
  "embedded-graphics-core",
  "embedded-graphics-simulator",
+ "embedded-touch",
  "fixed",
  "fixed-macro",
  "heapless",
@@ -375,6 +376,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "embedded-touch"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "93d19cf3f85ec63a8bdfc213ba3e3f1375acbb4ea9322060d3dded4afa5a8d6e"
+dependencies = [
+ "fixed",
+ "fixed-macro",
+]
+
+[[package]]
 name = "errno"
 version = "0.3.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -532,9 +543,9 @@ dependencies = [
 
 [[package]]
 name = "heapless"
-version = "0.8.0"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0bfb9eb618601c89945a70e254898da93b13be0388091d42117462b265bb3fad"
+checksum = "b1edcd5a338e64688fbdcb7531a846cfd3476a54784dcb918a0844682bc7ada5"
 dependencies = [
  "hash32",
  "stable_deref_trait",
@@ -1024,9 +1035,9 @@ checksum = "1dccffe3ce07af9386bfd29e80c0ab1a8205a2fc34e4bcd40364df902cfa8f3f"
 
 [[package]]
 name = "u8g2-fonts"
-version = "0.7.0"
+version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5d47e4dc46a1db0427f302d49c8428fa483b202117bc2097e006b9214a391b71"
+checksum = "825f57be1429fd60f335a4aade11e128a7ae4f89d75ca3a003cb8410a91093f7"
 dependencies = [
  "embedded-graphics",
  "embedded-graphics-core",

@@ -1,19 +1,27 @@
 use std::time::Duration;
 
 use buoyant::{
-    event::{Event, EventContext},
+    event::EventContext,
     primitives::{Point, Size},
     render::Render,
     render_target::FixedTextBuffer,
     view::{prelude::*, scroll_view::ScrollDirection},
 };
 
-use crate::assert_str_grid_eq;
-use crate::common::helpers::tree;
+use crate::common::{helpers, touch_move, touch_up};
+use crate::{assert_str_grid_eq, common::touch_down};
 
-fn scroll_view<T>() -> impl View<char, T> {
+fn scroll_view() -> impl View<char, u8> {
     ScrollView::new(VStack::new((
-        Rectangle.frame().with_height(4).foreground_color('a'),
+        Button::new(
+            |i: &mut u8| *i += 1,
+            |is_pressed| {
+                Rectangle
+                    .frame()
+                    .with_height(4)
+                    .foreground_color(if is_pressed { 'A' } else { 'a' })
+            },
+        ),
         Rectangle.frame().with_height(4).foreground_color('b'),
         Rectangle.frame().with_height(4).foreground_color('c'),
     )))
@@ -22,16 +30,23 @@ fn scroll_view<T>() -> impl View<char, T> {
     .padding(Edges::All, 1)
 }
 
+#[expect(clippy::too_many_lines)]
 #[test]
-fn vertical_scroll_does_not_move_horizontally() {
+fn button_action_cancelled_by_scroll() {
     let mut buffer = FixedTextBuffer::<12, 5>::default();
     let size = Size::new(12, 5);
 
-    let mut captures = false;
+    let mut captures = 0;
     let view = scroll_view();
     let mut state = view.build_state(&mut captures);
 
-    let mut tree = tree(&view, &mut captures, &mut state, Duration::default(), size);
+    let mut tree = helpers::tree(
+        &view,
+        &mut captures,
+        &mut state,
+        Duration::from_secs(1),
+        size,
+    );
 
     tree.render(&mut buffer, &' ');
 
@@ -45,20 +60,54 @@ fn vertical_scroll_does_not_move_horizontally() {
         ],
         &buffer.text
     );
-    view.handle_event(
-        &Event::TouchDown(Point::new(2, 3)),
-        &EventContext::new(Duration::ZERO),
+
+    let result = view.handle_event(
+        &touch_down(Point::new(2, 3)),
+        &EventContext::new(Duration::from_secs(2)),
+        &mut tree,
+        &mut captures,
+        &mut state,
+    );
+    assert!(result.recompute_view);
+
+    tree = helpers::tree(
+        &view,
+        &mut captures,
+        &mut state,
+        Duration::from_secs(1),
+        size,
+    );
+
+    tree.render(&mut buffer, &' ');
+
+    assert_str_grid_eq!(
+        [
+            "            ",
+            " AAAAAAAAAA ",
+            " AAAAAAAAAA ",
+            " AAAAAAAAAA ",
+            "            ",
+        ],
+        &buffer.text
+    );
+
+    // cancel touch by moving touch
+    let result = view.handle_event(
+        &touch_move(Point::new(20, 3)),
+        &EventContext::new(Duration::from_secs(3)),
         &mut tree,
         &mut captures,
         &mut state,
     );
 
-    view.handle_event(
-        &Event::TouchMoved(Point::new(20, 3)),
-        &EventContext::new(Duration::ZERO),
-        &mut tree,
+    assert!(result.recompute_view);
+
+    tree = helpers::tree(
+        &view,
         &mut captures,
         &mut state,
+        Duration::from_secs(1),
+        size,
     );
 
     tree.render(&mut buffer, &' ');
@@ -73,13 +122,16 @@ fn vertical_scroll_does_not_move_horizontally() {
         &buffer.text
     );
 
-    view.handle_event(
-        &Event::TouchMoved(Point::new(-20, 2)),
-        &EventContext::new(Duration::ZERO),
+    let result = view.handle_event(
+        &touch_move(Point::new(2, 2)),
+        &EventContext::new(Duration::from_secs(4)),
         &mut tree,
         &mut captures,
         &mut state,
     );
+
+    // Tree manually updated, no view recomputation
+    assert!(!result.recompute_view);
 
     tree.render(&mut buffer, &' ');
     assert_str_grid_eq!(
@@ -93,12 +145,22 @@ fn vertical_scroll_does_not_move_horizontally() {
         &buffer.text
     );
 
-    view.handle_event(
-        &Event::TouchUp(Point::new(1, 1)),
-        &EventContext::new(Duration::ZERO),
+    let result = view.handle_event(
+        &touch_up(Point::new(3, 1)),
+        &EventContext::new(Duration::from_secs(5)),
         &mut tree,
         &mut captures,
         &mut state,
+    );
+
+    assert!(result.recompute_view);
+
+    tree = helpers::tree(
+        &view,
+        &mut captures,
+        &mut state,
+        Duration::from_secs(5),
+        size,
     );
 
     tree.render(&mut buffer, &' ');
@@ -112,4 +174,109 @@ fn vertical_scroll_does_not_move_horizontally() {
         ],
         &buffer.text
     );
+
+    assert_eq!(captures, 0, "Button action should not have been called");
+}
+
+#[test]
+fn button_can_be_pressed_with_tiny_wiggle() {
+    let mut buffer = FixedTextBuffer::<12, 5>::default();
+    let size = Size::new(12, 5);
+
+    let mut captures = 0;
+    let view = scroll_view();
+    let mut state = view.build_state(&mut captures);
+
+    let mut tree = helpers::tree(
+        &view,
+        &mut captures,
+        &mut state,
+        Duration::from_secs(1),
+        size,
+    );
+
+    tree.render(&mut buffer, &' ');
+
+    assert_str_grid_eq!(
+        [
+            "            ",
+            " aaaaaaaaaa ",
+            " aaaaaaaaaa ",
+            " aaaaaaaaaa ",
+            "            ",
+        ],
+        &buffer.text
+    );
+
+    let result = view.handle_event(
+        &touch_down(Point::new(2, 2)),
+        &EventContext::new(Duration::from_secs(2)),
+        &mut tree,
+        &mut captures,
+        &mut state,
+    );
+    assert!(result.recompute_view);
+
+    tree = helpers::tree(
+        &view,
+        &mut captures,
+        &mut state,
+        Duration::from_secs(2),
+        size,
+    );
+
+    tree.render(&mut buffer, &' ');
+
+    assert_str_grid_eq!(
+        [
+            "            ",
+            " AAAAAAAAAA ",
+            " AAAAAAAAAA ",
+            " AAAAAAAAAA ",
+            "            ",
+        ],
+        &buffer.text
+    );
+
+    // little wiggle
+    let result = view.handle_event(
+        &touch_move(Point::new(5, 3)),
+        &EventContext::new(Duration::from_secs(3)),
+        &mut tree,
+        &mut captures,
+        &mut state,
+    );
+    assert!(!result.recompute_view);
+
+    let result = view.handle_event(
+        &touch_up(Point::new(5, 3)),
+        &EventContext::new(Duration::from_secs(3)),
+        &mut tree,
+        &mut captures,
+        &mut state,
+    );
+
+    assert!(result.recompute_view);
+
+    tree = helpers::tree(
+        &view,
+        &mut captures,
+        &mut state,
+        Duration::from_secs(3),
+        size,
+    );
+
+    tree.render(&mut buffer, &' ');
+    assert_str_grid_eq!(
+        [
+            "            ",
+            " aaaaaaaaaa ",
+            " aaaaaaaaaa ",
+            " aaaaaaaaaa ",
+            "            ",
+        ],
+        &buffer.text
+    );
+
+    assert_eq!(captures, 1);
 }

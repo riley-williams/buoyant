@@ -174,7 +174,7 @@ pub trait ViewLayout<Captures: ?Sized>: ViewMarker {
         state: &mut Self::State,
     ) -> Self::Renderables;
 
-    /// Process an event, returning true if the event was handled.
+    /// Process an event
     fn handle_event(
         &self,
         _event: &Event,

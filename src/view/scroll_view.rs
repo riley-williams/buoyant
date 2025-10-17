@@ -2,11 +2,13 @@
 
 use core::time::Duration;
 
+use embedded_touch::Phase;
+
 use crate::{
     animation::Animation,
     event::{Event, EventContext, EventResult},
     layout::ResolvedLayout,
-    primitives::{Point, ProposedDimension, ProposedDimensions, Size},
+    primitives::{Point, ProposedDimension, ProposedDimensions, Size, geometry::Rectangle},
     render::{Animate, Capsule, Offset, ScrollRenderable},
     transition::Opacity,
     view::{ViewLayout, ViewMarker},
@@ -192,6 +194,7 @@ enum ScrollInteraction {
         drag_start: Point,
         last_point: Point,
         is_exclusive: bool,
+        touch_id: u8,
     },
 }
 
@@ -370,118 +373,187 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
     ) -> EventResult {
         let (result, delta) = match event {
             Event::Scroll(delta) => (EventResult::new(true, true), *delta),
-            Event::TouchDown(point) => {
-                state.interaction = ScrollInteraction::Dragging {
-                    drag_start: *point,
-                    last_point: *point,
-                    is_exclusive: false,
-                };
-                (
-                    EventResult::new(true, true).merging(self.inner.handle_event(
-                        &event.offset(-render_tree.offset() - render_tree.inner.offset),
+            Event::Touch(touch) => {
+                // Only track the first touch. This could cause problems if
+                // the touch is "lost" without an ended or cancelled event.
+                if let ScrollInteraction::Dragging { touch_id, .. } = state.interaction
+                    && touch.id != touch_id
+                {
+                    return self.inner.handle_event(
+                        event,
                         context,
                         render_tree.inner_mut(),
                         captures,
                         &mut state.inner_state,
-                    )),
-                    Point::zero(),
-                )
-            }
-            Event::TouchMoved(point) => match &mut state.interaction {
-                ScrollInteraction::Dragging {
-                    drag_start,
-                    last_point,
-                    is_exclusive,
-                } => {
-                    let delta = *point - *last_point;
-
-                    *last_point = *point;
-                    let total_scroll = *point - *drag_start;
-
-                    if !*is_exclusive && (total_scroll.x.abs() >= 3 || total_scroll.y.abs() >= 3) {
-                        // cancel inner interaction once we're sure the user intended to scroll
-                        *is_exclusive = true;
-                        (
-                            EventResult::new(true, true).merging(self.inner.handle_event(
-                                &Event::TouchCancelled,
-                                context,
-                                render_tree.inner_mut(),
-                                captures,
-                                &mut state.inner_state,
-                            )),
-                            delta,
-                        )
-                    } else {
-                        (EventResult::new(true, true), delta)
-                    }
+                    );
                 }
-                ScrollInteraction::Idle => (EventResult::default(), Point::zero()),
-            },
-            Event::TouchUp(point) => match state.interaction {
-                ScrollInteraction::Dragging {
-                    drag_start: _,
-                    last_point,
-                    is_exclusive,
-                } => {
-                    state.interaction = ScrollInteraction::Idle;
-
-                    let delta = *point - last_point;
-
-                    if is_exclusive {
-                        // If we don't set this, the scroll view will not animate the
-                        // snap back because the frame time is old
-                        render_tree.inner.subtree.frame_time = context.app_time;
-                        render_tree.inner.subtree.value = true;
-                        (EventResult::new(true, true), delta)
-                    } else {
-                        (
-                            EventResult::new(true, true).merging(self.inner.handle_event(
-                                &Event::TouchUp(
-                                    *point - render_tree.offset() - render_tree.inner.offset,
+                let point = touch.location.into();
+                match touch.phase {
+                    Phase::Started => {
+                        state.interaction = ScrollInteraction::Dragging {
+                            drag_start: point,
+                            last_point: point,
+                            is_exclusive: false,
+                            touch_id: touch.id,
+                        };
+                        let bounds =
+                            Rectangle::new(render_tree.inner.offset, render_tree.inner_size);
+                        if bounds.contains(&point) {
+                            (
+                                EventResult::new(true, false).merging(self.inner.handle_event(
+                                    &event.offset(-render_tree.offset() - render_tree.inner.offset),
+                                    context,
+                                    render_tree.inner_mut(),
+                                    captures,
+                                    &mut state.inner_state,
+                                )),
+                                Point::zero(),
+                            )
+                        } else {
+                            // TODO: Is it really possible to start a touch outside the bounds for any inner view?
+                            // Inner views are clipped
+                            (
+                                self.inner.handle_event(
+                                    &event.offset(-render_tree.offset() - render_tree.inner.offset),
+                                    context,
+                                    render_tree.inner_mut(),
+                                    captures,
+                                    &mut state.inner_state,
                                 ),
+                                Point::zero(),
+                            )
+                        }
+                    }
+                    Phase::Moved => match &mut state.interaction {
+                        ScrollInteraction::Dragging {
+                            drag_start,
+                            last_point,
+                            is_exclusive,
+                            ..
+                        } => {
+                            let delta = point - *last_point;
+
+                            *last_point = point;
+                            let total_scroll = point - *drag_start;
+
+                            // 4 pixels of wiggle without cancelling inner
+                            if !*is_exclusive
+                                && (total_scroll.x.abs() >= 4 || total_scroll.y.abs() >= 4)
+                            {
+                                // cancel inner interaction once we're sure the user intended to scroll
+                                *is_exclusive = true;
+                                let mut cancel_event = touch.clone();
+                                cancel_event.phase = Phase::Cancelled;
+                                (
+                                    EventResult::new(true, false).merging(self.inner.handle_event(
+                                        &Event::Touch(cancel_event),
+                                        context,
+                                        render_tree.inner_mut(),
+                                        captures,
+                                        &mut state.inner_state,
+                                    )),
+                                    delta,
+                                )
+                            } else {
+                                (EventResult::new(true, false), delta)
+                            }
+                        }
+                        ScrollInteraction::Idle => (EventResult::default(), Point::zero()),
+                    },
+                    Phase::Ended => match state.interaction {
+                        ScrollInteraction::Dragging {
+                            drag_start: _,
+                            last_point,
+                            is_exclusive,
+                            ..
+                        } => {
+                            state.interaction = ScrollInteraction::Idle;
+
+                            let delta = point - last_point;
+
+                            if is_exclusive {
+                                // If we don't set this, the scroll view will not animate the
+                                // snap back
+                                render_tree.inner.subtree.value = true;
+                                (EventResult::new(true, true), delta)
+                            } else {
+                                let touch_offset = render_tree.offset() + render_tree.inner.offset;
+                                let mut touch = touch.clone();
+                                touch.location -= touch_offset.into();
+
+                                (
+                                    EventResult::new(true, true).merging(self.inner.handle_event(
+                                        &Event::Touch(touch),
+                                        context,
+                                        render_tree.inner_mut(),
+                                        captures,
+                                        &mut state.inner_state,
+                                    )),
+                                    delta,
+                                )
+                            }
+                        }
+                        ScrollInteraction::Idle => (
+                            self.inner.handle_event(
+                                event,
+                                context,
+                                render_tree.inner_mut(),
+                                captures,
+                                &mut state.inner_state,
+                            ),
+                            Point::zero(),
+                        ),
+                    },
+                    Phase::Cancelled => {
+                        state.interaction = ScrollInteraction::Idle;
+                        (
+                            EventResult::new(true, true).merging(self.inner.handle_event(
+                                event,
                                 context,
                                 render_tree.inner_mut(),
                                 captures,
                                 &mut state.inner_state,
                             )),
-                            delta,
+                            Point::zero(),
                         )
                     }
+                    Phase::Hovering(_) => (
+                        self.inner.handle_event(
+                            event,
+                            context,
+                            render_tree.inner_mut(),
+                            captures,
+                            &mut state.inner_state,
+                        ),
+                        Point::zero(),
+                    ),
                 }
-                ScrollInteraction::Idle => (EventResult::default(), Point::zero()),
-            },
-            Event::TouchCancelled => {
-                state.interaction = ScrollInteraction::Idle;
-                // FIXME: This might not be right
-                (
-                    EventResult::new(true, true).merging(self.inner.handle_event(
-                        &Event::TouchCancelled,
-                        context,
-                        render_tree.inner_mut(),
-                        captures,
-                        &mut state.inner_state,
-                    )),
-                    Point::zero(),
-                )
             }
-            _ => (EventResult::default(), Point::zero()),
+            _ => (
+                self.inner.handle_event(
+                    event,
+                    context,
+                    render_tree.inner_mut(),
+                    captures,
+                    &mut state.inner_state,
+                ),
+                Point::zero(),
+            ),
         };
 
-        match self.direction {
-            ScrollDirection::Vertical => {
-                state.scroll_offset.y += delta.y;
-            }
-            ScrollDirection::Horizontal => {
-                state.scroll_offset.x += delta.x;
-            }
-            ScrollDirection::Both => {
-                state.scroll_offset.x += delta.x;
-                state.scroll_offset.y += delta.y;
-            }
-        }
+        // Constrain delta to configured axis
+        let delta = match self.direction {
+            ScrollDirection::Vertical => Point::new(0, delta.y),
+            ScrollDirection::Horizontal => Point::new(delta.x, 0),
+            ScrollDirection::Both => delta,
+        };
+        state.scroll_offset += delta;
 
-        // Recompute scroll bars
-        if delta != Point::zero() {
+        // Recompute scroll bars and manually update the target tree.
+        // This is used to avoid recomputing the entire view tree every time the
+        // scroll position changes. If there's scroll jank it's probably related
+        // to this optimization.
+        if delta != Point::zero() && !result.recompute_view {
             let subview_offset = {
                 let permitted_offset_x = render_tree
                     .inner_size
