@@ -121,7 +121,7 @@ enum Shape {
 }
 
 fn shape(shape: Shape) -> impl View<Rgb888, ()> {
-    match_view!(shape => {
+    match_view!(shape, {
         Shape::Rectangle => {
             Rectangle
         },
