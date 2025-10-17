@@ -7,11 +7,10 @@ Extending the animated render loop and hiding the boilerplate:
 # extern crate embedded_graphics;
 # extern crate embedded_graphics_simulator;
 # use std::time::{Duration, Instant};
-# use std::convert::TryInto;
-# 
+#
 # use buoyant::{
 #     environment::DefaultEnvironment,
-#     event::EventContext,
+#     event::{EventContext, simulator::MouseTracker},
 #     primitives::{Point, Size},
 #     render::{AnimatedJoin, AnimationDomain, Render},
 #     render_target::EmbeddedGraphicsRenderTarget,
@@ -19,7 +18,7 @@ Extending the animated render loop and hiding the boilerplate:
 # };
 # use embedded_graphics::{prelude::*, pixelcolor::Rgb888};
 # use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
-# 
+#
 fn main() {
 #     let size = Size::new(200, 100);
 #     let mut display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(size.into());
@@ -29,8 +28,10 @@ fn main() {
 #     let env = DefaultEnvironment::new(app_start.elapsed());
 #
     let mut count = 0;
+    // This derives higher-level mouse events from the raw simulator events
+    let mut mouse_tracker = MouseTracker::new();
 
-    let mut view = counter_view(count); 
+    let mut view = counter_view(count);
 
     let mut state = view.build_state(&mut count);
     let layout = view.layout(&size.into(), &env, &mut count, &mut state);
@@ -62,7 +63,7 @@ fn main() {
 #             &Rgb888::WHITE,
 #             &AnimationDomain::top_level(app_start.elapsed()),
 #         );
-# 
+#
         // Flush to display...
 #         window.update(target.display());
 
@@ -70,13 +71,13 @@ fn main() {
         let context = EventContext::new(app_start.elapsed());
 
         let mut should_recompute_view = false;
-#         // This is missing a check for simulator exit events
-        for event in window.events().filter_map(|event| event.try_into().ok()) {
+        // This is missing a check for simulator exit events!
+        for event in window.events().filter_map(|event| mouse_tracker.process_event(event)) {
             let result = view.handle_event( // <---- Event handling here!
                 &event,
-                &context, 
-                &mut target_tree, 
-                &mut count, 
+                &context,
+                &mut target_tree,
+                &mut count,
                 &mut state
             );
             should_recompute_view |= result.recompute_view;
