@@ -4,7 +4,7 @@ use paste::paste;
 use crate::{
     environment::LayoutEnvironment,
     event::{EventContext, EventResult},
-    layout::{LayoutDirection, ResolvedLayout, VerticalAlignment},
+    layout::{LayoutDirection, ResolvedLayout, SafeAreaInsets, VerticalAlignment},
     primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions},
     view::{ViewLayout, ViewMarker},
 };
@@ -30,6 +30,10 @@ impl<T: LayoutEnvironment> LayoutEnvironment for HorizontalEnvironment<'_, T> {
     }
     fn app_time(&self) -> core::time::Duration {
         self.inner_environment.app_time()
+    }
+
+    fn safe_area_insets(&self) -> &SafeAreaInsets {
+        self.inner_environment.safe_area_insets()
     }
 }
 

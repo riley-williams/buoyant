@@ -5,7 +5,7 @@ use std::time::Duration;
 use buoyant::{
     environment::{DefaultEnvironment, LayoutEnvironment},
     event::Event,
-    layout::{Alignment, LayoutDirection},
+    layout::{Alignment, LayoutDirection, SafeAreaInsets},
     primitives::{Point, ProposedDimensions, Size},
     render_target::FixedTextBuffer,
     view::View,
@@ -19,6 +19,7 @@ pub struct TestEnv {
     pub alignment: Alignment,
     pub foreground_color: char,
     pub app_time: Duration,
+    pub safe_area_insets: SafeAreaInsets,
 }
 
 impl LayoutEnvironment for TestEnv {
@@ -29,6 +30,10 @@ impl LayoutEnvironment for TestEnv {
     fn app_time(&self) -> Duration {
         self.app_time
     }
+
+    fn safe_area_insets(&self) -> &SafeAreaInsets {
+        &self.safe_area_insets
+    }
 }
 
 impl Default for TestEnv {
@@ -38,6 +43,7 @@ impl Default for TestEnv {
             alignment: Alignment::default(),
             foreground_color: 'x',
             app_time: Duration::default(),
+            safe_area_insets: SafeAreaInsets::zero(),
         }
     }
 }

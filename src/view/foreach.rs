@@ -3,7 +3,7 @@ use core::cmp::max;
 use crate::{
     environment::LayoutEnvironment,
     event::{EventContext, EventResult},
-    layout::{HorizontalAlignment, LayoutDirection, ResolvedLayout},
+    layout::{HorizontalAlignment, LayoutDirection, ResolvedLayout, SafeAreaInsets},
     primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions},
     transition::Opacity,
     view::{ViewLayout, ViewMarker},
@@ -21,6 +21,10 @@ impl<T: LayoutEnvironment> LayoutEnvironment for ForEachEnvironment<'_, T> {
 
     fn app_time(&self) -> core::time::Duration {
         self.inner_environment.app_time()
+    }
+
+    fn safe_area_insets(&self) -> &SafeAreaInsets {
+        self.inner_environment.safe_area_insets()
     }
 }
 

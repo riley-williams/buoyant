@@ -133,3 +133,33 @@ impl Axis {
         }
     }
 }
+
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct SafeAreaInsets {
+    pub top: u32,
+    pub leading: u32,
+    pub bottom: u32,
+    pub trailing: u32,
+}
+
+impl SafeAreaInsets {
+    #[must_use]
+    pub const fn new(top: u32, leading: u32, bottom: u32, trailing: u32) -> Self {
+        Self {
+            top,
+            leading,
+            bottom,
+            trailing,
+        }
+    }
+
+    #[must_use]
+    pub const fn zero() -> Self {
+        Self {
+            top: 0,
+            leading: 0,
+            bottom: 0,
+            trailing: 0,
+        }
+    }
+}
