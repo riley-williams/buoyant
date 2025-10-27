@@ -120,12 +120,12 @@ pub trait ViewLayout<Captures: ?Sized>: ViewMarker {
     ///
     /// This state is created once when the view is first initialized and is intended
     /// to persist across multiple layout/render cycles.
-    type State;
+    type State: 'static;
 
     /// The computed layout of the view and its subviews.
     ///
     /// Size is represented here, but placement is deferred to the render tree.
-    type Sublayout: Clone + PartialEq;
+    type Sublayout: Clone + PartialEq + 'static;
 
     /// The layout priority of the view. Higher priority views are more likely to
     /// be given the size they want
