@@ -8,15 +8,16 @@
 
 use std::time::{Duration, Instant};
 
-use buoyant::event::simulator::MouseTracker;
-use buoyant::primitives::UnitPoint;
+use buoyant::environment::DefaultEnvironment;
+use buoyant::event::{EventContext, simulator::MouseTracker};
+use buoyant::primitives::{Point, UnitPoint};
+use buoyant::render::{AnimatedJoin, AnimationDomain, Render};
 use buoyant::render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _};
 use buoyant::transition::{Edge, Move};
 use buoyant::view::scroll_view::ScrollDirection;
 use buoyant::{animation::Animation, if_view, match_view, view::prelude::*};
 use embedded_graphics::prelude::*;
 use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
-use smol::lock::Mutex;
 
 #[allow(unused)]
 mod spacing {
@@ -62,40 +63,71 @@ fn main() {
     let size = Size::new(480, 320);
     let mut display: SimulatorDisplay<color::Space> = SimulatorDisplay::new(size);
     let mut target = EmbeddedGraphicsRenderTarget::new_hinted(&mut display, color::BACKGROUND);
-    let window = Mutex::new(Window::new("Coffeeeee", &OutputSettings::default()));
+    let mut window = Window::new("Coffeeeee", &OutputSettings::default());
     let app_start = Instant::now();
     let mut touch_tracker = MouseTracker::new();
 
-    let captures = AppState::default();
+    let mut app_data = AppState::default();
+    let mut view = root_view(&app_data);
+    let mut state = view.build_state(&mut app_data);
 
-    let app_time = || app_start.elapsed();
+    // Create initial source and target trees for animation
+    let time = app_start.elapsed();
+    let env = DefaultEnvironment::new(time);
+    let layout = view.layout(&target.size().into(), &env, &mut app_data, &mut state);
 
-    let view_fn = |app_data: &mut AppState, _, _| root_view(app_data);
-    let flush_fn = async |target: &mut EmbeddedGraphicsRenderTarget<_>, _, _| {
-        window.lock().await.update(target.display());
-        // clear buffer for next frame
+    let mut source_tree =
+        &mut view.render_tree(&layout, Point::default(), &env, &mut app_data, &mut state);
+    let mut target_tree =
+        &mut view.render_tree(&layout, Point::default(), &env, &mut app_data, &mut state);
+
+    loop {
+        let time = app_start.elapsed();
+        let domain = AnimationDomain::top_level(time);
+
+        // Render animated transition between source and target trees
+        Render::render_animated(
+            &mut target,
+            source_tree,
+            target_tree,
+            &color::Space::WHITE,
+            &domain,
+        );
+        window.update(target.display());
         target.clear(color::Space::BLACK);
-    };
 
-    let render_loop = buoyant::render_loop::render_loop(
-        &mut target,
-        captures,
-        color::Space::WHITE,
-        app_time,
-        view_fn,
-        flush_fn,
-        async |handler| {
-            window
-                .lock()
-                .await
-                .events()
-                .filter_map(|event| touch_tracker.process_event(event))
-                .for_each(|event| {
-                    handler.handle_event(&event);
-                });
-        },
-    );
-    smol::block_on(render_loop);
+        // Handle events
+        let mut should_exit = false;
+        let context = EventContext::new(time);
+        for event in window
+            .events()
+            .filter_map(|event| touch_tracker.process_event(event))
+        {
+            if event == buoyant::event::Event::Exit {
+                should_exit = true;
+                break;
+            }
+            let result =
+                view.handle_event(&event, &context, target_tree, &mut app_data, &mut state);
+            if result.recompute_view {
+                // Join source and target trees at current time, "freezing" animation progress
+                target_tree.join_from(source_tree, &domain);
+                // Swap trees so the current target becomes the next source.
+                // Note this swaps the references instead of the whole section of memory
+                core::mem::swap(&mut source_tree, &mut target_tree);
+                // Create new view and target tree
+                view = root_view(&app_data);
+                let env = DefaultEnvironment::new(time);
+                let layout = view.layout(&target.size().into(), &env, &mut app_data, &mut state);
+                *target_tree =
+                    view.render_tree(&layout, Point::default(), &env, &mut app_data, &mut state);
+            }
+        }
+
+        if should_exit {
+            break;
+        }
+    }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Default)]
