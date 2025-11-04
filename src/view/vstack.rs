@@ -73,12 +73,23 @@ impl<T> VStack<T> {
 
 type LayoutFn<'a, C> = &'a mut dyn FnMut(ProposedDimensions, &mut C) -> Dimensions;
 
-fn layout_n<const N: usize, C: ?Sized>(
-    subviews: &mut [(LayoutFn<C>, i8, bool); N],
+fn layout_n<C: ?Sized>(
+    subviews: &mut [(LayoutFn<C>, i8, bool)],
     offer: ProposedDimensions,
     spacing: u32,
     captures: &mut C,
+    flexibilities: &mut [Dimension],
+    subviews_indices: &mut [usize],
 ) -> Dimensions {
+    let subview_count = subviews.len();
+    // These asserts should be provably true, and optimized away in release builds
+    assert!(subview_count <= flexibilities.len());
+    assert!(subview_count <= subviews_indices.len());
+
+    // Ensure initial values are as expected
+    debug_assert!(!flexibilities.iter().any(|e| *e != Dimension::new(0)));
+    debug_assert!(!subviews_indices.iter().any(|e| *e != 0));
+
     let ProposedDimension::Exact(height) = offer.height else {
         let mut total_height: Dimension = 0u32.into();
         let mut max_width: Dimension = 0u32.into();
@@ -105,7 +116,6 @@ fn layout_n<const N: usize, C: ?Sized>(
     // compute the "flexibility" of each view on the vertical axis and sort by decreasing
     // flexibility
     // Flexibility is defined as the difference between the responses to 0 and infinite height offers
-    let mut flexibilities: [Dimension; N] = [0u32.into(); N];
     let mut num_empty_views = 0;
     let min_proposal = ProposedDimensions {
         width: offer.width,
@@ -116,7 +126,7 @@ fn layout_n<const N: usize, C: ?Sized>(
         height: ProposedDimension::Infinite,
     };
 
-    for index in 0..N {
+    for index in 0..subview_count {
         let minimum_dimension = subviews[index].0(min_proposal, captures);
         // skip any further work for empty views
         if subviews[index].2 {
@@ -129,12 +139,11 @@ fn layout_n<const N: usize, C: ?Sized>(
     }
 
     let mut remaining_height =
-        height.saturating_sub(spacing * (N.saturating_sub(num_empty_views + 1)) as u32);
+        height.saturating_sub(spacing * (subview_count.saturating_sub(num_empty_views + 1)) as u32);
     let mut last_priority_group: Option<i8> = None;
     let mut max_width: Dimension = 0u32.into();
     loop {
         // collect the unsized subviews with the max layout priority into a group
-        let mut subviews_indices: [usize; N] = [0; N];
         let mut max = i8::MIN;
         let mut slice_start: usize = 0;
         let mut slice_len: usize = 0;
@@ -255,7 +264,9 @@ macro_rules! impl_view_for_vstack {
                     )+
                 ];
 
-                let total_size = layout_n(&mut subviews, *offer, self.spacing, captures);
+                let mut flexibilities: [Dimension; N] = [Dimension::new(0); N];
+                let mut subviews_indices: [usize; N] = [0; N];
+                let total_size = layout_n(&mut subviews, *offer, self.spacing, captures, &mut flexibilities, &mut subviews_indices);
                 ResolvedLayout {
                     sublayouts: ($([<c$n>].unwrap()),+),
                     resolved_size: total_size,
