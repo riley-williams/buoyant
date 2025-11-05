@@ -1,49 +1,14 @@
+//! `ForEach` view. See [`ForEach`] for details.
+
 use core::cmp::max;
 
 use crate::{
     environment::LayoutEnvironment,
-    event::{EventContext, EventResult},
-    layout::{HorizontalAlignment, LayoutDirection, ResolvedLayout},
+    layout::{HorizontalAlignment, LayoutDirection, ResolvedLayout, VerticalAlignment},
     primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions},
     transition::Opacity,
     view::{ViewLayout, ViewMarker},
 };
-
-#[derive(Debug, Clone)]
-struct ForEachEnvironment<'a, T> {
-    inner_environment: &'a T,
-}
-
-impl<T: LayoutEnvironment> LayoutEnvironment for ForEachEnvironment<'_, T> {
-    fn layout_direction(&self) -> LayoutDirection {
-        LayoutDirection::Vertical
-    }
-
-    fn app_time(&self) -> core::time::Duration {
-        self.inner_environment.app_time()
-    }
-}
-
-impl<'a, T: LayoutEnvironment> From<&'a T> for ForEachEnvironment<'a, T> {
-    fn from(environment: &'a T) -> Self {
-        Self {
-            inner_environment: environment,
-        }
-    }
-}
-
-/// Prefer using `ForEach::new` to avoid needing to specify
-/// type parameters.
-#[derive(Debug, Clone)]
-pub struct ForEachView<'a, const N: usize, I, V, F>
-where
-    F: Fn(&'a I) -> V,
-{
-    items: &'a [I],
-    build_view: F,
-    alignment: HorizontalAlignment,
-    spacing: u32,
-}
 
 /// A homogeneous collection of views, arranged vertically. Up to N views
 /// will be rendered.
@@ -51,7 +16,7 @@ where
 /// Alignment and spacing can be configured, and have the same behavior
 /// as with `VStack`.
 ///
-/// # Examples
+/// Example:
 ///
 /// ```
 /// use buoyant::view::{ForEach, Text};
@@ -70,33 +35,156 @@ where
 ///     .with_alignment(HorizontalAlignment::Leading);
 /// ```
 #[expect(missing_debug_implementations)]
-pub struct ForEach<const N: usize> {}
+pub struct ForEach<const N: usize, D = Vertical> {
+    _marker: core::marker::PhantomData<D>,
+}
 
-impl<const N: usize> ForEach<N> {
+/// Prefer using `ForEach::new` to avoid needing to specify
+/// type parameters.
+#[derive(Debug, Clone)]
+pub struct ForEachView<'a, const N: usize, I, V, F, D = Vertical>
+where
+    F: Fn(&'a I) -> V,
+{
+    items: &'a [I],
+    build_view: F,
+    direction_with_alignment: D,
+    spacing: u32,
+}
+
+/// Specifies a vertical direction for `ForEach`. Used in [`ForEachView::with_direction`].
+#[derive(Debug, Clone, Copy, Default)]
+pub struct Vertical(pub HorizontalAlignment);
+/// Specifies a horizontal direction for `ForEach`. Used in [`ForEachView::with_direction`].
+#[derive(Debug, Clone, Copy, Default)]
+pub struct Horizontal(pub VerticalAlignment);
+
+#[doc(hidden)]
+pub trait ForEachDirection: Copy + Default {
+    fn layout_dir() -> LayoutDirection;
+    fn align(&self, accumulated: i32, layout_size: &Dimensions, item_size: &Dimensions) -> Point;
+    fn size_of(&self, item_size: &Dimensions) -> i32;
+}
+
+impl ForEachDirection for Vertical {
+    fn layout_dir() -> LayoutDirection {
+        LayoutDirection::Vertical
+    }
+    fn align(&self, accumulated: i32, layout_size: &Dimensions, item_size: &Dimensions) -> Point {
+        let alignment = &self.0;
+        let width = alignment.align(layout_size.width.into(), item_size.width.into());
+        Point::new(width, accumulated)
+    }
+    fn size_of(&self, item_size: &Dimensions) -> i32 {
+        item_size.height.into()
+    }
+}
+
+impl ForEachDirection for Horizontal {
+    fn layout_dir() -> LayoutDirection {
+        LayoutDirection::Horizontal
+    }
+    fn align(&self, accumulated: i32, layout_size: &Dimensions, item_size: &Dimensions) -> Point {
+        let alignment = &self.0;
+        let height = alignment.align(layout_size.height.into(), item_size.height.into());
+
+        Point::new(accumulated, height)
+    }
+    fn size_of(&self, item_size: &Dimensions) -> i32 {
+        item_size.width.into()
+    }
+}
+
+#[derive(Debug, Clone)]
+struct ForEachEnvironment<'a, T, D> {
+    inner_environment: &'a T,
+    _direction: D,
+}
+
+impl<T: LayoutEnvironment, D: ForEachDirection> LayoutEnvironment for ForEachEnvironment<'_, T, D> {
+    fn layout_direction(&self) -> LayoutDirection {
+        D::layout_dir()
+    }
+
+    fn app_time(&self) -> core::time::Duration {
+        self.inner_environment.app_time()
+    }
+}
+
+impl<'a, T: LayoutEnvironment, D> ForEachEnvironment<'a, T, D> {
+    fn new(environment: &'a T, direction: D) -> Self {
+        Self {
+            inner_environment: environment,
+            _direction: direction,
+        }
+    }
+}
+
+impl<const N: usize, D: ForEachDirection> ForEach<N, D> {
     #[allow(missing_docs)]
     #[expect(clippy::new_ret_no_self)]
-    pub fn new<'a, I, V, F>(items: &'a [I], build_view: F) -> ForEachView<'a, N, I, V, F>
+    pub fn new<'a, I, V, F>(items: &'a [I], build_view: F) -> ForEachView<'a, N, I, V, F, D>
     where
         F: Fn(&'a I) -> V,
     {
         ForEachView {
             items,
             build_view,
-            alignment: HorizontalAlignment::default(),
+            direction_with_alignment: D::default(),
             spacing: 0,
         }
     }
 }
 
-impl<'a, const N: usize, I, V, F> ForEachView<'a, N, I, V, F>
+impl<'a, const N: usize, I, V, F> ForEachView<'a, N, I, V, F, Vertical>
 where
     F: Fn(&'a I) -> V,
 {
-    /// Sets an alignment strategy for when child views vary in width
+    /// Sets an alignment strategy for when child views vary in size
     #[must_use]
-    pub const fn with_alignment(mut self, alignment: HorizontalAlignment) -> Self {
-        self.alignment = alignment;
-        self
+    pub fn with_alignment(self, alignment: HorizontalAlignment) -> Self {
+        ForEachView {
+            items: self.items,
+            build_view: self.build_view,
+            direction_with_alignment: Vertical(alignment),
+            spacing: self.spacing,
+        }
+    }
+}
+
+impl<'a, const N: usize, I, V, F> ForEachView<'a, N, I, V, F, Horizontal>
+where
+    F: Fn(&'a I) -> V,
+{
+    /// Sets an alignment strategy for when child views vary in size
+    #[must_use]
+    pub fn with_alignment(self, alignment: VerticalAlignment) -> Self {
+        ForEachView {
+            items: self.items,
+            build_view: self.build_view,
+            direction_with_alignment: Horizontal(alignment),
+            spacing: self.spacing,
+        }
+    }
+}
+
+impl<'a, const N: usize, I, V, F, D> ForEachView<'a, N, I, V, F, D>
+where
+    D: ForEachDirection,
+    F: Fn(&'a I) -> V,
+{
+    /// Sets an direction and alignment strategy for when child views vary in size
+    #[must_use]
+    pub fn with_direction<D2>(self, direction: D2) -> ForEachView<'a, N, I, V, F, D2>
+    where
+        D2: ForEachDirection, // const shinenigans
+    {
+        ForEachView {
+            items: self.items,
+            build_view: self.build_view,
+            direction_with_alignment: direction,
+            spacing: self.spacing,
+        }
     }
 
     /// Inserts spacing between child views
@@ -107,7 +195,7 @@ where
     }
 }
 
-impl<'a, const N: usize, I, V, F> ViewMarker for ForEachView<'a, N, I, V, F>
+impl<'a, const N: usize, I, V, F, D> ViewMarker for ForEachView<'a, N, I, V, F, D>
 where
     F: Fn(&'a I) -> V,
     V: ViewMarker,
@@ -116,8 +204,8 @@ where
     type Transition = Opacity;
 }
 
-impl<'a, const N: usize, I, V, F, Captures: ?Sized> ViewLayout<Captures>
-    for ForEachView<'a, N, I, V, F>
+impl<'a, const N: usize, I, V, F, Captures: ?Sized, D: ForEachDirection> ViewLayout<Captures>
+    for ForEachView<'a, N, I, V, F, D>
 where
     V: ViewLayout<Captures>,
     F: Fn(&'a I) -> V,
@@ -147,7 +235,7 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> ResolvedLayout<Self::Sublayout> {
-        let env = &ForEachEnvironment::from(env);
+        let env = &ForEachEnvironment::new(env, self.direction_with_alignment);
         let mut sublayouts: heapless::Vec<ResolvedLayout<V::Sublayout>, N> = heapless::Vec::new();
         let mut subview_stages: heapless::Vec<(i8, bool), N> = heapless::Vec::new();
 
@@ -174,7 +262,9 @@ where
             size
         };
 
-        let size = layout_n(&subview_stages, *offer, self.spacing, layout_fn);
+        let direction = D::layout_dir();
+
+        let size = layout_n(&subview_stages, direction, *offer, self.spacing, layout_fn);
         ResolvedLayout {
             sublayouts,
             resolved_size: size,
@@ -189,22 +279,21 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> Self::Renderables {
-        let env = &ForEachEnvironment::from(env);
+        let env = &ForEachEnvironment::new(env, self.direction_with_alignment);
 
-        let mut accumulated_height = 0;
+        let mut accumulated_size = 0;
         let mut renderables = heapless::Vec::new();
 
         for ((item_layout, item), item_state) in layout.sublayouts.iter().zip(self.items).zip(state)
         {
-            let aligned_origin = origin
-                + Point::new(
-                    self.alignment.align(
-                        layout.resolved_size.width.into(),
-                        item_layout.resolved_size.width.into(),
-                    ),
-                    accumulated_height,
-                );
+            let aligned_origin = self.direction_with_alignment.align(
+                accumulated_size,
+                &layout.resolved_size,
+                &item_layout.resolved_size,
+            ) + origin;
+
             let view = (self.build_view)(item);
+
             // TODO: If we include an ID here, rows can be animated and transitioned
             let item = renderables.push(view.render_tree(
                 item_layout,
@@ -216,49 +305,32 @@ where
             assert!(item.is_ok());
 
             if !view.is_empty() {
-                let item_height: i32 = item_layout.resolved_size.height.into();
-                accumulated_height += item_height + self.spacing as i32;
+                accumulated_size += self
+                    .direction_with_alignment
+                    .size_of(&item_layout.resolved_size)
+                    + self.spacing as i32;
             }
         }
 
         renderables
     }
-
-    fn handle_event(
-        &self,
-        event: &crate::view::Event,
-        context: &EventContext,
-        render_tree: &mut Self::Renderables,
-        captures: &mut Captures,
-        state: &mut Self::State,
-    ) -> EventResult {
-        let mut result = EventResult::default();
-        for ((item, item_state), render_tree) in self
-            .items
-            .iter()
-            .zip(state.iter_mut())
-            .zip(render_tree.iter_mut())
-        {
-            let view = (self.build_view)(item);
-            result.merge(view.handle_event(event, context, render_tree, captures, item_state));
-            if result.handled {
-                return result;
-            }
-        }
-        result
-    }
 }
 
 fn layout_n<const N: usize>(
     subviews: &heapless::Vec<(i8, bool), N>,
+    direction: LayoutDirection,
     offer: ProposedDimensions,
     spacing: u32,
     mut layout_fn: impl FnMut(usize, ProposedDimensions) -> Dimensions,
 ) -> Dimensions {
-    let ProposedDimension::Exact(height) = offer.height else {
+    let proposed_dimension = match direction {
+        LayoutDirection::Horizontal => offer.width,
+        LayoutDirection::Vertical => offer.height,
+    };
+    let ProposedDimension::Exact(size) = proposed_dimension else {
         // Compact or infinite offer
-        let mut total_height: Dimension = 0u32.into();
-        let mut max_width: Dimension = 0u32.into();
+        let mut total_size: Dimension = 0u32.into();
+        let mut max_cross_size: Dimension = 0u32.into();
         let mut non_empty_views: u32 = 0;
         for (i, (_, is_empty)) in subviews.iter().enumerate() {
             // layout must be called at least once on every view to avoid panic unwrapping the
@@ -268,13 +340,23 @@ fn layout_n<const N: usize>(
                 continue;
             }
 
-            total_height += dimensions.height;
-            max_width = max(max_width, dimensions.width);
+            let (size, cross_size) = match direction {
+                LayoutDirection::Vertical => (dimensions.height, dimensions.width),
+                LayoutDirection::Horizontal => (dimensions.width, dimensions.height),
+            };
+            total_size += size;
+            max_cross_size = max(max_cross_size, cross_size);
             non_empty_views += 1;
         }
-        return Dimensions {
-            width: max_width,
-            height: total_height + spacing * (non_empty_views.saturating_sub(1)),
+        return match direction {
+            LayoutDirection::Horizontal => Dimensions {
+                width: total_size + spacing * (non_empty_views.saturating_sub(1)),
+                height: max_cross_size,
+            },
+            LayoutDirection::Vertical => Dimensions {
+                width: max_cross_size,
+                height: total_size + spacing * (non_empty_views.saturating_sub(1)),
+            },
         };
     };
 
@@ -283,14 +365,27 @@ fn layout_n<const N: usize>(
     // Flexibility is defined as the difference between the responses to 0 and infinite height offers
     let mut flexibilities: [Dimension; N] = [0u32.into(); N];
     let mut num_empty_views = 0;
-    let min_proposal = ProposedDimensions {
-        width: offer.width,
-        height: ProposedDimension::Exact(0),
-    };
-
-    let max_proposal = ProposedDimensions {
-        width: offer.width,
-        height: ProposedDimension::Infinite,
+    let (min_proposal, max_proposal) = match direction {
+        LayoutDirection::Horizontal => (
+            ProposedDimensions {
+                width: ProposedDimension::Exact(0),
+                height: offer.height,
+            },
+            ProposedDimensions {
+                width: ProposedDimension::Infinite,
+                height: offer.height,
+            },
+        ),
+        LayoutDirection::Vertical => (
+            ProposedDimensions {
+                width: offer.width,
+                height: ProposedDimension::Exact(0),
+            },
+            ProposedDimensions {
+                width: offer.width,
+                height: ProposedDimension::Infinite,
+            },
+        ),
     };
 
     for index in 0..subviews.len() {
@@ -301,13 +396,16 @@ fn layout_n<const N: usize>(
             continue;
         }
         let maximum_dimension = layout_fn(index, max_proposal);
-        flexibilities[index] = maximum_dimension.height - minimum_dimension.height;
+        flexibilities[index] = match direction {
+            LayoutDirection::Horizontal => maximum_dimension.width - minimum_dimension.width,
+            LayoutDirection::Vertical => maximum_dimension.height - minimum_dimension.height,
+        };
     }
 
-    let mut remaining_height =
-        height.saturating_sub(spacing * (N.saturating_sub(num_empty_views + 1)) as u32);
+    let mut remaining_size =
+        size.saturating_sub(spacing * (N.saturating_sub(num_empty_views + 1)) as u32);
     let mut last_priority_group: Option<i8> = None;
-    let mut max_width: Dimension = 0u32.into();
+    let mut max_cross_size: Dimension = 0u32.into();
     loop {
         // collect the unsized subviews with the max layout priority into a group
         let mut subviews_indices: [usize; N] = [0; N];
@@ -347,24 +445,50 @@ fn layout_n<const N: usize>(
 
         let mut remaining_group_size = group_indices.len() as u32;
 
-        for index in group_indices {
-            let height_fraction =
-                remaining_height / remaining_group_size + remaining_height % remaining_group_size;
-            let size = layout_fn(
-                *index,
-                ProposedDimensions {
-                    width: offer.width,
-                    height: ProposedDimension::Exact(height_fraction),
-                },
-            );
-            remaining_height = remaining_height.saturating_sub(size.height.into());
-            remaining_group_size -= 1;
-            max_width = max_width.max(size.width);
+        match direction {
+            LayoutDirection::Horizontal => {
+                for index in group_indices {
+                    let width_fraction = remaining_size / remaining_group_size
+                        + remaining_size % remaining_group_size;
+                    let size = layout_fn(
+                        *index,
+                        ProposedDimensions {
+                            width: ProposedDimension::Exact(width_fraction),
+                            height: offer.height,
+                        },
+                    );
+                    remaining_size = remaining_size.saturating_sub(size.width.into());
+                    remaining_group_size -= 1;
+                    max_cross_size = max_cross_size.max(size.height);
+                }
+            }
+            LayoutDirection::Vertical => {
+                for index in group_indices {
+                    let height_fraction = remaining_size / remaining_group_size
+                        + remaining_size % remaining_group_size;
+                    let size = layout_fn(
+                        *index,
+                        ProposedDimensions {
+                            width: offer.width,
+                            height: ProposedDimension::Exact(height_fraction),
+                        },
+                    );
+                    remaining_size = remaining_size.saturating_sub(size.height.into());
+                    remaining_group_size -= 1;
+                    max_cross_size = max_cross_size.max(size.width);
+                }
+            }
         }
     }
 
-    Dimensions {
-        width: max_width,
-        height: (height.saturating_sub(remaining_height)).into(),
+    match direction {
+        LayoutDirection::Horizontal => Dimensions {
+            width: (size.saturating_sub(remaining_size)).into(),
+            height: max_cross_size,
+        },
+        LayoutDirection::Vertical => Dimensions {
+            width: max_cross_size,
+            height: (size.saturating_sub(remaining_size)).into(),
+        },
     }
 }
