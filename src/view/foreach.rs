@@ -250,7 +250,7 @@ where
             _ = subview_stages.push((view.priority(), view.is_empty()));
         }
 
-        let layout_fn = |index: usize, offer: ProposedDimensions| {
+        let mut layout_fn = |index: usize, offer: ProposedDimensions| {
             let layout = (self.build_view)(&self.items[index]).layout(
                 &offer,
                 env,
@@ -264,7 +264,18 @@ where
 
         let direction = D::layout_dir();
 
-        let size = layout_n(&subview_stages, direction, *offer, self.spacing, layout_fn);
+        // collect the unsized subviews with the max layout priority into a group
+        let mut subviews_indices: [usize; N] = [0; N];
+        let mut flexibilities: [Dimension; N] = [0u32.into(); N];
+        let size = layout_n(
+            &subview_stages,
+            &mut subviews_indices,
+            &mut flexibilities,
+            direction,
+            *offer,
+            self.spacing,
+            &mut layout_fn,
+        );
         ResolvedLayout {
             sublayouts,
             resolved_size: size,
@@ -316,12 +327,15 @@ where
     }
 }
 
-fn layout_n<const N: usize>(
-    subviews: &heapless::Vec<(i8, bool), N>,
+#[allow(clippy::too_many_lines)]
+fn layout_n(
+    subviews: &[(i8, bool)],
+    subviews_indices: &mut [usize],
+    flexibilities: &mut [Dimension],
     direction: LayoutDirection,
     offer: ProposedDimensions,
     spacing: u32,
-    mut layout_fn: impl FnMut(usize, ProposedDimensions) -> Dimensions,
+    layout_fn: &mut dyn FnMut(usize, ProposedDimensions) -> Dimensions,
 ) -> Dimensions {
     let proposed_dimension = match direction {
         LayoutDirection::Horizontal => offer.width,
@@ -363,7 +377,7 @@ fn layout_n<const N: usize>(
     // compute the "flexibility" of each view on the vertical axis and sort by decreasing
     // flexibility
     // Flexibility is defined as the difference between the responses to 0 and infinite height offers
-    let mut flexibilities: [Dimension; N] = [0u32.into(); N];
+    flexibilities.fill(Dimension::from(0u32));
     let mut num_empty_views = 0;
     let (min_proposal, max_proposal) = match direction {
         LayoutDirection::Horizontal => (
@@ -402,13 +416,12 @@ fn layout_n<const N: usize>(
         };
     }
 
-    let mut remaining_size =
-        size.saturating_sub(spacing * (N.saturating_sub(num_empty_views + 1)) as u32);
+    let len = subviews.len() as u32;
+    let mut remaining_size = size.saturating_sub(spacing * len.saturating_sub(num_empty_views + 1));
     let mut last_priority_group: Option<i8> = None;
     let mut max_cross_size: Dimension = 0u32.into();
     loop {
-        // collect the unsized subviews with the max layout priority into a group
-        let mut subviews_indices: [usize; N] = [0; N];
+        subviews_indices.fill(0);
         let mut max = i8::MIN;
         let mut slice_start: usize = 0;
         let mut slice_len: usize = 0;
