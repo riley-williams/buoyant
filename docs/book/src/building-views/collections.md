@@ -62,7 +62,7 @@ static SWATCHES: [Swatch; 4] = [
 ];
 
 fn view(swatches: &[Swatch]) -> impl View<Rgb888, ()> + use<'_> {
-    ForEach::<10>::new(swatches, |swatch| {
+    ForEach::<10>::new_vertical(swatches, |swatch| {
         HStack::new((
             RoundedRectangle::new(8)
                 .foreground_color(swatch.color)
@@ -85,7 +85,7 @@ many items. As with `VStack`, the alignment and spacing of its subviews can be c
 # use buoyant::view::prelude::*;
 let radii = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
-ForEach::<10>::new(&radii, |radius| {
+ForEach::<10>::new_vertical(&radii, |radius| {
     RoundedRectangle::new(*radius)
 });
 ```
