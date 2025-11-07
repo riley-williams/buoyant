@@ -7,7 +7,7 @@ pub mod button;
 mod capturing;
 mod divider;
 mod empty_view;
-pub mod foreach;
+mod foreach;
 mod geometry_reader;
 mod hstack;
 #[cfg(feature = "embedded-graphics")]

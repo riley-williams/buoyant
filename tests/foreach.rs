@@ -37,7 +37,7 @@ fn foreach_with_inner_wrapping_hstack() {
         })
         .unwrap();
 
-    let view = ForEach::<10>::new(&users, |user: &User| {
+    let view = ForEach::<10>::new_vertical(&users, |user: &User| {
         HStack::new((
             Text::new(&user.name, &FONT),
             Spacer::default(),
@@ -81,7 +81,7 @@ fn foreach_leading_aligned() {
         })
         .unwrap();
 
-    let view = ForEach::<10>::new(&users, |user| {
+    let view = ForEach::<10>::new_vertical(&users, |user| {
         HStack::new((Text::new(&user.name, &FONT), Text::new(&user.age, &FONT)))
             .with_alignment(VerticalAlignment::Bottom)
             .with_spacing(1)
@@ -123,7 +123,7 @@ fn foreach_trailing_aligned() {
         })
         .unwrap();
 
-    let view = ForEach::<10>::new(&users, |user| {
+    let view = ForEach::<10>::new_vertical(&users, |user| {
         HStack::new((Text::new(&user.name, &FONT), Text::new(&user.age, &FONT)))
             .with_alignment(VerticalAlignment::Bottom)
             .with_spacing(1)
@@ -147,7 +147,7 @@ fn foreach_spacing() {
     rows.push("Row 2".to_string()).unwrap();
     rows.push("Row 3".to_string()).unwrap();
 
-    let view = ForEach::<10>::new(&rows, |name| Text::new(name, &FONT))
+    let view = ForEach::<10>::new_vertical(&rows, |name| Text::new(name, &FONT))
         .with_spacing(1)
         .foreground_color(' ');
     let mut buffer = FixedTextBuffer::<10, 5>::default();
@@ -164,7 +164,8 @@ fn foreach_spacing() {
 fn foreach_undersized() {
     let items = vec!["A", "B", "C", "D"];
 
-    let view = ForEach::<2>::new(&items, |name| Text::new(name, &FONT)).foreground_color(' ');
+    let view =
+        ForEach::<2>::new_vertical(&items, |name| Text::new(name, &FONT)).foreground_color(' ');
     let mut buffer = FixedTextBuffer::<10, 5>::default();
     let tree = make_render_tree(&view, buffer.size(), &mut ());
     tree.render(&mut buffer, &' ');

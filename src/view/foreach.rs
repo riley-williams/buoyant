@@ -35,9 +35,7 @@ use crate::{
 ///     .with_alignment(HorizontalAlignment::Leading);
 /// ```
 #[expect(missing_debug_implementations)]
-pub struct ForEach<const N: usize, D = Vertical> {
-    _marker: core::marker::PhantomData<D>,
-}
+pub struct ForEach<const N: usize> {}
 
 /// Prefer using `ForEach::new` to avoid needing to specify
 /// type parameters.
@@ -59,23 +57,24 @@ pub struct Vertical(pub HorizontalAlignment);
 #[derive(Debug, Clone, Copy, Default)]
 pub struct Horizontal(pub VerticalAlignment);
 
-#[doc(hidden)]
 pub trait ForEachDirection: Copy + Default {
     fn layout_dir() -> LayoutDirection;
-    fn align(&self, accumulated: i32, layout_size: &Dimensions, item_size: &Dimensions) -> Point;
-    fn size_of(&self, item_size: &Dimensions) -> i32;
+    fn align(&self, accumulated: i32, layout_size: Dimensions, item_size: Dimensions) -> Point;
+    fn size_of(&self, item_size: Dimensions) -> i32;
 }
 
 impl ForEachDirection for Vertical {
     fn layout_dir() -> LayoutDirection {
         LayoutDirection::Vertical
     }
-    fn align(&self, accumulated: i32, layout_size: &Dimensions, item_size: &Dimensions) -> Point {
+
+    fn align(&self, accumulated: i32, layout_size: Dimensions, item_size: Dimensions) -> Point {
         let alignment = &self.0;
         let width = alignment.align(layout_size.width.into(), item_size.width.into());
         Point::new(width, accumulated)
     }
-    fn size_of(&self, item_size: &Dimensions) -> i32 {
+
+    fn size_of(&self, item_size: Dimensions) -> i32 {
         item_size.height.into()
     }
 }
@@ -84,13 +83,14 @@ impl ForEachDirection for Horizontal {
     fn layout_dir() -> LayoutDirection {
         LayoutDirection::Horizontal
     }
-    fn align(&self, accumulated: i32, layout_size: &Dimensions, item_size: &Dimensions) -> Point {
+
+    fn align(&self, accumulated: i32, layout_size: Dimensions, item_size: Dimensions) -> Point {
         let alignment = &self.0;
         let height = alignment.align(layout_size.height.into(), item_size.height.into());
-
         Point::new(accumulated, height)
     }
-    fn size_of(&self, item_size: &Dimensions) -> i32 {
+
+    fn size_of(&self, item_size: Dimensions) -> i32 {
         item_size.width.into()
     }
 }
@@ -120,17 +120,45 @@ impl<'a, T: LayoutEnvironment, D> ForEachEnvironment<'a, T, D> {
     }
 }
 
-impl<const N: usize, D: ForEachDirection> ForEach<N, D> {
+impl<const N: usize> ForEach<N> {
     #[allow(missing_docs)]
     #[expect(clippy::new_ret_no_self)]
-    pub fn new<'a, I, V, F>(items: &'a [I], build_view: F) -> ForEachView<'a, N, I, V, F, D>
+    #[deprecated(since = "0.6.0", note = "Use `ForEach::<N>::new_vertical`")]
+    pub fn new<'a, I, V, F>(items: &'a [I], build_view: F) -> ForEachView<'a, N, I, V, F, Vertical>
+    where
+        F: Fn(&'a I) -> V,
+    {
+        Self::new_vertical(items, build_view)
+    }
+
+    #[allow(missing_docs)]
+    pub fn new_vertical<'a, I, V, F>(
+        items: &'a [I],
+        build_view: F,
+    ) -> ForEachView<'a, N, I, V, F, Vertical>
     where
         F: Fn(&'a I) -> V,
     {
         ForEachView {
             items,
             build_view,
-            direction_with_alignment: D::default(),
+            direction_with_alignment: Vertical::default(),
+            spacing: 0,
+        }
+    }
+
+    #[allow(missing_docs)]
+    pub fn new_horizontal<'a, I, V, F>(
+        items: &'a [I],
+        build_view: F,
+    ) -> ForEachView<'a, N, I, V, F, Horizontal>
+    where
+        F: Fn(&'a I) -> V,
+    {
+        ForEachView {
+            items,
+            build_view,
+            direction_with_alignment: Horizontal::default(),
             spacing: 0,
         }
     }
@@ -299,8 +327,8 @@ where
         {
             let aligned_origin = self.direction_with_alignment.align(
                 accumulated_size,
-                &layout.resolved_size,
-                &item_layout.resolved_size,
+                layout.resolved_size,
+                item_layout.resolved_size,
             ) + origin;
 
             let view = (self.build_view)(item);
@@ -318,7 +346,7 @@ where
             if !view.is_empty() {
                 accumulated_size += self
                     .direction_with_alignment
-                    .size_of(&item_layout.resolved_size)
+                    .size_of(item_layout.resolved_size)
                     + self.spacing as i32;
             }
         }
