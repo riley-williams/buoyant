@@ -61,6 +61,7 @@ impl<'a, F: FontMetrics + 'a> Iterator for WhitespaceWrap<'a, F> {
             // Check for newline first
             if ch == '\n' {
                 let (line, rest) = self.remaining.split_at(pos);
+                // This is safe because ch == \n which is 1 byte
                 self.remaining = &rest[1..];
 
                 // Handle empty lines and spaces after newlines
@@ -93,7 +94,16 @@ impl<'a, F: FontMetrics + 'a> Iterator for WhitespaceWrap<'a, F> {
                     return Some(result.trim_end());
                 }
                 // Force split the word
-                let split_pos = if pos > 0 { pos } else { 1 };
+                let split_pos = if pos > 0 {
+                    pos
+                } else {
+                    let Some(p) = self.remaining.char_indices().nth(1) else {
+                        let last_char = self.remaining;
+                        self.remaining = "";
+                        return Some(last_char);
+                    };
+                    p.0
+                };
                 let (result, rest) = self.remaining.split_at(split_pos);
                 self.remaining = rest;
                 return Some(result);
@@ -289,12 +299,14 @@ mod tests {
         assert_eq!(wrap.collect::<Vec<_>>(), vec!["hell", "o", "worl", "d"]);
     }
 
-    #[ignore = "This test is correct, fix later"]
     #[test]
-    fn multi_byte_unicode_wraps_correctly() {
+    fn unicode_wraps_correctly() {
         let metrics = &FONT.metrics();
-        let wrap = super::WhitespaceWrap::new("y̆y̆y̆y̆y̆ y̆y̆y̆ y̆y̆ y̆", 4, metrics);
-        assert_eq!(wrap.collect::<Vec<_>>(), vec!["y̆y̆y̆y̆", "y̆", "y̆y̆y̆", "y̆y̆ y̆"]);
+        let wrap = super::WhitespaceWrap::new("mº🦀º🦀 🦀ºº ºº 🦀", 4, metrics);
+        assert_eq!(
+            wrap.collect::<Vec<_>>(),
+            vec!["mº🦀º", "🦀", "🦀ºº", "ºº 🦀"]
+        );
     }
 
     /// Characters are 1 unit, whitespace is 2 units, and digits are the width of the digit value
