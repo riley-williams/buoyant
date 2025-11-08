@@ -9,6 +9,8 @@ use crate::{
     view::{ViewLayout, ViewMarker},
 };
 
+use core::cell::RefCell;
+
 /// A stack of heterogeneous views that arranges its children horizontally.
 ///
 /// [`HStack`] attempts to fairly distribute the available width among its children,
@@ -73,13 +75,12 @@ impl<T> HStack<T> {
     }
 }
 
-type LayoutFn<'a, C> = &'a mut dyn FnMut(ProposedDimensions, &mut C) -> Dimensions;
+type LayoutFn<'a> = &'a mut dyn FnMut(ProposedDimensions) -> Dimensions;
 
-fn layout_n<C: ?Sized>(
-    subviews: &mut [(LayoutFn<C>, i8, bool)],
+fn layout_n(
+    subviews: &mut [(LayoutFn, i8, bool)],
     offer: ProposedDimensions,
     spacing: u32,
-    captures: &mut C,
     flexibilities: &mut [Dimension],
     subviews_indices: &mut [usize],
 ) -> Dimensions {
@@ -100,7 +101,7 @@ fn layout_n<C: ?Sized>(
             // layout must be called at least once on every view to avoid panic unwrapping the
             // resolved layout.
             // TODO: Allowing layouts to return a cheap "empty" layout could avoid this?
-            let dimensions = layout_fn(offer, captures);
+            let dimensions = layout_fn(offer);
             if *is_empty {
                 continue;
             }
@@ -133,13 +134,13 @@ fn layout_n<C: ?Sized>(
     };
 
     for index in 0..subview_count {
-        let minimum_dimension = subviews[index].0(min_proposal, captures);
+        let minimum_dimension = subviews[index].0(min_proposal);
         // skip any further work for empty views
         if subviews[index].2 {
             num_empty_views += 1;
             continue;
         }
-        let maximum_dimension = subviews[index].0(max_proposal, captures);
+        let maximum_dimension = subviews[index].0(max_proposal);
         flexibilities[index] = maximum_dimension.width - minimum_dimension.width;
     }
 
@@ -191,13 +192,10 @@ fn layout_n<C: ?Sized>(
         for index in group_indices {
             let width_fraction =
                 remaining_width / remaining_group_size + remaining_width % remaining_group_size;
-            let size = subviews[*index].0(
-                ProposedDimensions {
-                    width: ProposedDimension::Exact(width_fraction),
-                    height: offer.height,
-                },
-                captures,
-            );
+            let size = subviews[*index].0(ProposedDimensions {
+                width: ProposedDimension::Exact(width_fraction),
+                height: offer.height,
+            });
             remaining_width = remaining_width.saturating_sub(size.width.into());
             remaining_group_size -= 1;
             max_height = max_height.max(size.height);
@@ -256,17 +254,24 @@ macro_rules! impl_view_for_hstack {
                 const N: usize = count!($($n),+);
                 let env = &HorizontalEnvironment::from(env);
 
+                let captures_cell = RefCell::new(captures);
+
                 $(
                     let mut [<c $n>]: Option<ResolvedLayout<$type::Sublayout>> = None;
-                    let mut [<f $n>] = |size: ProposedDimensions, captures: &mut Captures| {
-                        let layout = self.items.$n.layout(&size, env, captures, &mut state.$n);
+                )+
+
+                $(
+                    let mut [<f $n>] = |size: ProposedDimensions| {
+                        // Calls to this layout cannot overlap, so this borrow will not conflict
+                        let mut captures = captures_cell.borrow_mut();
+                        let layout = self.items.$n.layout(&size, env, &mut *captures, &mut state.$n);
                         let size = layout.resolved_size;
                         [<c $n>] = Some(layout);
                         size
                     };
                 )+
 
-                let mut subviews: [(LayoutFn<Captures>, i8, bool); N] = [
+                let mut subviews: [(LayoutFn, i8, bool); N] = [
                     $(
                         (&mut [<f $n>], self.items.$n.priority(), self.items.$n.is_empty()),
                     )+
@@ -274,7 +279,7 @@ macro_rules! impl_view_for_hstack {
 
                 let mut flexibilities: [Dimension; N] = [Dimension::new(0); N];
                 let mut subviews_indices: [usize; N] = [0; N];
-                let total_size = layout_n(&mut subviews, *offer, self.spacing, captures, &mut flexibilities, &mut subviews_indices);
+                let total_size = layout_n(&mut subviews, *offer, self.spacing, &mut flexibilities, &mut subviews_indices);
                 ResolvedLayout {
                     sublayouts: ($(
                         [<c $n>] .unwrap()
