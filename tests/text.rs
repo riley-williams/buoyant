@@ -1,4 +1,4 @@
-use buoyant::render::Render;
+use buoyant::{primitives::Size, render::Render};
 use std::iter::zip;
 
 use buoyant::{
@@ -170,4 +170,27 @@ fn undersized_format_args() {
     assert_eq!(buffer.text[1].iter().collect::<String>(), "123+           ");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "123+456=       ");
     assert_eq!(buffer.text[3].iter().collect::<String>(), "123+456=579    ");
+}
+
+#[test]
+fn multibyte_char_wrapping_does_not_panic() {
+    let font = CharacterBufferFont {};
+    let mut buffer = FixedTextBuffer::<15, 8>::default();
+
+    let view = HStack::new((
+        buoyant::view::Text::new("Temp:", &font),
+        buoyant::view::Text::new("252°C", &font),
+    ))
+    .with_spacing(5)
+    .with_alignment(buoyant::layout::VerticalAlignment::Top)
+    .foreground_color(' ');
+
+    for x in 0..buffer.size().width {
+        for y in 0..buffer.size().height {
+            buffer.clear();
+            let layout_size = Size::new(x, y);
+            let tree = make_render_tree(&view, layout_size, &mut ());
+            tree.render(&mut buffer, &' ');
+        }
+    }
 }
