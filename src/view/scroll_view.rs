@@ -198,12 +198,19 @@ enum ScrollInteraction {
     },
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum ContentPinning {
+    Floating,
+    Pinned(bool, bool),
+}
+
 /// Persisted state for the scroll view and its inner view.
 #[derive(Debug, Clone)]
 pub struct ScrollViewState<InnerState> {
     scroll_offset: Point,
     interaction: ScrollInteraction,
     inner_state: InnerState,
+    content_pinning: ContentPinning,
 }
 
 impl<Inner: ViewMarker> ViewMarker for ScrollView<Inner> {
@@ -224,6 +231,7 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
             scroll_offset: Point::zero(),
             interaction: ScrollInteraction::Idle,
             inner_state: self.inner.build_state(captures),
+            content_pinning: ContentPinning::Floating,
         }
     }
 
@@ -284,6 +292,18 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
 
         let permitted_offset_x = inner_view_width.saturating_sub(scroll_view_width) as i32;
         let permitted_offset_y = inner_view_height.saturating_sub(scroll_view_height) as i32;
+
+        // Adjust scroll offset if pinning is enabled
+        if state.interaction == ScrollInteraction::Idle
+            && let ContentPinning::Pinned(horizontal, vertical) = state.content_pinning
+        {
+            if horizontal {
+                state.scroll_offset.x = -permitted_offset_x;
+            }
+            if vertical {
+                state.scroll_offset.y = -permitted_offset_y;
+            }
+        }
 
         // Make sure the inner view is within the scroll view's bounds, mutate scroll
         // offset to correct only if not dragging
@@ -548,6 +568,24 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
             ScrollDirection::Both => delta,
         };
         state.scroll_offset += delta;
+
+        let should_pin_bottom = -state.scroll_offset.y
+            >= (render_tree
+                .inner_size
+                .height
+                .saturating_sub(render_tree.scroll_size.height)) as i32
+            && state.scroll_offset.y != 0;
+        let should_pin_trailing = -state.scroll_offset.x
+            >= (render_tree
+                .inner_size
+                .width
+                .saturating_sub(render_tree.scroll_size.width)) as i32
+            && state.scroll_offset.x != 0;
+
+        state.content_pinning = match (should_pin_trailing, should_pin_bottom) {
+            (false, false) => ContentPinning::Floating,
+            (horizontal, vertical) => ContentPinning::Pinned(horizontal, vertical),
+        };
 
         // Recompute scroll bars and manually update the target tree.
         // This is used to avoid recomputing the entire view tree every time the
