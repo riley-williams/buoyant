@@ -83,7 +83,7 @@ fn increment_single_frame() {
     assert_eq!(app_state, AppState { a: 0, b: 0 });
 
     view.handle_event(
-        &touch_down(Point::new(1, 1)),
+        &touch_down(1, 1),
         &EventContext::new(Duration::ZERO),
         &mut tree,
         &mut app_state,
@@ -91,7 +91,7 @@ fn increment_single_frame() {
     );
     assert_eq!(app_state, AppState { a: 0, b: 0 });
     view.handle_event(
-        &touch_up(Point::new(1, 1)),
+        &touch_up(1, 1),
         &EventContext::new(Duration::ZERO),
         &mut tree,
         &mut app_state,
@@ -124,7 +124,7 @@ fn drag_cancel() {
     );
 
     view.handle_event(
-        &touch_down(Point::new(1, 1)),
+        &touch_down(1, 1),
         &EventContext::new(Duration::ZERO),
         &mut tree,
         &mut app_state,
@@ -132,7 +132,7 @@ fn drag_cancel() {
     );
     assert_eq!(app_state, AppState { a: 0, b: 0 });
     view.handle_event(
-        &touch_move(Point::new(1, 2)),
+        &touch_move(1, 2),
         &EventContext::new(Duration::ZERO),
         &mut tree,
         &mut app_state,
@@ -140,7 +140,7 @@ fn drag_cancel() {
     );
     assert_eq!(app_state, AppState { a: 0, b: 0 });
     view.handle_event(
-        &touch_up(Point::new(1, 2)),
+        &touch_up(1, 2),
         &EventContext::new(Duration::ZERO),
         &mut tree,
         &mut app_state,
@@ -163,7 +163,7 @@ fn drag_cancel_uncancel() {
     );
 
     view.handle_event(
-        &touch_down(Point::new(1, 1)),
+        &touch_down(1, 1),
         &EventContext::new(Duration::ZERO),
         &mut tree,
         &mut app_state,
@@ -171,7 +171,7 @@ fn drag_cancel_uncancel() {
     );
     assert_eq!(app_state, AppState { a: 0, b: 0 });
     view.handle_event(
-        &touch_move(Point::new(1, 2)),
+        &touch_move(1, 2),
         &EventContext::new(Duration::ZERO),
         &mut tree,
         &mut app_state,
@@ -179,7 +179,7 @@ fn drag_cancel_uncancel() {
     );
     assert_eq!(app_state, AppState { a: 0, b: 0 });
     view.handle_event(
-        &touch_move(Point::new(5, 1)),
+        &touch_move(5, 1),
         &EventContext::new(Duration::ZERO),
         &mut tree,
         &mut app_state,
@@ -187,7 +187,7 @@ fn drag_cancel_uncancel() {
     );
     assert_eq!(app_state, AppState { a: 0, b: 0 });
     view.handle_event(
-        &touch_up(Point::new(5, 1)),
+        &touch_up(5, 1),
         &EventContext::new(Duration::ZERO),
         &mut tree,
         &mut app_state,

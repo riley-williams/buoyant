@@ -8,7 +8,7 @@ use crate::{
     animation::Animation,
     event::{Event, EventContext, EventResult},
     layout::ResolvedLayout,
-    primitives::{Point, ProposedDimension, ProposedDimensions, Size, geometry::Rectangle},
+    primitives::{Point, ProposedDimension, ProposedDimensions, Size},
     render::{Animate, Capsule, Offset, ScrollRenderable},
     transition::Opacity,
     view::{ViewLayout, ViewMarker},
@@ -410,15 +410,15 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
                 let point = touch.location.into();
                 match touch.phase {
                     Phase::Started => {
-                        state.interaction = ScrollInteraction::Dragging {
-                            drag_start: point,
-                            last_point: point,
-                            is_exclusive: false,
-                            touch_id: touch.id,
-                        };
-                        let bounds =
-                            Rectangle::new(render_tree.inner.offset, render_tree.inner_size);
+                        let bounds = render_tree.bounds();
                         if bounds.contains(&point) {
+                            state.interaction = ScrollInteraction::Dragging {
+                                drag_start: point,
+                                last_point: point,
+                                is_exclusive: false,
+                                touch_id: touch.id,
+                            };
+
                             (
                                 EventResult::new(true, false).merging(self.inner.handle_event(
                                     &event.offset(-render_tree.offset() - render_tree.inner.offset),
@@ -430,18 +430,8 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
                                 Point::zero(),
                             )
                         } else {
-                            // TODO: Is it really possible to start a touch outside the bounds for any inner view?
-                            // Inner views are clipped
-                            (
-                                self.inner.handle_event(
-                                    &event.offset(-render_tree.offset() - render_tree.inner.offset),
-                                    context,
-                                    render_tree.inner_mut(),
-                                    captures,
-                                    &mut state.inner_state,
-                                ),
-                                Point::zero(),
-                            )
+                            // Touches cannot start outside the bounds, return early
+                            return EventResult::new(false, false);
                         }
                     }
                     Phase::Moved => match &mut state.interaction {
