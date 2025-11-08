@@ -34,6 +34,11 @@ impl<T> ScrollRenderable<T> {
         &mut self.inner.subtree.subtree.0.offset
     }
 
+    /// The bounds of the scrollview itself
+    pub fn bounds(&self) -> Rectangle {
+        Rectangle::new(self.inner.offset, self.scroll_size)
+    }
+
     pub fn inner_mut(&mut self) -> &mut T {
         &mut self.inner.subtree.subtree.0.subtree
     }

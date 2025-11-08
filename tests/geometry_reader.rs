@@ -5,7 +5,7 @@ use crate::common::{touch_down, touch_move};
 use buoyant::{
     environment::DefaultEnvironment,
     event::EventContext,
-    primitives::{Dimensions, Point, ProposedDimensions, Size},
+    primitives::{Dimensions, ProposedDimensions, Size},
     render::Render,
     render_target::FixedTextBuffer,
     view::{button::ButtonState, prelude::*},
@@ -227,7 +227,7 @@ fn preserves_inner_state() {
     );
 
     view.handle_event(
-        &touch_down(Point::new(1, 1)),
+        &touch_down(1, 1),
         &EventContext::new(Duration::ZERO),
         &mut render_tree,
         &mut captures,
@@ -256,7 +256,7 @@ fn preserves_inner_state() {
     );
 
     view.handle_event(
-        &touch_move(Point::new(2, 20)),
+        &touch_move(2, 20),
         &EventContext::new(Duration::ZERO),
         &mut render_tree,
         &mut captures,

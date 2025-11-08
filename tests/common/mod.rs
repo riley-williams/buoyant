@@ -10,7 +10,7 @@ use buoyant::{
     render_target::FixedTextBuffer,
     view::View,
 };
-use embedded_touch::{Phase, PointerButton, Tool, Touch};
+use embedded_touch::{Phase, PointerButton, Tool, Touch, TouchPoint};
 
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
@@ -84,10 +84,10 @@ where
 }
 
 #[allow(dead_code)]
-pub fn touch_down(p: Point) -> Event {
+pub fn touch_down(x: i32, y: i32) -> Event {
     Event::Touch(Touch {
         id: 0,
-        location: p.into(),
+        location: TouchPoint::new(x, y),
         phase: Phase::Started,
         tool: Tool::Pointer {
             button: PointerButton::Primary,
@@ -96,10 +96,10 @@ pub fn touch_down(p: Point) -> Event {
 }
 
 #[allow(dead_code)]
-pub fn touch_up(p: Point) -> Event {
+pub fn touch_up(x: i32, y: i32) -> Event {
     Event::Touch(Touch {
         id: 0,
-        location: p.into(),
+        location: TouchPoint::new(x, y),
         phase: Phase::Ended,
         tool: Tool::Pointer {
             button: PointerButton::Primary,
@@ -108,10 +108,10 @@ pub fn touch_up(p: Point) -> Event {
 }
 
 #[allow(dead_code)]
-pub fn touch_move(p: Point) -> Event {
+pub fn touch_move(x: i32, y: i32) -> Event {
     Event::Touch(Touch {
         id: 0,
-        location: p.into(),
+        location: TouchPoint::new(x, y),
         phase: Phase::Moved,
         tool: Tool::Pointer {
             button: PointerButton::Primary,

@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use buoyant::{
     event::EventContext,
-    primitives::{Point, Size},
+    primitives::Size,
     render::Render,
     render_target::FixedTextBuffer,
     view::{prelude::*, scroll_view::ScrollDirection},
@@ -53,7 +53,7 @@ fn vertical_scroll_does_not_move_horizontally() {
     );
 
     view.handle_event(
-        &touch_down(Point::new(2, 3)),
+        &touch_down(2, 3),
         &EventContext::new(Duration::from_secs(2)),
         &mut tree,
         &mut captures,
@@ -61,7 +61,7 @@ fn vertical_scroll_does_not_move_horizontally() {
     );
 
     let result = view.handle_event(
-        &touch_move(Point::new(20, 3)),
+        &touch_move(20, 3),
         &EventContext::new(Duration::from_secs(3)),
         &mut tree,
         &mut captures,
@@ -83,7 +83,7 @@ fn vertical_scroll_does_not_move_horizontally() {
     );
 
     let result = view.handle_event(
-        &touch_move(Point::new(-20, 2)),
+        &touch_move(-20, 2),
         &EventContext::new(Duration::from_secs(4)),
         &mut tree,
         &mut captures,
@@ -106,7 +106,7 @@ fn vertical_scroll_does_not_move_horizontally() {
     );
 
     let result = view.handle_event(
-        &touch_up(Point::new(1, 1)),
+        &touch_up(1, 1),
         &EventContext::new(Duration::from_secs(5)),
         &mut tree,
         &mut captures,
