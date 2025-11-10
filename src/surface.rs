@@ -145,14 +145,7 @@ where
     where
         I: IntoIterator<Item = Self::Color>,
     {
-        self.0.draw_iter(
-            embedded_graphics::prelude::PointsIter::points(area)
-                .zip(colors)
-                .map(|(pos, color)| Pixel {
-                    point: pos.into(),
-                    color,
-                }),
-        );
+        self.0.fill_contiguous(&(*area).into(), colors);
         Ok(())
     }
 
