@@ -53,6 +53,10 @@ impl<D: DrawTarget> Surface for DrawTargetSurface<'_, D> {
     fn fill_solid(&mut self, area: &Rectangle, color: Self::Color) {
         _ = self.0.fill_solid(&area.clone().into(), color);
     }
+
+    fn clear(&mut self, color: Self::Color) {
+        _ = self.0.clear(color);
+    }
 }
 
 #[derive(Debug)]
