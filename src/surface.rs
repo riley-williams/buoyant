@@ -32,6 +32,11 @@ pub trait Surface {
     fn fill_solid(&mut self, area: &Rectangle, color: Self::Color) {
         self.fill_contiguous(area, core::iter::repeat(color));
     }
+
+    fn clear(&mut self, color: Self::Color) {
+        let bounding_box = Rectangle::new(Point::zero(), self.size());
+        self.fill_solid(&bounding_box, color);
+    }
 }
 
 /// A surface which draws with a specified offset.
@@ -145,14 +150,7 @@ where
     where
         I: IntoIterator<Item = Self::Color>,
     {
-        self.0.draw_iter(
-            embedded_graphics::prelude::PointsIter::points(area)
-                .zip(colors)
-                .map(|(pos, color)| Pixel {
-                    point: pos.into(),
-                    color,
-                }),
-        );
+        self.0.fill_contiguous(&(*area).into(), colors);
         Ok(())
     }
 
@@ -162,13 +160,12 @@ where
         color: Self::Color,
     ) -> Result<(), Self::Error> {
         let area: Rectangle = (*area).into();
-        self.0.fill_contiguous(&area, core::iter::repeat(color));
+        self.0.fill_solid(&area, color);
         Ok(())
     }
 
     fn clear(&mut self, color: Self::Color) -> Result<(), Self::Error> {
-        let bounding_box = Rectangle::new(Point::zero(), self.0.size());
-        self.0.fill_solid(&bounding_box, color);
+        self.0.clear(color);
         Ok(())
     }
 }
