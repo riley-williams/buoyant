@@ -8,6 +8,8 @@ use crate::{
     view::{ViewLayout, ViewMarker},
 };
 
+use core::cell::RefCell;
+
 /// A stack of heterogeneous views that arranges its children vertically.
 ///
 /// [`VStack`] attempts to fairly distribute the available height among its children,
@@ -71,14 +73,24 @@ impl<T> VStack<T> {
     }
 }
 
-type LayoutFn<'a, C> = &'a mut dyn FnMut(ProposedDimensions, &mut C) -> Dimensions;
+type LayoutFn<'a> = &'a mut dyn FnMut(ProposedDimensions) -> Dimensions;
 
-fn layout_n<const N: usize, C: ?Sized>(
-    subviews: &mut [(LayoutFn<C>, i8, bool); N],
+fn layout_n(
+    subviews: &mut [(LayoutFn, i8, bool)],
     offer: ProposedDimensions,
     spacing: u32,
-    captures: &mut C,
+    flexibilities: &mut [Dimension],
+    subviews_indices: &mut [usize],
 ) -> Dimensions {
+    let subview_count = subviews.len();
+    // These asserts should be provably true, and optimized away in release builds
+    assert!(subview_count <= flexibilities.len());
+    assert!(subview_count <= subviews_indices.len());
+
+    // Ensure initial values are as expected
+    debug_assert!(!flexibilities.iter().any(|e| *e != Dimension::new(0)));
+    debug_assert!(!subviews_indices.iter().any(|e| *e != 0));
+
     let ProposedDimension::Exact(height) = offer.height else {
         let mut total_height: Dimension = 0u32.into();
         let mut max_width: Dimension = 0u32.into();
@@ -87,7 +99,7 @@ fn layout_n<const N: usize, C: ?Sized>(
             // layout must be called at least once on every view to avoid panic unwrapping the
             // resolved layout.
             // TODO: Allowing layouts to return a cheap "empty" layout could avoid this?
-            let dimensions = layout_fn(offer, captures);
+            let dimensions = layout_fn(offer);
             if *is_empty {
                 continue;
             }
@@ -105,7 +117,6 @@ fn layout_n<const N: usize, C: ?Sized>(
     // compute the "flexibility" of each view on the vertical axis and sort by decreasing
     // flexibility
     // Flexibility is defined as the difference between the responses to 0 and infinite height offers
-    let mut flexibilities: [Dimension; N] = [0u32.into(); N];
     let mut num_empty_views = 0;
     let min_proposal = ProposedDimensions {
         width: offer.width,
@@ -116,25 +127,24 @@ fn layout_n<const N: usize, C: ?Sized>(
         height: ProposedDimension::Infinite,
     };
 
-    for index in 0..N {
-        let minimum_dimension = subviews[index].0(min_proposal, captures);
+    for index in 0..subview_count {
+        let minimum_dimension = subviews[index].0(min_proposal);
         // skip any further work for empty views
         if subviews[index].2 {
             num_empty_views += 1;
             continue;
         }
 
-        let maximum_dimension = subviews[index].0(max_proposal, captures);
+        let maximum_dimension = subviews[index].0(max_proposal);
         flexibilities[index] = maximum_dimension.height - minimum_dimension.height;
     }
 
     let mut remaining_height =
-        height.saturating_sub(spacing * (N.saturating_sub(num_empty_views + 1)) as u32);
+        height.saturating_sub(spacing * (subview_count.saturating_sub(num_empty_views + 1)) as u32);
     let mut last_priority_group: Option<i8> = None;
     let mut max_width: Dimension = 0u32.into();
     loop {
         // collect the unsized subviews with the max layout priority into a group
-        let mut subviews_indices: [usize; N] = [0; N];
         let mut max = i8::MIN;
         let mut slice_start: usize = 0;
         let mut slice_len: usize = 0;
@@ -174,13 +184,10 @@ fn layout_n<const N: usize, C: ?Sized>(
         for index in group_indices {
             let height_fraction =
                 remaining_height / remaining_group_size + remaining_height % remaining_group_size;
-            let size = subviews[*index].0(
-                ProposedDimensions {
-                    width: offer.width,
-                    height: ProposedDimension::Exact(height_fraction),
-                },
-                captures,
-            );
+            let size = subviews[*index].0(ProposedDimensions {
+                width: offer.width,
+                height: ProposedDimension::Exact(height_fraction),
+            });
             remaining_height = remaining_height.saturating_sub(size.height.into());
             remaining_group_size -= 1;
             max_width = max_width.max(size.width);
@@ -236,26 +243,32 @@ macro_rules! impl_view_for_vstack {
                 const N: usize = count!($($n),+);
                 let env = &VerticalEnvironment::from(env);
 
+                let captures_cell = RefCell::new(captures);
+
                 $(
                     let mut [<c$n>]: Option<ResolvedLayout<$type::Sublayout>> = None;
                 )+
 
                 $(
-                    let mut [<f$n>] = |size: ProposedDimensions, captures: &mut Captures| {
-                        let layout = self.items.$n.layout(&size, env, captures, &mut state.$n);
+                    let mut [<f$n>] = |size: ProposedDimensions| {
+                        // Calls to this layout cannot overlap, so this borrow will not conflict
+                        let mut captures = captures_cell.borrow_mut();
+                        let layout = self.items.$n.layout(&size, env, &mut *captures, &mut state.$n);
                         let size = layout.resolved_size;
                         [<c$n>] = Some(layout);
                         size
                     };
                 )+
 
-                let mut subviews: [(LayoutFn<Captures>, i8, bool); N] = [
+                let mut subviews: [(LayoutFn, i8, bool); N] = [
                     $(
                         (&mut [<f$n>], self.items.$n.priority(), self.items.$n.is_empty()),
                     )+
                 ];
 
-                let total_size = layout_n(&mut subviews, *offer, self.spacing, captures);
+                let mut flexibilities: [Dimension; N] = [Dimension::new(0); N];
+                let mut subviews_indices: [usize; N] = [0; N];
+                let total_size = layout_n(&mut subviews, *offer, self.spacing, &mut flexibilities, &mut subviews_indices);
                 ResolvedLayout {
                     sublayouts: ($([<c$n>].unwrap()),+),
                     resolved_size: total_size,
