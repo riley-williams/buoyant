@@ -7,7 +7,7 @@ use crate::{
     primitives::{Interpolate, Point, Size, geometry::Rectangle},
     render::{AnimatedJoin, AnimationDomain, Render},
     render_target::{Glyph, RenderTarget, SolidBrush},
-    view::{HorizontalTextAlignment, WhitespaceWrap},
+    view::{BreakWordWrap, HorizontalTextAlignment, WhitespaceWrap, WrapStrategy},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -24,6 +24,7 @@ pub struct Text<'a, T, F, const LINES: usize> {
     pub text: T,
     pub alignment: HorizontalTextAlignment,
     pub lines: Vec<Line, LINES>,
+    pub wrap: WrapStrategy,
 }
 
 impl<'a, T: AsRef<str>, F> Text<'a, T, F, 8> {
@@ -34,6 +35,7 @@ impl<'a, T: AsRef<str>, F> Text<'a, T, F, 8> {
         text: T,
         alignment: HorizontalTextAlignment,
         lines: Vec<Line, 8>,
+        wrap: WrapStrategy,
     ) -> Self {
         Self {
             origin,
@@ -42,6 +44,7 @@ impl<'a, T: AsRef<str>, F> Text<'a, T, F, 8> {
             text,
             alignment,
             lines,
+            wrap,
         }
     }
 }
@@ -54,6 +57,7 @@ impl<T: Clone, F, const N: usize> Clone for Text<'_, T, F, N> {
             text: self.text.clone(),
             alignment: self.alignment,
             lines: self.lines.clone(),
+            wrap: self.wrap,
         }
     }
 }
@@ -133,7 +137,12 @@ impl<C: Copy, T: AsRef<str> + Clone, F: FontRender<C>, const LINE_BREAKS: usize>
             return;
         }
 
-        let wrap = WhitespaceWrap::new(remaining_text, self.size.width, &metrics);
+        let mut whitespace = WhitespaceWrap::new(remaining_text, self.size.width, &metrics);
+        let mut word = BreakWordWrap::new(remaining_text, self.size.width, &metrics);
+        let wrap = core::iter::from_fn(|| match self.wrap {
+            WrapStrategy::Whitespace => whitespace.next(),
+            WrapStrategy::BreakWord => word.next(),
+        });
 
         let clip_rect = render_target.clip_rect();
 
@@ -196,6 +205,7 @@ impl<C: Copy, T: AsRef<str> + Clone, F: FontRender<C>, const LINE_BREAKS: usize>
             font: target.font,
             alignment: target.alignment,
             lines: target.lines.clone(),
+            wrap: target.wrap,
         }
         .render(render_target, style);
     }
@@ -222,6 +232,7 @@ mod tests {
             "Hello",
             HorizontalTextAlignment::Leading,
             Vec::new(),
+            WrapStrategy::Whitespace,
         );
         let mut target = Text::new(
             Point::new(50, 25),
@@ -230,6 +241,7 @@ mod tests {
             "World",
             HorizontalTextAlignment::Center,
             Vec::new(),
+            WrapStrategy::Whitespace,
         );
 
         target.join_from(&source, &animation_domain(0));
@@ -251,6 +263,7 @@ mod tests {
             "Hello",
             HorizontalTextAlignment::Leading,
             Vec::new(),
+            WrapStrategy::Whitespace,
         );
         let original_target = Text::new(
             Point::new(50, 25),
@@ -259,6 +272,7 @@ mod tests {
             "World",
             HorizontalTextAlignment::Center,
             Vec::new(),
+            WrapStrategy::Whitespace,
         );
         let mut target = original_target.clone();
 
@@ -281,6 +295,7 @@ mod tests {
             "Start",
             HorizontalTextAlignment::Leading,
             Vec::new(),
+            WrapStrategy::Whitespace,
         );
         let original_target = Text::new(
             Point::new(100, 50),
@@ -289,6 +304,7 @@ mod tests {
             "End",
             HorizontalTextAlignment::Trailing,
             Vec::new(),
+            WrapStrategy::Whitespace,
         );
         let mut target = original_target.clone();
 

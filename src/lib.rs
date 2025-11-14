@@ -1,7 +1,4 @@
-#![no_std]
-
-#[cfg(any(test, feature = "std"))]
-extern crate std;
+#![cfg_attr(not(any(test, feature = "std")), no_std)]
 
 pub mod animation;
 pub mod color;

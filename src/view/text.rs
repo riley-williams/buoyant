@@ -7,11 +7,22 @@ use crate::{
     transition::Opacity,
     view::{ViewLayout, ViewMarker},
 };
-use core::{fmt::Write as _, marker::PhantomData};
+use core::fmt::Write;
 
-pub use wrap::WhitespaceWrap;
+mod break_word_wrap;
+mod whitespace_wrap;
 
-mod wrap;
+pub use break_word_wrap::BreakWordWrap;
+pub use whitespace_wrap::WhitespaceWrap;
+
+/// The strategy to use when wrapping text.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum WrapStrategy {
+    /// Wrap at whitespace boundaries.
+    Whitespace,
+    /// Wrap at character boundaries.
+    BreakWord,
+}
 
 // W is hardcoded elsewhere to WhitespaceWrap, leaving generic for future fix
 
@@ -31,12 +42,12 @@ mod wrap;
 /// }
 /// ```
 #[derive(Debug, Clone)]
-pub struct Text<'a, T, F, W = WhitespaceWrap<'a, F>> {
+pub struct Text<'a, T, F> {
     #[allow(clippy::struct_field_names)]
     pub(crate) text: T,
     pub(crate) font: &'a F,
     pub(crate) alignment: HorizontalTextAlignment,
-    pub(crate) _wrap: PhantomData<W>,
+    pub(crate) wrap: WrapStrategy,
 }
 
 /// The alignment of multiline text. This has no effect on single-line text.
@@ -69,8 +80,14 @@ impl<'a, T: AsRef<str>, F> Text<'a, T, F> {
             text,
             font,
             alignment: HorizontalTextAlignment::default(),
-            _wrap: PhantomData,
+            wrap: WrapStrategy::Whitespace,
         }
+    }
+    /// Sets the wrapping strategy for the text.
+    #[must_use]
+    pub fn with_wrap_strategy(mut self, strategy: WrapStrategy) -> Self {
+        self.wrap = strategy;
+        self
     }
 }
 
@@ -141,10 +158,15 @@ where
     ) -> ResolvedLayout<Self::Sublayout> {
         let metrics = self.font.metrics();
         let line_height = metrics.default_line_height();
-        let wrap = WhitespaceWrap::new(self.text.as_ref(), offer.width, &metrics);
         let mut size = Size::zero();
-        // TODO: actually calculate this
         let line_ranges = heapless::Vec::new();
+        let mut whitespace = WhitespaceWrap::new(self.text.as_ref(), offer.width, &metrics);
+        let mut word = BreakWordWrap::new(self.text.as_ref(), offer.width, &metrics);
+        let wrap = core::iter::from_fn(|| match self.wrap {
+            WrapStrategy::Whitespace => whitespace.next(),
+            WrapStrategy::BreakWord => word.next(),
+        });
+        // TODO: actually calculate this
         for line in wrap {
             // FIXME: WhitespaceWrap could return a `Line` type with more information
             // it's already done a width calculation
@@ -176,6 +198,7 @@ where
             self.text.clone(),
             self.alignment,
             layout.sublayouts.clone(),
+            self.wrap,
         )
     }
 }
