@@ -185,7 +185,9 @@ mod test {
     use crate::{
         environment::DefaultEnvironment,
         font::{Font, FontMetrics, FontRender},
-        primitives::{Dimensions, ProposedDimension, ProposedDimensions, Size},
+        primitives::{
+            Dimensions, Point, ProposedDimension, ProposedDimensions, Size, geometry::Rectangle,
+        },
         view::{Text, ViewLayout},
     };
 
@@ -230,8 +232,11 @@ mod test {
     }
 
     impl FontMetrics for ArbitraryFontMetrics {
-        fn rendered_size(&self, _: char) -> Size {
-            Size::new(self.character_width, self.line_height)
+        fn rendered_size(&self, _: char) -> Option<Rectangle> {
+            Some(Rectangle::new(
+                Point::zero(),
+                Size::new(self.character_width, self.line_height),
+            ))
         }
 
         fn default_line_height(&self) -> u32 {
@@ -242,8 +247,12 @@ mod test {
             self.character_width
         }
 
-        fn baseline(&self) -> u32 {
-            self.line_height
+        fn maximum_character_size(&self) -> Size {
+            Size::new(self.character_width, self.line_height)
+        }
+
+        fn str_width(&self, text: &str) -> u32 {
+            text.chars().count() as u32 * self.character_width
         }
     }
 

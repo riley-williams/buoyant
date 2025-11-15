@@ -136,7 +136,8 @@ impl<'a, F: FontMetrics + 'a> Iterator for WhitespaceWrap<'a, F> {
 #[cfg(test)]
 mod tests {
     use crate::font::{Font, FontMetrics, FontRender};
-    use crate::primitives::Size;
+    use crate::primitives::geometry::Rectangle;
+    use crate::primitives::{Point, Size};
     use crate::surface::Surface;
     use crate::{font::CharacterBufferFont, primitives::ProposedDimension};
     use std::vec;
@@ -314,8 +315,8 @@ mod tests {
     struct VariableWidthFontMetrics;
 
     impl FontMetrics for VariableWidthFontMetrics {
-        fn rendered_size(&self, c: char) -> crate::primitives::Size {
-            Size::new(self.advance(c), 1)
+        fn rendered_size(&self, c: char) -> Option<Rectangle> {
+            Some(Rectangle::new(Point::zero(), Size::new(self.advance(c), 1)))
         }
 
         fn default_line_height(&self) -> u32 {
@@ -332,8 +333,12 @@ mod tests {
             }
         }
 
-        fn baseline(&self) -> u32 {
-            1
+        fn maximum_character_size(&self) -> Size {
+            Size::new(9, 1)
+        }
+
+        fn str_width(&self, text: &str) -> u32 {
+            text.chars().fold(0, |acc, c| acc + self.advance(c))
         }
     }
 
