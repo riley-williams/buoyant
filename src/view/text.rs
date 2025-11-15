@@ -2,7 +2,7 @@ use crate::{
     environment::LayoutEnvironment,
     font::{Font, FontMetrics},
     layout::ResolvedLayout,
-    primitives::{Point, ProposedDimension, ProposedDimensions, Size},
+    primitives::{Point, ProposedDimension, ProposedDimensions, Size, geometry::Rectangle},
     render::{self},
     transition::Opacity,
     view::{ViewLayout, ViewMarker},
@@ -36,6 +36,7 @@ pub struct Text<'a, T, F, W = WhitespaceWrap<'a, F>> {
     pub(crate) text: T,
     pub(crate) font: &'a F,
     pub(crate) alignment: HorizontalTextAlignment,
+    pub(crate) precise_character_bounds: bool,
     pub(crate) _wrap: PhantomData<W>,
 }
 
@@ -69,6 +70,7 @@ impl<'a, T: AsRef<str>, F> Text<'a, T, F> {
             text,
             font,
             alignment: HorizontalTextAlignment::default(),
+            precise_character_bounds: false,
             _wrap: PhantomData,
         }
     }
@@ -105,6 +107,19 @@ impl<T, F> Text<'_, T, F> {
     pub fn multiline_text_alignment(self, alignment: HorizontalTextAlignment) -> Self {
         Text { alignment, ..self }
     }
+
+    /// Enable calculation of precise character boundaries.
+    ///
+    /// This option is particularly useful for displaying tightly bordered
+    /// text.
+    ///
+    /// Note that when using precision bounds, the baselines of text
+    /// arranged horizontally are no longer guaranteed to align.
+    #[must_use]
+    pub fn with_precise_bounds(mut self) -> Self {
+        self.precise_character_bounds = true;
+        self
+    }
 }
 
 impl<T: PartialEq, F> PartialEq for Text<'_, T, F> {
@@ -123,7 +138,7 @@ where
     T: AsRef<str> + Clone,
     F: Font,
 {
-    type Sublayout = heapless::Vec<crate::render::text::Line, 8>;
+    type Sublayout = (heapless::Vec<crate::render::text::Line, 8>, Point, Size);
     type State = ();
 
     fn transition(&self) -> Self::Transition {
@@ -145,18 +160,64 @@ where
         let mut size = Size::zero();
         // TODO: actually calculate this
         let line_ranges = heapless::Vec::new();
+        let mut full_precise_bounds: Option<Rectangle> = None;
         for line in wrap {
             // FIXME: WhitespaceWrap could return a `Line` type with more information
-            // it's already done a width calculation
+            // because it gets recomputed.
+
+            if self.precise_character_bounds {
+                // FIXME: this could've been calculated during wrapping
+                // FIXME: Only the heights of the first and last lines actually matter
+                // FIXME: Only the widths of the first and last character of each line matter
+                let mut char_iter = line.chars();
+                if let Some(first_char) = char_iter.next() {
+                    let mut line_bounds = metrics.rendered_size(first_char);
+                    let mut advance = metrics.advance(first_char);
+                    for char in char_iter {
+                        let mut char_bounds = metrics.rendered_size(char);
+
+                        if let Some(bounds) = &mut char_bounds {
+                            bounds.origin += Point::new(advance as i32, size.height as i32);
+                            if let Some(line_bounds) = &mut line_bounds {
+                                *line_bounds = line_bounds.union(bounds);
+                            } else {
+                                // Account for any leading whitespace
+                                line_bounds = Some(Rectangle::new(
+                                    Point::new(0, bounds.origin.y),
+                                    Size::new(bounds.size.width + advance, bounds.size.height),
+                                ));
+                            }
+                        }
+                        advance += metrics.advance(char);
+                    }
+                    if let Some(line_bounds) = line_bounds {
+                        full_precise_bounds = full_precise_bounds
+                            .map_or(Some(line_bounds.clone()), |rect| {
+                                Some(line_bounds.union(&rect))
+                            });
+                    }
+                }
+            }
             size.width = core::cmp::max(size.width, metrics.str_width(line));
+
             size.height += line_height;
             if ProposedDimension::Exact(size.height) >= offer.height {
                 break;
             }
         }
+        let mut manual_offset = Point::zero();
+        // Track the original size before applying the precise bounds adjustment
+        // This allows rendering to wrap lines in the correct amount of space
+        let wrap_size = size;
+        if self.precise_character_bounds
+            && let Some(frame) = full_precise_bounds
+        {
+            manual_offset = -frame.origin;
+            size = frame.size;
+        }
 
         ResolvedLayout {
-            sublayouts: line_ranges,
+            sublayouts: (line_ranges, manual_offset, wrap_size),
             resolved_size: size.into(),
         }
     }
@@ -170,12 +231,12 @@ where
         _state: &mut Self::State,
     ) -> Self::Renderables {
         render::Text::new(
-            origin,
-            layout.resolved_size.into(),
+            origin + layout.sublayouts.1,
+            layout.sublayouts.2,
             self.font,
             self.text.clone(),
             self.alignment,
-            layout.sublayouts.clone(),
+            layout.sublayouts.0.clone(),
         )
     }
 }
