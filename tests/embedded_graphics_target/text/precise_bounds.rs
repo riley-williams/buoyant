@@ -1,0 +1,134 @@
+//! Tests for precise bounds calculation of text views using various fonts.
+//!
+//! Compares the expected bounds with the actual rendered bounds on an embedded-graphics target.
+
+use buoyant::environment::DefaultEnvironment;
+use buoyant::font::FontRender;
+use buoyant::if_view;
+use buoyant::primitives::ProposedDimensions;
+use buoyant::{
+    font::Font,
+    primitives::{Point, Size, geometry::Rectangle},
+    view::prelude::*,
+};
+use embedded_graphics::Drawable;
+
+use embedded_graphics::prelude::RgbColor;
+use embedded_graphics::{mock_display::MockDisplay, pixelcolor::Rgb888};
+use u8g2_fonts::FontRenderer;
+
+const FONT0: FontRenderer = FontRenderer::new::<u8g2_fonts::fonts::u8g2_font_helvB08_tf>();
+const FONT1: FontRenderer = FontRenderer::new::<u8g2_fonts::fonts::u8g2_font_courB18_tf>();
+const FONT2: FontRenderer = FontRenderer::new::<u8g2_fonts::fonts::u8g2_font_courR14_tf>();
+const FONT3: FontRenderer = FontRenderer::new::<u8g2_fonts::fonts::u8g2_font_glasstown_nbp_tf>();
+const FONT4: FontRenderer = FontRenderer::new::<u8g2_fonts::fonts::u8g2_font_mystery_quest_24_tf>();
+
+fn expected_bounds(text: &str, font: &impl Font, size: &ProposedDimensions) -> Option<Rectangle> {
+    let text_view = Text::new(text, font).with_precise_bounds();
+    let layout = text_view.layout(size, &DefaultEnvironment::default(), &mut (), &mut ());
+
+    if layout.resolved_size.area() == 0 {
+        None
+    } else {
+        Some(Rectangle::new(Point::zero(), layout.resolved_size.into()))
+    }
+}
+
+/// Helper to render text and return the affected area
+fn rendered_text_bounds(
+    text: &str,
+    font: &impl buoyant::font::FontRender<Rgb888>,
+    size: Size,
+    print: bool,
+) -> Option<Rectangle> {
+    let view = if_view!((print) {
+        Text::new(text, font)
+        .with_precise_bounds()
+        .foreground_color(Rgb888::WHITE)
+        .background(Alignment::Center, {
+                    Rectangle
+                        .stroked_offset(2, StrokeOffset::Inner)
+                        .foreground_color(Rgb888::GREEN)
+                })
+    } else {
+        Text::new(text, font)
+        .with_precise_bounds()
+        .foreground_color(Rgb888::WHITE)
+
+    });
+
+    let mut display = MockDisplay::new();
+    display.set_allow_out_of_bounds_drawing(true);
+    display.set_allow_overdraw(true);
+    view.as_drawable(size, Rgb888::WHITE, &mut ())
+        .draw(&mut display)
+        .unwrap();
+    if print {
+        println!("{display:?}");
+    }
+
+    let area = display.affected_area();
+    if area.size.width == 0 || area.size.height == 0 {
+        None
+    } else {
+        Some(area.into())
+    }
+}
+
+const TEST_TEXTS: &[&str] = &[
+    "Hello, World!",
+    "The quick brown fox jumps over the lazy dog.",
+    "1234567890",
+    "!@#$%^&*()_+-=[]{}|;':\",.<>/?`~",
+    "Line 1\nLine 2\nLine 3",
+];
+
+#[test]
+fn test_precise_bounds_u8g2_font() {
+    exhaustively_check_precise_bounds(&FONT0);
+    exhaustively_check_precise_bounds(&FONT1);
+    exhaustively_check_precise_bounds(&FONT2);
+    exhaustively_check_precise_bounds(&FONT3);
+    exhaustively_check_precise_bounds(&FONT4);
+}
+
+fn exhaustively_check_precise_bounds(font: &impl FontRender<Rgb888>) {
+    // With precise bounds
+    for text in TEST_TEXTS {
+        for width in 20..60 {
+            for height in 20..40 {
+                let size = Size::new(width, height);
+                let expected_bounds = expected_bounds(text, font, &size.into());
+                let actual_bounds = rendered_text_bounds(text, font, size, false);
+                if actual_bounds != expected_bounds {
+                    rendered_text_bounds(text, font, size, true);
+                }
+                assert_eq!(
+                    expected_bounds, actual_bounds,
+                    "Failed for size: {size:?}, text: {text:?}"
+                );
+            }
+        }
+    }
+}
+
+/// The 'j' here has a negative x offset, which can cause issues
+/// This specific size is known to be tricky
+#[test]
+fn check_j_offset() {
+    let font = &FONT0;
+    // With precise bounds
+    let text = "The quick brown fox jumps over the lazy dog.";
+    let width = 51;
+    let height = 31;
+    let size = Size::new(width, height);
+    let expected_bounds = expected_bounds(text, font, &size.into());
+    let actual_bounds = rendered_text_bounds(text, font, size, false);
+    if actual_bounds != expected_bounds {
+        rendered_text_bounds(text, font, size, true);
+    }
+    assert_eq!(
+        expected_bounds, actual_bounds,
+        "Failed for size: {size:?}, text: {text:?}"
+    );
+}

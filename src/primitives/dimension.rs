@@ -82,6 +82,8 @@ impl From<Size> for ProposedDimensions {
 
 impl From<Dimensions> for ProposedDimensions {
     fn from(dimensions: Dimensions) -> Self {
+        // FIXME: This is suspiscious, should not be grabbing the inner here?
+        // if is_infinite?
         Self {
             width: ProposedDimension::Exact(dimensions.width.0),
             height: ProposedDimension::Exact(dimensions.height.0),

@@ -2,7 +2,7 @@ use crate::{
     environment::LayoutEnvironment,
     font::{Font, FontMetrics},
     layout::ResolvedLayout,
-    primitives::{Point, ProposedDimension, ProposedDimensions, Size, geometry::Rectangle},
+    primitives::{Point, ProposedDimension, ProposedDimensions, Size},
     render::{self},
     transition::Opacity,
     view::{ViewLayout, ViewMarker},
@@ -44,7 +44,9 @@ pub struct Text<'a, T, F, W = WhitespaceWrap<'a, F>> {
 pub struct WrappedLine<'a> {
     pub content: &'a str,
     pub width: u32,
-    pub precise_bounds: Option<Rectangle>,
+    pub precise_width: u32,
+    pub min_x: i32,
+    pub max_x: i32,
 }
 
 /// The alignment of multiline text. This has no effect on single-line text.
@@ -79,6 +81,38 @@ impl<'a, T: AsRef<str>, F> Text<'a, T, F> {
             alignment: HorizontalTextAlignment::default(),
             precise_character_bounds: false,
             _wrap: PhantomData,
+        }
+    }
+}
+
+impl<T, F> Text<'_, T, F> {
+    /// Calculate the vertical extent (min y, max y) for a line of text.
+    /// This is used for first and last lines to determine vertical bounds.
+    fn calculate_vertical_extent(
+        metrics: &impl FontMetrics,
+        text: &str,
+        y_offset: i32,
+    ) -> Option<(i32, i32)> {
+        if text.is_empty() {
+            return None;
+        }
+
+        let mut min_y = i32::MAX;
+        let mut max_y = i32::MIN;
+
+        for ch in text.chars() {
+            if let Some(char_bounds) = metrics.rendered_size(ch) {
+                let top = char_bounds.origin.y + y_offset;
+                let bottom = top + char_bounds.size.height as i32;
+                min_y = core::cmp::min(min_y, top);
+                max_y = core::cmp::max(max_y, bottom);
+            }
+        }
+
+        if min_y <= max_y {
+            Some((min_y, max_y))
+        } else {
+            None
         }
     }
 }
@@ -163,7 +197,7 @@ where
     ) -> ResolvedLayout<Self::Sublayout> {
         let metrics = self.font.metrics();
         let line_height = metrics.default_line_height();
-        let wrap = WhitespaceWrap::new(
+        let mut wrap = WhitespaceWrap::new(
             self.text.as_ref(),
             offer.width,
             &metrics,
@@ -172,32 +206,82 @@ where
         let mut size = Size::zero();
         // TODO: actually calculate this
         let line_ranges = heapless::Vec::new();
-        let mut full_precise_bounds: Option<Rectangle> = None;
-        for line in wrap {
-            if let Some(line_bounds) = line.precise_bounds {
-                // Line bounds already have correct absolute Y coordinates from wrap
-                full_precise_bounds = full_precise_bounds
-                    .map_or(Some(line_bounds.clone()), |rect| {
-                        Some(line_bounds.union(&rect))
-                    });
-            }
 
+        // Iterate through lines, tracking width and horizontal extents
+        // Always use advance-based width for wrapping consistency
+        let mut max_precise_width = 0u32;
+        let mut global_min_x = 0i32;
+        let mut global_max_x = 0i32;
+        let mut has_content = false;
+
+        for line in &mut wrap {
             size.width = core::cmp::max(size.width, line.width);
+            max_precise_width = core::cmp::max(max_precise_width, line.precise_width);
+
+            // Track horizontal extents across all lines for precise bounds
+            // The WrappedLine already calculated these during iteration
+            if self.precise_character_bounds && !line.content.is_empty() {
+                if has_content {
+                    global_min_x = core::cmp::min(global_min_x, line.min_x);
+                    global_max_x = core::cmp::max(global_max_x, line.max_x);
+                } else {
+                    global_min_x = line.min_x;
+                    global_max_x = line.max_x;
+                    has_content = true;
+                }
+            }
 
             size.height += line_height;
             if ProposedDimension::Exact(size.height) >= offer.height {
                 break;
             }
         }
+
+        // Calculate vertical extent from first and last non-empty lines
+        let mut min_y = 0i32;
+        let mut max_y = 0i32;
+        let mut has_vertical_extent = false;
+
+        if self.precise_character_bounds {
+            if let Some((first_line, first_y)) = wrap.first_non_empty_line()
+                && let Some((first_min_y, first_max_y)) =
+                    Self::calculate_vertical_extent(&metrics, first_line, *first_y)
+            {
+                min_y = first_min_y;
+                max_y = first_max_y;
+                has_vertical_extent = true;
+            }
+
+            if let Some((last_line, last_y)) = wrap.last_non_empty_line()
+                && let Some((last_min_y, last_max_y)) =
+                    Self::calculate_vertical_extent(&metrics, last_line, *last_y)
+            {
+                if has_vertical_extent {
+                    // Union with first line extent
+                    min_y = core::cmp::min(min_y, last_min_y);
+                    max_y = core::cmp::max(max_y, last_max_y);
+                } else {
+                    // Only last line exists (first was empty)
+                    min_y = last_min_y;
+                    max_y = last_max_y;
+                    has_vertical_extent = true;
+                }
+            }
+        }
         let mut manual_offset = Point::zero();
         // Track the original size before applying the precise bounds adjustment
         // This allows rendering to wrap lines in the correct amount of space
         let wrap_size = size;
-        if self.precise_character_bounds
-            && let Some(frame) = full_precise_bounds
-        {
-            manual_offset = -frame.origin;
-            size = frame.size;
+        if self.precise_character_bounds && has_content && has_vertical_extent {
+            // Calculate manual offset from the minimum x and y coordinates across all lines
+            manual_offset = Point::new(-global_min_x, -min_y);
+
+            // Use the horizontal extent across all lines and vertical extent from boundary lines
+            // The width is calculated from the global min/max x, accounting for all lines
+            let precise_width = (global_max_x - global_min_x) as u32;
+            let precise_height = (max_y - min_y) as u32;
+
+            size = Size::new(precise_width, precise_height);
         }
 
         ResolvedLayout {
