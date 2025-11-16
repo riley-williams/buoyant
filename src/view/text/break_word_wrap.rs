@@ -1,9 +1,21 @@
 use crate::{font::FontMetrics, primitives::ProposedDimension};
 
+/// Breaks lines at maximum width, ignoring word boundaries
+///
+/// Example:
+///
+/// "Build a bunch of buoyant boats"
+///
+/// Breaking at 7 characters wide will produce:
+///
+/// "Build a"
+/// " bunch "
+/// "of buoy"
+/// "ant boa"
+/// "ts"
 #[derive(Debug, Clone)]
 pub struct BreakWordWrap<'a, F> {
     remaining: &'a str,
-    overflow: &'a str,
     available_width: ProposedDimension,
     font: &'a F,
 }
@@ -12,24 +24,9 @@ impl<'a, F: FontMetrics> BreakWordWrap<'a, F> {
     pub fn new(text: &'a str, available_width: impl Into<ProposedDimension>, font: &'a F) -> Self {
         Self {
             remaining: text,
-            overflow: "",
             available_width: available_width.into(),
             font,
         }
-    }
-
-    /// If `available_width` is Exact(w) find first split position in `text` where cumulative
-    /// width would exceed w. Returns `Some(split_byte_index)` or `None` if it never exceeds.
-    fn find_split_pos(&self, text: &str) -> Option<usize> {
-        let mut width = 0u32;
-        for (pos, ch) in text.char_indices() {
-            width += self.font.advance(ch);
-            if ProposedDimension::Exact(width) > self.available_width {
-                // if the overflow occurs on the first char, force at least one char
-                return Some(if pos > 0 { pos } else { 1 });
-            }
-        }
-        None
     }
 }
 
@@ -37,67 +34,50 @@ impl<'a, F: FontMetrics + 'a> Iterator for BreakWordWrap<'a, F> {
     type Item = &'a str;
 
     fn next(&mut self) -> Option<Self::Item> {
-        // Handle overflow first (force continued splits of a previously forced segment)
-        if !self.overflow.is_empty() {
-            if let Some(split_pos) = self.find_split_pos(self.overflow) {
-                let (result, rest) = self.overflow.split_at(split_pos);
-                self.overflow = rest;
-                return Some(result);
-            }
-            let result = self.overflow;
-            self.overflow = "";
-            return Some(result);
-        }
+        // Return as many characters as fit within available width, always at least one (or exit)
+        let mut remaining_iter = self.remaining.char_indices();
+        let (mut split_pos, mut ch) = remaining_iter.next()?;
 
-        if self.remaining.is_empty() {
-            return None;
-        }
-
-        // Walk the remaining text, splitting when width limit reached or newline encountered.
         let mut width = 0u32;
-        for (pos, ch) in self.remaining.char_indices() {
+
+        loop {
+            // Newlines always break the line
             if ch == '\n' {
-                // split before newline; consume the newline
-                let (line, rest) = self.remaining.split_at(pos);
-                // fine because newline is one byte
+                let (line, rest) = self.remaining.split_at(split_pos);
+                // Skip the newline character itself
+                // This is safe because we know \n is 1 byte
                 self.remaining = &rest[1..];
-                // No need to issue an empty line
-                if line.is_empty() {
-                    continue;
-                }
+
                 return Some(line);
             }
-
             width += self.font.advance(ch);
 
-            if ProposedDimension::Exact(width) > self.available_width {
-                // We need to split here.
-                // If pos==0, force at least one char (handle multi-byte char boundary below)
-                let split_pos = if pos > 0 {
-                    pos
-                } else {
-                    // If the first character exceeded the width, include at least the first char.
-                    // To find the byte index of the second char (if present) we use nth(1),
-                    // otherwise we return the whole remaining string as a single item.
-                    if let Some(p) = self.remaining.char_indices().nth(1) {
-                        p.0
-                    } else {
-                        // only one char left; return it
-                        let last_char = self.remaining;
-                        self.remaining = "";
-                        return Some(last_char);
-                    }
-                };
-
-                let (result, rest) = self.remaining.split_at(split_pos);
-                self.remaining = rest;
-                return Some(result);
+            if let Some((idx, character)) = remaining_iter.next() {
+                split_pos = idx;
+                ch = character;
+            } else {
+                split_pos = self.remaining.len();
+                break;
+            }
+            if ProposedDimension::Exact(width) >= self.available_width {
+                break;
             }
         }
 
-        // No width break encountered; return rest (may include whitespace)
-        let result = self.remaining;
-        self.remaining = "";
+        // If the next character is a newline, consume it as well because we
+        // are naturally breaking here. However if this is the last character,
+        // We should still output one more empty line
+        if ch == '\n' && split_pos != self.remaining.len() - 1 {
+            let (line, rest) = self.remaining.split_at(split_pos);
+            // Skip the newline character itself
+            // This is safe because we know \n is 1 byte
+            self.remaining = &rest[1..];
+
+            return Some(line);
+        }
+
+        let (result, rest) = self.remaining.split_at(split_pos);
+        self.remaining = rest;
         Some(result)
     }
 }
@@ -207,8 +187,9 @@ mod tests {
         // We ensure it breaks according to the accumulated widths (exact expected values may differ
         // depending on how you count digits); test kept simple to show behavior composes with metric.
         let parts = wrap.collect::<Vec<_>>();
-        assert!(!parts.is_empty());
+        assert_eq!(parts, vec!["1 2", " 3", " 4", " 5", " 6"]);
     }
+
     #[test]
     fn zero_sized_offer() {
         // The behavior of newlines in zero-width offers should be the same as with 1-width offers
@@ -220,11 +201,12 @@ mod tests {
     }
 
     #[test]
-    fn trailing_newline_is_ignored() {
-        // The last newline should not produce an extra empty line
+    fn natural_breaks_consume_explicit_newlines() {
+        // When breaking naturally before a newline, it should not produce an extra line,
+        // except for a trailing newline
         let metrics = &FONT.metrics();
-        let wrap = BreakWordWrap::new("1\n2\n3\n", 3, metrics);
-        assert_eq!(wrap.collect::<Vec<_>>(), vec!["1", "2", "3"]);
+        let wrap = BreakWordWrap::new("1\n\n3\n", 1, metrics);
+        assert_eq!(wrap.collect::<Vec<_>>(), vec!["1", "", "3", ""]);
     }
 
     #[test]
