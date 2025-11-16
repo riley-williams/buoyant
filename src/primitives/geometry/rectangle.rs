@@ -56,6 +56,30 @@ impl Rectangle {
             size: Size::new((x2 - x1) as u32, (y2 - y1) as u32),
         })
     }
+
+    #[must_use]
+    pub fn union(&self, other: &Self) -> Self {
+        let x1 = self.origin.x.min(other.origin.x);
+        let y1 = self.origin.y.min(other.origin.y);
+        let x2 =
+            (self.origin.x + self.size.width as i32).max(other.origin.x + other.size.width as i32);
+        let y2 = (self.origin.y + self.size.height as i32)
+            .max(other.origin.y + other.size.height as i32);
+
+        Self {
+            origin: Point::new(x1, y1),
+            size: Size::new((x2 - x1) as u32, (y2 - y1) as u32),
+        }
+    }
+}
+
+impl Default for Rectangle {
+    fn default() -> Self {
+        Self {
+            origin: Point::new(0, 0),
+            size: Size::new(0, 0),
+        }
+    }
 }
 
 impl CoordinateSpaceTransform for Rectangle {
@@ -282,5 +306,104 @@ mod tests {
         let intersection = intersection.unwrap();
         assert_eq!(intersection.origin, Point::new(-5, -5));
         assert_eq!(intersection.size, Size::new(15, 15));
+    }
+
+    #[test]
+    fn union_overlapping_rectangles() {
+        let rect1 = Rectangle::new(Point::new(10, 10), Size::new(20, 20));
+        let rect2 = Rectangle::new(Point::new(20, 20), Size::new(20, 20));
+
+        let union = rect1.union(&rect2);
+
+        assert_eq!(union.origin, Point::new(10, 10));
+        assert_eq!(union.size, Size::new(30, 30));
+    }
+
+    #[test]
+    fn union_non_overlapping_rectangles() {
+        let rect1 = Rectangle::new(Point::new(0, 0), Size::new(10, 10));
+        let rect2 = Rectangle::new(Point::new(20, 20), Size::new(10, 10));
+
+        let union = rect1.union(&rect2);
+
+        assert_eq!(union.origin, Point::new(0, 0));
+        assert_eq!(union.size, Size::new(30, 30));
+    }
+
+    #[test]
+    fn union_identical_rectangles() {
+        let rect1 = Rectangle::new(Point::new(5, 5), Size::new(15, 25));
+        let rect2 = Rectangle::new(Point::new(5, 5), Size::new(15, 25));
+
+        let union = rect1.union(&rect2);
+
+        assert_eq!(union, rect1);
+    }
+
+    #[test]
+    fn union_fully_inside() {
+        let outer = Rectangle::new(Point::new(0, 0), Size::new(100, 100));
+        let inner = Rectangle::new(Point::new(25, 25), Size::new(50, 50));
+
+        let union0 = outer.union(&inner);
+        let union1 = inner.union(&outer);
+
+        assert_eq!(union0, union1);
+        assert_eq!(union0, outer);
+    }
+
+    #[test]
+    fn union_touching_corners() {
+        let rect1 = Rectangle::new(Point::new(0, 0), Size::new(10, 10));
+        let rect2 = Rectangle::new(Point::new(10, 10), Size::new(10, 10));
+
+        let union = rect1.union(&rect2);
+
+        assert_eq!(union.origin, Point::new(0, 0));
+        assert_eq!(union.size, Size::new(20, 20));
+    }
+
+    #[test]
+    fn union_partial_overlap_horizontal() {
+        let rect1 = Rectangle::new(Point::new(0, 10), Size::new(20, 20));
+        let rect2 = Rectangle::new(Point::new(10, 10), Size::new(20, 20));
+
+        let union = rect1.union(&rect2);
+
+        assert_eq!(union.origin, Point::new(0, 10));
+        assert_eq!(union.size, Size::new(30, 20));
+    }
+
+    #[test]
+    fn union_partial_overlap_vertical() {
+        let rect1 = Rectangle::new(Point::new(10, 0), Size::new(20, 20));
+        let rect2 = Rectangle::new(Point::new(10, 10), Size::new(20, 20));
+
+        let union = rect1.union(&rect2);
+
+        assert_eq!(union.origin, Point::new(10, 0));
+        assert_eq!(union.size, Size::new(20, 30));
+    }
+
+    #[test]
+    fn union_with_negative_coordinates() {
+        let rect1 = Rectangle::new(Point::new(-10, -10), Size::new(20, 20));
+        let rect2 = Rectangle::new(Point::new(-5, -5), Size::new(20, 20));
+
+        let union = rect1.union(&rect2);
+
+        assert_eq!(union.origin, Point::new(-10, -10));
+        assert_eq!(union.size, Size::new(25, 25));
+    }
+
+    #[test]
+    fn union_is_commutative() {
+        let rect1 = Rectangle::new(Point::new(5, 10), Size::new(15, 20));
+        let rect2 = Rectangle::new(Point::new(12, 8), Size::new(10, 25));
+
+        let union1 = rect1.union(&rect2);
+        let union2 = rect2.union(&rect1);
+
+        assert_eq!(union1, union2);
     }
 }

@@ -1,4 +1,7 @@
-use crate::{primitives::Size, surface::Surface};
+use crate::{
+    primitives::{Point, Size, geometry::Rectangle},
+    surface::Surface,
+};
 
 use super::{Font, FontMetrics, FontRender};
 
@@ -21,19 +24,23 @@ impl<C> FontRender<C> for CharacterBufferFont {
 
 struct CharacterBufferFontMetrics;
 impl FontMetrics for CharacterBufferFontMetrics {
-    fn advance(&self, _: char) -> u32 {
-        1
-    }
-
-    fn rendered_size(&self, _: char) -> Size {
-        Size::new(1, 1)
+    fn rendered_size(&self, _: char) -> Option<Rectangle> {
+        Some(Rectangle::new(Point::zero(), Size::new(1, 1)))
     }
 
     fn default_line_height(&self) -> u32 {
         1
     }
 
-    fn baseline(&self) -> u32 {
+    fn advance(&self, _: char) -> u32 {
         1
+    }
+
+    fn maximum_character_size(&self) -> Size {
+        Size::new(1, 1)
+    }
+
+    fn str_width(&self, text: &str) -> u32 {
+        text.chars().count() as u32
     }
 }

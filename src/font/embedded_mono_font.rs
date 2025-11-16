@@ -1,13 +1,14 @@
+use crate::primitives::geometry::Rectangle;
 use crate::surface::AsDrawTarget as _;
 use embedded_graphics::Drawable;
 use embedded_graphics::mono_font::MonoFont;
 use embedded_graphics::{
     mono_font::MonoTextStyleBuilder,
-    prelude::{PixelColor, Point},
+    prelude::{PixelColor, Point as EgPoint},
     text::Text,
 };
 
-use crate::primitives::Size;
+use crate::primitives::{Point, Size};
 use crate::surface::Surface;
 
 use super::{Font, FontMetrics, FontRender};
@@ -32,7 +33,7 @@ impl<C: PixelColor> FontRender<C> for MonoFont<'_> {
             .font(self)
             .text_color(color)
             .build();
-        let mut point = Point::zero();
+        let mut point = EgPoint::zero();
         point.y += self.baseline as i32;
         _ = Text::new(&s, point, style).draw(&mut surface.draw_target());
     }
@@ -46,19 +47,23 @@ struct MonoFontMetrics {
 }
 
 impl FontMetrics for MonoFontMetrics {
-    fn advance(&self, _: char) -> u32 {
-        self.advance
-    }
-
-    fn rendered_size(&self, _: char) -> Size {
-        self.size
+    fn rendered_size(&self, _: char) -> Option<Rectangle> {
+        Some(Rectangle::new(Point::zero(), self.size))
     }
 
     fn default_line_height(&self) -> u32 {
         self.size.height
     }
 
-    fn baseline(&self) -> u32 {
-        self.baseline
+    fn advance(&self, _: char) -> u32 {
+        self.advance
+    }
+
+    fn maximum_character_size(&self) -> Size {
+        self.size
+    }
+
+    fn str_width(&self, text: &str) -> u32 {
+        self.advance * text.chars().count() as u32
     }
 }
