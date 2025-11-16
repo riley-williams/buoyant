@@ -62,8 +62,4 @@ impl FontMetrics for MonoFontMetrics {
     fn maximum_character_size(&self) -> Size {
         self.size
     }
-
-    fn str_width(&self, text: &str) -> u32 {
-        self.advance * text.chars().count() as u32
-    }
 }

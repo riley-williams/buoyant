@@ -56,10 +56,6 @@ impl FontMetrics for FontRenderer {
             .map_or(0, |d| d.advance.x as u32)
     }
 
-    fn str_width(&self, text: &str) -> u32 {
-        text.chars().map(|c| self.advance(c)).sum()
-    }
-
     fn maximum_character_size(&self) -> Size {
         self.get_font_bounding_box(VerticalPosition::Top)
             .bounding_box()

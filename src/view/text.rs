@@ -40,6 +40,13 @@ pub struct Text<'a, T, F, W = WhitespaceWrap<'a, F>> {
     pub(crate) _wrap: PhantomData<W>,
 }
 
+#[derive(Debug)]
+pub struct WrappedLine<'a> {
+    pub content: &'a str,
+    pub width: u32,
+    pub precise_bounds: Option<Rectangle>,
+}
+
 /// The alignment of multiline text. This has no effect on single-line text.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum HorizontalTextAlignment {
@@ -156,49 +163,26 @@ where
     ) -> ResolvedLayout<Self::Sublayout> {
         let metrics = self.font.metrics();
         let line_height = metrics.default_line_height();
-        let wrap = WhitespaceWrap::new(self.text.as_ref(), offer.width, &metrics);
+        let wrap = WhitespaceWrap::new(
+            self.text.as_ref(),
+            offer.width,
+            &metrics,
+            self.precise_character_bounds,
+        );
         let mut size = Size::zero();
         // TODO: actually calculate this
         let line_ranges = heapless::Vec::new();
         let mut full_precise_bounds: Option<Rectangle> = None;
         for line in wrap {
-            // FIXME: WhitespaceWrap could return a `Line` type with more information
-            // because it gets recomputed.
-
-            if self.precise_character_bounds {
-                // FIXME: this could've been calculated during wrapping
-                // FIXME: Only the heights of the first and last lines actually matter
-                // FIXME: Only the widths of the first and last character of each line matter
-                let mut char_iter = line.chars();
-                if let Some(first_char) = char_iter.next() {
-                    let mut line_bounds = metrics.rendered_size(first_char);
-                    let mut advance = metrics.advance(first_char);
-                    for char in char_iter {
-                        let mut char_bounds = metrics.rendered_size(char);
-
-                        if let Some(bounds) = &mut char_bounds {
-                            bounds.origin += Point::new(advance as i32, size.height as i32);
-                            if let Some(line_bounds) = &mut line_bounds {
-                                *line_bounds = line_bounds.union(bounds);
-                            } else {
-                                // Account for any leading whitespace
-                                line_bounds = Some(Rectangle::new(
-                                    Point::new(0, bounds.origin.y),
-                                    Size::new(bounds.size.width + advance, bounds.size.height),
-                                ));
-                            }
-                        }
-                        advance += metrics.advance(char);
-                    }
-                    if let Some(line_bounds) = line_bounds {
-                        full_precise_bounds = full_precise_bounds
-                            .map_or(Some(line_bounds.clone()), |rect| {
-                                Some(line_bounds.union(&rect))
-                            });
-                    }
-                }
+            if let Some(line_bounds) = line.precise_bounds {
+                // Line bounds already have correct absolute Y coordinates from wrap
+                full_precise_bounds = full_precise_bounds
+                    .map_or(Some(line_bounds.clone()), |rect| {
+                        Some(line_bounds.union(&rect))
+                    });
             }
-            size.width = core::cmp::max(size.width, metrics.str_width(line));
+
+            size.width = core::cmp::max(size.width, line.width);
 
             size.height += line_height;
             if ProposedDimension::Exact(size.height) >= offer.height {
@@ -310,10 +294,6 @@ mod test {
 
         fn maximum_character_size(&self) -> Size {
             Size::new(self.character_width, self.line_height)
-        }
-
-        fn str_width(&self, text: &str) -> u32 {
-            text.chars().count() as u32 * self.character_width
         }
     }
 

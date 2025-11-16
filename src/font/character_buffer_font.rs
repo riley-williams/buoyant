@@ -39,8 +39,4 @@ impl FontMetrics for CharacterBufferFontMetrics {
     fn maximum_character_size(&self) -> Size {
         Size::new(1, 1)
     }
-
-    fn str_width(&self, text: &str) -> u32 {
-        text.chars().count() as u32
-    }
 }

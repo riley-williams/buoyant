@@ -42,9 +42,6 @@ pub trait FontMetrics {
 
     /// The maximum size of a character in this font
     fn maximum_character_size(&self) -> Size;
-
-    /// The width of a string
-    fn str_width(&self, text: &str) -> u32;
 }
 
 impl<T: FontMetrics> FontMetrics for &T {
@@ -62,9 +59,5 @@ impl<T: FontMetrics> FontMetrics for &T {
 
     fn maximum_character_size(&self) -> Size {
         (*self).maximum_character_size()
-    }
-
-    fn str_width(&self, text: &str) -> u32 {
-        (*self).str_width(text)
     }
 }

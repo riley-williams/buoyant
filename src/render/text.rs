@@ -133,13 +133,12 @@ impl<C: Copy, T: AsRef<str> + Clone, F: FontRender<C>, const LINE_BREAKS: usize>
             return;
         }
 
-        let wrap = WhitespaceWrap::new(remaining_text, self.size.width, &metrics);
+        let wrap = WhitespaceWrap::new(remaining_text, self.size.width, &metrics, false);
 
         let clip_rect = render_target.clip_rect();
 
         for line in wrap {
-            // TODO: WhitespaceWrap should also return the width of the line
-            let width = metrics.str_width(line);
+            let width = line.width;
 
             let line_x = self.alignment.align(self.size.width as i32, width as i32) + self.origin.x;
             let mut x = 0;
@@ -162,7 +161,7 @@ impl<C: Copy, T: AsRef<str> + Clone, F: FontRender<C>, const LINE_BREAKS: usize>
             render_target.draw_glyphs(
                 line_offset,
                 &brush,
-                line.chars().map(|c| {
+                line.content.chars().map(|c| {
                     let glyph = Glyph {
                         character: c,
                         offset: Point::new(x, 0),
