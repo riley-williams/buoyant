@@ -205,4 +205,31 @@ mod tests {
         let parts = wrap.collect::<Vec<_>>();
         assert!(!parts.is_empty());
     }
+    #[test]
+    fn zero_sized_offer() {
+        // The behavior of newlines in zero-width offers should be the same as with 1-width offers
+        let metrics = &FONT.metrics();
+        let wrap_0 = BreakWordWrap::new("he\nllo", 0, metrics);
+        assert_eq!(wrap_0.collect::<Vec<_>>(), vec!["h", "e", "l", "l", "o"]);
+        let wrap_1 = BreakWordWrap::new("he\nllo", 1, metrics);
+        assert_eq!(wrap_1.collect::<Vec<_>>(), vec!["h", "e", "l", "l", "o"]);
+    }
+
+    #[test]
+    fn trailing_newline_is_ignored() {
+        // The last newline should not produce an extra empty line
+        let metrics = &FONT.metrics();
+        let wrap = BreakWordWrap::new("1\n2\n3\n", 3, metrics);
+        assert_eq!(wrap.collect::<Vec<_>>(), vec!["1", "2", "3"]);
+    }
+
+    #[test]
+    fn unicode_wraps_correctly() {
+        let metrics = &FONT.metrics();
+        let wrap = BreakWordWrap::new("rº🦀_🦀 🦀\nyº ºº\t🦀", 4, metrics);
+        assert_eq!(
+            wrap.collect::<Vec<_>>(),
+            vec!["rº🦀_", "🦀 🦀", "yº º", "º\t🦀"]
+        );
+    }
 }
