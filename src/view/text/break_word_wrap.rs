@@ -59,8 +59,12 @@ impl<'a, F: FontMetrics + 'a> Iterator for BreakWordWrap<'a, F> {
             if ch == '\n' {
                 // split before newline; consume the newline
                 let (line, rest) = self.remaining.split_at(pos);
-                // safe because newline is one byte
+                // fine because newline is one byte
                 self.remaining = &rest[1..];
+                // No need to issue an empty line
+                if line.is_empty() {
+                    continue;
+                }
                 return Some(line);
             }
 
