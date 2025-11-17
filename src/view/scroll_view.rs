@@ -557,7 +557,8 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
             ScrollDirection::Horizontal => Point::new(delta.x, 0),
             ScrollDirection::Both => delta,
         };
-        state.scroll_offset += delta;
+        state.scroll_offset.x = state.scroll_offset.x.saturating_add(delta.x);
+        state.scroll_offset.y = state.scroll_offset.y.saturating_add(delta.y);
 
         let should_pin_bottom = -state.scroll_offset.y
             >= (render_tree
