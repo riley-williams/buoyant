@@ -12,6 +12,8 @@ use u8g2_fonts::{FontRenderer, fonts, types::FontColor};
 
 use super::render_to_mock;
 
+mod precise_bounds;
+
 #[test]
 fn embedded_graphics_mono_font() {
     let view = Text::new("Test.\n12 3", &FONT_7X13).foreground_color(Rgb888::CSS_OLD_LACE);

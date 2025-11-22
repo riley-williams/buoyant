@@ -1,10 +1,10 @@
-use embedded_graphics::prelude::{PixelColor, Point as EgPoint};
+use embedded_graphics::prelude::{Dimensions, PixelColor, Point as EgPoint};
 use u8g2_fonts::{
     FontRenderer,
     types::{FontColor, VerticalPosition},
 };
 
-use crate::primitives::{Point, Size};
+use crate::primitives::{Point, Size, geometry::Rectangle};
 use crate::surface::AsDrawTarget;
 
 use super::{Font, FontMetrics, FontRender};
@@ -37,15 +37,14 @@ impl<C: PixelColor> FontRender<C> for FontRenderer {
 }
 
 impl FontMetrics for FontRenderer {
-    fn rendered_size(&self, character: char) -> crate::primitives::Size {
-        self.get_rendered_dimensions(
+    fn rendered_size(&self, character: char) -> Option<Rectangle> {
+        self.get_rendered_dimensions_aligned(
             character,
             EgPoint::zero(),
-            u8g2_fonts::types::VerticalPosition::Top,
+            VerticalPosition::Top,
+            u8g2_fonts::types::HorizontalAlignment::Left,
         )
-        .map_or(Size::zero(), |d| {
-            d.bounding_box.unwrap_or_default().size.into()
-        })
+        .map_or(None, |d| d.map(Into::into))
     }
 
     fn default_line_height(&self) -> u32 {
@@ -53,19 +52,14 @@ impl FontMetrics for FontRenderer {
     }
 
     fn advance(&self, character: char) -> u32 {
-        self.get_rendered_dimensions(
-            character,
-            EgPoint::zero(),
-            u8g2_fonts::types::VerticalPosition::Top,
-        )
-        .map_or(0, |d| d.advance.x as u32)
+        self.get_rendered_dimensions(character, EgPoint::zero(), VerticalPosition::Top)
+            .map_or(0, |d| d.advance.x as u32)
     }
 
-    fn baseline(&self) -> u32 {
-        self.get_ascent() as u32 // FIXME: This is wrong...
-    }
-
-    fn str_width(&self, text: &str) -> u32 {
-        text.chars().map(|c| self.advance(c)).sum()
+    fn maximum_character_size(&self) -> Size {
+        self.get_font_bounding_box(VerticalPosition::Top)
+            .bounding_box()
+            .size
+            .into()
     }
 }
