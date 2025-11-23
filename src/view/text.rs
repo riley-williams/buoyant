@@ -196,7 +196,12 @@ where
     T: AsRef<str> + Clone,
     F: Font,
 {
-    type Sublayout = (heapless::Vec<crate::render::text::Line, 8>, Point, Size);
+    type Sublayout = (
+        heapless::Vec<crate::render::text::Line, 8>,
+        Point,
+        Size,
+        u32,
+    );
     type State = ();
 
     fn transition(&self) -> Self::Transition {
@@ -215,7 +220,13 @@ where
         let metrics = self.font.metrics();
         let line_height = metrics.default_line_height();
 
+        let max_line_count = match offer.height {
+            ProposedDimension::Exact(h) => h / line_height,
+            _ => u32::MAX,
+        };
+
         let mut size = Size::zero();
+        // TODO: actually calculate this
         let line_ranges = heapless::Vec::new();
         let mut whitespace = WhitespaceWrap::new(
             self.text.as_ref(),
@@ -223,13 +234,18 @@ where
             &metrics,
             self.precise_character_bounds,
         );
-        let mut word = BreakWordWrap::new(self.text.as_ref(), offer.width, &metrics);
-        let wrap = core::iter::from_fn(|| match self.wrap {
+        let mut word = BreakWordWrap::new(
+            self.text.as_ref(),
+            offer.width,
+            &metrics,
+            self.precise_character_bounds,
+        );
+        let mut wrap = core::iter::from_fn(|| match self.wrap {
             WrapStrategy::Whitespace => whitespace.next(),
             WrapStrategy::BreakWord => word.next(),
         });
-        // TODO: actually calculate this
-        let line_ranges = heapless::Vec::new();
+
+        let mut line_count: u32 = 0;
 
         // Iterate through lines, tracking width and horizontal extents
         // Always use advance-based width for wrapping consistency
@@ -238,7 +254,8 @@ where
         let mut global_max_x = 0i32;
         let mut has_content = false;
 
-        for line in &mut wrap {
+        for line in (&mut wrap).take(max_line_count as usize) {
+            line_count += 1;
             size.width = core::cmp::max(size.width, line.width);
             max_precise_width = core::cmp::max(max_precise_width, line.precise_width);
 
@@ -254,12 +271,9 @@ where
                     has_content = true;
                 }
             }
-
-            size.height += line_height;
-            if ProposedDimension::Exact(size.height) >= offer.height {
-                break;
-            }
         }
+
+        size.height = line_count * line_height;
 
         // Calculate vertical extent from first and last non-empty lines
         let mut min_y = 0i32;
@@ -267,7 +281,17 @@ where
         let mut has_vertical_extent = false;
 
         if self.precise_character_bounds {
-            if let Some((first_line, first_y)) = wrap.first_non_empty_line()
+            let (first_non_empty, last_non_empty) = match self.wrap {
+                WrapStrategy::Whitespace => (
+                    whitespace.first_non_empty_line(),
+                    whitespace.last_non_empty_line(),
+                ),
+                WrapStrategy::BreakWord => {
+                    (word.first_non_empty_line(), word.last_non_empty_line())
+                }
+            };
+
+            if let Some((first_line, first_y)) = first_non_empty
                 && let Some((first_min_y, first_max_y)) =
                     Self::calculate_vertical_extent(&metrics, first_line, *first_y)
             {
@@ -276,7 +300,7 @@ where
                 has_vertical_extent = true;
             }
 
-            if let Some((last_line, last_y)) = wrap.last_non_empty_line()
+            if let Some((last_line, last_y)) = last_non_empty
                 && let Some((last_min_y, last_max_y)) =
                     Self::calculate_vertical_extent(&metrics, last_line, *last_y)
             {
@@ -309,7 +333,7 @@ where
         }
 
         ResolvedLayout {
-            sublayouts: (line_ranges, manual_offset, wrap_size),
+            sublayouts: (line_ranges, manual_offset, wrap_size, line_count),
             resolved_size: size.into(),
         }
     }
@@ -329,6 +353,7 @@ where
             self.text.clone(),
             self.alignment,
             layout.sublayouts.0.clone(),
+            layout.sublayouts.3,
             self.wrap,
         )
     }
@@ -554,5 +579,34 @@ mod test {
         let mut captures = ();
         let layout = text.layout(&offer, &env, &mut captures, &mut ());
         assert_eq!(layout.resolved_size, Dimensions::new(8, 2));
+    }
+
+    #[test]
+    fn test_height_cutoff() {
+        let font = ArbitraryFont::new(1, 1);
+        let text = Text::new("abc defg hij", &font).with_precise_bounds();
+        let offer = ProposedDimensions {
+            width: 3.into(),
+            height: 2.into(),
+        };
+        let env = DefaultEnvironment::non_animated();
+        let mut captures = ();
+        let layout = text.layout(&offer, &env, &mut captures, &mut ());
+        assert_eq!(layout.resolved_size, Dimensions::new(3, 2));
+    }
+
+    #[ignore = "Is there a use case where this matters?"]
+    #[test]
+    fn zero_height_lines_retain_width() {
+        let font = ArbitraryFont::new(2, 1);
+        let text = Text::new("abc defg hij", &font).with_precise_bounds();
+        let offer = ProposedDimensions {
+            width: 3.into(),
+            height: 1.into(),
+        };
+        let env = DefaultEnvironment::non_animated();
+        let mut captures = ();
+        let layout = text.layout(&offer, &env, &mut captures, &mut ());
+        assert_eq!(layout.resolved_size, Dimensions::new(3, 0));
     }
 }

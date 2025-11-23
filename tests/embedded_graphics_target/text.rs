@@ -13,6 +13,7 @@ use u8g2_fonts::{FontRenderer, fonts, types::FontColor};
 use super::render_to_mock;
 
 mod precise_bounds;
+mod precise_bounds_break_wrap;
 
 #[test]
 fn embedded_graphics_mono_font() {
