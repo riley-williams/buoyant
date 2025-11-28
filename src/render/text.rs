@@ -29,6 +29,7 @@ pub struct Text<'a, T, F, const LINES: usize> {
 }
 
 impl<'a, T: AsRef<str>, F> Text<'a, T, F, 8> {
+    #[expect(clippy::too_many_arguments)]
     pub fn new(
         origin: Point,
         size: Size,

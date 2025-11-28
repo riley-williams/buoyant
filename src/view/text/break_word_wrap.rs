@@ -211,10 +211,12 @@ mod tests {
     fn breaks_anywhere_not_at_space() {
         let metrics = &FONT.metrics();
         // "hello world" is 11 chars -> width 11
+        // @typos-ignore
         // available_width = 10 -> should break after 10 bytes: "hello worl", "d"
         let wrap = BreakWordWrap::new("hello world", 10, metrics, false);
         assert_eq!(
             wrap.map(|l| l.content).collect::<Vec<&str>>(),
+            // @typos-ignore
             vec!["hello worl", "d"]
         );
     }
@@ -235,6 +237,7 @@ mod tests {
         let wrap = BreakWordWrap::new("hello\nworld", 3, metrics, false);
         assert_eq!(
             wrap.map(|l| l.content).collect::<Vec<_>>(),
+            // @typos-ignore
             vec!["hel", "lo", "wor", "ld"]
         );
     }
