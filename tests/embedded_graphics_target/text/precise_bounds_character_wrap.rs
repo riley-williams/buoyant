@@ -20,7 +20,7 @@ use u8g2_fonts::FontRenderer;
 fn expected_bounds(text: &str, font: &impl Font, size: &ProposedDimensions) -> Option<Rectangle> {
     let text_view = Text::new(text, font)
         .with_precise_bounds()
-        .with_wrap_strategy(buoyant::view::WrapStrategy::BreakWord);
+        .with_wrap_strategy(buoyant::view::WrapStrategy::Character);
     let layout = text_view.layout(size, &DefaultEnvironment::default(), &mut (), &mut ());
 
     if layout.resolved_size.area() == 0 {
@@ -40,7 +40,7 @@ fn rendered_text_bounds(
     let view = if_view!((print) {
         Text::new(text, font)
         .with_precise_bounds()
-        .with_wrap_strategy(buoyant::view::WrapStrategy::BreakWord)
+        .with_wrap_strategy(buoyant::view::WrapStrategy::Character)
         .foreground_color(Rgb888::WHITE)
         .background(Alignment::Center, {
                     Rectangle
@@ -50,7 +50,7 @@ fn rendered_text_bounds(
     } else {
         Text::new(text, font)
         .with_precise_bounds()
-        .with_wrap_strategy(buoyant::view::WrapStrategy::BreakWord)
+        .with_wrap_strategy(buoyant::view::WrapStrategy::Character)
         .foreground_color(Rgb888::WHITE)
 
     });

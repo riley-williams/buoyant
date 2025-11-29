@@ -18,7 +18,7 @@ use crate::{
 /// "ant boa"
 /// "ts"
 #[derive(Debug, Clone)]
-pub struct BreakWordWrap<'a, F> {
+pub struct CharacterWrap<'a, F> {
     remaining: &'a str,
     available_width: ProposedDimension,
     font: &'a F,
@@ -28,7 +28,7 @@ pub struct BreakWordWrap<'a, F> {
     last_non_empty_line: Option<(&'a str, i32)>,
 }
 
-impl<'a, F: FontMetrics> BreakWordWrap<'a, F> {
+impl<'a, F: FontMetrics> CharacterWrap<'a, F> {
     pub fn new(
         text: &'a str,
         available_width: impl Into<ProposedDimension>,
@@ -131,7 +131,7 @@ impl<'a, F: FontMetrics> BreakWordWrap<'a, F> {
     }
 }
 
-impl<'a, F: FontMetrics + 'a> Iterator for BreakWordWrap<'a, F> {
+impl<'a, F: FontMetrics + 'a> Iterator for CharacterWrap<'a, F> {
     type Item = WrappedLine<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -186,7 +186,7 @@ impl<'a, F: FontMetrics + 'a> Iterator for BreakWordWrap<'a, F> {
 
 #[cfg(test)]
 mod tests {
-    use super::BreakWordWrap;
+    use super::CharacterWrap;
     use crate::font::{CharacterBufferFont, Font, FontMetrics, FontRender};
     use crate::primitives::Size;
     use crate::primitives::geometry::Rectangle;
@@ -200,7 +200,7 @@ mod tests {
     #[test]
     fn single_word() {
         let metrics = &FONT.metrics();
-        let wrap = BreakWordWrap::new("hello", 10, metrics, false);
+        let wrap = CharacterWrap::new("hello", 10, metrics, false);
         assert_eq!(
             wrap.map(|l| l.content).collect::<Vec<&str>>(),
             vec!["hello"]
@@ -213,7 +213,7 @@ mod tests {
         // "hello world" is 11 chars -> width 11
         // @typos-ignore
         // available_width = 10 -> should break after 10 bytes: "hello worl", "d"
-        let wrap = BreakWordWrap::new("hello world", 10, metrics, false);
+        let wrap = CharacterWrap::new("hello world", 10, metrics, false);
         assert_eq!(
             wrap.map(|l| l.content).collect::<Vec<&str>>(),
             // @typos-ignore
@@ -224,7 +224,7 @@ mod tests {
     #[test]
     fn partial_words_are_wrapped_2() {
         let metrics = &FONT.metrics();
-        let wrap = BreakWordWrap::new("hello world", 2, metrics, false);
+        let wrap = CharacterWrap::new("hello world", 2, metrics, false);
         assert_eq!(
             wrap.map(|l| l.content).collect::<Vec<_>>(),
             vec!["he", "ll", "o ", "wo", "rl", "d"]
@@ -234,7 +234,7 @@ mod tests {
     #[test]
     fn newlines_are_respected() {
         let metrics = &FONT.metrics();
-        let wrap = BreakWordWrap::new("hello\nworld", 3, metrics, false);
+        let wrap = CharacterWrap::new("hello\nworld", 3, metrics, false);
         assert_eq!(
             wrap.map(|l| l.content).collect::<Vec<_>>(),
             // @typos-ignore
@@ -245,19 +245,19 @@ mod tests {
     #[test]
     fn compact_and_infinite_do_not_wrap_unless_newline() {
         let metrics = &FONT.metrics();
-        let wrap = BreakWordWrap::new("hello world", ProposedDimension::Compact, metrics, false);
+        let wrap = CharacterWrap::new("hello world", ProposedDimension::Compact, metrics, false);
         assert_eq!(
             wrap.map(|l| l.content).collect::<Vec<_>>(),
             vec!["hello world"]
         );
 
-        let wrap = BreakWordWrap::new("hello\nworld", ProposedDimension::Compact, metrics, false);
+        let wrap = CharacterWrap::new("hello\nworld", ProposedDimension::Compact, metrics, false);
         assert_eq!(
             wrap.map(|l| l.content).collect::<Vec<_>>(),
             vec!["hello", "world"]
         );
 
-        let wrap = BreakWordWrap::new("hello world", ProposedDimension::Infinite, metrics, false);
+        let wrap = CharacterWrap::new("hello world", ProposedDimension::Infinite, metrics, false);
         assert_eq!(
             wrap.map(|l| l.content).collect::<Vec<_>>(),
             vec!["hello world"]
@@ -318,7 +318,7 @@ mod tests {
         // 55555
         //
         // 666666
-        let wrap = BreakWordWrap::new("1 2 3 4 5 6", 5, metrics, false);
+        let wrap = CharacterWrap::new("1 2 3 4 5 6", 5, metrics, false);
         // We ensure it breaks according to the accumulated widths (exact expected values may differ
         // depending on how you count digits); test kept simple to show behavior composes with metric.
         let parts = wrap.map(|l| l.content).collect::<Vec<_>>();
@@ -329,12 +329,12 @@ mod tests {
     fn zero_sized_offer() {
         // The behavior of newlines in zero-width offers should be the same as with 1-width offers
         let metrics = &FONT.metrics();
-        let wrap_0 = BreakWordWrap::new("he\nllo", 0, metrics, false);
+        let wrap_0 = CharacterWrap::new("he\nllo", 0, metrics, false);
         assert_eq!(
             wrap_0.map(|l| l.content).collect::<Vec<_>>(),
             vec!["h", "e", "l", "l", "o"]
         );
-        let wrap_1 = BreakWordWrap::new("he\nllo", 1, metrics, false);
+        let wrap_1 = CharacterWrap::new("he\nllo", 1, metrics, false);
         assert_eq!(
             wrap_1.map(|l| l.content).collect::<Vec<_>>(),
             vec!["h", "e", "l", "l", "o"]
@@ -346,7 +346,7 @@ mod tests {
         // When breaking naturally before a newline, it should not produce an extra line,
         // except for a trailing newline
         let metrics = &FONT.metrics();
-        let wrap = BreakWordWrap::new("1\n\n3\n", 1, metrics, false);
+        let wrap = CharacterWrap::new("1\n\n3\n", 1, metrics, false);
         assert_eq!(
             wrap.map(|l| l.content).collect::<Vec<_>>(),
             vec!["1", "", "3", ""]
@@ -356,7 +356,7 @@ mod tests {
     #[test]
     fn unicode_wraps_correctly() {
         let metrics = &FONT.metrics();
-        let wrap = BreakWordWrap::new("rº🦀_🦀 🦀\nyº ºº\t🦀", 4, metrics, false);
+        let wrap = CharacterWrap::new("rº🦀_🦀 🦀\nyº ºº\t🦀", 4, metrics, false);
         assert_eq!(
             wrap.map(|l| l.content).collect::<Vec<_>>(),
             vec!["rº🦀_", "🦀 🦀", "yº º", "º\t🦀"]
