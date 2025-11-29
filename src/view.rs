@@ -38,7 +38,7 @@ pub use modifier::aspect_ratio;
 pub use modifier::padding;
 pub use scroll_view::ScrollView;
 pub use spacer::Spacer;
-pub(crate) use text::{BreakWordWrap, WhitespaceWrap};
+pub(crate) use text::{CharacterWrap, WordWrap};
 pub use text::{HorizontalTextAlignment, Text, WrapStrategy};
 pub use view_that_fits::{FitAxis, ViewThatFits};
 pub use vstack::VStack;

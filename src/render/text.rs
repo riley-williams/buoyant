@@ -7,7 +7,7 @@ use crate::{
     primitives::{Interpolate, Point, Size, geometry::Rectangle},
     render::{AnimatedJoin, AnimationDomain, Render},
     render_target::{Glyph, RenderTarget, SolidBrush},
-    view::{BreakWordWrap, HorizontalTextAlignment, WhitespaceWrap, WrapStrategy},
+    view::{CharacterWrap, HorizontalTextAlignment, WordWrap, WrapStrategy},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -147,11 +147,12 @@ impl<C: Copy, T: AsRef<str> + Clone, F: FontRender<C>, const LINE_BREAKS: usize>
         // Pass false for precise wrapping, it doesn't affect rendered lines.
         // The width passed here should be the advance-based width, not the tighter precise
         //  bounding box width so that the text is wrapped the same.
-        let mut whitespace = WhitespaceWrap::new(remaining_text, self.size.width, &metrics, false);
-        let mut word = BreakWordWrap::new(remaining_text, self.size.width, &metrics, false);
+        let mut word_wrap = WordWrap::new(remaining_text, self.size.width, &metrics, false);
+        let mut character_wrap =
+            CharacterWrap::new(remaining_text, self.size.width, &metrics, false);
         let wrap = core::iter::from_fn(|| match self.wrap {
-            WrapStrategy::Whitespace => whitespace.next(),
-            WrapStrategy::BreakWord => word.next(),
+            WrapStrategy::Word => word_wrap.next(),
+            WrapStrategy::Character => character_wrap.next(),
         });
 
         let clip_rect = render_target.clip_rect();
@@ -245,7 +246,7 @@ mod tests {
             HorizontalTextAlignment::Leading,
             Vec::new(),
             100,
-            WrapStrategy::Whitespace,
+            WrapStrategy::Word,
         );
         let mut target = Text::new(
             Point::new(50, 25),
@@ -255,7 +256,7 @@ mod tests {
             HorizontalTextAlignment::Center,
             Vec::new(),
             100,
-            WrapStrategy::Whitespace,
+            WrapStrategy::Word,
         );
 
         target.join_from(&source, &animation_domain(0));
@@ -278,7 +279,7 @@ mod tests {
             HorizontalTextAlignment::Leading,
             Vec::new(),
             100,
-            WrapStrategy::Whitespace,
+            WrapStrategy::Word,
         );
         let original_target = Text::new(
             Point::new(50, 25),
@@ -288,7 +289,7 @@ mod tests {
             HorizontalTextAlignment::Center,
             Vec::new(),
             100,
-            WrapStrategy::Whitespace,
+            WrapStrategy::Word,
         );
         let mut target = original_target.clone();
 
@@ -312,7 +313,7 @@ mod tests {
             HorizontalTextAlignment::Leading,
             Vec::new(),
             100,
-            WrapStrategy::Whitespace,
+            WrapStrategy::Word,
         );
         let original_target = Text::new(
             Point::new(100, 50),
@@ -322,7 +323,7 @@ mod tests {
             HorizontalTextAlignment::Trailing,
             Vec::new(),
             100,
-            WrapStrategy::Whitespace,
+            WrapStrategy::Word,
         );
         let mut target = original_target.clone();
 

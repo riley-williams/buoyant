@@ -9,22 +9,20 @@ use crate::{
 };
 use core::fmt::Write;
 
-mod break_word_wrap;
-mod whitespace_wrap;
+mod character_wrap;
+mod word_wrap;
 
-pub use break_word_wrap::BreakWordWrap;
-pub use whitespace_wrap::WhitespaceWrap;
+pub use character_wrap::CharacterWrap;
+pub use word_wrap::WordWrap;
 
 /// The strategy to use when wrapping text.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum WrapStrategy {
-    /// Wrap at whitespace boundaries.
-    Whitespace,
+    /// Wrap at word/whitespace boundaries.
+    Word,
     /// Wrap at character boundaries.
-    BreakWord,
+    Character,
 }
-
-// W is hardcoded elsewhere to WhitespaceWrap, leaving generic for future fix
 
 /// Displays text in a given font.
 ///
@@ -51,7 +49,7 @@ pub struct Text<'a, T, F> {
     pub(crate) wrap: WrapStrategy,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct WrappedLine<'a> {
     pub content: &'a str,
     pub width: u32,
@@ -91,7 +89,7 @@ impl<'a, T: AsRef<str>, F> Text<'a, T, F> {
             font,
             alignment: HorizontalTextAlignment::default(),
             precise_character_bounds: false,
-            wrap: WrapStrategy::Whitespace,
+            wrap: WrapStrategy::Word,
         }
     }
     /// Sets the wrapping strategy for the text.
@@ -228,21 +226,21 @@ where
         let mut size = Size::zero();
         // TODO: actually calculate this
         let line_ranges = heapless::Vec::new();
-        let mut whitespace = WhitespaceWrap::new(
+        let mut whitespace = WordWrap::new(
             self.text.as_ref(),
             offer.width,
             &metrics,
             self.precise_character_bounds,
         );
-        let mut word = BreakWordWrap::new(
+        let mut word = CharacterWrap::new(
             self.text.as_ref(),
             offer.width,
             &metrics,
             self.precise_character_bounds,
         );
         let mut wrap = core::iter::from_fn(|| match self.wrap {
-            WrapStrategy::Whitespace => whitespace.next(),
-            WrapStrategy::BreakWord => word.next(),
+            WrapStrategy::Word => whitespace.next(),
+            WrapStrategy::Character => word.next(),
         });
 
         let mut line_count: u32 = 0;
@@ -282,11 +280,11 @@ where
 
         if self.precise_character_bounds {
             let (first_non_empty, last_non_empty) = match self.wrap {
-                WrapStrategy::Whitespace => (
+                WrapStrategy::Word => (
                     whitespace.first_non_empty_line(),
                     whitespace.last_non_empty_line(),
                 ),
-                WrapStrategy::BreakWord => {
+                WrapStrategy::Character => {
                     (word.first_non_empty_line(), word.last_non_empty_line())
                 }
             };
