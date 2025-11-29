@@ -876,7 +876,7 @@ mod tests {
             font: &traced_font,
             alignment: crate::view::HorizontalTextAlignment::Leading,
             precise_character_bounds: true,
-            _wrap: core::marker::PhantomData::<_>,
+            wrap: crate::view::WrapStrategy::Whitespace,
         };
         text.layout(
             &ProposedDimensions::new(5, 5),
@@ -907,7 +907,7 @@ mod tests {
             font: &traced_font,
             alignment: crate::view::HorizontalTextAlignment::Leading,
             precise_character_bounds: false,
-            _wrap: core::marker::PhantomData::<_>,
+            wrap: crate::view::WrapStrategy::Whitespace,
         };
         text.layout(
             &ProposedDimensions::new(5, 5),

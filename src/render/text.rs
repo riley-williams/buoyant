@@ -7,7 +7,7 @@ use crate::{
     primitives::{Interpolate, Point, Size, geometry::Rectangle},
     render::{AnimatedJoin, AnimationDomain, Render},
     render_target::{Glyph, RenderTarget, SolidBrush},
-    view::{HorizontalTextAlignment, WhitespaceWrap},
+    view::{BreakWordWrap, HorizontalTextAlignment, WhitespaceWrap, WrapStrategy},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -24,9 +24,12 @@ pub struct Text<'a, T, F, const LINES: usize> {
     pub text: T,
     pub alignment: HorizontalTextAlignment,
     pub lines: Vec<Line, LINES>,
+    pub max_lines: u32,
+    pub wrap: WrapStrategy,
 }
 
 impl<'a, T: AsRef<str>, F> Text<'a, T, F, 8> {
+    #[expect(clippy::too_many_arguments)]
     pub fn new(
         origin: Point,
         size: Size,
@@ -34,6 +37,8 @@ impl<'a, T: AsRef<str>, F> Text<'a, T, F, 8> {
         text: T,
         alignment: HorizontalTextAlignment,
         lines: Vec<Line, 8>,
+        max_lines: u32,
+        wrap: WrapStrategy,
     ) -> Self {
         Self {
             origin,
@@ -42,6 +47,8 @@ impl<'a, T: AsRef<str>, F> Text<'a, T, F, 8> {
             text,
             alignment,
             lines,
+            max_lines,
+            wrap,
         }
     }
 }
@@ -54,6 +61,8 @@ impl<T: Clone, F, const N: usize> Clone for Text<'_, T, F, N> {
             text: self.text.clone(),
             alignment: self.alignment,
             lines: self.lines.clone(),
+            max_lines: self.max_lines,
+            wrap: self.wrap,
         }
     }
 }
@@ -83,8 +92,14 @@ impl<C: Copy, T: AsRef<str> + Clone, F: FontRender<C>, const LINE_BREAKS: usize>
         let line_height = metrics.default_line_height();
 
         let mut height = 0;
+        let mut line_count = 0;
 
         for line in &self.lines {
+            if line_count >= self.max_lines {
+                break;
+            }
+            line_count += 1;
+
             let line_x = self
                 .alignment
                 .align(self.size.width as i32, line.pixel_width as i32)
@@ -121,9 +136,6 @@ impl<C: Copy, T: AsRef<str> + Clone, F: FontRender<C>, const LINE_BREAKS: usize>
             );
 
             height += line_height as i32;
-            if height >= self.size.height as i32 {
-                break;
-            }
         }
         let remaining_text = self.lines.last().map_or(self.text.as_ref(), |last_range| {
             // Get the remaining text after the last line
@@ -132,12 +144,24 @@ impl<C: Copy, T: AsRef<str> + Clone, F: FontRender<C>, const LINE_BREAKS: usize>
         if remaining_text.is_empty() {
             return;
         }
-
-        let wrap = WhitespaceWrap::new(remaining_text, self.size.width, &metrics, false);
+        // Pass false for precise wrapping, it doesn't affect rendered lines.
+        // The width passed here should be the advance-based width, not the tighter precise
+        //  bounding box width so that the text is wrapped the same.
+        let mut whitespace = WhitespaceWrap::new(remaining_text, self.size.width, &metrics, false);
+        let mut word = BreakWordWrap::new(remaining_text, self.size.width, &metrics, false);
+        let wrap = core::iter::from_fn(|| match self.wrap {
+            WrapStrategy::Whitespace => whitespace.next(),
+            WrapStrategy::BreakWord => word.next(),
+        });
 
         let clip_rect = render_target.clip_rect();
 
         for line in wrap {
+            if line_count >= self.max_lines {
+                break;
+            }
+            line_count += 1;
+
             let width = line.width;
 
             let line_x = self.alignment.align(self.size.width as i32, width as i32) + self.origin.x;
@@ -173,9 +197,6 @@ impl<C: Copy, T: AsRef<str> + Clone, F: FontRender<C>, const LINE_BREAKS: usize>
             );
 
             height += line_height as i32;
-            if height >= self.size.height as i32 {
-                break;
-            }
         }
     }
 
@@ -195,6 +216,8 @@ impl<C: Copy, T: AsRef<str> + Clone, F: FontRender<C>, const LINE_BREAKS: usize>
             font: target.font,
             alignment: target.alignment,
             lines: target.lines.clone(),
+            max_lines: target.max_lines,
+            wrap: target.wrap,
         }
         .render(render_target, style);
     }
@@ -221,6 +244,8 @@ mod tests {
             "Hello",
             HorizontalTextAlignment::Leading,
             Vec::new(),
+            100,
+            WrapStrategy::Whitespace,
         );
         let mut target = Text::new(
             Point::new(50, 25),
@@ -229,6 +254,8 @@ mod tests {
             "World",
             HorizontalTextAlignment::Center,
             Vec::new(),
+            100,
+            WrapStrategy::Whitespace,
         );
 
         target.join_from(&source, &animation_domain(0));
@@ -250,6 +277,8 @@ mod tests {
             "Hello",
             HorizontalTextAlignment::Leading,
             Vec::new(),
+            100,
+            WrapStrategy::Whitespace,
         );
         let original_target = Text::new(
             Point::new(50, 25),
@@ -258,6 +287,8 @@ mod tests {
             "World",
             HorizontalTextAlignment::Center,
             Vec::new(),
+            100,
+            WrapStrategy::Whitespace,
         );
         let mut target = original_target.clone();
 
@@ -280,6 +311,8 @@ mod tests {
             "Start",
             HorizontalTextAlignment::Leading,
             Vec::new(),
+            100,
+            WrapStrategy::Whitespace,
         );
         let original_target = Text::new(
             Point::new(100, 50),
@@ -288,6 +321,8 @@ mod tests {
             "End",
             HorizontalTextAlignment::Trailing,
             Vec::new(),
+            100,
+            WrapStrategy::Whitespace,
         );
         let mut target = original_target.clone();
 

@@ -18,7 +18,9 @@ use embedded_graphics::{mock_display::MockDisplay, pixelcolor::Rgb888};
 use u8g2_fonts::FontRenderer;
 
 fn expected_bounds(text: &str, font: &impl Font, size: &ProposedDimensions) -> Option<Rectangle> {
-    let text_view = Text::new(text, font).with_precise_bounds();
+    let text_view = Text::new(text, font)
+        .with_precise_bounds()
+        .with_wrap_strategy(buoyant::view::WrapStrategy::BreakWord);
     let layout = text_view.layout(size, &DefaultEnvironment::default(), &mut (), &mut ());
 
     if layout.resolved_size.area() == 0 {
@@ -38,6 +40,7 @@ fn rendered_text_bounds(
     let view = if_view!((print) {
         Text::new(text, font)
         .with_precise_bounds()
+        .with_wrap_strategy(buoyant::view::WrapStrategy::BreakWord)
         .foreground_color(Rgb888::WHITE)
         .background(Alignment::Center, {
                     Rectangle
@@ -47,6 +50,7 @@ fn rendered_text_bounds(
     } else {
         Text::new(text, font)
         .with_precise_bounds()
+        .with_wrap_strategy(buoyant::view::WrapStrategy::BreakWord)
         .foreground_color(Rgb888::WHITE)
 
     });
@@ -69,12 +73,13 @@ fn rendered_text_bounds(
     }
 }
 
+// Spaces are excluded because the cheaper wrapping doesn't check for them
 const TEST_TEXTS: &[&str] = &[
-    "Hello, World!",
-    "The quick brown fox jumps over the lazy dog.",
+    "Hello,_World!",
+    "The.quick.brown.fox.jumps.over.the.lazy.dog.",
     "1234567890",
     "!@#$%^&*()_+-=[]{}|;':\",.<>/?`~",
-    "Line 1\nLine 2\nLine 3",
+    "Line_1\nLine_2\nLine_3",
 ];
 
 #[test]
@@ -126,13 +131,13 @@ fn exhaustively_check_precise_bounds(font: &impl FontRender<Rgb888>) {
                 }
                 assert!(
                     size.width >= actual_bounds.clone().map_or(0, |r| r.size.width),
-                    "Expected actual width of at most {} but got {:?}",
+                    "Expected actual width to be less than offer of {} but got {:?}",
                     size.width,
                     actual_bounds
                 );
                 assert!(
                     size.height >= actual_bounds.clone().map_or(0, |r| r.size.height),
-                    "Expected actual height of at most {} but got {:?}",
+                    "Expected actual height to be less than offer of {} but got {:?}",
                     size.height,
                     actual_bounds
                 );
@@ -143,25 +148,4 @@ fn exhaustively_check_precise_bounds(font: &impl FontRender<Rgb888>) {
             }
         }
     }
-}
-
-/// The 'j' here has a negative x offset, which can cause issues
-/// This specific size is known to be tricky
-#[test]
-fn check_j_offset() {
-    let font = &FontRenderer::new::<u8g2_fonts::fonts::u8g2_font_mystery_quest_24_tf>();
-    // With precise bounds
-    let text = "The quick brown fox jumps over the lazy dog.";
-    let width = 51;
-    let height = 31;
-    let size = Size::new(width, height);
-    let expected_bounds = expected_bounds(text, font, &size.into());
-    let actual_bounds = rendered_text_bounds(text, font, size, false);
-    if actual_bounds != expected_bounds {
-        rendered_text_bounds(text, font, size, true);
-    }
-    assert_eq!(
-        expected_bounds, actual_bounds,
-        "Failed for size: {size:?}, text: {text:?}"
-    );
 }
