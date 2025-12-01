@@ -53,7 +53,7 @@ pub trait AnimatedJoin {
 }
 
 /// A type that can be rendered to a target and animated
-pub trait Render<Color>: AnimatedJoin + Sized {
+pub trait Render<Color>: AnimatedJoin {
     /// Render the view to the screen
     fn render(&self, render_target: &mut impl RenderTarget<ColorFormat = Color>, style: &Color);
 
