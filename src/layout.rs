@@ -92,7 +92,7 @@ impl VerticalAlignment {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct ResolvedLayout<C: Clone + PartialEq> {
     pub sublayouts: C,
     pub resolved_size: Dimensions,
