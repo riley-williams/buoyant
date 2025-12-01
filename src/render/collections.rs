@@ -101,8 +101,9 @@ mod impl_render {
 
 impl<Color, T: Render<Color>> Render<Color> for [T] {
     fn render(&self, render_target: &mut impl RenderTarget<ColorFormat = Color>, style: &Color) {
-        self.iter()
-            .for_each(|item| item.render(render_target, style));
+        for item in self {
+            item.render(render_target, style);
+        }
     }
 
     fn render_animated(
@@ -135,7 +136,7 @@ impl<Color, T: Render<Color>, const N: usize> Render<Color> for [T; N] {
         style: &Color,
         domain: &AnimationDomain,
     ) {
-        <[T]>::render_animated(render_target, source, target, style, domain)
+        <[T]>::render_animated(render_target, source, target, style, domain);
     }
 }
 
@@ -153,7 +154,7 @@ impl<Color, T: Render<Color>, const N: usize> Render<Color> for heapless::Vec<T,
         style: &Color,
         domain: &AnimationDomain,
     ) {
-        <[T]>::render_animated(render_target, source, target, style, domain)
+        <[T]>::render_animated(render_target, source, target, style, domain);
     }
 }
 

@@ -1,3 +1,5 @@
+#![allow(clippy::needless_range_loop)]
+
 use core::array;
 use core::cmp::max;
 
@@ -48,8 +50,9 @@ use buoyant::view::{
 };
 use embedded_graphics::{pixelcolor::Rgb565, mono_font::ascii::FONT_9X15_BOLD};
 
-struct Item<'a> {
+struct Items<'a> {
     width: usize,
+    height: usize,
     keys: &'a [&'a str],
     values: &'a [&'a str],
 }
@@ -61,9 +64,10 @@ impl<'a> TableIndex<'a> for Items<'a> {
         let value = &self.values[y * self.width + x];
         (key, value)
     }
+}
 
-fn table_with_borders(keys: &[&str], values: &[&str]) -> impl View<Rgb565, ()> {
-    Table::<6, 6>::new(2, 2, items, |(key, value)| {
+fn table_with_borders<'a>(items: Items<'a>) -> impl View<Rgb565, ()> + 'a {
+    Table::<6, 6>::new(items.width, items.height, items, |(key, value)| {
         HStack::new((
             Text::new(key, &FONT_9X15_BOLD),
             Text::new(": ", &FONT_9X15_BOLD),
@@ -76,7 +80,7 @@ fn table_with_borders(keys: &[&str], values: &[&str]) -> impl View<Rgb565, ()> {
     .background(Alignment::Center, Rectangle.stroked(1))
     .background(
         Alignment::Center,
-        Rectangle.foreground_color(data.palette.dark_gray),
+        Rectangle.foreground_color(Rgb565::new(169, 169, 169)),
     )
 }
 ```
@@ -139,7 +143,7 @@ impl<VState, const R: usize, const C: usize> TableState<VState, R, C> {
 }
 
 impl CellAlignment {
-    pub fn align(&self, cell: Dimensions, item: Dimensions) -> Point {
+    pub fn align(self, cell: Dimensions, item: Dimensions) -> Point {
         let h = self.0.align(cell.width.into(), item.width.into());
         let v = self.1.align(cell.height.into(), item.height.into());
         Point::new(h, v)
@@ -148,6 +152,7 @@ impl CellAlignment {
 
 impl<const R: usize, const C: usize> Table<R, C> {
     /// Creates a new table view with the given dimensions, items and view builder function.
+    #[expect(clippy::new_ret_no_self)]
     pub fn new<'a, M, V, F>(
         mut width: usize,
         mut height: usize,
@@ -260,16 +265,17 @@ where
     }
 
     fn build_state(&self, captures: &mut Captures) -> Self::State {
-        let mut state: Self::State = Default::default();
+        let mut state: Self::State = TableState::default();
         for c in 0..self.width {
             for r in 0..self.height {
                 state.cell_states[c][r] =
-                    (self.build_view)(self.items.index(c, r)).build_state(captures)
+                    (self.build_view)(self.items.index(c, r)).build_state(captures);
             }
         }
         state
     }
 
+    #[allow(clippy::too_many_lines)]
     fn layout(
         &self,
         offer: &ProposedDimensions,
@@ -277,7 +283,7 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> ResolvedLayout<Self::Sublayout> {
-        let mut sublayouts: Array<C, Array<R, ResolvedLayout<V::Sublayout>>> = Default::default();
+        let mut sublayouts: Array<C, Array<R, ResolvedLayout<V::Sublayout>>> = Array::default();
 
         let mut layout_fn = |c: usize, r: usize, offer: ProposedDimensions| {
             debug_assert!(c < self.width && r < self.height);
@@ -300,13 +306,11 @@ where
         match self.algorithm {
             TableAlgorithm::FixedBoth => {
                 // require exact width and height
-                let total_width = match offer.width {
-                    ProposedDimension::Exact(w) => w,
-                    _ => panic!("Table algorithm `FixedBoth` requires an exact width offer"),
+                let ProposedDimension::Exact(total_width) = offer.width else {
+                    panic!("Table algorithm `FixedBoth` requires an exact width offer")
                 };
-                let total_height = match offer.height {
-                    ProposedDimension::Exact(h) => h,
-                    _ => panic!("Table algorithm `FixedBoth` requires an exact height offer"),
+                let ProposedDimension::Exact(total_height) = offer.height else {
+                    panic!("Table algorithm `FixedBoth` requires an exact height offer")
                 };
 
                 let stroke_w = self.col_stroke * self.width.saturating_sub(1) as u32;
@@ -319,10 +323,10 @@ where
                 let rem_h = (total_height.saturating_sub(stroke_h) % div_h) as usize;
 
                 for c in 0..self.width {
-                    state.col_widths[c] = base_w + (c < rem_w) as u32;
+                    state.col_widths[c] = base_w + u32::from(c < rem_w);
                 }
                 for r in 0..self.height {
-                    state.row_heights[r] = base_h + (r < rem_h) as u32;
+                    state.row_heights[r] = base_h + u32::from(r < rem_h);
                 }
 
                 for c in 0..self.width {
@@ -345,9 +349,8 @@ where
             }
             TableAlgorithm::FixedWidth => {
                 // require exact width and height
-                let total_width = match offer.width {
-                    ProposedDimension::Exact(w) => w,
-                    _ => panic!("Table algorithm `FixedBoth` requires an exact width offer"),
+                let ProposedDimension::Exact(total_width) = offer.width else {
+                    panic!("Table algorithm `FixedBoth` requires an exact width offer")
                 };
 
                 let stroke_w = self.col_stroke * self.width.saturating_sub(1) as u32;
@@ -356,14 +359,14 @@ where
                 let rem_w = (total_width.saturating_sub(stroke_w) % div_w) as usize;
 
                 for c in 0..self.width {
-                    state.col_widths[c] = base_w + (c < rem_w) as u32;
+                    state.col_widths[c] = base_w + u32::from(c < rem_w);
                 }
 
                 for c in 0..self.width {
                     let mut subviews_col: [(i8, bool); R] = [(i8::MIN, true); R];
                     for r in 0..self.height {
                         let view = (self.build_view)(self.items.index(c, r));
-                        subviews_col[r] = (view.priority(), view.is_empty())
+                        subviews_col[r] = (view.priority(), view.is_empty());
                     }
 
                     let _ = layout_n(
@@ -418,9 +421,9 @@ where
             For general case table layout seems to require a [convergence algorithm].
             HTML's `table-layout: auto;` is cool but isn't specified. Non-normative part of
             the [w3c spec] talks about determining maximing minimums and maximums for each column,
-            but it doesn't seem to highligh how to distribute the space between columns.
+            but it doesn't seem to highlight how to distribute the space between columns.
 
-            So this is like a "single covergence step". `layout_n` is used to get plausible
+            So this is like a "single convergence step". `layout_n` is used to get plausible
             heights by giving columns equal (±1) width. Then those height are used in the
             second `layout_n` which computes widths based on those heights. Finally,
             it uses computed width and height to actually do the layout of each cell. It
@@ -442,7 +445,7 @@ where
                         is_empty &= view.is_empty();
                         priority = max(priority, view.priority());
                     }
-                    subviews_agg_row[c] = (priority, is_empty)
+                    subviews_agg_row[c] = (priority, is_empty);
                 }
 
                 // If the offered height is Exact, offer a fraction of it to get more realistic widths
@@ -492,7 +495,7 @@ where
                     let mut subviews_col: [(i8, bool); R] = [(i8::MIN, true); R];
                     for r in 0..self.height {
                         let view = (self.build_view)(self.items.index(c, r));
-                        subviews_col[r] = (view.priority(), view.is_empty())
+                        subviews_col[r] = (view.priority(), view.is_empty());
                     }
 
                     let _ = layout_n(
@@ -603,7 +606,7 @@ where
 
 // We can't use plain arrays there due to https://github.com/rust-lang/rust/issues/61415
 mod kinda_array {
-    #[derive(Debug, Clone, PartialEq, PartialOrd, Copy)]
+    #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Copy)]
     pub struct Array<const N: usize, T>(pub [T; N]);
 
     impl<const N: usize, T> Default for Array<N, T>

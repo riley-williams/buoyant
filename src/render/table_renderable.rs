@@ -56,7 +56,7 @@ where
                 None,
                 &Rectangle::new(
                     Point::new(self.origin.x, y),
-                    Size::new(self.resolved_size.width.0 as u32, self.row_stroke),
+                    Size::new(self.resolved_size.width.0, self.row_stroke),
                 ),
             );
             y += self.row_stroke as i32 + self.row_heights[r] as i32;

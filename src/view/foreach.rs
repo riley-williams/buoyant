@@ -268,9 +268,9 @@ where
         let mut subview_stages: heapless::Vec<(i8, bool), N> = heapless::Vec::new();
 
         // TODO: guess there are no empty views, often no extra work needed?
-        for item in self.items.iter() {
+        for item in self.items {
             let view = (self.build_view)(item);
-            _ = sublayouts.push(Default::default());
+            _ = sublayouts.push(ResolvedLayout::default());
             _ = subview_stages.push((view.priority(), view.is_empty()));
         }
 
