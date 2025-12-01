@@ -32,11 +32,23 @@ mod impl_join {
     impl_join_for_collections!((0, T0), (1, T1), (2, T2), (3, T3), (4, T4), (5, T5), (6, T6), (7, T7), (8, T8), (9, T9));
 }
 
-impl<T: AnimatedJoin, const N: usize> AnimatedJoin for heapless::Vec<T, N> {
+impl<T: AnimatedJoin> AnimatedJoin for [T] {
     fn join_from(&mut self, source: &Self, domain: &AnimationDomain) {
         self.iter_mut().zip(source).for_each(|(target, source)| {
             target.join_from(source, domain);
         });
+    }
+}
+
+impl<T: AnimatedJoin, const N: usize> AnimatedJoin for [T; N] {
+    fn join_from(&mut self, source: &Self, domain: &AnimationDomain) {
+        self.as_mut_slice().join_from(source.as_slice(), domain);
+    }
+}
+
+impl<T: AnimatedJoin, const N: usize> AnimatedJoin for heapless::Vec<T, N> {
+    fn join_from(&mut self, source: &Self, domain: &AnimationDomain) {
+        self.as_mut_slice().join_from(source.as_slice(), domain);
     }
 }
 
@@ -75,19 +87,19 @@ macro_rules! impl_render_for_collections {
 }
 
 #[rustfmt::skip]
-    mod impl_render {
-        impl_render_for_collections!((0, T0), (1, T1));
-        impl_render_for_collections!((0, T0), (1, T1), (2, T2));
-        impl_render_for_collections!((0, T0), (1, T1), (2, T2), (3, T3));
-        impl_render_for_collections!((0, T0), (1, T1), (2, T2), (3, T3), (4, T4));
-        impl_render_for_collections!((0, T0), (1, T1), (2, T2), (3, T3), (4, T4), (5, T5));
-        impl_render_for_collections!((0, T0), (1, T1), (2, T2), (3, T3), (4, T4), (5, T5), (6, T6));
-        impl_render_for_collections!((0, T0), (1, T1), (2, T2), (3, T3), (4, T4), (5, T5), (6, T6), (7, T7));
-        impl_render_for_collections!((0, T0), (1, T1), (2, T2), (3, T3), (4, T4), (5, T5), (6, T6), (7, T7), (8, T8));
-        impl_render_for_collections!((0, T0), (1, T1), (2, T2), (3, T3), (4, T4), (5, T5), (6, T6), (7, T7), (8, T8), (9, T9));
-    }
+mod impl_render {
+    impl_render_for_collections!((0, T0), (1, T1));
+    impl_render_for_collections!((0, T0), (1, T1), (2, T2));
+    impl_render_for_collections!((0, T0), (1, T1), (2, T2), (3, T3));
+    impl_render_for_collections!((0, T0), (1, T1), (2, T2), (3, T3), (4, T4));
+    impl_render_for_collections!((0, T0), (1, T1), (2, T2), (3, T3), (4, T4), (5, T5));
+    impl_render_for_collections!((0, T0), (1, T1), (2, T2), (3, T3), (4, T4), (5, T5), (6, T6));
+    impl_render_for_collections!((0, T0), (1, T1), (2, T2), (3, T3), (4, T4), (5, T5), (6, T6), (7, T7));
+    impl_render_for_collections!((0, T0), (1, T1), (2, T2), (3, T3), (4, T4), (5, T5), (6, T6), (7, T7), (8, T8));
+    impl_render_for_collections!((0, T0), (1, T1), (2, T2), (3, T3), (4, T4), (5, T5), (6, T6), (7, T7), (8, T8), (9, T9));
+}
 
-impl<Color, T: Render<Color>, const N: usize> Render<Color> for heapless::Vec<T, N> {
+impl<Color, T: Render<Color>> Render<Color> for [T] {
     fn render(&self, render_target: &mut impl RenderTarget<ColorFormat = Color>, style: &Color) {
         self.iter()
             .for_each(|item| item.render(render_target, style));
@@ -106,6 +118,42 @@ impl<Color, T: Render<Color>, const N: usize> Render<Color> for heapless::Vec<T,
             .for_each(|(source, target)| {
                 T::render_animated(render_target, source, target, style, domain);
             });
+    }
+}
+
+impl<Color, T: Render<Color>, const N: usize> Render<Color> for [T; N] {
+    #[inline]
+    fn render(&self, render_target: &mut impl RenderTarget<ColorFormat = Color>, style: &Color) {
+        self.as_slice().render(render_target, style);
+    }
+
+    #[inline]
+    fn render_animated(
+        render_target: &mut impl RenderTarget<ColorFormat = Color>,
+        source: &Self,
+        target: &Self,
+        style: &Color,
+        domain: &AnimationDomain,
+    ) {
+        <[T]>::render_animated(render_target, source, target, style, domain)
+    }
+}
+
+impl<Color, T: Render<Color>, const N: usize> Render<Color> for heapless::Vec<T, N> {
+    #[inline]
+    fn render(&self, render_target: &mut impl RenderTarget<ColorFormat = Color>, style: &Color) {
+        self.as_slice().render(render_target, style);
+    }
+
+    #[inline]
+    fn render_animated(
+        render_target: &mut impl RenderTarget<ColorFormat = Color>,
+        source: &Self,
+        target: &Self,
+        style: &Color,
+        domain: &AnimationDomain,
+    ) {
+        <[T]>::render_animated(render_target, source, target, style, domain)
     }
 }
 
