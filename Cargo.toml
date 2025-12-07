@@ -1,6 +1,6 @@
 [package]
 name = "buoyant"
-version = "0.6.0-alpha.2"
+version = "0.6.0"
 authors = ["Riley Williams"]
 edition = "2024"
 license = "MIT OR Apache-2.0"
@@ -40,7 +40,7 @@ fixed = "^1.29"
 fixed-macro = "^1.2.0"
 paste = "1.0.15"
 embedded-touch = "^0.3.0"
-embedded-graphics-simulator = { version = "0.7.0", default-features = false, features = [
+embedded-graphics-simulator = { version = "0.8.0", default-features = false, features = [
   "with-sdl",
 ], optional = true }
 
@@ -70,7 +70,7 @@ members = ["buoyant-examples/battery"]
 
 [workspace.dependencies]
 embedded-graphics = "0.8.1"
-embedded-graphics-simulator = { version = "0.7.0", default-features = false, features = [
+embedded-graphics-simulator = { version = "0.8.0", default-features = false, features = [
   "with-sdl",
 ] }
 heapless = "0.9.1"
