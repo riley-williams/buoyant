@@ -34,7 +34,7 @@ pub use hint_background::HintBackground;
 #[cfg(feature = "embedded-graphics")]
 pub use image::Image;
 pub use offset::Offset;
-pub use one_of::{OneOf2, OneOf3, OneOf4};
+pub use one_of::{OneOf1, OneOf2, OneOf3, OneOf4, OneOf5, OneOf6, OneOf7};
 pub use opacity::Opacity;
 pub use scroll_renderable::ScrollRenderable;
 pub use shade_subtree::ShadeSubtree;
