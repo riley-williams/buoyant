@@ -258,7 +258,7 @@ macro_rules! impl_view_for_hstack {
                     resolved_size: Dimensions::default(),
                 };
 
-                let env = &VerticalEnvironment::from(env);
+                let env = &HorizontalEnvironment::from(env);
 
                 let captures_cell = RefCell::new(captures);
 
