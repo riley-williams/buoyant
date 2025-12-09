@@ -241,21 +241,24 @@ macro_rules! impl_view_for_vstack {
                 state: &mut Self::State,
             ) -> ResolvedLayout<Self::Sublayout> {
                 const N: usize = count!($($n),+);
+
+                let mut layout = ResolvedLayout {
+                    sublayouts: ($(ResolvedLayout::<$type::Sublayout>::default()),+),
+                    resolved_size: Dimensions::default(),
+                };
+
                 let env = &VerticalEnvironment::from(env);
 
                 let captures_cell = RefCell::new(captures);
 
                 $(
-                    let mut [<c$n>]: Option<ResolvedLayout<$type::Sublayout>> = None;
-                )+
-
-                $(
+                    let sublayout = &mut layout.sublayouts.$n;
                     let mut [<f$n>] = |size: ProposedDimensions| {
                         // Calls to this layout cannot overlap, so this borrow will not conflict
                         let mut captures = captures_cell.borrow_mut();
                         let layout = self.items.$n.layout(&size, env, &mut *captures, &mut state.$n);
                         let size = layout.resolved_size;
-                        [<c$n>] = Some(layout);
+                        *sublayout = layout;
                         size
                     };
                 )+
@@ -269,10 +272,8 @@ macro_rules! impl_view_for_vstack {
                 let mut flexibilities: [Dimension; N] = [Dimension::new(0); N];
                 let mut subviews_indices: [usize; N] = [0; N];
                 let total_size = layout_n(&mut subviews, *offer, self.spacing, &mut flexibilities, &mut subviews_indices);
-                ResolvedLayout {
-                    sublayouts: ($([<c$n>].unwrap()),+),
-                    resolved_size: total_size,
-                }
+                layout.resolved_size = total_size;
+                layout
             }
 
             #[allow(unused_assignments)]
