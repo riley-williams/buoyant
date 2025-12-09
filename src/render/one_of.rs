@@ -2,172 +2,68 @@ use crate::render::{Render, RenderTarget};
 
 use super::AnimatedJoin;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum OneOf2<V0, V1> {
-    Variant0(V0),
-    Variant1(V1),
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum OneOf3<V0, V1, V2> {
-    Variant0(V0),
-    Variant1(V1),
-    Variant2(V2),
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum OneOf4<V0, V1, V2, V3> {
-    Variant0(V0),
-    Variant1(V1),
-    Variant2(V2),
-    Variant3(V3),
-}
-
-impl<V0: AnimatedJoin, V1: AnimatedJoin> AnimatedJoin for OneOf2<V0, V1> {
-    fn join_from(&mut self, source: &Self, domain: &crate::render::AnimationDomain) {
-        match (source, self) {
-            (Self::Variant0(source), Self::Variant0(target)) => target.join_from(source, domain),
-            (Self::Variant1(source), Self::Variant1(target)) => target.join_from(source, domain),
-            (_, _) => (),
+macro_rules! define_branch {
+    ($name:ident, $($variant:ident),+) => {
+        #[derive(Debug, Clone, PartialEq, Eq)]
+        pub enum $name<$($variant),+> {
+            $(
+                $variant($variant),
+            )+
         }
-    }
-}
 
-impl<V0: AnimatedJoin, V1: AnimatedJoin, V2: AnimatedJoin> AnimatedJoin for OneOf3<V0, V1, V2> {
-    fn join_from(&mut self, source: &Self, domain: &crate::render::AnimationDomain) {
-        match (source, self) {
-            (Self::Variant0(source), Self::Variant0(target)) => target.join_from(source, domain),
-            (Self::Variant1(source), Self::Variant1(target)) => target.join_from(source, domain),
-            (Self::Variant2(source), Self::Variant2(target)) => target.join_from(source, domain),
-            (_, _) => (),
-        }
-    }
-}
-
-impl<V0: AnimatedJoin, V1: AnimatedJoin, V2: AnimatedJoin, V3: AnimatedJoin> AnimatedJoin
-    for OneOf4<V0, V1, V2, V3>
-{
-    fn join_from(&mut self, source: &Self, domain: &crate::render::AnimationDomain) {
-        match (source, self) {
-            (Self::Variant0(source), Self::Variant0(target)) => target.join_from(source, domain),
-            (Self::Variant1(source), Self::Variant1(target)) => target.join_from(source, domain),
-            (Self::Variant2(source), Self::Variant2(target)) => target.join_from(source, domain),
-            (Self::Variant3(source), Self::Variant3(target)) => target.join_from(source, domain),
-            (_, _) => (),
-        }
-    }
-}
-
-impl<V0, V1, C> Render<C> for OneOf2<V0, V1>
-where
-    V0: Render<C>,
-    V1: Render<C>,
-{
-    fn render(&self, target: &mut impl RenderTarget<ColorFormat = C>, color: &C) {
-        match self {
-            Self::Variant0(v0) => v0.render(target, color),
-            Self::Variant1(v1) => v1.render(target, color),
-        }
-    }
-
-    fn render_animated(
-        render_target: &mut impl RenderTarget<ColorFormat = C>,
-        source: &Self,
-        target: &Self,
-        style: &C,
-        domain: &crate::render::AnimationDomain,
-    ) {
-        match (source, target) {
-            (Self::Variant0(source), Self::Variant0(target)) => {
-                V0::render_animated(render_target, source, target, style, domain);
+        impl<$($variant),+>  AnimatedJoin for $name<$($variant),+>
+            where $($variant: AnimatedJoin,)+
+        {
+            fn join_from(&mut self, source: &Self, domain: &crate::render::AnimationDomain) {
+                match (source, self) {
+                    $(
+                        (Self::$variant(source), Self::$variant(target)) => {
+                            target.join_from(source, domain)
+                        },
+                    )+
+                    (_, _) => (),
+                }
             }
-            (Self::Variant1(source), Self::Variant1(target)) => {
-                V1::render_animated(render_target, source, target, style, domain);
+        }
+
+        impl<C, $($variant),+> Render<C> for $name<$($variant),+>
+            where $($variant: Render<C>,)+
+        {
+            fn render(&self, target: &mut impl RenderTarget<ColorFormat = C>, color: &C) {
+                match self {
+                    $(
+                        Self::$variant(v) => v.render(target, color),
+                    )+
+                }
             }
-            (_, target) => {
-                target.render(render_target, style);
+
+            fn render_animated(
+                render_target: &mut impl RenderTarget<ColorFormat = C>,
+                source: &Self,
+                target: &Self,
+                style: &C,
+                domain: &crate::render::AnimationDomain,
+            ) {
+                match (source, target) {
+                    $(
+                        (Self::$variant(source), Self::$variant(target)) => {
+                            $variant::render_animated(render_target, source, target, style, domain);
+                        },
+                    )+
+                    (_, target) => {
+                        target.render(render_target, style);
+                    }
+                }
             }
         }
     }
 }
 
-impl<V0, V1, V2, C> Render<C> for OneOf3<V0, V1, V2>
-where
-    V0: Render<C>,
-    V1: Render<C>,
-    V2: Render<C>,
-{
-    fn render(&self, target: &mut impl RenderTarget<ColorFormat = C>, color: &C) {
-        match self {
-            Self::Variant0(v0) => v0.render(target, color),
-            Self::Variant1(v1) => v1.render(target, color),
-            Self::Variant2(v2) => v2.render(target, color),
-        }
-    }
-
-    fn render_animated(
-        render_target: &mut impl RenderTarget<ColorFormat = C>,
-        source: &Self,
-        target: &Self,
-        style: &C,
-        domain: &crate::render::AnimationDomain,
-    ) {
-        match (source, target) {
-            (Self::Variant0(source), Self::Variant0(target)) => {
-                V0::render_animated(render_target, source, target, style, domain);
-            }
-            (Self::Variant1(source), Self::Variant1(target)) => {
-                V1::render_animated(render_target, source, target, style, domain);
-            }
-            (Self::Variant2(source), Self::Variant2(target)) => {
-                V2::render_animated(render_target, source, target, style, domain);
-            }
-            (_, target) => {
-                target.render(render_target, style);
-            }
-        }
-    }
-}
-
-impl<V0, V1, V2, V3, C> Render<C> for OneOf4<V0, V1, V2, V3>
-where
-    V0: Render<C>,
-    V1: Render<C>,
-    V2: Render<C>,
-    V3: Render<C>,
-{
-    fn render(&self, target: &mut impl RenderTarget<ColorFormat = C>, color: &C) {
-        match self {
-            Self::Variant0(v0) => v0.render(target, color),
-            Self::Variant1(v1) => v1.render(target, color),
-            Self::Variant2(v2) => v2.render(target, color),
-            Self::Variant3(v3) => v3.render(target, color),
-        }
-    }
-
-    fn render_animated(
-        render_target: &mut impl RenderTarget<ColorFormat = C>,
-        source: &Self,
-        target: &Self,
-        style: &C,
-        domain: &crate::render::AnimationDomain,
-    ) {
-        match (source, target) {
-            (Self::Variant0(source), Self::Variant0(target)) => {
-                V0::render_animated(render_target, source, target, style, domain);
-            }
-            (Self::Variant1(source), Self::Variant1(target)) => {
-                V1::render_animated(render_target, source, target, style, domain);
-            }
-            (Self::Variant2(source), Self::Variant2(target)) => {
-                V2::render_animated(render_target, source, target, style, domain);
-            }
-            (Self::Variant3(source), Self::Variant3(target)) => {
-                V3::render_animated(render_target, source, target, style, domain);
-            }
-            (_, target) => {
-                target.render(render_target, style);
-            }
-        }
-    }
-}
+// OneOf1 has no reason to exist, skip it
+// Views with only one variant should just use the inner type directly
+define_branch!(OneOf2, V0, V1);
+define_branch!(OneOf3, V0, V1, V2);
+define_branch!(OneOf4, V0, V1, V2, V3);
+define_branch!(OneOf5, V0, V1, V2, V3, V4);
+define_branch!(OneOf6, V0, V1, V2, V3, V4, V5);
+define_branch!(OneOf7, V0, V1, V2, V3, V4, V5, V6);
