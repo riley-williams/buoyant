@@ -221,27 +221,27 @@ macro_rules! count {
 macro_rules! impl_view_for_hstack {
     ($(($n:tt, $type:ident)),+) => {
         paste! {
-        impl<$($type),+> ViewMarker for HStack<($($type),+)>
+        impl<$($type),+> ViewMarker for HStack<($($type,)+)>
         where
             $($type: ViewMarker),+
         {
-            type Renderables = ($($type::Renderables),+);
+            type Renderables = ($($type::Renderables,)+);
             type Transition = crate::transition::Opacity;
         }
 
-        impl<$($type),+, Captures: ?Sized> ViewLayout<Captures> for HStack<($($type),+)>
+        impl<$($type),+, Captures: ?Sized> ViewLayout<Captures> for HStack<($($type,)+)>
         where
             $($type: ViewLayout<Captures>),+
         {
-            type State = ($($type::State),+);
-            type Sublayout = ($(ResolvedLayout<$type::Sublayout>),+);
+            type State = ($($type::State,)+);
+            type Sublayout = ($(ResolvedLayout<$type::Sublayout>,)+);
 
             fn transition(&self) -> Self::Transition {
                 crate::transition::Opacity
             }
 
             fn build_state(&self, captures: &mut Captures) -> Self::State {
-                ($(self.items.$n.build_state(captures)),+)
+                ($(self.items.$n.build_state(captures),)+)
             }
 
             fn layout(
@@ -254,7 +254,7 @@ macro_rules! impl_view_for_hstack {
                 const N: usize = count!($($n),+);
 
                 let mut layout = ResolvedLayout {
-                    sublayouts: ($(ResolvedLayout::<$type::Sublayout>::default()),+),
+                    sublayouts: ($(ResolvedLayout::<$type::Sublayout>::default(),)+),
                     resolved_size: Dimensions::default(),
                 };
 
@@ -321,7 +321,7 @@ macro_rules! impl_view_for_hstack {
                     }
                 )+
 
-                ($([<subtree_$n>]),+)
+                ($([<subtree_$n>],)+)
             }
 
             fn handle_event(
@@ -352,6 +352,7 @@ macro_rules! impl_view_for_hstack {
     };
 }
 
+impl_view_for_hstack!((0, T0));
 impl_view_for_hstack!((0, T0), (1, T1));
 impl_view_for_hstack!((0, T0), (1, T1), (2, T2));
 impl_view_for_hstack!((0, T0), (1, T1), (2, T2), (3, T3));
