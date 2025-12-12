@@ -8,7 +8,7 @@ use buoyant::{
     primitives::{Dimensions, ProposedDimensions, Size},
     render::Render,
     render_target::FixedTextBuffer,
-    view::{button::ButtonState, prelude::*},
+    view::{button::ButtonTouchState, prelude::*},
 };
 use core::time::Duration;
 
@@ -215,7 +215,7 @@ fn preserves_inner_state() {
     );
     render_tree.render(&mut buffer, &' ');
 
-    assert_eq!(state, Some((ButtonState::AtRest, ())));
+    assert_eq!(state.unwrap().0.touch, ButtonTouchState::AtRest);
     assert_str_grid_eq!(
         [
             "---         ",
@@ -233,7 +233,7 @@ fn preserves_inner_state() {
         &mut captures,
         &mut state,
     );
-    assert_eq!(state, Some((ButtonState::CaptivePressed(0), ())));
+    assert_eq!(state.unwrap().0.touch, ButtonTouchState::CaptivePressed(0));
 
     render_tree = tree(
         &view,
@@ -244,7 +244,7 @@ fn preserves_inner_state() {
     );
     render_tree.render(&mut buffer, &' ');
 
-    assert_eq!(state, Some((ButtonState::CaptivePressed(0), ())));
+    assert_eq!(state.unwrap().0.touch, ButtonTouchState::CaptivePressed(0));
     assert_str_grid_eq!(
         [
             "xxx         ",
@@ -262,7 +262,7 @@ fn preserves_inner_state() {
         &mut captures,
         &mut state,
     );
-    assert_eq!(state, Some((ButtonState::Captive(0), ())));
+    assert_eq!(state.unwrap().0.touch, ButtonTouchState::Captive(0));
 
     render_tree = tree(
         &view,
@@ -273,7 +273,7 @@ fn preserves_inner_state() {
     );
     render_tree.render(&mut buffer, &' ');
 
-    assert_eq!(state, Some((ButtonState::Captive(0), ())));
+    assert_eq!(state.unwrap().0.touch, ButtonTouchState::Captive(0));
     assert_str_grid_eq!(
         [
             "---         ",

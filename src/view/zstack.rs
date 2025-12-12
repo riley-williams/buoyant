@@ -83,6 +83,11 @@ impl<T> ZStack<T> {
     }
 }
 
+macro_rules! count {
+    () => (0);
+    ($head:tt $(, $rest:tt)*) => (1 + count!($($rest),*));
+}
+
 macro_rules! impl_view_for_zstack {
     ($(($n:tt, $type:ident)),+) => {
         paste! {
@@ -183,6 +188,22 @@ macro_rules! impl_view_for_zstack {
                 state: &mut Self::State,
             ) -> EventResult {
                 let mut result = EventResult::default();
+                let max = const { count!($($n),+) - 1 };
+
+                if let crate::view::Event::Keyboard(k) = event && k.kind.is_movement() {
+                    return context.input.traverse(k.groups, k.kind, max, |i| match i {
+                        $(
+                            $n => self.items.$n.handle_event(
+                                event,
+                                context,
+                                &mut render_tree.$n,
+                                captures,
+                                &mut state.$n
+                            ),
+                        )+
+                        _ => EventResult::default(),
+                    });
+                }
                 $(
                     result.merge(self.items.$n.handle_event(event, context, &mut render_tree.$n, captures, &mut state.$n));
                     if result.handled {

@@ -46,7 +46,7 @@ fn button(c: char) -> impl View<char, u8> + use<> {
     )
 }
 
-fn ctx(secs: u64) -> EventContext {
+fn ctx(secs: u64) -> EventContext<'static> {
     EventContext::new(Duration::from_secs(secs))
 }
 

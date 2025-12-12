@@ -1,11 +1,17 @@
 use crate::{
-    event::{EventContext, EventResult},
+    event::{EventContext, EventResult, input::Groups},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
     render,
     transition::Opacity,
     view::{ViewLayout, ViewMarker},
 };
+
+#[derive(Default, Debug)]
+pub struct State<T> {
+    observed_groups: Groups,
+    inner: T,
+}
 
 /// A view that conditionally renders its arms based on a boolean expression.
 ///
@@ -251,7 +257,7 @@ macro_rules! define_branch {
                 $($variant: ViewLayout<Captures>,)+
         {
             type Sublayout = $name<$(ResolvedLayout<$variant::Sublayout>),+>;
-            type State = $name<$( $variant::State ),+>;
+            type State = State<$name<$( $variant::State ),+>>;
 
             fn priority(&self) -> i8 {
                 match self {
@@ -270,8 +276,11 @@ macro_rules! define_branch {
             }
 
             fn build_state(&self, captures: &mut Captures) -> Self::State {
-                match self {
-                    $( Self::$variant(v) => $name::$variant(v.build_state(captures)),)+
+                State {
+                    observed_groups: Groups::default(),
+                    inner: match self {
+                        $( Self::$variant(v) => $name::$variant(v.build_state(captures)),)+
+                    }
                 }
             }
 
@@ -285,11 +294,13 @@ macro_rules! define_branch {
                 match self {
                     $(
                         Self::$variant(v) => {
-                            let s = if let $name::$variant(s) = state {
+                            let s = if let $name::$variant(s) = &mut state.inner {
                                 s
                             } else {
-                                *state = $name::$variant(v.build_state(captures));
-                                let $name::$variant(s) = state else {
+                                env.blur(state.observed_groups);
+                                state.observed_groups = Groups::default();
+                                state.inner = $name::$variant(v.build_state(captures));
+                                let $name::$variant(s) = &mut state.inner else {
                                     unreachable!("Guaranteed to not be any other variant")
                                 };
                                 s
@@ -318,13 +329,16 @@ macro_rules! define_branch {
                     $(
                     (Self::$variant(v), $name::$variant(l0)) => {
                         // apparently consumes a lot less stack than matching on state too
-                        if let $name::$variant(s) = state {
+                        if let $name::$variant(s) = &mut state.inner {
                             render::$name::$variant(v.render_tree(l0, origin, env, captures, s))
                         } else {
+                            // state variant mismatch, rebuild state
                             let mut s = v.build_state(captures);
                             let renderables =
-                                render::$name::$variant(v.render_tree(l0, origin, env, captures, &mut s));
-                            *state = $name::$variant(s);
+                                 render::$name::$variant(v.render_tree(l0, origin, env, captures, &mut s));
+                            state.observed_groups = Groups::default();
+                            state.inner = $name::$variant(s);
+
                             renderables
                         }
                     }
@@ -344,10 +358,14 @@ macro_rules! define_branch {
                 captures: &mut Captures,
                 state: &mut Self::State,
             ) -> EventResult {
-                match (self, render_tree, state) {
+                match (self, render_tree, &mut state.inner) {
                     $(
                     (Self::$variant(v), render::$name::$variant(t), $name::$variant(s)) => {
-                        v.handle_event(event, context, t, captures, s)
+                        let result = v.handle_event(event, context, t, captures, s);
+                        if result.handled {
+                            state.observed_groups &= event.groups();
+                        }
+                        result
                     }
                     )+
                     _ => {
