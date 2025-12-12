@@ -15,6 +15,7 @@ mod image;
 #[allow(missing_docs)]
 pub mod match_view;
 mod modifier;
+mod pagination;
 pub mod scroll_view;
 pub mod shape;
 mod spacer;
@@ -36,6 +37,7 @@ pub use hstack::HStack;
 pub use image::Image;
 pub use modifier::aspect_ratio;
 pub use modifier::padding;
+pub use pagination::{Pagination, PaginationDirection, PaginationIndex};
 pub use scroll_view::ScrollView;
 pub use spacer::Spacer;
 pub(crate) use text::{CharacterWrap, WordWrap};

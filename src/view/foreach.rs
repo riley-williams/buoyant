@@ -4,6 +4,7 @@ use core::cmp::max;
 
 use crate::{
     environment::LayoutEnvironment,
+    event::{Event, EventContext, EventResult},
     layout::{HorizontalAlignment, LayoutDirection, ResolvedLayout, VerticalAlignment},
     primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions},
     transition::Opacity,
@@ -108,6 +109,10 @@ impl<T: LayoutEnvironment, D: ForEachDirection> LayoutEnvironment for ForEachEnv
 
     fn app_time(&self) -> core::time::Duration {
         self.inner_environment.app_time()
+    }
+
+    fn blur(&self, groups: crate::event::input::Groups) {
+        self.inner_environment.blur(groups)
     }
 }
 
@@ -348,6 +353,42 @@ where
         }
 
         renderables
+    }
+
+    fn handle_event(
+        &self,
+        event: &Event,
+        context: &EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> EventResult {
+        let mut result = EventResult::default();
+        if self.items.len() > 1 {
+            let max = self.items.len() - 1;
+            if let Event::Keyboard(k) = event
+                && k.kind.is_movement()
+            {
+                return context.input.traverse(k.groups, k.kind, max, |i| {
+                    let view = (self.build_view)(&self.items[i]);
+                    view.handle_event(event, context, &mut render_tree[i], captures, &mut state[i])
+                });
+            }
+        }
+        for i in 0..self.items.len() {
+            let view = (self.build_view)(&self.items[i]);
+            result.merge(view.handle_event(
+                event,
+                context,
+                &mut render_tree[i],
+                captures,
+                &mut state[i],
+            ));
+            if result.handled {
+                return result;
+            }
+        }
+        result
     }
 }
 

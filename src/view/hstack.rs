@@ -33,6 +33,9 @@ impl<T: LayoutEnvironment> LayoutEnvironment for HorizontalEnvironment<'_, T> {
     fn app_time(&self) -> core::time::Duration {
         self.inner_environment.app_time()
     }
+    fn blur(&self, groups: crate::event::input::Groups) {
+        self.inner_environment.blur(groups)
+    }
 }
 
 impl<'a, T: LayoutEnvironment> From<&'a T> for HorizontalEnvironment<'a, T> {
@@ -333,14 +336,24 @@ macro_rules! impl_view_for_hstack {
                 state: &mut Self::State,
             ) -> EventResult {
                 let mut result = EventResult::default();
+                let max = const { count!($($n),+) - 1 };
+
+                if let crate::view::Event::Keyboard(k) = event && k.kind.is_movement() {
+                    return context.input.traverse(k.groups, k.kind, max, |i| match i {
+                        $(
+                            $n => self.items.$n.handle_event(
+                                event,
+                                context,
+                                &mut render_tree.$n,
+                                captures,
+                                &mut state.$n
+                            ),
+                        )+
+                        _ => EventResult::default(),
+                    });
+                }
                 $(
-                    result.merge(self.items.$n.handle_event(
-                        event,
-                        context,
-                        &mut render_tree.$n,
-                        captures,
-                        &mut state.$n,
-                    ));
+                    result.merge(self.items.$n.handle_event(event, context, &mut render_tree.$n, captures, &mut state.$n));
                     if result.handled {
                         return result;
                     }

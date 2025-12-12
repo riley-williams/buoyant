@@ -1,5 +1,5 @@
 use crate::{
-    event::{EventContext, EventResult},
+    event::{EventContext, EventResult, input::Groups},
     layout::ResolvedLayout,
     primitives::{Dimensions, Point, ProposedDimensions},
     render::{self, TransitionOption},
@@ -242,6 +242,12 @@ macro_rules! match_view {
     }};
 }
 
+#[derive(Default, Debug)]
+pub struct State<T> {
+    observed_groups: Groups,
+    inner: T,
+}
+
 impl<V> ViewMarker for Option<V>
 where
     V: ViewMarker,
@@ -256,7 +262,7 @@ where
     Captures: ?Sized,
 {
     type Sublayout = Option<ResolvedLayout<V::Sublayout>>;
-    type State = Option<V::State>;
+    type State = State<Option<V::State>>;
 
     fn priority(&self) -> i8 {
         self.as_ref().map_or(i8::MIN, ViewLayout::priority)
@@ -272,7 +278,10 @@ where
     }
 
     fn build_state(&self, captures: &mut Captures) -> Self::State {
-        self.as_ref().map(|v| v.build_state(captures))
+        State {
+            observed_groups: Groups::default(),
+            inner: self.as_ref().map(|v| v.build_state(captures)),
+        }
     }
 
     fn layout(
@@ -288,11 +297,14 @@ where
                 resolved_size: Dimensions::zero(),
             },
             |v| {
-                let s0 = if let Some(s) = state {
+                let s0 = if let Some(s) = state.inner.as_mut() {
                     s
                 } else {
-                    *state = Some(v.build_state(captures));
-                    let Some(s) = state else {
+                    env.blur(state.observed_groups);
+                    state.observed_groups = Groups::default();
+                    state.inner = Some(v.build_state(captures));
+
+                    let Some(s) = state.inner.as_mut() else {
                         unreachable!("Guaranteed to not be any other variant")
                     };
                     s
@@ -316,7 +328,7 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> Self::Renderables {
-        match (self, &layout.sublayouts, state) {
+        match (self, &layout.sublayouts, &mut state.inner) {
             (Some(v), Some(l0), Some(s0)) => TransitionOption::new_some(
                 v.render_tree(l0, origin, env, captures, s0),
                 l0.resolved_size.into(),
@@ -338,9 +350,14 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> EventResult {
-        match (self, render_tree, state) {
+
+        match (self, render_tree, &mut state.inner) {
             (Some(v), TransitionOption::Some { subtree, .. }, Some(s)) => {
-                v.handle_event(event, context, subtree, captures, s)
+                let result = v.handle_event(event, context, subtree, captures, s);
+                if result.handled {
+                    state.observed_groups &= event.groups();
+                }
+                result
             }
             (None, _, _) => EventResult::default(),
             _ => {
@@ -385,7 +402,7 @@ macro_rules! define_branch {
                 $($variant: ViewLayout<Captures>,)+
         {
             type Sublayout = $name<$(ResolvedLayout<$variant::Sublayout>),+>;
-            type State = $name<$( $variant::State ),+>;
+            type State = State<$name<$( $variant::State ),+>>;
 
             fn priority(&self) -> i8 {
                 match self {
@@ -404,8 +421,11 @@ macro_rules! define_branch {
             }
 
             fn build_state(&self, captures: &mut Captures) -> Self::State {
-                match self {
-                    $( Self::$variant(v) => $name::$variant(v.build_state(captures)),)+
+                State {
+                    observed_groups: Groups::default(),
+                    inner: match self {
+                        $( Self::$variant(v) => $name::$variant(v.build_state(captures)),)+
+                    }
                 }
             }
 
@@ -419,11 +439,13 @@ macro_rules! define_branch {
                 match self {
                     $(
                         Self::$variant(v) => {
-                            let s = if let $name::$variant(s) = state {
+                            let s = if let $name::$variant(s) = &mut state.inner {
                                 s
                             } else {
-                                *state = $name::$variant(v.build_state(captures));
-                                let $name::$variant(s) = state else {
+                                env.blur(state.observed_groups);
+                                state.observed_groups = Groups::default();
+                                state.inner = $name::$variant(v.build_state(captures));
+                                let $name::$variant(s) = &mut state.inner else {
                                     unreachable!("Guaranteed to not be any other variant")
                                 };
                                 s
@@ -458,7 +480,8 @@ macro_rules! define_branch {
                             let mut s = v.build_state(captures);
                             let renderables =
                                 render::$render::$variant(v.render_tree(l0, origin, env, captures, &mut s));
-                            *state = $name::$variant(s);
+                            state.observed_groups = Groups::default();
+                            state.inner = $name::$variant(s);
                             renderables
                         }
                     }
@@ -478,10 +501,14 @@ macro_rules! define_branch {
                 captures: &mut Captures,
                 state: &mut Self::State,
             ) -> EventResult {
-                match (self, render_tree, state) {
+                match (self, render_tree, &mut state.inner) {
                     $(
                     (Self::$variant(v), render::$render::$variant(t), $name::$variant(s)) => {
-                        v.handle_event(event, context, t, captures, s)
+                        let result = v.handle_event(event, context, t, captures, s);
+                        if result.handled {
+                            state.observed_groups &= event.groups();
+                        }
+                        result
                     }
                     )+
                     _ => {

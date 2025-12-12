@@ -6,7 +6,11 @@ use embedded_touch::Phase;
 
 use crate::{
     environment::LayoutEnvironment,
-    event::{EventContext, EventResult},
+    event::{
+        EventContext, EventResult,
+        input::{FocusState, Groups},
+        keyboard::{KeyboardEvent, KeyboardEventKind},
+    },
     layout::ResolvedLayout,
     primitives::{Frame, ProposedDimensions},
     render::Container,
@@ -14,10 +18,19 @@ use crate::{
     view::{Event, ViewLayout, ViewMarker},
 };
 
+/// A button state.
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ButtonState {
+    /// A button interaction state.
+    pub touch: ButtonTouchState,
+    /// A button focus state.
+    pub focus: FocusState,
+}
+
 /// A button interaction state.
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
-pub enum ButtonState {
+pub enum ButtonTouchState {
     /// The button is pressed and the touch is still within the button area.
     CaptivePressed(u8),
     /// The button was pressed but the touch has moved outside the button area.
@@ -87,21 +100,35 @@ pub enum ButtonState {
 #[derive(Debug, Clone)]
 pub struct Button<ViewFn, Inner, Action> {
     _inner_marker: PhantomData<Inner>,
+    groups: Groups,
     view: ViewFn,
     action: Action,
 }
 
-impl<ViewFn, Inner, Action> Button<ViewFn, Inner, Action> {
+impl<ViewFn: Fn(bool) -> Inner, Inner, Action> Button<ViewFn, Inner, Action> {
     #[allow(missing_docs)]
-    pub fn new(action: Action, view: ViewFn) -> Self
-    where
-        ViewFn: Fn(bool) -> Inner,
-    {
+    pub fn new(action: Action, view: ViewFn) -> Self {
         Self {
             view,
             action,
+            groups: Groups::default(),
             _inner_marker: PhantomData,
         }
+    }
+    #[allow(missing_docs)]
+    pub fn new_with_groups(action: Action, groups: impl Into<Groups>, view: ViewFn) -> Self {
+        Self {
+            view,
+            action,
+            groups: groups.into(),
+            _inner_marker: PhantomData,
+        }
+    }
+    /// Assign the button to the set of input groups. It becomes focusable via
+    /// any keyboard within these groups.
+    pub fn groups(mut self, groups: Groups) -> Self {
+        self.groups |= groups;
+        self
     }
 }
 
@@ -126,7 +153,10 @@ where
 
     fn build_state(&self, captures: &mut Captures) -> Self::State {
         (
-            ButtonState::AtRest,
+            ButtonState {
+                touch: ButtonTouchState::default(),
+                focus: FocusState::new(self.groups),
+            },
             (self.view)(false).build_state(captures),
         )
     }
@@ -138,11 +168,11 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> ResolvedLayout<Self::Sublayout> {
-        match state.0 {
-            ButtonState::CaptivePressed(_) => {
+        match state.0.touch {
+            ButtonTouchState::CaptivePressed(_) => {
                 (self.view)(true).layout(offer, env, captures, &mut state.1)
             }
-            ButtonState::AtRest | ButtonState::Captive(_) => {
+            ButtonTouchState::AtRest | ButtonTouchState::Captive(_) => {
                 (self.view)(false).layout(offer, env, captures, &mut state.1)
             }
         }
@@ -158,11 +188,11 @@ where
     ) -> Self::Renderables {
         Container::new(
             Frame::new(origin, layout.resolved_size.into()),
-            match state.0 {
-                ButtonState::CaptivePressed(_) => {
+            match state.0.touch {
+                ButtonTouchState::CaptivePressed(_) => {
                     (self.view)(true).render_tree(layout, origin, env, captures, &mut state.1)
                 }
-                ButtonState::AtRest | ButtonState::Captive(_) => {
+                ButtonTouchState::AtRest | ButtonTouchState::Captive(_) => {
                     (self.view)(false).render_tree(layout, origin, env, captures, &mut state.1)
                 }
             },
@@ -172,17 +202,38 @@ where
     fn handle_event(
         &self,
         event: &Event,
-        _context: &EventContext,
+        context: &EventContext,
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> EventResult {
+        match event {
+            Event::Touch(touch) => self.handle_touch(render_tree, captures, state, touch),
+            Event::Keyboard(keyboard) => self.handle_keyboard(context, captures, state, keyboard),
+            _ => EventResult::default(),
+        }
+    }
+}
+
+impl<Inner, ViewFn, Action> Button<ViewFn, Inner, Action>
+where
+    ViewFn: Fn(bool) -> Inner,
+{
+    fn handle_touch<Captures: ?Sized>(
+        &self,
+        render_tree: &mut <Self as ViewMarker>::Renderables,
+        captures: &mut Captures,
+        state: &mut <Self as ViewLayout<Captures>>::State,
+        touch: &embedded_touch::Touch,
+    ) -> EventResult
+    where
+        Inner: ViewLayout<Captures>,
+        Action: Fn(&mut Captures),
+    {
         let mut result = EventResult::default();
-        let Event::Touch(touch) = event else {
-            return result;
-        };
         // Only track the ID of the first touch that started within the button.
-        if let ButtonState::Captive(touch_id) | ButtonState::CaptivePressed(touch_id) = state.0
+        if let ButtonTouchState::Captive(touch_id) | ButtonTouchState::CaptivePressed(touch_id) =
+            state.0.touch
             && touch.id != touch_id
         {
             return result;
@@ -192,7 +243,7 @@ where
         match touch.phase {
             Phase::Started => {
                 if render_tree.frame.contains(&point) {
-                    state.0 = ButtonState::CaptivePressed(touch.id);
+                    state.0.touch = ButtonTouchState::CaptivePressed(touch.id);
                     // TODO: I think we could maybe just recompute the tiny button render
                     // tree here and avoid recomputing the view.
                     // May require an internal animation render node?
@@ -201,39 +252,40 @@ where
                 }
             }
             Phase::Ended => {
-                if state.0 != ButtonState::AtRest {
+                if state.0.touch != ButtonTouchState::AtRest {
                     if render_tree.frame.contains(&point) {
                         (self.action)(captures);
                     }
-                    state.0 = ButtonState::AtRest;
+                    state.0.touch = ButtonTouchState::AtRest;
                     result.recompute_view = true;
                     result.handled = true;
                 }
             }
-            Phase::Moved => match (render_tree.frame.contains(&point), state.0) {
-                (true, ButtonState::Captive(touch_id)) => {
-                    state.0 = ButtonState::CaptivePressed(touch_id);
+            Phase::Moved => match (render_tree.frame.contains(&point), state.0.touch) {
+                (true, ButtonTouchState::Captive(touch_id)) => {
+                    state.0.touch = ButtonTouchState::CaptivePressed(touch_id);
                     // TODO: Same here...
                     result.recompute_view = true;
                     result.handled = true;
                 }
-                (false, ButtonState::CaptivePressed(touch_id)) => {
-                    state.0 = ButtonState::Captive(touch_id);
+                (false, ButtonTouchState::CaptivePressed(touch_id)) => {
+                    state.0.touch = ButtonTouchState::Captive(touch_id);
                     // TODO: Same here...
                     result.recompute_view = true;
                     result.handled = true;
                 }
-                (true, ButtonState::CaptivePressed(_)) | (false, ButtonState::Captive(_)) => {
+                (true, ButtonTouchState::CaptivePressed(_))
+                | (false, ButtonTouchState::Captive(_)) => {
                     result.handled = true;
                 }
-                (_, ButtonState::AtRest) => (),
+                (_, ButtonTouchState::AtRest) => (),
             },
             Phase::Cancelled => {
-                if matches!(state.0, ButtonState::CaptivePressed(_)) {
+                if matches!(state.0.touch, ButtonTouchState::CaptivePressed(_)) {
                     // TODO: Same here...
                     result.recompute_view = true;
                 }
-                state.0 = ButtonState::AtRest;
+                state.0.touch = ButtonTouchState::AtRest;
                 result.handled = false;
             }
             Phase::Hovering(_) => {
@@ -242,5 +294,30 @@ where
             }
         }
         result
+    }
+    fn handle_keyboard<Captures: ?Sized>(
+        &self,
+        context: &EventContext,
+        captures: &mut Captures,
+        state: &mut <Self as ViewLayout<Captures>>::State,
+        event: &KeyboardEvent,
+    ) -> EventResult
+    where
+        Inner: ViewLayout<Captures>,
+        Action: Fn(&mut Captures),
+    {
+        if !state.0.focus.is_member_of_any(event.groups) {
+            return EventResult::default();
+        }
+
+        match event.kind {
+            k if k.is_movement() => context.input.leaf_move(&mut state.0.focus, event.groups),
+            KeyboardEventKind::Click if state.0.focus.is_focused_any(event.groups) => {
+                (self.action)(captures);
+
+                EventResult::new(true, true)
+            }
+            _ => EventResult::default(),
+        }
     }
 }

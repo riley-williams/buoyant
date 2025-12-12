@@ -2,11 +2,16 @@ use core::time::Duration;
 
 use crate::primitives::Point;
 
+pub mod cursor;
+pub mod input;
+pub mod keyboard;
+
 /// An interaction event that can be handled by a view.
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
 pub enum Event {
     Touch(embedded_touch::Touch),
+    Keyboard(keyboard::KeyboardEvent),
     /// A scroll event with the given offset.
     Scroll(Point),
     /// External state changed which may affect the view.
@@ -15,6 +20,21 @@ pub enum Event {
     External,
     /// The app should exit
     Exit,
+}
+
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct EventResult {
+    /// Whether the event was handled by the view.
+    pub handled: bool,
+    /// Whether the view should be recomputed, and render trees joined.
+    pub recompute_view: bool,
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct EventContext<'a> {
+    pub app_time: Duration,
+    pub input: input::InputRef<'a>,
 }
 
 impl Event {
@@ -26,18 +46,18 @@ impl Event {
             Self::Touch(touch) => {
                 touch.location += offset.into();
             }
-            Self::Scroll(_) | Self::External | Self::Exit => {}
+            Self::Keyboard(_) | Self::Scroll(_) | Self::External | Self::Exit => {}
         }
         event
     }
-}
 
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
-pub struct EventResult {
-    /// Whether the event was handled by the view.
-    pub handled: bool,
-    /// Whether the view should be recomputed, and render trees joined.
-    pub recompute_view: bool,
+    #[must_use]
+    pub fn groups(&self) -> input::Groups {
+        match self {
+            Self::Keyboard(k) => k.groups,
+            _ => input::Groups::default(),
+        }
+    }
 }
 
 impl EventResult {
@@ -68,17 +88,26 @@ impl EventResult {
     }
 }
 
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct EventContext {
-    pub app_time: Duration,
-}
-
-impl EventContext {
+impl<'a> EventContext<'a> {
     /// Creates a new `EventContext` with the given application time.
     #[must_use]
     pub const fn new(app_time: Duration) -> Self {
-        Self { app_time }
+        Self {
+            app_time,
+            input: input::InputRef::empty(),
+        }
+    }
+    #[must_use]
+    pub const fn new_with_input(app_time: Duration, input: &'a input::Input<'a>) -> Self {
+        Self {
+            app_time,
+            input: input.as_ref(),
+        }
+    }
+
+    pub const fn input(mut self, input: &'a input::Input<'a>) -> Self {
+        self.input = input.as_ref();
+        self
     }
 }
 

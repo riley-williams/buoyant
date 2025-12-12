@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use buoyant::{
     environment::{DefaultEnvironment, LayoutEnvironment},
-    event::Event,
+    event::{Event, input},
     layout::{Alignment, LayoutDirection},
     primitives::{Point, ProposedDimensions, Size},
     render_target::FixedTextBuffer,
@@ -29,6 +29,7 @@ impl LayoutEnvironment for TestEnv {
     fn app_time(&self) -> Duration {
         self.app_time
     }
+    fn blur(&self, _groups: input::Groups) {}
 }
 
 impl Default for TestEnv {
