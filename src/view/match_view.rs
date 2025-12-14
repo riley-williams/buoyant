@@ -50,9 +50,9 @@ macro_rules! if_view {
         }
     ) => {{
         if $value {
-            $crate::view::match_view::OneOf2::V0($view0)
+            $crate::view::match_view::Branch2::V0($view0)
         } else {
-            $crate::view::match_view::OneOf2::V1($view1)
+            $crate::view::match_view::Branch2::V1($view1)
         }
     }};
 }
@@ -123,7 +123,7 @@ macro_rules! match_view {
         }
     ) => {{
         match $value {
-            $pattern0 => $crate::view::match_view::OneOf1::V0($view0),
+            $pattern0 => $crate::view::match_view::Branch1::V0($view0),
         }
     }};
 
@@ -134,8 +134,8 @@ macro_rules! match_view {
         }
     ) => {{
         match $value {
-            $pattern0 => $crate::view::match_view::OneOf2::V0($view0),
-            $pattern1 => $crate::view::match_view::OneOf2::V1($view1),
+            $pattern0 => $crate::view::match_view::Branch2::V0($view0),
+            $pattern1 => $crate::view::match_view::Branch2::V1($view1),
         }
     }};
 
@@ -147,9 +147,9 @@ macro_rules! match_view {
         }
     ) => {{
         match $value {
-            $pattern0 => $crate::view::match_view::OneOf3::V0($view0),
-            $pattern1 => $crate::view::match_view::OneOf3::V1($view1),
-            $pattern2 => $crate::view::match_view::OneOf3::V2($view2),
+            $pattern0 => $crate::view::match_view::Branch3::V0($view0),
+            $pattern1 => $crate::view::match_view::Branch3::V1($view1),
+            $pattern2 => $crate::view::match_view::Branch3::V2($view2),
         }
     }};
 
@@ -162,10 +162,10 @@ macro_rules! match_view {
         }
     ) => {{
         match $value {
-            $pattern0 => $crate::view::match_view::OneOf4::V0($view0),
-            $pattern1 => $crate::view::match_view::OneOf4::V1($view1),
-            $pattern2 => $crate::view::match_view::OneOf4::V2($view2),
-            $pattern3 => $crate::view::match_view::OneOf4::V3($view3),
+            $pattern0 => $crate::view::match_view::Branch4::V0($view0),
+            $pattern1 => $crate::view::match_view::Branch4::V1($view1),
+            $pattern2 => $crate::view::match_view::Branch4::V2($view2),
+            $pattern3 => $crate::view::match_view::Branch4::V3($view3),
         }
     }};
 
@@ -179,11 +179,11 @@ macro_rules! match_view {
         }
     ) => {{
         match $value {
-            $pattern0 => $crate::view::match_view::OneOf5::V0($view0),
-            $pattern1 => $crate::view::match_view::OneOf5::V1($view1),
-            $pattern2 => $crate::view::match_view::OneOf5::V2($view2),
-            $pattern3 => $crate::view::match_view::OneOf5::V3($view3),
-            $pattern4 => $crate::view::match_view::OneOf5::V4($view4),
+            $pattern0 => $crate::view::match_view::Branch5::V0($view0),
+            $pattern1 => $crate::view::match_view::Branch5::V1($view1),
+            $pattern2 => $crate::view::match_view::Branch5::V2($view2),
+            $pattern3 => $crate::view::match_view::Branch5::V3($view3),
+            $pattern4 => $crate::view::match_view::Branch5::V4($view4),
         }
     }};
 
@@ -198,12 +198,12 @@ macro_rules! match_view {
         }
     ) => {{
         match $value {
-            $pattern0 => $crate::view::match_view::OneOf6::V0($view0),
-            $pattern1 => $crate::view::match_view::OneOf6::V1($view1),
-            $pattern2 => $crate::view::match_view::OneOf6::V2($view2),
-            $pattern3 => $crate::view::match_view::OneOf6::V3($view3),
-            $pattern4 => $crate::view::match_view::OneOf6::V4($view4),
-            $pattern5 => $crate::view::match_view::OneOf6::V5($view5),
+            $pattern0 => $crate::view::match_view::Branch6::V0($view0),
+            $pattern1 => $crate::view::match_view::Branch6::V1($view1),
+            $pattern2 => $crate::view::match_view::Branch6::V2($view2),
+            $pattern3 => $crate::view::match_view::Branch6::V3($view3),
+            $pattern4 => $crate::view::match_view::Branch6::V4($view4),
+            $pattern5 => $crate::view::match_view::Branch6::V5($view5),
         }
     }};
 
@@ -219,13 +219,13 @@ macro_rules! match_view {
         }
     ) => {{
         match $value {
-            $pattern0 => $crate::view::match_view::OneOf7::V0($view0),
-            $pattern1 => $crate::view::match_view::OneOf7::V1($view1),
-            $pattern2 => $crate::view::match_view::OneOf7::V2($view2),
-            $pattern3 => $crate::view::match_view::OneOf7::V3($view3),
-            $pattern4 => $crate::view::match_view::OneOf7::V4($view4),
-            $pattern5 => $crate::view::match_view::OneOf7::V5($view5),
-            $pattern6 => $crate::view::match_view::OneOf7::V6($view6),
+            $pattern0 => $crate::view::match_view::Branch7::V0($view0),
+            $pattern1 => $crate::view::match_view::Branch7::V1($view1),
+            $pattern2 => $crate::view::match_view::Branch7::V2($view2),
+            $pattern3 => $crate::view::match_view::Branch7::V3($view3),
+            $pattern4 => $crate::view::match_view::Branch7::V4($view4),
+            $pattern5 => $crate::view::match_view::Branch7::V5($view5),
+            $pattern6 => $crate::view::match_view::Branch7::V6($view6),
         }
     }};
 
@@ -355,7 +355,7 @@ where
 }
 
 macro_rules! define_branch {
-    ($name:ident, $($variant:ident),+) => {
+    ($name:ident, $render:ident, $($variant:ident),+) => {
         #[derive(Debug, Clone, PartialEq, Eq)]
         pub enum $name<$($variant),+> {
             $(
@@ -374,11 +374,11 @@ macro_rules! define_branch {
         impl<$($variant),+> ViewMarker for $name<$($variant),+>
             where $($variant: ViewMarker,)+
         {
-            type Renderables = render::$name::<$($variant::Renderables),+>;
+            type Renderables = render::$render::<$($variant::Renderables),+>;
             type Transition = Opacity;
         }
 
-        #[allow(unreachable_patterns, irrefutable_let_patterns)] // OneOf1
+        #[allow(unreachable_patterns, irrefutable_let_patterns)] // Branch1
         impl<Captures, $($variant),+> ViewLayout<Captures> for $name<$($variant),+>
             where
                 Captures: ?Sized,
@@ -453,11 +453,11 @@ macro_rules! define_branch {
                     $(
                     (Self::$variant(v), $name::$variant(l0)) => {
                         if let $name::$variant(s) = state {
-                            render::$name::$variant(v.render_tree(l0, origin, env, captures, s))
+                            render::$render::$variant(v.render_tree(l0, origin, env, captures, s))
                         } else {
                             let mut s = v.build_state(captures);
                             let renderables =
-                                render::$name::$variant(v.render_tree(l0, origin, env, captures, &mut s));
+                                render::$render::$variant(v.render_tree(l0, origin, env, captures, &mut s));
                             *state = $name::$variant(s);
                             renderables
                         }
@@ -480,7 +480,7 @@ macro_rules! define_branch {
             ) -> EventResult {
                 match (self, render_tree, state) {
                     $(
-                    (Self::$variant(v), render::$name::$variant(t), $name::$variant(s)) => {
+                    (Self::$variant(v), render::$render::$variant(t), $name::$variant(s)) => {
                         v.handle_event(event, context, t, captures, s)
                     }
                     )+
@@ -497,17 +497,17 @@ macro_rules! define_branch {
     };
 }
 
-define_branch!(OneOf1, V0);
-define_branch!(OneOf2, V0, V1);
-define_branch!(OneOf3, V0, V1, V2);
-define_branch!(OneOf4, V0, V1, V2, V3);
-define_branch!(OneOf5, V0, V1, V2, V3, V4);
-define_branch!(OneOf6, V0, V1, V2, V3, V4, V5);
-define_branch!(OneOf7, V0, V1, V2, V3, V4, V5, V6);
+define_branch!(Branch1, OneOf1, V0);
+define_branch!(Branch2, OneOf2, V0, V1);
+define_branch!(Branch3, OneOf3, V0, V1, V2);
+define_branch!(Branch4, OneOf4, V0, V1, V2, V3);
+define_branch!(Branch5, OneOf5, V0, V1, V2, V3, V4);
+define_branch!(Branch6, OneOf6, V0, V1, V2, V3, V4, V5);
+define_branch!(Branch7, OneOf7, V0, V1, V2, V3, V4, V5, V6);
 
 #[cfg(test)]
 mod tests {
-    use super::OneOf2::{self, V0, V1};
+    use super::Branch2::{self, V0, V1};
 
     #[test]
     fn match_view() {
@@ -516,7 +516,7 @@ mod tests {
             _ => 1,
         });
 
-        assert_eq!(view, OneOf2::<_, u8>::V1(1));
+        assert_eq!(view, Branch2::<_, u8>::V1(1));
     }
 
     #[test]
@@ -565,6 +565,6 @@ mod tests {
             ThreeState::Third => 3,
         });
 
-        assert_eq!(view, super::OneOf3::V1(2));
+        assert_eq!(view, super::Branch3::V1(2));
     }
 }
