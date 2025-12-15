@@ -24,6 +24,7 @@ mod option;
 mod scroll_renderable;
 mod shade_subtree;
 pub mod shape;
+mod table_renderable;
 pub mod text;
 mod transform;
 mod transition_option;
@@ -43,6 +44,7 @@ pub use shape::Circle;
 pub use shape::Rect;
 pub use shape::RoundedRect;
 pub use shape::StrokedShape;
+pub use table_renderable::TableRenderable;
 pub use text::Text;
 pub use transform::Transform;
 pub use transition_option::TransitionOption;
@@ -53,7 +55,7 @@ pub trait AnimatedJoin {
 }
 
 /// A type that can be rendered to a target and animated
-pub trait Render<Color>: AnimatedJoin + Sized {
+pub trait Render<Color>: AnimatedJoin {
     /// Render the view to the screen
     fn render(&self, render_target: &mut impl RenderTarget<ColorFormat = Color>, style: &Color);
 
