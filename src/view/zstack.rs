@@ -86,27 +86,27 @@ impl<T> ZStack<T> {
 macro_rules! impl_view_for_zstack {
     ($(($n:tt, $type:ident)),+) => {
         paste! {
-        impl<$($type),+> ViewMarker for ZStack<($($type),+)>
+        impl<$($type),+> ViewMarker for ZStack<($($type,)+)>
         where
             $($type: ViewMarker),+
         {
-            type Renderables = ($($type::Renderables),+);
+            type Renderables = ($($type::Renderables,)+);
             type Transition = crate::transition::Opacity;
         }
 
-        impl<Captures: ?Sized, $($type),+> ViewLayout<Captures> for ZStack<($($type),+)>
+        impl<Captures: ?Sized, $($type),+> ViewLayout<Captures> for ZStack<($($type,)+)>
         where
             $($type: ViewLayout<Captures>),+
         {
-            type Sublayout = ($(ResolvedLayout<$type::Sublayout>),+);
-            type State = ($($type::State),+);
+            type Sublayout = ($(ResolvedLayout<$type::Sublayout>,)+);
+            type State = ($($type::State,)+);
 
             fn transition(&self) -> Self::Transition {
                 crate::transition::Opacity
             }
 
             fn build_state(&self, captures: &mut Captures) -> Self::State {
-                ($(self.items.$n.build_state(captures)),+)
+                ($(self.items.$n.build_state(captures),)+)
             }
 
             fn layout(
@@ -140,7 +140,7 @@ macro_rules! impl_view_for_zstack {
                 ResolvedLayout {
                     sublayouts: ($(
                         [<layout$n>]
-                    ),+),
+                    ,)+),
                     resolved_size: size.intersecting_proposal(offer),
                 }
             }
@@ -170,7 +170,7 @@ macro_rules! impl_view_for_zstack {
                 (
                     $(
                         self.items.$n.render_tree(&layout.sublayouts.$n, [<offset_$n>], env, captures, &mut state.$n)
-                    ),+
+                    ,)+
                 )
             }
 
@@ -196,6 +196,7 @@ macro_rules! impl_view_for_zstack {
     }
 }
 
+impl_view_for_zstack!((0, T0));
 impl_view_for_zstack!((0, T0), (1, T1));
 impl_view_for_zstack!((0, T0), (1, T1), (2, T2));
 impl_view_for_zstack!((0, T0), (1, T1), (2, T2), (3, T3));
