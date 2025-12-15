@@ -5,7 +5,7 @@ use crate::{
     event::{EventContext, EventResult},
     layout::{HorizontalAlignment, LayoutDirection, ResolvedLayout},
     primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions},
-    view::{ViewLayout, ViewMarker},
+    view::{ViewLayout, ViewMarker, modifier::FixedSize},
 };
 
 use core::cell::RefCell;
@@ -70,6 +70,17 @@ impl<T> VStack<T> {
     #[must_use]
     pub fn with_alignment(self, alignment: HorizontalAlignment) -> Self {
         Self { alignment, ..self }
+    }
+
+    /// Lays out and renders the stack at its ideal height rather than attempting to distribute
+    /// space fairly.
+    ///
+    /// This can significantly reduce the cost of layout when the view is known to fit in the
+    /// available space. However, child views which have no intrinsic ideal size, such as
+    /// shapes, may become zero-sized if not contained within e.g. `.fixed_frame`.
+    #[must_use]
+    pub fn lazy(self) -> FixedSize<Self> {
+        FixedSize::new(false, true, self)
     }
 }
 
