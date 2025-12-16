@@ -21,8 +21,8 @@ impl ComponentPath {
     }
 
     #[inline]
-    fn current(&self) -> usize {
-        self.path[self.offset.get() as usize].get() as usize
+    fn current(&self) -> u8 {
+        self.path[self.offset.get() as usize].get() as u8
     }
     #[inline]
     fn set_current(&self, value: u8) {
@@ -57,26 +57,28 @@ impl ComponentPath {
         self.len.set(0);
     }
 
+    fn is_forward(&self, kind: Kind) -> bool {
+        debug_assert!(kind.is_movement(), "Unsupported event for traversal");
+        matches!(kind, Kind::Down | Kind::Right)
+    }
+
     pub fn traverse(
         &self,
         event: Kind,
         max: usize,
         mut f: impl FnMut(usize) -> EventResult,
     ) -> EventResult {
-        let mut result = EventResult::default();
-        let offset = self.offset.get();
+        debug_assert!(event.is_movement(), "Unsupported event for traversal");
 
-        debug_assert!(matches!(
-            event,
-            Kind::Up | Kind::Down | Kind::Left | Kind::Right
-        ));
+        let is_forward = self.is_forward(event);
+        let offset = self.offset.get();
+        let max = max as u8;
+
+        let mut result = EventResult::default();
+        let mut allowed_retry = offset == 0;
 
         if self.len.get() == offset {
-            match event {
-                Kind::Down | Kind::Right => self.set_current(0),
-                Kind::Up | Kind::Left => self.set_current(max as u8),
-                _ => (),
-            }
+            self.set_current(if is_forward { 0 } else { max });
             self.len.set(offset + 1);
         }
 
@@ -87,7 +89,7 @@ impl ComponentPath {
 
             self.offset.set(offset + 1);
 
-            result.merge(f(current));
+            result.merge(f(current as usize));
 
             self.offset.set(offset);
 
@@ -95,23 +97,30 @@ impl ComponentPath {
                 return result;
             }
 
-            let overflow = match event {
-                Kind::Down | Kind::Right => self.delta(1, max),
-                Kind::Up | Kind::Left => self.delta(-1, 0),
-                _ => false,
+            // Remove the path to unsuccessful child
+            self.len.set(offset + 1);
+
+            let overflow = if is_forward {
+                self.delta(1, max)
+            } else {
+                self.delta(-1, 0)
             };
 
             if overflow {
-                self.len.set(offset);
+                if allowed_retry {
+                    allowed_retry = false;
+                    self.set_current(if is_forward { 0 } else { max });
+                    continue;
+                } else {
+                    self.len.set(offset);
+                }
                 return result;
-            } else {
-                self.len.set(offset + 1);
             }
         }
     }
 
     #[inline]
-    pub fn delta(&self, delta: i8, bound: usize) -> bool {
+    pub fn delta(&self, delta: i8, bound: u8) -> bool {
         let current = self.current();
         if current == bound {
             true
@@ -133,7 +142,7 @@ mod tests {
     use crate::event::keyboard::KeyboardEventKind;
 
     use super::*;
-    use std::{cell::Cell, vec, vec::Vec};
+    use std::{vec, vec::Vec};
 
     #[derive(Default, Debug)]
     struct Meta {
@@ -243,20 +252,24 @@ mod tests {
 
         let path = ComponentPath::new();
 
-        for _ in 0..5 {
-            assert!(path.is_empty());
+        assert!(path.is_empty());
 
-            std::println!("--- Next 0 ---");
+        for i in 0..5 {
+            std::println!("--- Next {i}.0 ---");
 
             let mut meta = Meta::default();
             let result = tree.handle(&mut meta, KeyboardEventKind::Down, &path);
             assert!(result.handled);
             assert_eq!(meta.focused_id, Some(2));
-            assert_eq!(meta.order, vec![1, 2]);
+            if i == 0 {
+                assert_eq!(meta.order, vec![1, 2]);
+            } else {
+                assert_eq!(meta.order, vec![7, 1, 2]);
+            }
             assert_eq!(path.len.get(), 2);
             assert_eq!(path.path_chunk(), [1, 0]);
 
-            std::println!("--- Next 1 ---");
+            std::println!("--- Next {i}.1 ---");
 
             let mut meta = Meta::default();
             let result = tree.handle(&mut meta, KeyboardEventKind::Down, &path);
@@ -266,7 +279,7 @@ mod tests {
             assert_eq!(path.len.get(), 3);
             assert_eq!(path.path_chunk(), [1, 1, 1]);
 
-            std::println!("--- Next 2 ---");
+            std::println!("--- Next {i}.2 ---");
 
             let mut meta = Meta::default();
             let result = tree.handle(&mut meta, KeyboardEventKind::Down, &path);
@@ -276,7 +289,7 @@ mod tests {
             assert_eq!(path.len.get(), 2);
             assert_eq!(path.path_chunk(), [1, 3]);
 
-            std::println!("--- Next 3 ---");
+            std::println!("--- Next {i}.3 ---");
 
             let mut meta = Meta::default();
             let result = tree.handle(&mut meta, KeyboardEventKind::Down, &path);
@@ -285,15 +298,6 @@ mod tests {
             assert_eq!(meta.order, vec![6, 7]);
             assert_eq!(path.len.get(), 1);
             assert_eq!(path.path_chunk(), [2]);
-
-            std::println!("--- Next 4 ---");
-
-            let mut meta = Meta::default();
-            let result = tree.handle(&mut meta, KeyboardEventKind::Down, &path);
-            assert!(!result.handled);
-            assert_eq!(meta.focused_id, None);
-            assert_eq!(meta.order, vec![7]);
-            assert_eq!(path.len.get(), 0);
         }
     }
 
@@ -343,22 +347,22 @@ mod tests {
 
         let path = ComponentPath::new();
 
-        for _ in 0..5 {
-            assert!(path.is_empty());
+        assert!(path.is_empty());
 
-            let mut meta = Meta::default();
-            tree.handle(&mut meta, KeyboardEventKind::Down, &path);
-            tree.handle(&mut meta, KeyboardEventKind::Down, &path);
-            tree.handle(&mut meta, KeyboardEventKind::Down, &path);
-            tree.handle(&mut meta, KeyboardEventKind::Down, &path);
+        let mut meta = Meta::default();
+        tree.handle(&mut meta, KeyboardEventKind::Down, &path);
+        tree.handle(&mut meta, KeyboardEventKind::Down, &path);
+        tree.handle(&mut meta, KeyboardEventKind::Down, &path);
+        tree.handle(&mut meta, KeyboardEventKind::Down, &path);
 
-            assert_eq!(
-                meta.focused_id,
-                Some(7),
-                "Assumption that 'forward' test passes."
-            );
+        assert_eq!(
+            meta.focused_id,
+            Some(7),
+            "Assumption that 'forward' test passes."
+        );
 
-            std::println!("--- Next 0 ---");
+        for i in 0..5 {
+            std::println!("--- Next {i}.0  ---");
 
             let mut meta = Meta::default();
             let result = tree.handle(&mut meta, KeyboardEventKind::Up, &path);
@@ -368,7 +372,7 @@ mod tests {
             assert_eq!(path.len.get(), 2);
             assert_eq!(path.path_chunk(), [1, 3]);
 
-            std::println!("--- Next 1 ---");
+            std::println!("--- Next {i}.1 ---");
 
             let mut meta = Meta::default();
             let result = tree.handle(&mut meta, KeyboardEventKind::Up, &path);
@@ -378,7 +382,7 @@ mod tests {
             assert_eq!(path.len.get(), 3);
             assert_eq!(path.path_chunk(), [1, 1, 1]);
 
-            std::println!("--- Next 2 ---");
+            std::println!("--- Next {i}.2 ---");
 
             let mut meta = Meta::default();
             let result = tree.handle(&mut meta, KeyboardEventKind::Up, &path);
@@ -388,14 +392,15 @@ mod tests {
             assert_eq!(path.len.get(), 2);
             assert_eq!(path.path_chunk(), [1, 0]);
 
-            std::println!("--- Next 3 ---");
+            std::println!("--- Next {i}.3 ---");
 
             let mut meta = Meta::default();
             let result = tree.handle(&mut meta, KeyboardEventKind::Up, &path);
-            assert!(!result.handled);
-            assert_eq!(meta.focused_id, None);
-            assert_eq!(meta.order, vec![2, 1]);
-            assert_eq!(path.len.get(), 0);
+            assert!(result.handled);
+            assert_eq!(meta.focused_id, Some(7));
+            assert_eq!(meta.order, vec![2, 1, 7]);
+            assert_eq!(path.len.get(), 1);
+            assert_eq!(path.path_chunk(), [2]);
         }
     }
 }

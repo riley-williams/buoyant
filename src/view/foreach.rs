@@ -366,8 +366,8 @@ where
         let mut result = EventResult::default();
         if self.items.len() > 1 {
             let max = self.items.len() - 1;
-            if let Event::Keyboard(k) = event
-                && k.kind.is_movement()
+            if let crate::view::Event::Keyboard(k) = event
+                && (context.input.is_focused_any(k.groups) || k.kind.is_movement())
             {
                 return context.input.traverse(k.groups, k.kind, max, |i| {
                     let view = (self.build_view)(&self.items[i]);

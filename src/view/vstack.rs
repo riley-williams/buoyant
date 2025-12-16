@@ -332,7 +332,9 @@ macro_rules! impl_view_for_vstack {
                 let mut result = EventResult::default();
                 let max = const { count!($($n),+) - 1 };
 
-                if let crate::view::Event::Keyboard(k) = event && k.kind.is_movement() {
+                if let crate::view::Event::Keyboard(k) = event &&
+                    (context.input.is_focused_any(k.groups) || k.kind.is_movement())
+                {
                     return context.input.traverse(k.groups, k.kind, max, |i| match i {
                         $(
                             $n => self.items.$n.handle_event(
