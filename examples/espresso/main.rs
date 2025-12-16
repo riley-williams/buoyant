@@ -14,6 +14,7 @@ use buoyant::event::{EventContext, EventResult, simulator::MouseTracker};
 use buoyant::primitives::Point;
 use buoyant::render::{AnimatedJoin, AnimationDomain, Render};
 use buoyant::render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _};
+use buoyant::view::button::ActiveModifiers;
 use buoyant::{animation::Animation, if_view, match_view, view::prelude::*};
 use embedded_graphics::prelude::*;
 use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
@@ -237,10 +238,10 @@ fn tab_item<C, F: Fn(&mut C)>(
         (color::FOREGROUND_SECONDARY, 0)
     };
 
-    Button::new(on_tap, move |is_pressed: bool| {
+    Button::new(on_tap, move |modifiers: ActiveModifiers| {
         VStack::new((
             ZStack::new((
-                if_view!((is_selected || is_pressed) {
+                if_view!((is_selected || modifiers.is_pressed()) {
                     Rectangle.foreground_color(color::BACKGROUND_SECONDARY)
                 }),
                 VStack::new((
@@ -249,7 +250,7 @@ fn tab_item<C, F: Fn(&mut C)>(
                 ))
                 .with_spacing(spacing::ELEMENT)
                 .padding(Edges::All, spacing::ELEMENT)
-                .hint_background_color(if is_selected || is_pressed {
+                .hint_background_color(if is_selected || modifiers.is_pressed() {
                     color::BACKGROUND_SECONDARY
                 } else {
                     color::BACKGROUND
