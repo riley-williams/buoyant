@@ -1,5 +1,3 @@
-use core::num::NonZeroUsize;
-
 use crate::{
     environment::LayoutEnvironment,
     event::{
@@ -30,93 +28,68 @@ pub enum PaginationDirection {
 pub struct PaginationState<T> {
     observed_groups: Groups,
     focus: FocusState,
-    active_index: usize,
+    entered: FocusState,
     inner: T,
 }
 
-/// Trait used for indexing into the pagination
-pub trait PaginationIndex<'a> {
-    /// The output type when indexing into the pagination
-    type Output: 'a;
-
-    /// Retuns the number of paginated items
-    fn len(&self) -> NonZeroUsize;
-
-    /// Returns the data needed to display page `i`
-    fn index(&self, i: usize) -> Self::Output;
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum PaginationAction {
+    Next,
+    Previous,
+    Enter,
+    Submit,
+    Escape,
 }
 
 #[derive(Debug, Clone)]
-pub struct PaginationView<'a, M, V, F> {
-    items: M,
-    build_view: F,
+pub struct PaginationView<V, Action> {
+    view: V,
+    action: Action,
     direction: PaginationDirection,
-    transparent_on_click: bool,
+    click_to_enter: bool,
     groups: Groups,
-    carousel: bool,
-    _marker: core::marker::PhantomData<(V, &'a ())>,
 }
 
 impl Pagination {
     /// Constructs new horizontal [`Pagination`]
-    pub fn new_horizontal<'a, M, V, F>(
+    pub fn new_horizontal<V, Action, Captures>(
         groups: impl Into<Groups>,
-        items: M,
-        build_view: F,
-    ) -> PaginationView<'a, M, V, F>
-    where
-        M: PaginationIndex<'a>,
-        F: Fn(M::Output) -> V,
-    {
+        on_action: Action,
+        view: V,
+    ) -> PaginationView<V, Action> {
         PaginationView {
-            items,
-            build_view,
+            action: on_action,
             direction: PaginationDirection::Horizontal,
             groups: groups.into(),
-            transparent_on_click: false,
-            carousel: false,
-            _marker: core::marker::PhantomData,
+            click_to_enter: false,
+            view,
         }
     }
 
     /// Constructs new vertical [`Pagination`]
-    pub fn new_vertical<'a, M, V, F>(
+    pub fn new_vertical<V, Action, Captures>(
         groups: impl Into<Groups>,
-        items: M,
-        build_view: F,
-    ) -> PaginationView<'a, M, V, F>
-    where
-        M: PaginationIndex<'a>,
-        F: Fn(M::Output) -> V,
-    {
+        on_action: Action,
+        view: V,
+    ) -> PaginationView<V, Action> {
         PaginationView {
-            items,
-            build_view,
+            action: on_action,
             direction: PaginationDirection::Vertical,
             groups: groups.into(),
-            transparent_on_click: false,
-            carousel: false,
-            _marker: core::marker::PhantomData,
+            click_to_enter: false,
+            view,
         }
     }
 }
 
-impl<'a, M, V, F> PaginationView<'a, M, V, F> {
-    /// Horizontal pagination will consume `Left` and `Right` keyboard events to
-    /// navigate, vertical will consume `Up` and `Down`, will be transparent to clicks etc.
-    /// With transparent on click enabled, first click will be consumed and then all buttons except
-    /// `Cancel` will be passed to the child views. `Cancel` will "exit" from the navigation.
-    pub fn with_transparent_on_click(mut self, transparent_on_click: bool) -> Self {
-        self.transparent_on_click = transparent_on_click;
-        self
-    }
-    pub fn with_carousel(mut self, carousel: bool) -> Self {
-        self.carousel = carousel;
+impl<V, Action> PaginationView<V, Action> {
+    pub fn with_click_to_enter(mut self, click_to_enter: bool) -> Self {
+        self.click_to_enter = click_to_enter;
         self
     }
 }
 
-impl<'a, M, V, F> ViewMarker for PaginationView<'a, M, V, F>
+impl<V, Action> ViewMarker for PaginationView<V, Action>
 where
     V: ViewMarker,
 {
@@ -125,10 +98,9 @@ where
     type Transition = Opacity;
 }
 
-impl<'a, M, V, F, Captures> ViewLayout<Captures> for PaginationView<'a, M, V, F>
+impl<V, Action, Captures> ViewLayout<Captures> for PaginationView<V, Action>
 where
-    M: PaginationIndex<'a>,
-    F: Fn(M::Output) -> V,
+    Action: Fn(PaginationAction, &mut Captures),
     V: ViewLayout<Captures>,
     Captures: ?Sized,
 {
@@ -140,12 +112,11 @@ where
     }
 
     fn build_state(&self, captures: &mut Captures) -> Self::State {
-        let view = (self.build_view)(self.items.index(0));
         PaginationState {
             observed_groups: Groups::default(),
             focus: FocusState::new(self.groups),
-            active_index: 0,
-            inner: view.build_state(captures),
+            entered: FocusState::new(self.groups),
+            inner: self.view.build_state(captures),
         }
     }
 
@@ -156,8 +127,7 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> ResolvedLayout<Self::Sublayout> {
-        let view = (self.build_view)(self.items.index(state.active_index));
-        view.layout(offer, env, captures, &mut state.inner)
+        self.view.layout(offer, env, captures, &mut state.inner)
     }
 
     fn render_tree(
@@ -168,8 +138,8 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> Self::Renderables {
-        let view = (self.build_view)(self.items.index(state.active_index));
-        view.render_tree(layout, origin, env, captures, &mut state.inner)
+        self.view
+            .render_tree(layout, origin, env, captures, &mut state.inner)
     }
 
     fn handle_event(
@@ -186,64 +156,77 @@ where
         let handled = EventResult::new(true, false);
 
         let focus = &mut state.focus;
-
-        // std::println!("Event!: {event:?}");
+        let entered = &mut state.entered;
 
         if let Event::Keyboard(k) = event {
+            if self.click_to_enter && !entered.is_focused_any(k.groups) {
+                return if k.kind.is_movement() {
+                    context.input.leaf_move(focus, k.groups)
+                } else if k.kind == K::Click {
+                    (self.action)(PaginationAction::Enter, captures);
+                    entered.focus(k.groups);
+                    EventResult::new(true, true)
+                } else {
+                    let result = self.view.handle_event(
+                        event,
+                        context,
+                        render_tree,
+                        captures,
+                        &mut state.inner,
+                    );
+                    if result.handled {
+                        state.observed_groups |= event.groups();
+                    }
+                    result
+                };
+            }
+
+            // Match assumes that we already entered.
+
             match (self.direction, k.kind) {
-                (D::Horizontal, K::Click)
-                    if focus.should_focus(k.groups) && self.transparent_on_click =>
-                {
-                    context.input.focus(focus.focus(k.groups));
-                    return handled;
-                }
-                (D::Horizontal, K::Cancel)
-                    if focus.should_blur(k.groups) && self.transparent_on_click =>
-                {
-                    context.input.blur(focus.blur(k.groups));
-                    return handled;
-                }
-                (D::Vertical, K::Up) | (D::Horizontal, K::Left)
-                    if !focus.is_focused_any(k.groups) && focus.is_member_of_any(k.groups) =>
-                {
-                    let next_index = if state.active_index == 0 {
-                        self.carousel.then_some(self.items.len().get() - 1)
+                (_, K::Cancel | K::LongPress) if self.click_to_enter => {
+                    (self.action)(PaginationAction::Escape, captures);
+                    let result = self.view.handle_event(
+                        event,
+                        context,
+                        render_tree,
+                        captures,
+                        &mut state.inner,
+                    );
+                    return if result.handled {
+                        result
                     } else {
-                        Some(state.active_index - 1)
+                        entered.blur(k.groups);
+                        handled
                     };
-                    if let Some(i) = next_index {
-                        context.input.blur(state.observed_groups);
-                        state.active_index = i;
-                        let view = (self.build_view)(self.items.index(state.active_index));
-                        state.inner = view.build_state(captures);
-                    }
+                }
+                (D::Vertical, K::Up) | (D::Horizontal, K::Left) => {
+                    context.input.blur(state.observed_groups);
+                    state.observed_groups = Groups::default();
+                    (self.action)(PaginationAction::Previous, captures);
                     return handled;
                 }
-                (D::Vertical, K::Down) | (D::Horizontal, K::Right)
-                    if !focus.is_focused_any(k.groups) && focus.is_member_of_any(k.groups) =>
-                {
-                    let next_index = if state.active_index + 1 == self.items.len().get() {
-                        self.carousel.then_some(0)
-                    } else {
-                        Some(state.active_index + 1)
-                    };
-                    if let Some(i) = next_index {
-                        context.input.blur(state.observed_groups);
-                        state.active_index = i;
-                        let view = (self.build_view)(self.items.index(state.active_index));
-                        state.inner = view.build_state(captures);
-                    }
+                (D::Vertical, K::Down) | (D::Horizontal, K::Right) => {
+                    context.input.blur(state.observed_groups);
+                    state.observed_groups = Groups::default();
+                    (self.action)(PaginationAction::Next, captures);
                     return handled;
                 }
                 _ => (),
             }
         }
 
-        let view = (self.build_view)(self.items.index(state.active_index));
-        let result = view.handle_event(event, context, render_tree, captures, &mut state.inner);
+        let result =
+            self.view
+                .handle_event(event, context, render_tree, captures, &mut state.inner);
         if result.handled {
             state.observed_groups |= event.groups();
         }
+
+        if let Event::Keyboard(k) = event && k.kind == K::Click {
+            (self.action)(PaginationAction::Submit, captures);
+        }
+
         result
     }
 }
