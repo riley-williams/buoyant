@@ -38,7 +38,7 @@ pub use hstack::HStack;
 pub use image::Image;
 pub use modifier::aspect_ratio;
 pub use modifier::padding;
-pub use pagination::{Pagination, PaginationDirection, PaginationIndex};
+pub use pagination::{Pagination, PaginationAction, PaginationDirection};
 pub use scroll_view::ScrollView;
 pub use spacer::Spacer;
 pub(crate) use text::{CharacterWrap, WordWrap};
