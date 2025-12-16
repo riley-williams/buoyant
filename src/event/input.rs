@@ -114,6 +114,8 @@ impl<'a> Input<'a> {
             return super::EventResult::default();
         }
 
+        // todo: debug assert that there is a sound path there
+
         if self.is_focused_any(groups) {
             debug_assert!(
                 focus.is_focused_any(groups),

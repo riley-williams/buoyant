@@ -58,7 +58,6 @@ impl ComponentPath {
     }
 
     fn is_forward(&self, kind: Kind) -> bool {
-        debug_assert!(kind.is_movement(), "Unsupported event for traversal");
         matches!(kind, Kind::Down | Kind::Right)
     }
 
@@ -68,8 +67,6 @@ impl ComponentPath {
         max: usize,
         mut f: impl FnMut(usize) -> EventResult,
     ) -> EventResult {
-        debug_assert!(event.is_movement(), "Unsupported event for traversal");
-
         let is_forward = self.is_forward(event);
         let offset = self.offset.get();
         let max = max as u8;
@@ -78,8 +75,12 @@ impl ComponentPath {
         let mut allowed_retry = offset == 0;
 
         if self.len.get() == offset {
-            self.set_current(if is_forward { 0 } else { max });
-            self.len.set(offset + 1);
+            if event.is_movement() {
+                self.set_current(if is_forward { 0 } else { max });
+                self.len.set(offset + 1);
+            } else {
+                return result;
+            }
         }
 
         debug_assert!(offset < self.len.get());
@@ -93,7 +94,7 @@ impl ComponentPath {
 
             self.offset.set(offset);
 
-            if result.handled {
+            if result.handled || !event.is_movement() {
                 return result;
             }
 
@@ -401,6 +402,101 @@ mod tests {
             assert_eq!(meta.order, vec![2, 1, 7]);
             assert_eq!(path.len.get(), 1);
             assert_eq!(path.path_chunk(), [2]);
+        }
+    }
+
+    #[test]
+    fn test_find_focus_backward_start() {
+        let mut tree = Node::Node(vec![Node::Node(vec![
+            Node::Leaf {
+                id: 1,
+                focusable: false,
+                focused: false,
+            },
+            Node::Node(vec![
+                Node::Leaf {
+                    id: 2,
+                    focusable: true,
+                    focused: false,
+                },
+                Node::Node(vec![
+                    Node::Leaf {
+                        id: 3,
+                        focusable: false,
+                        focused: false,
+                    },
+                    Node::Leaf {
+                        id: 4,
+                        focusable: true,
+                        focused: false,
+                    },
+                ]),
+                Node::Leaf {
+                    id: 5,
+                    focusable: false,
+                    focused: false,
+                },
+                Node::Leaf {
+                    id: 6,
+                    focusable: true,
+                    focused: false,
+                },
+            ]),
+            Node::Leaf {
+                id: 7,
+                focusable: true,
+                focused: false,
+            },
+        ])]);
+
+        let path = ComponentPath::new();
+
+        assert!(path.is_empty());
+
+        for i in 0..5 {
+            std::println!("--- Next {i}.0 ---");
+
+            let mut meta = Meta::default();
+            let result = tree.handle(&mut meta, KeyboardEventKind::Up, &path);
+            assert!(result.handled);
+            assert_eq!(meta.focused_id, Some(7));
+            if i == 0 {
+                assert_eq!(meta.order, vec![7]);
+            } else {
+                assert_eq!(meta.order, vec![2, 1, 7]);
+            }
+            // assert_eq!(path.len.get(), 1);
+            // assert_eq!(path.path_chunk(), [2]);
+
+            std::println!("--- Next {i}.1  ---");
+
+            let mut meta = Meta::default();
+            let result = tree.handle(&mut meta, KeyboardEventKind::Up, &path);
+            assert!(result.handled);
+            assert_eq!(meta.focused_id, Some(6));
+            assert_eq!(meta.order, vec![7, 6]);
+            // assert_eq!(path.len.get(), 2);
+            // assert_eq!(path.path_chunk(), [1, 3]);
+
+            std::println!("--- Next {i}.2 ---");
+
+            let mut meta = Meta::default();
+            let result = tree.handle(&mut meta, KeyboardEventKind::Up, &path);
+            assert!(result.handled);
+            assert_eq!(meta.focused_id, Some(4));
+            assert_eq!(meta.order, vec![6, 5, 4]);
+            // assert_eq!(path.len.get(), 3);
+            // assert_eq!(path.path_chunk(), [1, 1, 1]);
+
+            std::println!("--- Next {i}.3 ---");
+
+            let mut meta = Meta::default();
+            let result = tree.handle(&mut meta, KeyboardEventKind::Up, &path);
+            assert!(result.handled);
+            assert_eq!(meta.focused_id, Some(2));
+            assert_eq!(meta.order, vec![4, 3, 2]);
+            // assert_eq!(path.len.get(), 2);
+            // assert_eq!(path.path_chunk(), [1, 0]);
         }
     }
 }
