@@ -188,9 +188,9 @@ fn preserves_inner_state() {
         GeometryReader::new(|size: Size| {
             Button::new(
                 |(): &mut ()| {},
-                move |is_pressed: bool| {
+                move |a| {
                     Rectangle
-                        .foreground_color(if is_pressed { 'x' } else { '-' })
+                        .foreground_color(if a.is_pressed() { 'x' } else { '-' })
                         .frame_sized(size.width / 2, size.height / 2)
                 },
             )

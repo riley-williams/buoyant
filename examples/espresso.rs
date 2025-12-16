@@ -192,10 +192,10 @@ fn tab_item<C, F: Fn(&mut C)>(
         (color::FOREGROUND_SECONDARY, 0)
     };
 
-    Button::new(on_tap, move |is_pressed: bool| {
+    Button::new(on_tap, move |a| {
         VStack::new((
             ZStack::new((
-                if_view!((is_selected || is_pressed) {
+                if_view!((is_selected || a.is_pressed()) {
                     Rectangle.foreground_color(color::BACKGROUND_SECONDARY)
                 }),
                 VStack::new((
@@ -303,16 +303,16 @@ fn toggle_button<C>(is_on: bool, on_tap: fn(&mut C)) -> impl View<color::Space, 
         (color::Space::CSS_LIGHT_GRAY, HorizontalAlignment::Leading)
     };
 
-    Button::new(on_tap, move |is_pressed: bool| {
+    Button::new(on_tap, move |a| {
         ZStack::new((
             buoyant::view::shape::Capsule.foreground_color(color),
             buoyant::view::shape::Circle
-                .foreground_color(if is_pressed {
+                .foreground_color(if a.is_pressed() {
                     color::Space::CSS_LIGHT_GRAY
                 } else {
                     color::Space::WHITE
                 })
-                .scale_effect(if is_pressed { 1.5 } else { 1.0 }, UnitPoint::center())
+                .scale_effect(if a.is_pressed() { 1.5 } else { 1.0 }, UnitPoint::center())
                 .padding(Edges::All, 2)
                 .animated(Animation::linear(Duration::from_millis(125)), is_on),
         ))

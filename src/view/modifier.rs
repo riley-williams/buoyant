@@ -552,10 +552,10 @@ pub trait ViewModifier: Sized {
     /// fn expanding_button() -> impl View<Rgb888, i32> {
     ///     Button::new(|_: &mut i32| {
     ///         // do something when pressed
-    ///     }, |is_pressed| {
+    ///     }, |a| {
     ///         Rectangle
-    ///             .scale_effect(if is_pressed { 1.2 } else { 1.0 }, UnitPoint::center())
-    ///             .animated(Animation::linear(Duration::from_millis(150)), is_pressed)
+    ///             .scale_effect(if a.is_pressed() { 1.2 } else { 1.0 }, UnitPoint::center())
+    ///             .animated(Animation::linear(Duration::from_millis(150)), a.is_pressed())
     ///     })
     /// }
     /// ```

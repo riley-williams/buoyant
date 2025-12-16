@@ -27,6 +27,10 @@ pub struct ButtonState {
     pub focus: FocusState,
 }
 
+/// A set of applied modifiers.
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ActiveModifiers(pub(crate) u8);
+
 /// A button interaction state.
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
@@ -81,12 +85,12 @@ pub enum ButtonTouchState {
 /// fn highlight_button() -> impl View<Rgb888, i32> {
 ///     Button::new(
 ///         |c: &mut i32| { *c += 1; },
-///         |is_pressed| {
+///         |a| {
 ///             Text::new("Press me", &FONT_9X15)
 ///                 .foreground_color(Rgb888::WHITE)
 ///                 .padding(Edges::All, 10)
 ///                 .background_color(
-///                     if is_pressed {
+///                     if a.is_pressed() {
 ///                         Rgb888::BLUE
 ///                     } else {
 ///                         Rgb888::GREEN
@@ -105,7 +109,7 @@ pub struct Button<ViewFn, Inner, Action> {
     action: Action,
 }
 
-impl<ViewFn: Fn(bool) -> Inner, Inner, Action> Button<ViewFn, Inner, Action> {
+impl<ViewFn: Fn(ActiveModifiers) -> Inner, Inner, Action> Button<ViewFn, Inner, Action> {
     #[allow(missing_docs)]
     pub fn new(action: Action, view: ViewFn) -> Self {
         Self {
@@ -130,6 +134,43 @@ impl<ViewFn: Fn(bool) -> Inner, Inner, Action> Button<ViewFn, Inner, Action> {
         self.groups |= groups;
         self
     }
+
+    fn active_modifiers(&self, state: &ButtonState) -> ActiveModifiers {
+        let pressed = matches!(state.touch, ButtonTouchState::CaptivePressed(_));
+        let focused = state.focus.is_focused_any(self.groups);
+        ActiveModifiers::new()
+            .with(pressed, ActiveModifiers::PRESSED)
+            .with(focused, ActiveModifiers::FOCUSED)
+    }
+}
+
+// Note: we may report which group exactly is <pressed>, but I can't think of a use case.
+impl ActiveModifiers {
+    pub(crate) const PRESSED: u8 = 0b0000_0001;
+    pub(crate) const FOCUSED: u8 = 0b0000_0010;
+    pub(crate) const CLICKED: u8 = 0b0000_0100;
+    pub(crate) const LONG_PRESSED: u8 = 0b0000_1000;
+
+    pub(crate) fn new() -> Self {
+        Self(0)
+    }
+
+    pub fn with(self, on: bool, modifier: u8) -> Self {
+        Self(self.0 | if on { modifier } else { 0 })
+    }
+
+    pub fn is_pressed(self) -> bool {
+        (self.0 & Self::PRESSED) != 0
+    }
+    pub fn is_focused(self) -> bool {
+        (self.0 & Self::FOCUSED) != 0
+    }
+    pub fn is_clicked(self) -> bool {
+        (self.0 & Self::CLICKED) != 0
+    }
+    pub fn is_long_pressed(self) -> bool {
+        (self.0 & Self::LONG_PRESSED) != 0
+    }
 }
 
 impl<ViewFn, Inner: ViewMarker, Action> ViewMarker for Button<ViewFn, Inner, Action> {
@@ -142,7 +183,7 @@ where
     Action: Fn(&mut Captures),
     Captures: ?Sized,
     Inner: ViewLayout<Captures>,
-    ViewFn: Fn(bool) -> Inner,
+    ViewFn: Fn(ActiveModifiers) -> Inner,
 {
     type State = (ButtonState, Inner::State);
     type Sublayout = Inner::Sublayout;
@@ -157,7 +198,7 @@ where
                 touch: ButtonTouchState::default(),
                 focus: FocusState::new(self.groups),
             },
-            (self.view)(false).build_state(captures),
+            (self.view)(ActiveModifiers::new()).build_state(captures),
         )
     }
 
@@ -168,14 +209,9 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> ResolvedLayout<Self::Sublayout> {
-        match state.0.touch {
-            ButtonTouchState::CaptivePressed(_) => {
-                (self.view)(true).layout(offer, env, captures, &mut state.1)
-            }
-            ButtonTouchState::AtRest | ButtonTouchState::Captive(_) => {
-                (self.view)(false).layout(offer, env, captures, &mut state.1)
-            }
-        }
+        let active_modifiers = self.active_modifiers(&state.0);
+
+        (self.view)(active_modifiers).layout(offer, env, captures, &mut state.1)
     }
 
     fn render_tree(
@@ -186,16 +222,11 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> Self::Renderables {
+        let active_modifiers = self.active_modifiers(&state.0);
+
         Container::new(
             Frame::new(origin, layout.resolved_size.into()),
-            match state.0.touch {
-                ButtonTouchState::CaptivePressed(_) => {
-                    (self.view)(true).render_tree(layout, origin, env, captures, &mut state.1)
-                }
-                ButtonTouchState::AtRest | ButtonTouchState::Captive(_) => {
-                    (self.view)(false).render_tree(layout, origin, env, captures, &mut state.1)
-                }
-            },
+            (self.view)(active_modifiers).render_tree(layout, origin, env, captures, &mut state.1),
         )
     }
 
@@ -217,7 +248,7 @@ where
 
 impl<Inner, ViewFn, Action> Button<ViewFn, Inner, Action>
 where
-    ViewFn: Fn(bool) -> Inner,
+    ViewFn: Fn(ActiveModifiers) -> Inner,
 {
     fn handle_touch<Captures: ?Sized>(
         &self,
