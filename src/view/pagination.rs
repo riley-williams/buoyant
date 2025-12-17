@@ -2,7 +2,7 @@ use crate::{
     environment::LayoutEnvironment,
     event::{
         Event, EventContext, EventResult,
-        input::{FocusState, Groups},
+        input::{FocusState, Groups, Input, Interaction},
     },
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
@@ -42,55 +42,67 @@ pub enum PaginationAction {
 }
 
 #[derive(Debug, Clone)]
-pub struct PaginationView<V, Action> {
-    view: V,
+pub struct PaginationView<ViewFn, Action> {
+    view: ViewFn,
     action: Action,
     direction: PaginationDirection,
     click_to_enter: bool,
+    click_to_exit: bool,
     groups: Groups,
 }
 
 impl Pagination {
     /// Constructs new horizontal [`Pagination`]
-    pub fn new_horizontal<V, Action, Captures>(
+    pub fn new_horizontal<ViewFn, Action, Captures>(
         groups: impl Into<Groups>,
         on_action: Action,
-        view: V,
-    ) -> PaginationView<V, Action> {
+        view: ViewFn,
+    ) -> PaginationView<ViewFn, Action> {
         PaginationView {
             action: on_action,
             direction: PaginationDirection::Horizontal,
             groups: groups.into(),
             click_to_enter: false,
+            click_to_exit: false,
             view,
         }
     }
 
     /// Constructs new vertical [`Pagination`]
-    pub fn new_vertical<V, Action, Captures>(
+    pub fn new_vertical<ViewFn, Action, Captures>(
         groups: impl Into<Groups>,
         on_action: Action,
-        view: V,
-    ) -> PaginationView<V, Action> {
+        view: ViewFn,
+    ) -> PaginationView<ViewFn, Action> {
         PaginationView {
             action: on_action,
             direction: PaginationDirection::Vertical,
             groups: groups.into(),
             click_to_enter: false,
+            click_to_exit: false,
             view,
         }
     }
 }
 
-impl<V, Action> PaginationView<V, Action> {
+impl<ViewFn, Action> PaginationView<ViewFn, Action> {
     pub fn with_click_to_enter(mut self, click_to_enter: bool) -> Self {
         self.click_to_enter = click_to_enter;
         self
     }
+    pub fn with_click_to_exit(mut self, click_to_exit: bool) -> Self {
+        self.click_to_exit = click_to_exit;
+        self
+    }
+    fn interaction<T>(&self, state: &PaginationState<T>) -> Interaction {
+        let focused = state.focus.is_focused_any(self.groups);
+        Interaction::new().with(focused, Interaction::FOCUSED)
+    }
 }
 
-impl<V, Action> ViewMarker for PaginationView<V, Action>
+impl<V, ViewFn, Action> ViewMarker for PaginationView<ViewFn, Action>
 where
+    ViewFn: Fn(Interaction) -> V,
     V: ViewMarker,
 {
     type Renderables = V::Renderables;
@@ -98,9 +110,10 @@ where
     type Transition = Opacity;
 }
 
-impl<V, Action, Captures> ViewLayout<Captures> for PaginationView<V, Action>
+impl<V, ViewFn, Action, Captures> ViewLayout<Captures> for PaginationView<ViewFn, Action>
 where
-    Action: Fn(PaginationAction, &mut Captures),
+    Action: Fn(PaginationAction, &Input<'_>, &mut Captures),
+    ViewFn: Fn(Interaction) -> V,
     V: ViewLayout<Captures>,
     Captures: ?Sized,
 {
@@ -116,7 +129,7 @@ where
             observed_groups: Groups::default(),
             focus: FocusState::new(self.groups),
             entered: FocusState::new(self.groups),
-            inner: self.view.build_state(captures),
+            inner: (self.view)(Interaction::new()).build_state(captures),
         }
     }
 
@@ -127,7 +140,8 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> ResolvedLayout<Self::Sublayout> {
-        self.view.layout(offer, env, captures, &mut state.inner)
+        let interaction = self.interaction(state);
+        (self.view)(interaction).layout(offer, env, captures, &mut state.inner)
     }
 
     fn render_tree(
@@ -138,8 +152,8 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> Self::Renderables {
-        self.view
-            .render_tree(layout, origin, env, captures, &mut state.inner)
+        let interaction = self.interaction(state);
+        (self.view)(interaction).render_tree(layout, origin, env, captures, &mut state.inner)
     }
 
     fn handle_event(
@@ -155,76 +169,82 @@ where
 
         let handled = EventResult::new(true, false);
 
+        let interaction = self.interaction(&state);
         let focus = &mut state.focus;
         let entered = &mut state.entered;
+        let input = context.input;
 
         if let Event::Keyboard(k) = event {
             if self.click_to_enter && !entered.is_focused_any(k.groups) {
                 return if k.kind.is_movement() {
                     context.input.leaf_move(focus, k.groups)
                 } else if k.kind == K::Click {
-                    (self.action)(PaginationAction::Enter, captures);
+                    (self.action)(PaginationAction::Enter, input, captures);
                     entered.focus(k.groups);
                     EventResult::new(true, true)
                 } else {
-                    let result = self.view.handle_event(
-                        event,
-                        context,
-                        render_tree,
-                        captures,
-                        &mut state.inner,
-                    );
-                    if result.handled {
-                        state.observed_groups |= event.groups();
-                    }
-                    result
+                    // Not movement nor click, be transparent
+                    let view = (self.view)(interaction);
+                    view.handle_event(event, context, render_tree, captures, &mut state.inner)
                 };
             }
 
-            // Match assumes that we already entered.
+            // Assumption: this is keyboard event and we already entered.
 
             match (self.direction, k.kind) {
+                (_, K::Click) if self.click_to_exit => {
+                    (self.action)(PaginationAction::Submit, input, captures);
+                    entered.blur(k.groups);
+                    context.input.blur(state.observed_groups);
+                    state.observed_groups = Groups::default();
+                    return handled;
+                }
                 (_, K::Cancel | K::LongPress) if self.click_to_enter => {
-                    (self.action)(PaginationAction::Escape, captures);
-                    let result = self.view.handle_event(
-                        event,
-                        context,
-                        render_tree,
-                        captures,
-                        &mut state.inner,
-                    );
+                    (self.action)(PaginationAction::Escape, input, captures);
+                    let view = (self.view)(interaction);
+                    let result =
+                        view.handle_event(event, context, render_tree, captures, &mut state.inner);
                     return if result.handled {
                         result
                     } else {
                         entered.blur(k.groups);
+                        context.input.blur(state.observed_groups);
+                        state.observed_groups = Groups::default();
                         handled
                     };
                 }
                 (D::Vertical, K::Up) | (D::Horizontal, K::Left) => {
                     context.input.blur(state.observed_groups);
                     state.observed_groups = Groups::default();
-                    (self.action)(PaginationAction::Previous, captures);
+                    (self.action)(PaginationAction::Previous, input, captures);
                     return handled;
                 }
                 (D::Vertical, K::Down) | (D::Horizontal, K::Right) => {
                     context.input.blur(state.observed_groups);
                     state.observed_groups = Groups::default();
-                    (self.action)(PaginationAction::Next, captures);
+                    (self.action)(PaginationAction::Next, input, captures);
                     return handled;
                 }
                 _ => (),
+                /* fallthrough */
             }
         }
 
-        let result =
-            self.view
-                .handle_event(event, context, render_tree, captures, &mut state.inner);
+        // Assumption: it is either not keyboard event, or we are already entered into one.
+
+        let view = (self.view)(interaction);
+        let mut result = view.handle_event(event, context, render_tree, captures, &mut state.inner);
         if result.handled {
             state.observed_groups |= event.groups();
         }
 
-        if let Event::Keyboard(k) = event && k.kind == K::Click {
-            (self.action)(PaginationAction::Submit, captures);
+        if let Event::Keyboard(k) = event {
+            if k.kind == K::Click {
+                (self.action)(PaginationAction::Submit, input, captures);
+            }
+            if k.kind.is_movement() {
+                result.handled = true;
+            }
         }
 
         result

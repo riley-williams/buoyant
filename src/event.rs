@@ -34,7 +34,7 @@ pub struct EventResult {
 #[derive(Debug, Clone)]
 pub struct EventContext<'a> {
     pub app_time: Duration,
-    pub input: input::InputRef<'a>,
+    pub input: &'a input::Input<'a>,
 }
 
 impl Event {
@@ -88,26 +88,21 @@ impl EventResult {
     }
 }
 
+// Well, we may drop `input` if use a bit of unsafe code to have empty `Input`
+// in `static` - no actual `Cell`s will be present, so no data race is possible.
 impl<'a> EventContext<'a> {
-    /// Creates a new `EventContext` with the given application time.
+    /// Creates a new `EventContext` with the given application time and input.
     #[must_use]
-    pub const fn new(app_time: Duration) -> Self {
-        Self {
-            app_time,
-            input: input::InputRef::empty(),
-        }
+    pub const fn new(app_time: Duration, input: &'a input::Input<'a>) -> Self {
+        Self { app_time, input }
     }
-    #[must_use]
-    pub const fn new_with_input(app_time: Duration, input: &'a input::Input<'a>) -> Self {
-        Self {
-            app_time,
-            input: input.as_ref(),
-        }
-    }
-
-    pub const fn input(mut self, input: &'a input::Input<'a>) -> Self {
-        self.input = input.as_ref();
-        self
+    /// Creates a new `EventContext` with the given application time and gives it to the closure.
+    /// Input is not available (keyboard/encoder and focus movements).
+    #[inline]
+    pub fn with_time<T>(app_time: Duration, f: impl FnOnce(EventContext<'_>) -> T) -> T {
+        let input = input::Input::new();
+        let this = EventContext::new(app_time, &input);
+        f(this)
     }
 }
 

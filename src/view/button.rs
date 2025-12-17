@@ -8,7 +8,7 @@ use crate::{
     environment::LayoutEnvironment,
     event::{
         EventContext, EventResult,
-        input::{FocusState, Groups},
+        input::{FocusState, Groups, Input, Interaction},
         keyboard::{KeyboardEvent, KeyboardEventKind},
     },
     layout::ResolvedLayout,
@@ -26,10 +26,6 @@ pub struct ButtonState {
     /// A button focus state.
     pub focus: FocusState,
 }
-
-/// A set of applied modifiers.
-#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
-pub struct ActiveModifiers(pub(crate) u8);
 
 /// A button interaction state.
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
@@ -85,12 +81,12 @@ pub enum ButtonTouchState {
 /// fn highlight_button() -> impl View<Rgb888, i32> {
 ///     Button::new(
 ///         |c: &mut i32| { *c += 1; },
-///         |a| {
+///         |i| {
 ///             Text::new("Press me", &FONT_9X15)
 ///                 .foreground_color(Rgb888::WHITE)
 ///                 .padding(Edges::All, 10)
 ///                 .background_color(
-///                     if a.is_pressed() {
+///                     if i.is_pressed() {
 ///                         Rgb888::BLUE
 ///                     } else {
 ///                         Rgb888::GREEN
@@ -109,7 +105,10 @@ pub struct Button<ViewFn, Inner, Action> {
     action: Action,
 }
 
-impl<ViewFn: Fn(ActiveModifiers) -> Inner, Inner, Action> Button<ViewFn, Inner, Action> {
+// NOTE: I tried making Button accept both `fn(&mut Captures)` and `fn(&Input, &mut Captures)`,
+//       and I succeeded, but it looks too ugly in the API and I don't think it's worth it.
+//       It would confuse users more than help them.
+impl<ViewFn: Fn(Interaction) -> Inner, Inner, Action> Button<ViewFn, Inner, Action> {
     #[allow(missing_docs)]
     pub fn new(action: Action, view: ViewFn) -> Self {
         Self {
@@ -119,6 +118,7 @@ impl<ViewFn: Fn(ActiveModifiers) -> Inner, Inner, Action> Button<ViewFn, Inner, 
             _inner_marker: PhantomData,
         }
     }
+
     #[allow(missing_docs)]
     pub fn new_with_groups(action: Action, groups: impl Into<Groups>, view: ViewFn) -> Self {
         Self {
@@ -128,6 +128,9 @@ impl<ViewFn: Fn(ActiveModifiers) -> Inner, Inner, Action> Button<ViewFn, Inner, 
             _inner_marker: PhantomData,
         }
     }
+}
+
+impl<ViewFn, Inner, Action> Button<ViewFn, Inner, Action> {
     /// Assign the button to the set of input groups. It becomes focusable via
     /// any keyboard within these groups.
     pub fn groups(mut self, groups: Groups) -> Self {
@@ -135,41 +138,13 @@ impl<ViewFn: Fn(ActiveModifiers) -> Inner, Inner, Action> Button<ViewFn, Inner, 
         self
     }
 
-    fn active_modifiers(&self, state: &ButtonState) -> ActiveModifiers {
+    fn interaction(&self, state: &ButtonState) -> Interaction {
+        // todo: handle button press too, and click
         let pressed = matches!(state.touch, ButtonTouchState::CaptivePressed(_));
         let focused = state.focus.is_focused_any(self.groups);
-        ActiveModifiers::new()
-            .with(pressed, ActiveModifiers::PRESSED)
-            .with(focused, ActiveModifiers::FOCUSED)
-    }
-}
-
-// Note: we may report which group exactly is <pressed>, but I can't think of a use case.
-impl ActiveModifiers {
-    pub(crate) const PRESSED: u8 = 0b0000_0001;
-    pub(crate) const FOCUSED: u8 = 0b0000_0010;
-    pub(crate) const CLICKED: u8 = 0b0000_0100;
-    pub(crate) const LONG_PRESSED: u8 = 0b0000_1000;
-
-    pub(crate) fn new() -> Self {
-        Self(0)
-    }
-
-    pub fn with(self, on: bool, modifier: u8) -> Self {
-        Self(self.0 | if on { modifier } else { 0 })
-    }
-
-    pub fn is_pressed(self) -> bool {
-        (self.0 & Self::PRESSED) != 0
-    }
-    pub fn is_focused(self) -> bool {
-        (self.0 & Self::FOCUSED) != 0
-    }
-    pub fn is_clicked(self) -> bool {
-        (self.0 & Self::CLICKED) != 0
-    }
-    pub fn is_long_pressed(self) -> bool {
-        (self.0 & Self::LONG_PRESSED) != 0
+        Interaction::new()
+            .with(pressed, Interaction::PRESSED)
+            .with(focused, Interaction::FOCUSED)
     }
 }
 
@@ -180,10 +155,10 @@ impl<ViewFn, Inner: ViewMarker, Action> ViewMarker for Button<ViewFn, Inner, Act
 
 impl<Captures, Inner, ViewFn, Action> ViewLayout<Captures> for Button<ViewFn, Inner, Action>
 where
-    Action: Fn(&mut Captures),
+    Action: Fn(&Input<'_>, &mut Captures),
     Captures: ?Sized,
     Inner: ViewLayout<Captures>,
-    ViewFn: Fn(ActiveModifiers) -> Inner,
+    ViewFn: Fn(Interaction) -> Inner,
 {
     type State = (ButtonState, Inner::State);
     type Sublayout = Inner::Sublayout;
@@ -198,7 +173,7 @@ where
                 touch: ButtonTouchState::default(),
                 focus: FocusState::new(self.groups),
             },
-            (self.view)(ActiveModifiers::new()).build_state(captures),
+            (self.view)(Interaction::new()).build_state(captures),
         )
     }
 
@@ -209,9 +184,9 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> ResolvedLayout<Self::Sublayout> {
-        let active_modifiers = self.active_modifiers(&state.0);
+        let interaction = self.interaction(&state.0);
 
-        (self.view)(active_modifiers).layout(offer, env, captures, &mut state.1)
+        (self.view)(interaction).layout(offer, env, captures, &mut state.1)
     }
 
     fn render_tree(
@@ -222,11 +197,11 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> Self::Renderables {
-        let active_modifiers = self.active_modifiers(&state.0);
+        let interaction = self.interaction(&state.0);
 
         Container::new(
             Frame::new(origin, layout.resolved_size.into()),
-            (self.view)(active_modifiers).render_tree(layout, origin, env, captures, &mut state.1),
+            (self.view)(interaction).render_tree(layout, origin, env, captures, &mut state.1),
         )
     }
 
@@ -239,7 +214,7 @@ where
         state: &mut Self::State,
     ) -> EventResult {
         match event {
-            Event::Touch(touch) => self.handle_touch(render_tree, captures, state, touch),
+            Event::Touch(touch) => self.handle_touch(context, render_tree, captures, state, touch),
             Event::Keyboard(keyboard) => self.handle_keyboard(context, captures, state, keyboard),
             _ => EventResult::default(),
         }
@@ -248,10 +223,11 @@ where
 
 impl<Inner, ViewFn, Action> Button<ViewFn, Inner, Action>
 where
-    ViewFn: Fn(ActiveModifiers) -> Inner,
+    ViewFn: Fn(Interaction) -> Inner,
 {
     fn handle_touch<Captures: ?Sized>(
         &self,
+        context: &EventContext,
         render_tree: &mut <Self as ViewMarker>::Renderables,
         captures: &mut Captures,
         state: &mut <Self as ViewLayout<Captures>>::State,
@@ -259,7 +235,7 @@ where
     ) -> EventResult
     where
         Inner: ViewLayout<Captures>,
-        Action: Fn(&mut Captures),
+        Action: Fn(&Input<'_>, &mut Captures),
     {
         let mut result = EventResult::default();
         // Only track the ID of the first touch that started within the button.
@@ -285,7 +261,7 @@ where
             Phase::Ended => {
                 if state.0.touch != ButtonTouchState::AtRest {
                     if render_tree.frame.contains(&point) {
-                        (self.action)(captures);
+                        (self.action)(context.input, captures);
                     }
                     state.0.touch = ButtonTouchState::AtRest;
                     result.recompute_view = true;
@@ -335,7 +311,7 @@ where
     ) -> EventResult
     where
         Inner: ViewLayout<Captures>,
-        Action: Fn(&mut Captures),
+        Action: Fn(&Input<'_>, &mut Captures),
     {
         if !state.0.focus.is_member_of_any(event.groups) {
             return EventResult::default();
@@ -344,7 +320,7 @@ where
         match event.kind {
             k if k.is_movement() => context.input.leaf_move(&mut state.0.focus, event.groups),
             KeyboardEventKind::Click if state.0.focus.is_focused_any(event.groups) => {
-                (self.action)(captures);
+                (self.action)(context.input, captures);
 
                 EventResult::new(true, true)
             }

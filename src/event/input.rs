@@ -25,20 +25,55 @@ pub struct GroupData {
     focused_path: ComponentPath,
 }
 
-#[derive(Debug)]
+#[derive(Default, Debug)]
 pub struct Input<'a> {
+    // NOTE: for that one use relaxed atomic if want to put in static.
     pub active_groups: Cell<Groups>,
     pub keyboards: heapless::Vec<(Groups, &'a KeyboardInput), 8>,
     pub groups: heapless::LinearMap<Groups, &'a GroupData, 8>,
 }
 
-#[derive(Default, Debug, Clone, Copy)]
-pub struct InputRef<'a>(Option<&'a Input<'a>>);
+#[derive(Debug)]
+pub struct Deactivation {
+    groups: Groups,
+}
 
 #[derive(Debug)]
 pub struct DeactivationGuard<'a> {
-    input: InputRef<'a>,
+    input: &'a Input<'a>,
     groups: Groups,
+}
+
+/// A set of applied modifiers.
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Interaction(pub(crate) u32);
+
+// Note: we may report which group exactly is <pressed>, but I can't think of a use case.
+impl Interaction {
+    pub(crate) const PRESSED: u32 = 1 << 0;
+    pub(crate) const FOCUSED: u32 = 1 << 1;
+    pub(crate) const CLICKED: u32 = 1 << 2;
+    pub(crate) const LONG_PRESSED: u32 = 1 << 3;
+
+    pub(crate) const fn new() -> Self {
+        Self(0)
+    }
+    pub(crate) fn with(self, on: bool, modifier: u32) -> Self {
+        Self(self.0 | if on { modifier } else { 0 })
+    }
+
+    pub fn is_pressed(self) -> bool {
+        (self.0 & Self::PRESSED) != 0
+    }
+    pub fn is_focused(self) -> bool {
+        (self.0 & Self::FOCUSED) != 0
+    }
+    pub fn is_clicked(self) -> bool {
+        (self.0 & Self::CLICKED) != 0
+    }
+    pub fn is_long_pressed(self) -> bool {
+        (self.0 & Self::LONG_PRESSED) != 0
+    }
 }
 
 impl Group {
@@ -58,16 +93,12 @@ impl Group {
 }
 
 impl<'a> Input<'a> {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             active_groups: Cell::new(Groups::ZERO),
             keyboards: heapless::Vec::new(),
             groups: heapless::LinearMap::new(),
         }
-    }
-
-    pub const fn as_ref(&self) -> InputRef<'_> {
-        InputRef(Some(self))
     }
 
     pub fn keyboard_input(
@@ -79,21 +110,15 @@ impl<'a> Input<'a> {
     ) -> Option<super::Event> {
         let &(groups, _) = self.keyboards.iter().find(|(_, k)| *k == keyboard)?;
         let mut event = keyboard.input(key, button_state, timestamp)?;
-        event.groups = groups;
-        Some(super::Event::Keyboard(event))
+        event.groups = groups & self.active_groups.get();
+        (!event.groups.is_empty()).then_some(super::Event::Keyboard(event))
     }
     pub fn activate(&self, groups: Groups) {
         self.active_groups.update(|g| g | groups);
     }
-    pub fn deactivate(&self, groups: Groups) {
+    pub fn deactivate(&self, groups: Groups) -> Deactivation {
         self.active_groups.update(|g| g & !groups);
-    }
-    pub fn scoped_deactivate(&self, groups: Groups) -> DeactivationGuard<'_> {
-        self.deactivate(groups);
-        DeactivationGuard {
-            input: self.as_ref(),
-            groups,
-        }
+        Deactivation { groups }
     }
     pub fn traverse(
         &self,
@@ -110,6 +135,8 @@ impl<'a> Input<'a> {
         group.focused_path.traverse(event, max, f)
     }
     pub fn leaf_move(&self, focus: &mut FocusState, groups: Groups) -> super::EventResult {
+        let groups = groups & self.active_groups.get();
+
         if !focus.is_member_of_any(groups) {
             return super::EventResult::default();
         }
@@ -135,6 +162,8 @@ impl<'a> Input<'a> {
         }
     }
     pub fn is_focused_any(&self, groups: Groups) -> bool {
+        let groups = groups & self.active_groups.get();
+
         self.groups
             .iter()
             .filter(|g| (*g.0 & groups) != 0)
@@ -142,6 +171,7 @@ impl<'a> Input<'a> {
     }
     pub fn focus(&self, groups: Groups) {
         let groups = groups & self.active_groups.get();
+
         for (&g, &data) in self.groups.iter() {
             if (g & groups) != Groups::ZERO {
                 data.focused_path.focus()
@@ -150,6 +180,7 @@ impl<'a> Input<'a> {
     }
     pub fn blur(&self, groups: Groups) {
         let groups = groups & self.active_groups.get();
+
         for (&g, &data) in self.groups.iter() {
             if (g & groups) != Groups::ZERO {
                 data.focused_path.blur()
@@ -183,74 +214,6 @@ impl<'a> Input<'a> {
         self.keyboards
             .push((groups, keyboard))
             .map_err(|_| CapacityExceededError)
-    }
-}
-
-impl<'a> InputRef<'a> {
-    pub const fn empty() -> Self {
-        Self(None)
-    }
-
-    pub fn keyboard_input(
-        self,
-        keyboard: &'a KeyboardInput,
-        key: super::keyboard::Key,
-        button_state: super::keyboard::ButtonState,
-        timestamp: core::time::Duration,
-    ) -> Option<super::Event> {
-        self.0
-            .and_then(|i| i.keyboard_input(keyboard, key, button_state, timestamp))
-    }
-
-    pub fn activate(self, groups: Groups) {
-        if let Some(i) = self.0 {
-            i.activate(groups);
-        }
-    }
-    pub fn deactivate(self, groups: Groups) {
-        if let Some(i) = self.0 {
-            i.deactivate(groups);
-        }
-    }
-    pub fn scoped_deactivate(self, groups: Groups) -> DeactivationGuard<'a> {
-        self.deactivate(groups);
-        DeactivationGuard {
-            input: self,
-            groups,
-        }
-    }
-    pub fn traverse(
-        self,
-        groups: Groups,
-        event: super::keyboard::KeyboardEventKind,
-        max: usize,
-        f: impl FnMut(usize) -> super::EventResult,
-    ) -> super::EventResult {
-        if let Some(i) = self.0 {
-            i.traverse(groups, event, max, f)
-        } else {
-            super::EventResult::default()
-        }
-    }
-    pub fn leaf_move(self, focus: &mut FocusState, groups: Groups) -> super::EventResult {
-        if let Some(i) = self.0 {
-            i.leaf_move(focus, groups)
-        } else {
-            super::EventResult::default()
-        }
-    }
-    pub fn is_focused_any(self, groups: Groups) -> bool {
-        self.0.is_some_and(|i| i.is_focused_any(groups))
-    }
-    pub fn focus(self, groups: Groups) {
-        if let Some(i) = self.0 {
-            i.focus(groups);
-        }
-    }
-    pub fn blur(self, groups: Groups) {
-        if let Some(i) = self.0 {
-            i.blur(groups);
-        }
     }
 }
 
@@ -295,10 +258,11 @@ impl FocusState {
     }
 }
 
-impl GroupData {
-    pub const fn new() -> Self {
-        Self {
-            focused_path: ComponentPath::new(),
+impl Deactivation {
+    pub fn into_guard<'a>(self, input: &'a Input<'a>) -> DeactivationGuard<'a> {
+        DeactivationGuard {
+            groups: self.groups,
+            input,
         }
     }
 }
@@ -316,8 +280,26 @@ impl core::fmt::Display for CapacityExceededError {
     }
 }
 
+impl Default for FocusState {
+    fn default() -> Self {
+        Self::new(Groups(1))
+    }
+}
+
+impl GroupData {
+    pub const fn new() -> Self {
+        Self {
+            focused_path: ComponentPath::new(),
+        }
+    }
+}
+
 impl Groups {
     pub const ZERO: Self = Groups(0);
+
+    pub const fn from_mask(mask: u8) -> Self {
+        Self(mask)
+    }
 
     pub fn is_empty(self) -> bool {
         self.0 == 0
@@ -331,12 +313,6 @@ impl FromIterator<Group> for Groups {
             groups |= group.into();
         }
         groups
-    }
-}
-
-impl Default for FocusState {
-    fn default() -> Self {
-        Self::new(Groups(1))
     }
 }
 
