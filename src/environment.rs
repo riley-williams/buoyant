@@ -29,11 +29,9 @@ impl<'a> DefaultEnvironment<'a> {
     }
 
     #[must_use]
-    pub fn input(self, input: &'a Input<'a>) -> Self {
-        Self {
-            input: input.as_ref(),
-            ..self
-        }
+    pub const fn input(self, input: &'a Input<'a>) -> Self {
+        let input = input.as_ref();
+        Self { input, ..self }
     }
 
     // Input should always be provided, `as_drawable` is probably fine to not blur subtrees?

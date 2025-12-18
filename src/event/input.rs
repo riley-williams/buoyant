@@ -38,7 +38,7 @@ pub struct Input<'a> {
 #[derive(Debug, Clone, Copy)]
 pub struct InputRef<'a> {
     active_groups: &'a AtomicU8,
-    groups: &'a heapless::linear_map::LinearMapView<Groups, &'a GroupData>,
+    groups: &'a heapless::LinearMap<Groups, &'a GroupData, 8>,
 }
 
 #[derive(Debug)]
@@ -175,7 +175,7 @@ impl<'a> Input<'a> {
         Groups(self.active_groups.load(Ordering::Relaxed))
     }
 
-    pub fn as_ref(&'a self) -> InputRef<'a> {
+    pub const fn as_ref(&'a self) -> InputRef<'a> {
         InputRef {
             active_groups: &self.active_groups,
             groups: &self.groups,
@@ -192,7 +192,7 @@ impl Default for InputRef<'_> {
 impl<'a> InputRef<'a> {
     pub(crate) const DUMMY: InputRef<'static> = InputRef {
         active_groups: &DUMMY_ACTIVE_GROUPS,
-        groups: &heapless::linear_map::LinearMap::<_, _, 0>::new(),
+        groups: &heapless::linear_map::LinearMap::<_, _, 8>::new(),
     };
     #[inline]
     fn active_groups(&self) -> Groups {
