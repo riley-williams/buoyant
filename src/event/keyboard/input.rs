@@ -26,7 +26,7 @@ impl Default for KeyboardInput {
 }
 
 impl KeyboardInput {
-    #[must_use] 
+    #[must_use]
     pub const fn new() -> Self {
         Self {
             prev_button: Cell::new(None),
@@ -34,7 +34,7 @@ impl KeyboardInput {
             long_press_duration_per_repeat: Duration::new(0, 300_000_000),
         }
     }
-    #[must_use] 
+    #[must_use]
     pub const fn with_long_press(
         mut self,
         threshold: Duration,

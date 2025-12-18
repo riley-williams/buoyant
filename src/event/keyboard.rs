@@ -49,7 +49,7 @@ pub enum State {
 }
 
 impl KeyboardEventKind {
-    #[must_use] 
+    #[must_use]
     pub fn is_movement(self) -> bool {
         match self {
             Self::Click | Self::LongPress | Self::Cancel | Self::Char(_) => false,
@@ -60,14 +60,14 @@ impl KeyboardEventKind {
 }
 
 impl KeyboardEvent {
-    #[must_use] 
+    #[must_use]
     pub const fn new(kind: KeyboardEventKind) -> Self {
         Self {
             kind,
             groups: Groups::ZERO,
         }
     }
-    #[must_use] 
+    #[must_use]
     pub const fn new_with_groups(kind: KeyboardEventKind, groups: Groups) -> Self {
         Self { kind, groups }
     }

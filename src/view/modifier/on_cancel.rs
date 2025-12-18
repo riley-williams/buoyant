@@ -75,10 +75,12 @@ impl<Captures: ?Sized, V: ViewLayout<Captures>, F: Fn(&mut Captures)> ViewLayout
         let mut result = self.0.handle_event(event, context, tree, captures, state);
 
         if let Event::Keyboard(k) = event
-            && !result.handled && k.kind == Kind::Cancel {
-                (self.1)(captures);
-                result.handled = true;
-            }
+            && !result.handled
+            && k.kind == Kind::Cancel
+        {
+            (self.1)(captures);
+            result.handled = true;
+        }
 
         result
     }
