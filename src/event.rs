@@ -77,7 +77,7 @@ impl EventResult {
         }
     }
 
-    /// Marks the event as handled.
+    /// Returns this `EventResult` but with `handled` set to `true`.
     #[must_use]
     pub fn handled(self) -> Self {
         Self {
