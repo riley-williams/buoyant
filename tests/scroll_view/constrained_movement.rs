@@ -29,6 +29,7 @@ fn vertical_scroll_does_not_move_horizontally() {
 
     let mut captures = false;
     let view = scroll_view();
+    let input = buoyant::event::input::Input::new();
     let mut state = view.build_state(&mut captures);
 
     let mut tree = helpers::tree(
@@ -54,7 +55,7 @@ fn vertical_scroll_does_not_move_horizontally() {
 
     view.handle_event(
         &touch_down(2, 3),
-        &EventContext::new(Duration::from_secs(2)),
+        &EventContext::new(Duration::from_secs(2), &input),
         &mut tree,
         &mut captures,
         &mut state,
@@ -62,7 +63,7 @@ fn vertical_scroll_does_not_move_horizontally() {
 
     let result = view.handle_event(
         &touch_move(20, 3),
-        &EventContext::new(Duration::from_secs(3)),
+        &EventContext::new(Duration::from_secs(3), &input),
         &mut tree,
         &mut captures,
         &mut state,
@@ -84,7 +85,7 @@ fn vertical_scroll_does_not_move_horizontally() {
 
     let result = view.handle_event(
         &touch_move(-20, 2),
-        &EventContext::new(Duration::from_secs(4)),
+        &EventContext::new(Duration::from_secs(4), &input),
         &mut tree,
         &mut captures,
         &mut state,
@@ -107,7 +108,7 @@ fn vertical_scroll_does_not_move_horizontally() {
 
     let result = view.handle_event(
         &touch_up(1, 1),
-        &EventContext::new(Duration::from_secs(5)),
+        &EventContext::new(Duration::from_secs(5), &input),
         &mut tree,
         &mut captures,
         &mut state,

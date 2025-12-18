@@ -10,11 +10,11 @@ mod view;
 use std::time::{Duration, Instant};
 
 use buoyant::environment::DefaultEnvironment;
+use buoyant::event::input::Interaction;
 use buoyant::event::{EventContext, EventResult, simulator::MouseTracker};
 use buoyant::primitives::Point;
 use buoyant::render::{AnimatedJoin, AnimationDomain, Render};
 use buoyant::render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _};
-use buoyant::view::button::ActiveModifiers;
 use buoyant::{animation::Animation, if_view, match_view, view::prelude::*};
 use embedded_graphics::prelude::*;
 use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
@@ -81,6 +81,7 @@ fn main() {
 
     let app_start = Instant::now();
     let mut touch_tracker = MouseTracker::new();
+    let input = buoyant::event::input::Input::new();
 
     let mut app_data = AppState::default();
     let mut view = root_view(&app_data);
@@ -110,7 +111,7 @@ fn main() {
     loop {
         let time = app_start.elapsed();
         let domain = AnimationDomain::top_level(time);
-        let context = EventContext::new(time);
+        let context = EventContext::new(time, &input);
 
         let mut should_exit = false;
 
@@ -238,10 +239,10 @@ fn tab_item<C, F: Fn(&mut C)>(
         (color::FOREGROUND_SECONDARY, 0)
     };
 
-    Button::new(on_tap, move |modifiers: ActiveModifiers| {
+    Button::new(on_tap, move |a: Interaction| {
         VStack::new((
             ZStack::new((
-                if_view!((is_selected || modifiers.is_pressed()) {
+                if_view!((is_selected || a.is_pressed()) {
                     Rectangle.foreground_color(color::BACKGROUND_SECONDARY)
                 }),
                 VStack::new((
@@ -250,7 +251,7 @@ fn tab_item<C, F: Fn(&mut C)>(
                 ))
                 .with_spacing(spacing::ELEMENT)
                 .padding(Edges::All, spacing::ELEMENT)
-                .hint_background_color(if is_selected || modifiers.is_pressed() {
+                .hint_background_color(if is_selected || a.is_pressed() {
                     color::BACKGROUND_SECONDARY
                 } else {
                     color::BACKGROUND

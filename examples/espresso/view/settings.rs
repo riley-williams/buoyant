@@ -1,9 +1,9 @@
 use crate::{AppState, color, font, spacing};
 use buoyant::animation::Animation;
+use buoyant::event::input::Interaction;
 use buoyant::if_view;
 use buoyant::primitives::UnitPoint;
 use buoyant::transition::{Edge, Move};
-use buoyant::view::button::ActiveModifiers;
 use buoyant::view::prelude::*;
 use embedded_graphics::prelude::{RgbColor, WebColors};
 use std::time::Duration;
@@ -82,19 +82,16 @@ fn toggle_button<C>(is_on: bool, on_tap: fn(&mut C)) -> impl View<color::Space, 
         (color::Space::CSS_LIGHT_GRAY, HorizontalAlignment::Leading)
     };
 
-    Button::new(on_tap, move |modifiers: ActiveModifiers| {
+    Button::new(on_tap, move |a: Interaction| {
         ZStack::new((
             buoyant::view::shape::Capsule.foreground_color(color),
             buoyant::view::shape::Circle
-                .foreground_color(if modifiers.is_pressed() {
+                .foreground_color(if a.is_pressed() {
                     color::Space::CSS_LIGHT_GRAY
                 } else {
                     color::Space::CSS_WHITE
                 })
-                .scale_effect(
-                    if modifiers.is_pressed() { 1.5 } else { 1.0 },
-                    UnitPoint::center(),
-                )
+                .scale_effect(if a.is_pressed() { 1.5 } else { 1.0 }, UnitPoint::center())
                 .padding(Edges::All, 2)
                 .animated(Animation::linear(Duration::from_millis(125)), is_on),
         ))

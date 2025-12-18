@@ -204,6 +204,7 @@ fn preserves_inner_state() {
     let mut captures = ();
     let view = button_geometry();
     let mut state = view.build_state(&mut captures);
+    let input = buoyant::event::input::Input::new();
     assert_eq!(state, None);
 
     let mut render_tree = tree(
@@ -228,7 +229,7 @@ fn preserves_inner_state() {
 
     view.handle_event(
         &touch_down(1, 1),
-        &EventContext::new(Duration::ZERO),
+        &EventContext::new(Duration::ZERO, &input),
         &mut render_tree,
         &mut captures,
         &mut state,
@@ -257,7 +258,7 @@ fn preserves_inner_state() {
 
     view.handle_event(
         &touch_move(2, 20),
-        &EventContext::new(Duration::ZERO),
+        &EventContext::new(Duration::ZERO, &input),
         &mut render_tree,
         &mut captures,
         &mut state,
