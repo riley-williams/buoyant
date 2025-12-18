@@ -277,6 +277,15 @@ impl<'a> Input<'a> {
             }
         }
     }
+    pub fn reset(&self, groups: Groups) {
+        let groups = groups & self.active_groups();
+
+        for (&g, &data) in &self.groups {
+            if (g & groups) != Groups::ZERO {
+                data.focused_path.reset();
+            }
+        }
+    }
 }
 
 impl FocusState {
