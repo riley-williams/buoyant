@@ -291,6 +291,10 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> ResolvedLayout<Self::Sublayout> {
+        if self.is_none() {
+            state.inner = None;
+        }
+
         self.as_ref().map_or(
             ResolvedLayout {
                 sublayouts: None,
@@ -328,6 +332,10 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> Self::Renderables {
+        if self.is_none() {
+            state.inner = None;
+        }
+
         match (self, &layout.sublayouts, &mut state.inner) {
             (Some(v), Some(l0), Some(s0)) => TransitionOption::new_some(
                 v.render_tree(l0, origin, env, captures, s0),
@@ -350,6 +358,9 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> EventResult {
+        if self.is_none() {
+            state.inner = None;
+        }
 
         match (self, render_tree, &mut state.inner) {
             (Some(v), TransitionOption::Some { subtree, .. }, Some(s)) => {
