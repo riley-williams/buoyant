@@ -27,6 +27,7 @@ fn nonzero_opacity_hands_off_event() {
         &mut x,
         &mut state,
     );
+    let input = buoyant::event::input::Input::new();
 
     view.handle_event(
         &Event::Touch(Touch::new(
@@ -35,7 +36,7 @@ fn nonzero_opacity_hands_off_event() {
             embedded_touch::Phase::Started,
             Tool::Finger,
         )),
-        &buoyant::event::EventContext::new(Duration::ZERO),
+        &buoyant::event::EventContext::new(Duration::ZERO, &input),
         &mut tree,
         &mut x,
         &mut state,
@@ -47,7 +48,7 @@ fn nonzero_opacity_hands_off_event() {
             embedded_touch::Phase::Ended,
             Tool::Finger,
         )),
-        &buoyant::event::EventContext::new(Duration::ZERO),
+        &buoyant::event::EventContext::new(Duration::ZERO, &input),
         &mut tree,
         &mut x,
         &mut state,
@@ -75,6 +76,8 @@ fn zero_opacity_skips_event_handling() {
         &mut state,
     );
 
+    let input = buoyant::event::input::Input::new();
+
     view.handle_event(
         &Event::Touch(Touch::new(
             0,
@@ -82,7 +85,7 @@ fn zero_opacity_skips_event_handling() {
             embedded_touch::Phase::Started,
             Tool::Finger,
         )),
-        &buoyant::event::EventContext::new(Duration::ZERO),
+        &buoyant::event::EventContext::new(Duration::ZERO, &input),
         &mut tree,
         &mut x,
         &mut state,
@@ -94,7 +97,7 @@ fn zero_opacity_skips_event_handling() {
             embedded_touch::Phase::Ended,
             Tool::Finger,
         )),
-        &buoyant::event::EventContext::new(Duration::ZERO),
+        &buoyant::event::EventContext::new(Duration::ZERO, &input),
         &mut tree,
         &mut x,
         &mut state,

@@ -155,7 +155,7 @@ impl<ViewFn, Inner: ViewMarker, Action> ViewMarker for Button<ViewFn, Inner, Act
 
 impl<Captures, Inner, ViewFn, Action> ViewLayout<Captures> for Button<ViewFn, Inner, Action>
 where
-    Action: Fn(&Input<'_>, &mut Captures),
+    Action: Fn(&mut Captures),
     Captures: ?Sized,
     Inner: ViewLayout<Captures>,
     ViewFn: Fn(Interaction) -> Inner,
@@ -214,7 +214,7 @@ where
         state: &mut Self::State,
     ) -> EventResult {
         match event {
-            Event::Touch(touch) => self.handle_touch(context, render_tree, captures, state, touch),
+            Event::Touch(touch) => self.handle_touch(render_tree, captures, state, touch),
             Event::Keyboard(keyboard) => self.handle_keyboard(context, captures, state, keyboard),
             _ => EventResult::default(),
         }
@@ -227,7 +227,6 @@ where
 {
     fn handle_touch<Captures: ?Sized>(
         &self,
-        context: &EventContext,
         render_tree: &mut <Self as ViewMarker>::Renderables,
         captures: &mut Captures,
         state: &mut <Self as ViewLayout<Captures>>::State,
@@ -235,7 +234,7 @@ where
     ) -> EventResult
     where
         Inner: ViewLayout<Captures>,
-        Action: Fn(&Input<'_>, &mut Captures),
+        Action: Fn(&mut Captures),
     {
         let mut result = EventResult::default();
         // Only track the ID of the first touch that started within the button.
@@ -261,7 +260,7 @@ where
             Phase::Ended => {
                 if state.0.touch != ButtonTouchState::AtRest {
                     if render_tree.frame.contains(&point) {
-                        (self.action)(context.input, captures);
+                        (self.action)(captures);
                     }
                     state.0.touch = ButtonTouchState::AtRest;
                     result.recompute_view = true;
@@ -311,7 +310,7 @@ where
     ) -> EventResult
     where
         Inner: ViewLayout<Captures>,
-        Action: Fn(&Input<'_>, &mut Captures),
+        Action: Fn(&mut Captures),
     {
         if !state.0.focus.is_member_of_any(event.groups) {
             return EventResult::default();
@@ -320,7 +319,7 @@ where
         match event.kind {
             k if k.is_movement() => context.input.leaf_move(&mut state.0.focus, event.groups),
             KeyboardEventKind::Click if state.0.focus.is_focused_any(event.groups) => {
-                (self.action)(context.input, captures);
+                (self.action)(captures);
 
                 EventResult::new(true, true)
             }

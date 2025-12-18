@@ -82,6 +82,7 @@ fn scroll_down_snaps_back() {
 
     let mut captures = false;
     let view = vertical_scroll_view();
+    let input = buoyant::event::input::Input::new();
     let mut state = view.build_state(&mut captures);
 
     let mut render_tree = tree(&view, &mut captures, &mut state, Duration::default(), size);
@@ -100,7 +101,7 @@ fn scroll_down_snaps_back() {
     );
     let event_result = view.handle_event(
         &touch_down(2, 3),
-        &EventContext::new(Duration::ZERO),
+        &EventContext::new(Duration::ZERO, &input),
         &mut render_tree,
         &mut captures,
         &mut state,
@@ -110,7 +111,7 @@ fn scroll_down_snaps_back() {
     // Pull down
     let event_result = view.handle_event(
         &touch_move(2, 7),
-        &EventContext::new(Duration::ZERO),
+        &EventContext::new(Duration::ZERO, &input),
         &mut render_tree,
         &mut captures,
         &mut state,
@@ -132,7 +133,7 @@ fn scroll_down_snaps_back() {
 
     let event_result = view.handle_event(
         &touch_up(2, 7), // Just at the bottom edge
-        &EventContext::new(Duration::ZERO),
+        &EventContext::new(Duration::ZERO, &input),
         &mut render_tree,
         &mut captures,
         &mut state,
@@ -175,6 +176,7 @@ fn scroll_up_past_bottom_snaps_back() {
 
     let mut captures = false;
     let view = vertical_scroll_view();
+    let input = buoyant::event::input::Input::new();
     let mut state = view.build_state(&mut captures);
 
     let mut render_tree = tree(&view, &mut captures, &mut state, Duration::default(), size);
@@ -182,7 +184,7 @@ fn scroll_up_past_bottom_snaps_back() {
     // First scroll to the bottom of the content normally
     let event_result = view.handle_event(
         &touch_down(2, 2),
-        &EventContext::new(Duration::ZERO),
+        &EventContext::new(Duration::ZERO, &input),
         &mut render_tree,
         &mut captures,
         &mut state,
@@ -192,7 +194,7 @@ fn scroll_up_past_bottom_snaps_back() {
     // Scroll up to just touch bottom content
     let event_result = view.handle_event(
         &touch_move(2, -7),
-        &EventContext::new(Duration::ZERO),
+        &EventContext::new(Duration::ZERO, &input),
         &mut render_tree,
         &mut captures,
         &mut state,
@@ -215,7 +217,7 @@ fn scroll_up_past_bottom_snaps_back() {
     // Now scroll past the bottom limit - additional movement should be reduced by half
     let event_result = view.handle_event(
         &touch_move(2, -11), // 4 past the limit
-        &EventContext::new(Duration::ZERO),
+        &EventContext::new(Duration::ZERO, &input),
         &mut render_tree,
         &mut captures,
         &mut state,
@@ -238,7 +240,7 @@ fn scroll_up_past_bottom_snaps_back() {
     // Release touch
     let event_result = view.handle_event(
         &touch_up(2, -11),
-        &EventContext::new(Duration::ZERO),
+        &EventContext::new(Duration::ZERO, &input),
         &mut render_tree,
         &mut captures,
         &mut state,
@@ -283,6 +285,7 @@ fn horizontal_scroll_right_snaps_back() {
 
     let mut captures = false;
     let view = horizontal_scroll_view();
+    let input = buoyant::event::input::Input::new();
     let mut state = view.build_state(&mut captures);
 
     let mut render_tree = tree(&view, &mut captures, &mut state, Duration::default(), size);
@@ -301,7 +304,7 @@ fn horizontal_scroll_right_snaps_back() {
     );
     let event_result = view.handle_event(
         &touch_down(4, 2),
-        &EventContext::new(Duration::ZERO),
+        &EventContext::new(Duration::ZERO, &input),
         &mut render_tree,
         &mut captures,
         &mut state,
@@ -311,7 +314,7 @@ fn horizontal_scroll_right_snaps_back() {
     // Pull right
     let event_result = view.handle_event(
         &touch_move(8, 2),
-        &EventContext::new(Duration::ZERO),
+        &EventContext::new(Duration::ZERO, &input),
         &mut render_tree,
         &mut captures,
         &mut state,
@@ -333,7 +336,7 @@ fn horizontal_scroll_right_snaps_back() {
 
     let event_result = view.handle_event(
         &touch_up(8, 2), // Just at the right edge
-        &EventContext::new(Duration::ZERO),
+        &EventContext::new(Duration::ZERO, &input),
         &mut render_tree,
         &mut captures,
         &mut state,
@@ -376,6 +379,7 @@ fn both_direction_scroll_diagonal_snaps_back_up_left() {
 
     let mut captures = false;
     let view = both_direction_scroll_view();
+    let input = buoyant::event::input::Input::new();
     let mut state = view.build_state(&mut captures);
 
     let mut render_tree = tree(&view, &mut captures, &mut state, Duration::default(), size);
@@ -396,7 +400,7 @@ fn both_direction_scroll_diagonal_snaps_back_up_left() {
 
     let event_result = view.handle_event(
         &touch_down(2, 2),
-        &EventContext::new(Duration::ZERO),
+        &EventContext::new(Duration::ZERO, &input),
         &mut render_tree,
         &mut captures,
         &mut state,
@@ -406,7 +410,7 @@ fn both_direction_scroll_diagonal_snaps_back_up_left() {
     // Pull diagonally down-right past the top-left bounds
     let event_result = view.handle_event(
         &touch_move(6, 4),
-        &EventContext::new(Duration::ZERO),
+        &EventContext::new(Duration::ZERO, &input),
         &mut render_tree,
         &mut captures,
         &mut state,
@@ -429,7 +433,7 @@ fn both_direction_scroll_diagonal_snaps_back_up_left() {
 
     let event_result = view.handle_event(
         &touch_up(6, 4),
-        &EventContext::new(Duration::ZERO),
+        &EventContext::new(Duration::ZERO, &input),
         &mut render_tree,
         &mut captures,
         &mut state,
@@ -472,6 +476,7 @@ fn both_direction_scroll_bottom_right_snaps_back() {
     let size = Size::new(12, 5);
 
     let mut captures = false;
+    let input = buoyant::event::input::Input::new();
     let view = both_direction_scroll_view();
     let mut state = view.build_state(&mut captures);
 
@@ -480,7 +485,7 @@ fn both_direction_scroll_bottom_right_snaps_back() {
     // First scroll to the bottom-right corner normally
     let event_result = view.handle_event(
         &touch_down(6, 3),
-        &EventContext::new(Duration::from_millis(500)),
+        &EventContext::new(Duration::from_millis(500), &input),
         &mut render_tree,
         &mut captures,
         &mut state,
@@ -490,7 +495,7 @@ fn both_direction_scroll_bottom_right_snaps_back() {
     // Scroll to bottom-right corner
     let event_result = view.handle_event(
         &touch_move(4, 1),
-        &EventContext::new(Duration::from_millis(600)),
+        &EventContext::new(Duration::from_millis(600), &input),
         &mut render_tree,
         &mut captures,
         &mut state,
@@ -514,7 +519,7 @@ fn both_direction_scroll_bottom_right_snaps_back() {
     // Now scroll past the bottom-right bounds (up-left movement past limits)
     let event_result = view.handle_event(
         &touch_move(0, -3),
-        &EventContext::new(Duration::from_millis(700)),
+        &EventContext::new(Duration::from_millis(700), &input),
         &mut render_tree,
         &mut captures,
         &mut state,
@@ -537,7 +542,7 @@ fn both_direction_scroll_bottom_right_snaps_back() {
 
     let event_result = view.handle_event(
         &touch_up(0, -3),
-        &EventContext::new(Duration::from_millis(800)),
+        &EventContext::new(Duration::from_millis(800), &input),
         &mut render_tree,
         &mut captures,
         &mut state,
@@ -581,6 +586,7 @@ fn horizontal_scroll_left_past_right_edge_snaps_back() {
 
     let mut captures = false;
     let view = horizontal_scroll_view();
+    let input = buoyant::event::input::Input::new();
     let mut state = view.build_state(&mut captures);
 
     let mut render_tree = tree(&view, &mut captures, &mut state, Duration::default(), size);
@@ -588,7 +594,7 @@ fn horizontal_scroll_left_past_right_edge_snaps_back() {
     // First scroll to the right edge of the content normally
     let event_result = view.handle_event(
         &touch_down(2, 2),
-        &EventContext::new(Duration::from_millis(500)),
+        &EventContext::new(Duration::from_millis(500), &input),
         &mut render_tree,
         &mut captures,
         &mut state,
@@ -598,7 +604,7 @@ fn horizontal_scroll_left_past_right_edge_snaps_back() {
     // Scroll left to just touch right edge content
     let event_result = view.handle_event(
         &touch_move(0, 2),
-        &EventContext::new(Duration::from_millis(600)),
+        &EventContext::new(Duration::from_millis(600), &input),
         &mut render_tree,
         &mut captures,
         &mut state,
@@ -621,7 +627,7 @@ fn horizontal_scroll_left_past_right_edge_snaps_back() {
     // Now scroll past the right limit - additional movement should be reduced by half
     let event_result = view.handle_event(
         &touch_move(-8, 2), // 4 past the limit
-        &EventContext::new(Duration::from_millis(700)),
+        &EventContext::new(Duration::from_millis(700), &input),
         &mut render_tree,
         &mut captures,
         &mut state,
@@ -644,7 +650,7 @@ fn horizontal_scroll_left_past_right_edge_snaps_back() {
     // Release touch
     let event_result = view.handle_event(
         &touch_up(-8, 2),
-        &EventContext::new(Duration::from_millis(800)),
+        &EventContext::new(Duration::from_millis(800), &input),
         &mut render_tree,
         &mut captures,
         &mut state,

@@ -68,6 +68,7 @@ where
 #[test]
 fn increment_single_frame() {
     let mut app_state = AppState::default();
+    let input = buoyant::event::input::Input::new();
     let view = counter_view(&app_state);
     let mut view_state = view.build_state(&mut app_state);
 
@@ -84,7 +85,7 @@ fn increment_single_frame() {
 
     view.handle_event(
         &touch_down(1, 1),
-        &EventContext::new(Duration::ZERO),
+        &EventContext::new(Duration::ZERO, &input),
         &mut tree,
         &mut app_state,
         &mut view_state,
@@ -92,7 +93,7 @@ fn increment_single_frame() {
     assert_eq!(app_state, AppState { a: 0, b: 0 });
     view.handle_event(
         &touch_up(1, 1),
-        &EventContext::new(Duration::ZERO),
+        &EventContext::new(Duration::ZERO, &input),
         &mut tree,
         &mut app_state,
         &mut view_state,
@@ -113,6 +114,8 @@ fn increment_single_frame() {
 #[test]
 fn drag_cancel() {
     let mut app_state = AppState::default();
+    let input = buoyant::event::input::Input::new();
+
     let view = counter_view(&app_state);
     let mut view_state = view.build_state(&mut app_state);
 
@@ -125,7 +128,7 @@ fn drag_cancel() {
 
     view.handle_event(
         &touch_down(1, 1),
-        &EventContext::new(Duration::ZERO),
+        &EventContext::new(Duration::ZERO, &input),
         &mut tree,
         &mut app_state,
         &mut view_state,
@@ -133,7 +136,7 @@ fn drag_cancel() {
     assert_eq!(app_state, AppState { a: 0, b: 0 });
     view.handle_event(
         &touch_move(1, 2),
-        &EventContext::new(Duration::ZERO),
+        &EventContext::new(Duration::ZERO,&input),
         &mut tree,
         &mut app_state,
         &mut view_state,
@@ -141,7 +144,7 @@ fn drag_cancel() {
     assert_eq!(app_state, AppState { a: 0, b: 0 });
     view.handle_event(
         &touch_up(1, 2),
-        &EventContext::new(Duration::ZERO),
+        &EventContext::new(Duration::ZERO,&input),
         &mut tree,
         &mut app_state,
         &mut view_state,
@@ -152,6 +155,7 @@ fn drag_cancel() {
 #[test]
 fn drag_cancel_uncancel() {
     let mut app_state = AppState::default();
+    let input = buoyant::event::input::Input::new();
     let view = counter_view(&app_state);
     let mut view_state = view.build_state(&mut app_state);
 
@@ -164,7 +168,7 @@ fn drag_cancel_uncancel() {
 
     view.handle_event(
         &touch_down(1, 1),
-        &EventContext::new(Duration::ZERO),
+        &EventContext::new(Duration::ZERO, &input),
         &mut tree,
         &mut app_state,
         &mut view_state,
@@ -172,7 +176,7 @@ fn drag_cancel_uncancel() {
     assert_eq!(app_state, AppState { a: 0, b: 0 });
     view.handle_event(
         &touch_move(1, 2),
-        &EventContext::new(Duration::ZERO),
+        &EventContext::new(Duration::ZERO, &input),
         &mut tree,
         &mut app_state,
         &mut view_state,
@@ -180,7 +184,7 @@ fn drag_cancel_uncancel() {
     assert_eq!(app_state, AppState { a: 0, b: 0 });
     view.handle_event(
         &touch_move(5, 1),
-        &EventContext::new(Duration::ZERO),
+        &EventContext::new(Duration::ZERO, &input),
         &mut tree,
         &mut app_state,
         &mut view_state,
@@ -188,7 +192,7 @@ fn drag_cancel_uncancel() {
     assert_eq!(app_state, AppState { a: 0, b: 0 });
     view.handle_event(
         &touch_up(5, 1),
-        &EventContext::new(Duration::ZERO),
+        &EventContext::new(Duration::ZERO, &input),
         &mut tree,
         &mut app_state,
         &mut view_state,

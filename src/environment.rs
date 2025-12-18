@@ -20,19 +20,24 @@ pub struct DefaultEnvironment<'a> {
 }
 
 impl<'a> DefaultEnvironment<'a> {
-    // Well, we may drop `input` if use a bit of unsafe code to have empty `Input`
-    // in `static` - no actual `Cell`s will be present, so no data race is possible.
     #[must_use]
-    pub const fn new(app_time: Duration, input: &'a Input<'a>) -> Self {
+    pub const fn new(app_time: Duration) -> Self {
         Self {
             app_time,
+            input: None,
+        }
+    }
+
+    pub const fn input(self, input: &'a Input<'a>) -> Self {
+        Self {
             input: Some(input),
+            ..self
         }
     }
 
     // Input should always be provided, `as_drawable` is probably fine to not blur subtrees?
     #[must_use]
-    pub(crate) const fn non_animated() -> Self {
+    pub const fn non_animated() -> Self {
         Self {
             app_time: Duration::new(0, 0),
             input: None,

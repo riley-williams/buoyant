@@ -88,8 +88,6 @@ impl EventResult {
     }
 }
 
-// Well, we may drop `input` if use a bit of unsafe code to have empty `Input`
-// in `static` - no actual `Cell`s will be present, so no data race is possible.
 impl<'a> EventContext<'a> {
     /// Creates a new `EventContext` with the given application time and input.
     #[must_use]

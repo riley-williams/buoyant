@@ -1,7 +1,45 @@
 use core::cell::Cell;
+use core::sync::atomic::{AtomicU8, Ordering};
 
 use super::cursor::ComponentPath;
 use super::keyboard::KeyboardInput;
+
+/*
+
+This will allow users that only use mouse to not provide `Input`. Idk is `unsafe` worth it here,
+I guess it is too niche group of users to bother, most will either not use events or use keyboard,
+and at the end it will save 2 lines of code for them (import + let binding).
+
+NOTE: If someone greps for `unsafe`, they will see '//'.
+
+// mod dymmy_input {
+//     #![allow(unsafe_code)]
+//
+//     use super::*;
+//
+//     struct MakeSync<T>(T);
+//
+//     // SAFETY: All users of this type do enusre it is soundly used.
+//     unsafe impl<T> Sync for MakeSync<T> {}
+//
+//     // SAFETY: Input has its collection empty, thus no `Cell` is present inside
+//     //         and vectors can't be appended with a shared reference.
+//     static DUMMY_INPUT: MakeSync<Input<'static>> = unsafe {
+//         MakeSync(Input {
+//             // `AtomicU8` is `Sync`.
+//             active_groups: AtomicU8::new(0),
+//             // Empty, cannot be appended, thus no `Cell` is present inside.
+//             keyboards: heapless::Vec::new(),
+//             // Empty, cannot be appended, thus no `Cell` is present inside.
+//             groups: heapless::LinearMap::new(),
+//         })
+//     };
+//
+//     pub const DEFUALT_INPUT: &Input<'static> = &DUMMY_INPUT.0;
+// }
+//
+// pub use dymmy_input::DEFUALT_INPUT;
+*/
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Group(u8);
@@ -27,8 +65,8 @@ pub struct GroupData {
 
 #[derive(Default, Debug)]
 pub struct Input<'a> {
-    // NOTE: for that one use relaxed atomic if want to put in static.
-    pub active_groups: Cell<Groups>,
+    // Maybe be just `Cell<u8>` but relaxed atomic is free anyway + we may want `Input` to be `Sync` later.
+    pub active_groups: AtomicU8,
     pub keyboards: heapless::Vec<(Groups, &'a KeyboardInput), 8>,
     pub groups: heapless::LinearMap<Groups, &'a GroupData, 8>,
 }
@@ -95,10 +133,42 @@ impl Group {
 impl<'a> Input<'a> {
     pub const fn new() -> Self {
         Self {
-            active_groups: Cell::new(Groups::ZERO),
+            active_groups: AtomicU8::new(Groups::ZERO.0),
             keyboards: heapless::Vec::new(),
             groups: heapless::LinearMap::new(),
         }
+    }
+    pub fn add_group(
+        &mut self,
+        group: Group,
+        data: &'a mut GroupData,
+    ) -> Result<(), CapacityExceededError> {
+        let groups: Groups = group.into();
+        *self.active_groups.get_mut() |= groups.0;
+        self.groups
+            .insert(groups, data)
+            .map(|_| ())
+            .map_err(|_| CapacityExceededError)
+    }
+    pub fn add_keyboard(
+        &mut self,
+        groups: Groups,
+        keyboard: &'a KeyboardInput,
+    ) -> Result<(), CapacityExceededError> {
+        if groups.is_empty() {
+            return Ok(());
+        }
+        if let Some((g, _)) = self.keyboards.iter_mut().find(|(_, k)| *k == keyboard) {
+            *g |= groups;
+            return Ok(());
+        }
+        self.keyboards
+            .push((groups, keyboard))
+            .map_err(|_| CapacityExceededError)
+    }
+
+    fn active_groups(&self) -> Groups {
+        Groups(self.active_groups.load(Ordering::Relaxed))
     }
 
     pub fn keyboard_input(
@@ -110,14 +180,14 @@ impl<'a> Input<'a> {
     ) -> Option<super::Event> {
         let &(groups, _) = self.keyboards.iter().find(|(_, k)| *k == keyboard)?;
         let mut event = keyboard.input(key, button_state, timestamp)?;
-        event.groups = groups & self.active_groups.get();
+        event.groups = groups & self.active_groups();
         (!event.groups.is_empty()).then_some(super::Event::Keyboard(event))
     }
     pub fn activate(&self, groups: Groups) {
-        self.active_groups.update(|g| g | groups);
+        self.active_groups.fetch_or(groups.0, Ordering::Relaxed);
     }
     pub fn deactivate(&self, groups: Groups) -> Deactivation {
-        self.active_groups.update(|g| g & !groups);
+        self.active_groups.fetch_and(!groups.0, Ordering::Relaxed);
         Deactivation { groups }
     }
     pub fn traverse(
@@ -127,7 +197,7 @@ impl<'a> Input<'a> {
         max: usize,
         f: impl FnMut(usize) -> super::EventResult,
     ) -> super::EventResult {
-        let groups = groups & self.active_groups.get();
+        let groups = groups & self.active_groups();
         // TODO: traverse multiple groups with one event
         let Some((_, group)) = self.groups.iter().find(|&(&g, _)| (g & groups) != 0) else {
             return super::EventResult::default();
@@ -135,7 +205,7 @@ impl<'a> Input<'a> {
         group.focused_path.traverse(event, max, f)
     }
     pub fn leaf_move(&self, focus: &mut FocusState, groups: Groups) -> super::EventResult {
-        let groups = groups & self.active_groups.get();
+        let groups = groups & self.active_groups();
 
         if !focus.is_member_of_any(groups) {
             return super::EventResult::default();
@@ -162,7 +232,7 @@ impl<'a> Input<'a> {
         }
     }
     pub fn is_focused_any(&self, groups: Groups) -> bool {
-        let groups = groups & self.active_groups.get();
+        let groups = groups & self.active_groups();
 
         self.groups
             .iter()
@@ -170,7 +240,7 @@ impl<'a> Input<'a> {
             .any(|g| g.1.focused_path.is_focused())
     }
     pub fn focus(&self, groups: Groups) {
-        let groups = groups & self.active_groups.get();
+        let groups = groups & self.active_groups();
 
         for (&g, &data) in self.groups.iter() {
             if (g & groups) != Groups::ZERO {
@@ -179,41 +249,13 @@ impl<'a> Input<'a> {
         }
     }
     pub fn blur(&self, groups: Groups) {
-        let groups = groups & self.active_groups.get();
+        let groups = groups & self.active_groups();
 
         for (&g, &data) in self.groups.iter() {
             if (g & groups) != Groups::ZERO {
                 data.focused_path.blur()
             }
         }
-    }
-    pub fn add_group(
-        &mut self,
-        group: Group,
-        data: &'a mut GroupData,
-    ) -> Result<(), CapacityExceededError> {
-        let groups = group.into();
-        *self.active_groups.get_mut() |= groups;
-        self.groups
-            .insert(groups, data)
-            .map(|_| ())
-            .map_err(|_| CapacityExceededError)
-    }
-    pub fn add_keyboard(
-        &mut self,
-        groups: Groups,
-        keyboard: &'a KeyboardInput,
-    ) -> Result<(), CapacityExceededError> {
-        if groups.is_empty() {
-            return Ok(());
-        }
-        if let Some((g, _)) = self.keyboards.iter_mut().find(|(_, k)| *k == keyboard) {
-            *g |= groups;
-            return Ok(());
-        }
-        self.keyboards
-            .push((groups, keyboard))
-            .map_err(|_| CapacityExceededError)
     }
 }
 
