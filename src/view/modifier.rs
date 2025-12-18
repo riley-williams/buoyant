@@ -18,6 +18,7 @@ mod geometry_group;
 mod hidden;
 mod hint_background;
 mod offset;
+mod on_cancel;
 mod opacity;
 mod overlay;
 #[allow(missing_docs)]
@@ -40,6 +41,7 @@ pub(crate) use geometry_group::GeometryGroup;
 pub(crate) use hidden::Hidden;
 pub(crate) use hint_background::HintBackground;
 pub(crate) use offset::Offset;
+pub(crate) use on_cancel::OnCancel;
 pub(crate) use opacity::Opacity;
 pub(crate) use overlay::OverlayView;
 pub(crate) use padding::Padding;
@@ -598,5 +600,9 @@ pub trait ViewModifier: Sized {
     /// ```
     fn transition<T: crate::transition::Transition>(self, transition: T) -> Transition<Self, T> {
         Transition::new(transition, self)
+    }
+
+    fn on_cancel<F: Fn(&mut Captures), Captures: ?Sized>(self, f: F) -> OnCancel<Self, F> {
+        OnCancel::new(self, f)
     }
 }
