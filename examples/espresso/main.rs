@@ -81,7 +81,6 @@ fn main() {
 
     let app_start = Instant::now();
     let mut touch_tracker = MouseTracker::new();
-    let input = buoyant::event::input::Input::new();
 
     let mut app_data = AppState::default();
     let mut view = root_view(&app_data);
@@ -111,7 +110,7 @@ fn main() {
     loop {
         let time = app_start.elapsed();
         let domain = AnimationDomain::top_level(time);
-        let context = EventContext::new(time, &input);
+        let context = EventContext::new(time);
 
         let mut should_exit = false;
 

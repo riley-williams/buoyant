@@ -24,7 +24,6 @@ fn main() {
     let app_start = Instant::now();
     // This derives higher-level mouse events from the raw simulator events
     let mut mouse_tracker = MouseTracker::new();
-    let input = Input::new();
 
     let mut count = 0;
     let mut view = counter_view(count);
@@ -45,7 +44,7 @@ fn main() {
     loop {
         let time = app_start.elapsed();
         let domain = AnimationDomain::top_level(time);
-        let context = EventContext::new(app_start.elapsed(), &input);
+        let context = EventContext::new(app_start.elapsed());
 
         let mut should_exit = false;
 

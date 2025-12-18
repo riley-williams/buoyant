@@ -22,13 +22,6 @@ pub enum Event {
     Exit,
 }
 
-#[non_exhaustive]
-#[derive(Debug, Clone)]
-pub struct EventContext<'a> {
-    pub app_time: Duration,
-    pub input: &'a input::Input<'a>,
-}
-
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct EventResult {
     /// Whether the event was handled by the view.
@@ -41,6 +34,13 @@ pub struct EventResult {
     /// This should be set when a view directly modifies the render tree state
     /// without requesting a view recompute, e.g. scrollview dragging.
     pub redraw: bool,
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct EventContext<'a> {
+    pub app_time: Duration,
+    pub input: input::InputRef<'a>,
 }
 
 impl Event {
@@ -109,17 +109,23 @@ impl EventResult {
 impl<'a> EventContext<'a> {
     /// Creates a new `EventContext` with the given application time and input.
     #[must_use]
-    pub const fn new(app_time: Duration, input: &'a input::Input<'a>) -> Self {
+    pub const fn new(app_time: Duration) -> Self {
+        let input = input::InputRef::DUMMY;
         Self { app_time, input }
     }
 
-    /// Creates a new `EventContext` with the given application time and gives it to the closure.
-    /// Input is not available (keyboard/encoder and focus movements).
-    #[inline]
-    pub fn with_time<T>(app_time: Duration, f: impl FnOnce(EventContext<'_>) -> T) -> T {
-        let input = input::Input::new();
-        let this = EventContext::new(app_time, &input);
-        f(this)
+    /// Creates a new `EventContext` with the given application time and input.
+    #[must_use]
+    pub fn new_with_input(app_time: Duration, input: &'a input::Input<'a>) -> Self {
+        let input = input.as_ref();
+        Self { app_time, input }
+    }
+
+    /// Creates a new `EventContext` with the given application time and input.
+    #[must_use]
+    pub fn input(self, input: &'a input::Input<'a>) -> Self {
+        let input = input.as_ref();
+        Self { input, ..self }
     }
 }
 
