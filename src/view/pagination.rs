@@ -20,7 +20,7 @@ pub enum PaginationDirection {
     /// Horizonaly paginate with `Left` and `Right` buttons
     #[default]
     Horizontal,
-    /// Verticaly paginate with `Up` and `Down` buttons
+    /// Vertically paginate with `Up` and `Down` buttons
     Vertical,
 }
 

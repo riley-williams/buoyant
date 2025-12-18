@@ -18,7 +18,7 @@ NOTE: If someone greps for `unsafe`, they will see '//'.
 //
 //     struct MakeSync<T>(T);
 //
-//     // SAFETY: All users of this type do enusre it is soundly used.
+//     // SAFETY: All users of this type do ensure it is soundly used.
 //     unsafe impl<T> Sync for MakeSync<T> {}
 //
 //     // SAFETY: Input has its collection empty, thus no `Cell` is present inside
@@ -34,10 +34,10 @@ NOTE: If someone greps for `unsafe`, they will see '//'.
 //         })
 //     };
 //
-//     pub const DEFUALT_INPUT: &Input<'static> = &DUMMY_INPUT.0;
+//     pub const DEFAULT_INPUT: &Input<'static> = &DUMMY_INPUT.0;
 // }
 //
-// pub use dymmy_input::DEFUALT_INPUT;
+// pub use dymmy_input::DEFAULT_INPUT;
 */
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
