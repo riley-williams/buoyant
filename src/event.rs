@@ -77,6 +77,15 @@ impl EventResult {
         }
     }
 
+    /// Marks the event as handled.
+    #[must_use]
+    pub fn handled(self) -> Self {
+        Self {
+            handled: true,
+            ..self
+        }
+    }
+
     /// merges another `EventResult` into this one.
     #[expect(clippy::needless_pass_by_value)]
     pub fn merge(&mut self, other: Self) {
