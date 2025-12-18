@@ -10,7 +10,7 @@ Extending the animated render loop and hiding the boilerplate:
 #
 # use buoyant::{
 #     environment::DefaultEnvironment,
-#     event::{EventContext, simulator::MouseTracker},
+#     event::{EventContext, simulator::MouseTracker, input::Input},
 #     primitives::{Point, Size},
 #     render::{AnimatedJoin, AnimationDomain, Render},
 #     render_target::EmbeddedGraphicsRenderTarget,
@@ -26,6 +26,7 @@ fn main() {
 #     let mut window = Window::new("Example", &OutputSettings::default());
 #     let app_start = Instant::now();
 #     let env = DefaultEnvironment::new(app_start.elapsed());
+#     let input = Input::new();
 #
     let mut count = 0;
     // This derives higher-level mouse events from the raw simulator events
@@ -68,7 +69,7 @@ fn main() {
 #         window.update(target.display());
 
         // Handle events
-        let context = EventContext::new(app_start.elapsed());
+        let context = EventContext::new(app_start.elapsed(), &input);
 
         let mut should_recompute_view = false;
         // This is missing a check for simulator exit events!
