@@ -46,6 +46,10 @@ fn button(c: char) -> impl View<char, u8> + use<> {
     )
 }
 
+fn ctx(secs: u64) -> EventContext<'static> {
+    EventContext::new(Duration::from_secs(secs))
+}
+
 #[test]
 fn button_above_scroll() {
     assert_eq!(
@@ -144,7 +148,6 @@ fn tap_button(x: i32, y: i32, should_recompute: bool) -> TestState {
     let mut captures = TestState::default();
     let view = scroll_view();
     let mut state = view.build_state(&mut captures);
-    let input = buoyant::event::input::Input::new();
 
     let mut tree = helpers::tree(
         &view,
@@ -163,7 +166,7 @@ fn tap_button(x: i32, y: i32, should_recompute: bool) -> TestState {
 
     let result = view.handle_event(
         &touch_down(x, y),
-        &EventContext::new(Duration::from_secs(2), &input),
+        &ctx(2),
         &mut tree,
         &mut captures,
         &mut state,
@@ -172,7 +175,7 @@ fn tap_button(x: i32, y: i32, should_recompute: bool) -> TestState {
 
     let result = view.handle_event(
         &touch_up(x, y),
-        &EventContext::new(Duration::from_secs(3), &input),
+        &ctx(3),
         &mut tree,
         &mut captures,
         &mut state,

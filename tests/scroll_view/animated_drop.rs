@@ -26,7 +26,6 @@ fn scroll_down_animates_back() {
 
     let mut captures = false;
     let view = vertical_scroll_view();
-    let input = buoyant::event::input::Input::new();
     let mut state = view.build_state(&mut captures);
 
     let mut render_tree = tree(
@@ -52,7 +51,7 @@ fn scroll_down_animates_back() {
     // picking times much greater than the scroll animation duration
     let event_result = view.handle_event(
         &touch_down(2, 2),
-        &EventContext::new(Duration::from_millis(500), &input),
+        &EventContext::new(Duration::from_millis(500)),
         &mut render_tree,
         &mut captures,
         &mut state,
@@ -62,7 +61,7 @@ fn scroll_down_animates_back() {
     // Pull down just offscreen and release
     let event_result = view.handle_event(
         &touch_move(2, 8),
-        &EventContext::new(Duration::from_millis(1000), &input),
+        &EventContext::new(Duration::from_millis(1000)),
         &mut render_tree,
         &mut captures,
         &mut state,
@@ -84,7 +83,7 @@ fn scroll_down_animates_back() {
 
     let event_result = view.handle_event(
         &touch_up(2, 6),
-        &EventContext::new(Duration::from_millis(1500), &input),
+        &EventContext::new(Duration::from_millis(1500)),
         &mut render_tree,
         &mut captures,
         &mut state,

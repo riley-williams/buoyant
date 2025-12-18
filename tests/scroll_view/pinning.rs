@@ -29,7 +29,6 @@ fn scrolled_to_bottom_stays_at_bottom_with_longer_content() {
     let short_text = "Line1\nLine2\nLine3\nLine4";
     let mut captures = ();
     let view = log_viewer(short_text);
-    let input = buoyant::event::input::Input::new();
     let mut state = view.build_state(&mut captures);
 
     let mut tree = helpers::tree(
@@ -57,7 +56,7 @@ fn scrolled_to_bottom_stays_at_bottom_with_longer_content() {
     // Scroll down to show Line4 at bottom (activate pinning by reaching bottom)
     let result = view.handle_event(
         &touch_down(6, 3),
-        &EventContext::new(Duration::from_secs(2), &input),
+        &EventContext::new(Duration::from_secs(2)),
         &mut tree,
         &mut captures,
         &mut state,
@@ -66,7 +65,7 @@ fn scrolled_to_bottom_stays_at_bottom_with_longer_content() {
 
     let result = view.handle_event(
         &touch_move(6, 2),
-        &EventContext::new(Duration::from_secs(3), &input),
+        &EventContext::new(Duration::from_secs(3)),
         &mut tree,
         &mut captures,
         &mut state,
@@ -75,7 +74,7 @@ fn scrolled_to_bottom_stays_at_bottom_with_longer_content() {
 
     let result = view.handle_event(
         &touch_up(6, 2),
-        &EventContext::new(Duration::from_secs(4), &input),
+        &EventContext::new(Duration::from_secs(4)),
         &mut tree,
         &mut captures,
         &mut state,
@@ -150,7 +149,6 @@ fn can_scroll_to_bottom_of_content() {
     let text = "Line1\nLine2\nLine3\nLine4\nLine5\nLine6";
     let mut captures = ();
     let view = log_viewer(text);
-    let input = buoyant::event::input::Input::new();
     let mut state = view.build_state(&mut captures);
 
     let mut tree = helpers::tree(
@@ -178,7 +176,7 @@ fn can_scroll_to_bottom_of_content() {
     // Scroll to bottom
     view.handle_event(
         &touch_down(6, 3),
-        &EventContext::new(Duration::from_secs(2), &input),
+        &EventContext::new(Duration::from_secs(2)),
         &mut tree,
         &mut captures,
         &mut state,
@@ -186,7 +184,7 @@ fn can_scroll_to_bottom_of_content() {
 
     view.handle_event(
         &touch_move(6, 1),
-        &EventContext::new(Duration::from_secs(10), &input),
+        &EventContext::new(Duration::from_secs(10)),
         &mut tree,
         &mut captures,
         &mut state,
@@ -194,7 +192,7 @@ fn can_scroll_to_bottom_of_content() {
 
     view.handle_event(
         &touch_up(6, 1),
-        &EventContext::new(Duration::from_secs(11), &input),
+        &EventContext::new(Duration::from_secs(11)),
         &mut tree,
         &mut captures,
         &mut state,
@@ -231,7 +229,6 @@ fn multiple_scrolls_work_correctly() {
     let text = "L1\nL2\nL3\nL4\nL5\nL6";
     let mut captures = ();
     let view = log_viewer(text);
-    let input = buoyant::event::input::Input::new();
     let mut state = view.build_state(&mut captures);
 
     let mut tree = helpers::tree(
@@ -245,7 +242,7 @@ fn multiple_scrolls_work_correctly() {
     // Scroll to bottom
     view.handle_event(
         &touch_down(6, 3),
-        &EventContext::new(Duration::from_secs(2), &input),
+        &EventContext::new(Duration::from_secs(2)),
         &mut tree,
         &mut captures,
         &mut state,
@@ -253,7 +250,7 @@ fn multiple_scrolls_work_correctly() {
 
     view.handle_event(
         &touch_move(6, 1),
-        &EventContext::new(Duration::from_secs(10), &input),
+        &EventContext::new(Duration::from_secs(10)),
         &mut tree,
         &mut captures,
         &mut state,
@@ -261,7 +258,7 @@ fn multiple_scrolls_work_correctly() {
 
     view.handle_event(
         &touch_up(6, 1),
-        &EventContext::new(Duration::from_secs(11), &input),
+        &EventContext::new(Duration::from_secs(11)),
         &mut tree,
         &mut captures,
         &mut state,
@@ -292,7 +289,7 @@ fn multiple_scrolls_work_correctly() {
     // Scroll again to verify scrolling continues to work
     view.handle_event(
         &touch_down(6, 3),
-        &EventContext::new(Duration::from_secs(20), &input),
+        &EventContext::new(Duration::from_secs(20)),
         &mut tree,
         &mut captures,
         &mut state,
@@ -300,7 +297,7 @@ fn multiple_scrolls_work_correctly() {
 
     view.handle_event(
         &touch_move(6, 1),
-        &EventContext::new(Duration::from_secs(28), &input),
+        &EventContext::new(Duration::from_secs(28)),
         &mut tree,
         &mut captures,
         &mut state,
@@ -308,7 +305,7 @@ fn multiple_scrolls_work_correctly() {
 
     view.handle_event(
         &touch_up(6, 1),
-        &EventContext::new(Duration::from_secs(29), &input),
+        &EventContext::new(Duration::from_secs(29)),
         &mut tree,
         &mut captures,
         &mut state,
@@ -345,7 +342,6 @@ fn no_pinning_when_content_fits_in_view() {
     let text = "Line1\nLine2";
     let mut captures = ();
     let view = log_viewer(text);
-    let input = buoyant::event::input::Input::new();
     let mut state = view.build_state(&mut captures);
 
     let mut tree = helpers::tree(
@@ -373,7 +369,7 @@ fn no_pinning_when_content_fits_in_view() {
     // Try to activate pinning with a touch event
     view.handle_event(
         &touch_down(6, 2),
-        &EventContext::new(Duration::from_secs(2), &input),
+        &EventContext::new(Duration::from_secs(2)),
         &mut tree,
         &mut captures,
         &mut state,
@@ -381,7 +377,7 @@ fn no_pinning_when_content_fits_in_view() {
 
     view.handle_event(
         &touch_move(6, 1),
-        &EventContext::new(Duration::from_secs(3), &input),
+        &EventContext::new(Duration::from_secs(3)),
         &mut tree,
         &mut captures,
         &mut state,
@@ -389,7 +385,7 @@ fn no_pinning_when_content_fits_in_view() {
 
     let result = view.handle_event(
         &touch_up(6, 1),
-        &EventContext::new(Duration::from_secs(4), &input),
+        &EventContext::new(Duration::from_secs(4)),
         &mut tree,
         &mut captures,
         &mut state,
@@ -427,7 +423,6 @@ fn pinning_not_active_at_top_of_scrollable_content() {
     let text = "A\nB\nC\nD\nE\nF";
     let mut captures = ();
     let view = log_viewer(text);
-    let input = buoyant::event::input::Input::new();
     let mut state = view.build_state(&mut captures);
 
     let mut tree = helpers::tree(
@@ -455,7 +450,7 @@ fn pinning_not_active_at_top_of_scrollable_content() {
     // Trigger an event while at top (should NOT activate pinning)
     view.handle_event(
         &touch_down(6, 2),
-        &EventContext::new(Duration::from_secs(2), &input),
+        &EventContext::new(Duration::from_secs(2)),
         &mut tree,
         &mut captures,
         &mut state,
@@ -463,7 +458,7 @@ fn pinning_not_active_at_top_of_scrollable_content() {
 
     let result = view.handle_event(
         &touch_up(6, 2),
-        &EventContext::new(Duration::from_secs(3), &input),
+        &EventContext::new(Duration::from_secs(3)),
         &mut tree,
         &mut captures,
         &mut state,

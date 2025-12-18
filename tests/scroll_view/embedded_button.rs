@@ -38,7 +38,6 @@ fn button_action_cancelled_by_scroll() {
 
     let mut captures = 0;
     let view = scroll_view();
-    let input = buoyant::event::input::Input::new();
     let mut state = view.build_state(&mut captures);
 
     let mut tree = helpers::tree(
@@ -64,7 +63,7 @@ fn button_action_cancelled_by_scroll() {
 
     let result = view.handle_event(
         &touch_down(2, 3),
-        &EventContext::new(Duration::from_secs(2), &input),
+        &EventContext::new(Duration::from_secs(2)),
         &mut tree,
         &mut captures,
         &mut state,
@@ -95,7 +94,7 @@ fn button_action_cancelled_by_scroll() {
     // cancel touch by moving touch
     let result = view.handle_event(
         &touch_move(20, 3),
-        &EventContext::new(Duration::from_secs(3), &input),
+        &EventContext::new(Duration::from_secs(3)),
         &mut tree,
         &mut captures,
         &mut state,
@@ -125,7 +124,7 @@ fn button_action_cancelled_by_scroll() {
 
     let result = view.handle_event(
         &touch_move(2, 2),
-        &EventContext::new(Duration::from_secs(4), &input),
+        &EventContext::new(Duration::from_secs(4)),
         &mut tree,
         &mut captures,
         &mut state,
@@ -148,7 +147,7 @@ fn button_action_cancelled_by_scroll() {
 
     let result = view.handle_event(
         &touch_up(3, 1),
-        &EventContext::new(Duration::from_secs(5), &input),
+        &EventContext::new(Duration::from_secs(5)),
         &mut tree,
         &mut captures,
         &mut state,
@@ -186,7 +185,6 @@ fn button_can_be_pressed_with_tiny_wiggle() {
 
     let mut captures = 0;
     let view = scroll_view();
-    let input = buoyant::event::input::Input::new();
     let mut state = view.build_state(&mut captures);
 
     let mut tree = helpers::tree(
@@ -212,7 +210,7 @@ fn button_can_be_pressed_with_tiny_wiggle() {
 
     let result = view.handle_event(
         &touch_down(2, 2),
-        &EventContext::new(Duration::from_secs(2), &input),
+        &EventContext::new(Duration::from_secs(2)),
         &mut tree,
         &mut captures,
         &mut state,
@@ -243,7 +241,7 @@ fn button_can_be_pressed_with_tiny_wiggle() {
     // little wiggle
     let result = view.handle_event(
         &touch_move(5, 3),
-        &EventContext::new(Duration::from_secs(3), &input),
+        &EventContext::new(Duration::from_secs(3)),
         &mut tree,
         &mut captures,
         &mut state,
@@ -252,7 +250,7 @@ fn button_can_be_pressed_with_tiny_wiggle() {
 
     let result = view.handle_event(
         &touch_up(5, 3),
-        &EventContext::new(Duration::from_secs(3), &input),
+        &EventContext::new(Duration::from_secs(3)),
         &mut tree,
         &mut captures,
         &mut state,
