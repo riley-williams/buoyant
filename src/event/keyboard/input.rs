@@ -19,6 +19,12 @@ pub struct KeyboardInput {
     long_press_duration_per_repeat: Duration,
 }
 
+impl Default for KeyboardInput {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl KeyboardInput {
     #[must_use]
     pub const fn new() -> Self {

@@ -8,7 +8,7 @@ use crate::{
     environment::LayoutEnvironment,
     event::{
         EventContext, EventResult,
-        input::{FocusState, Groups, Input, Interaction},
+        input::{FocusState, Groups, Interaction},
         keyboard::{KeyboardEvent, KeyboardEventKind},
     },
     layout::ResolvedLayout,
@@ -139,7 +139,7 @@ impl<ViewFn, Inner, Action> Button<ViewFn, Inner, Action> {
         self
     }
 
-    fn interaction(&self, state: &ButtonState) -> Interaction {
+    fn interaction(&self, state: ButtonState) -> Interaction {
         // todo: handle button press too, and click
         let pressed = matches!(state.touch, ButtonTouchState::CaptivePressed(_));
         let focused = state.focus.is_focused_any(self.groups);
@@ -185,7 +185,7 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> ResolvedLayout<Self::Sublayout> {
-        let interaction = self.interaction(&state.0);
+        let interaction = self.interaction(state.0);
 
         (self.view)(interaction).layout(offer, env, captures, &mut state.1)
     }
@@ -198,7 +198,7 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> Self::Renderables {
-        let interaction = self.interaction(&state.0);
+        let interaction = self.interaction(state.0);
 
         Container::new(
             Frame::new(origin, layout.resolved_size.into()),
@@ -228,7 +228,7 @@ where
 {
     fn handle_touch<Captures: ?Sized>(
         &self,
-        render_tree: &mut <Self as ViewMarker>::Renderables,
+        render_tree: &<Self as ViewMarker>::Renderables,
         captures: &mut Captures,
         state: &mut <Self as ViewLayout<Captures>>::State,
         touch: &embedded_touch::Touch,

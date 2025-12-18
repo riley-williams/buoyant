@@ -1,4 +1,3 @@
-use core::cell::Cell;
 use core::sync::atomic::{AtomicU8, Ordering};
 
 use super::cursor::ComponentPath;
@@ -100,21 +99,28 @@ impl Interaction {
         Self(self.0 | if on { modifier } else { 0 })
     }
 
+    #[must_use]
     pub fn is_pressed(self) -> bool {
         (self.0 & Self::PRESSED) != 0
     }
+    #[must_use]
     pub fn is_focused(self) -> bool {
         (self.0 & Self::FOCUSED) != 0
     }
+    #[must_use]
     pub fn is_clicked(self) -> bool {
         (self.0 & Self::CLICKED) != 0
     }
+    #[must_use]
     pub fn is_long_pressed(self) -> bool {
         (self.0 & Self::LONG_PRESSED) != 0
     }
 }
 
 impl Group {
+    /// Create a new group
+    /// # Panics
+    /// If group is not in range `0..8`.
     #[must_use]
     pub const fn new(group: usize) -> Self {
         match Self::try_new(group) {
@@ -123,6 +129,7 @@ impl Group {
         }
     }
 
+    /// Create a new group
     #[must_use]
     pub const fn try_new(group: usize) -> Option<Self> {
         if group < 8 {
@@ -142,6 +149,10 @@ impl<'a> Input<'a> {
             groups: heapless::LinearMap::new(),
         }
     }
+
+    /// Adds a new group to the input system.
+    /// # Errors
+    /// If the capacity of the input system is exceeded, an error is returned.
     pub fn add_group(
         &mut self,
         group: Group,
@@ -154,6 +165,10 @@ impl<'a> Input<'a> {
             .map(|_| ())
             .map_err(|_| CapacityExceededError)
     }
+
+    /// Adds a new keyboard to the input system.
+    /// # Errors
+    /// If the capacity of the input system is exceeded, an error is returned.
     pub fn add_keyboard(
         &mut self,
         groups: Groups,
@@ -175,6 +190,7 @@ impl<'a> Input<'a> {
         Groups(self.active_groups.load(Ordering::Relaxed))
     }
 
+    /// Processes a keyboard input state.
     pub fn keyboard_input(
         &self,
         keyboard: &'a KeyboardInput,
@@ -252,7 +268,7 @@ impl<'a> Input<'a> {
     pub fn focus(&self, groups: Groups) {
         let groups = groups & self.active_groups();
 
-        for (&g, &data) in self.groups.iter() {
+        for (&g, &data) in &self.groups {
             if (g & groups) != Groups::ZERO {
                 data.focused_path.focus();
             }
@@ -262,7 +278,7 @@ impl<'a> Input<'a> {
     pub fn blur(&self, groups: Groups) {
         let groups = groups & self.active_groups();
 
-        for (&g, &data) in self.groups.iter() {
+        for (&g, &data) in &self.groups {
             if (g & groups) != Groups::ZERO {
                 data.focused_path.blur();
             }
@@ -355,6 +371,7 @@ impl Default for FocusState {
 }
 
 impl GroupData {
+    #[must_use]
     pub const fn new() -> Self {
         Self {
             focused_path: ComponentPath::new(),
@@ -370,6 +387,7 @@ impl Groups {
         Self(mask)
     }
 
+    #[must_use]
     pub fn is_empty(self) -> bool {
         self.0 == 0
     }
@@ -427,7 +445,7 @@ impl core::ops::BitAndAssign for Groups {
 
 impl From<Group> for Groups {
     fn from(value: Group) -> Self {
-        Self(1u8.unbounded_shl(value.0 as u32))
+        Self(1u8.unbounded_shl(u32::from(value.0)))
     }
 }
 

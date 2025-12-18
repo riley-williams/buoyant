@@ -602,6 +602,8 @@ pub trait ViewModifier: Sized {
         Transition::new(transition, self)
     }
 
+    /// Captures bubbling `Cancel` events and calls a closure with `Captures`.
+    /// Usefule to close popup windows or exit from menus.
     fn on_cancel<F: Fn(&mut Captures), Captures: ?Sized>(self, f: F) -> OnCancel<Self, F> {
         OnCancel::new(self, f)
     }
