@@ -3,42 +3,7 @@ use core::sync::atomic::{AtomicU8, Ordering};
 use super::cursor::ComponentPath;
 use super::keyboard::KeyboardInput;
 
-/*
-
-This will allow users that only use mouse to not provide `Input`. Idk is `unsafe` worth it here,
-I guess it is too niche group of users to bother, most will either not use events or use keyboard,
-and at the end it will save 2 lines of code for them (import + let binding).
-
-NOTE: If someone greps for `unsafe`, they will see '//'.
-
-// mod dymmy_input {
-//     #![allow(unsafe_code)]
-//
-//     use super::*;
-//
-//     struct MakeSync<T>(T);
-//
-//     // SAFETY: All users of this type do ensure it is soundly used.
-//     unsafe impl<T> Sync for MakeSync<T> {}
-//
-//     // SAFETY: Input has its collection empty, thus no `Cell` is present inside
-//     //         and vectors can't be appended with a shared reference.
-//     static DUMMY_INPUT: MakeSync<Input<'static>> = unsafe {
-//         MakeSync(Input {
-//             // `AtomicU8` is `Sync`.
-//             active_groups: AtomicU8::new(0),
-//             // Empty, cannot be appended, thus no `Cell` is present inside.
-//             keyboards: heapless::Vec::new(),
-//             // Empty, cannot be appended, thus no `Cell` is present inside.
-//             groups: heapless::LinearMap::new(),
-//         })
-//     };
-//
-//     pub const DEFAULT_INPUT: &Input<'static> = &DUMMY_INPUT.0;
-// }
-//
-// pub use dymmy_input::DEFAULT_INPUT;
-*/
+static DUMMY_ACTIVE_GROUPS: AtomicU8 = AtomicU8::new(0);
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Group(u8);
@@ -64,10 +29,16 @@ pub struct GroupData {
 
 #[derive(Default, Debug)]
 pub struct Input<'a> {
-    // Maybe be just `Cell<u8>` but relaxed atomic is free anyway + we may want `Input` to be `Sync` later.
-    pub active_groups: AtomicU8,
-    pub keyboards: heapless::Vec<(Groups, &'a KeyboardInput), 8>,
-    pub groups: heapless::LinearMap<Groups, &'a GroupData, 8>,
+    // Maybe be just `Cell<u8>` if ref would have `&'a Option<Cell<u8>>`.
+    active_groups: AtomicU8,
+    keyboards: heapless::Vec<(Groups, &'a KeyboardInput), 8>,
+    groups: heapless::LinearMap<Groups, &'a GroupData, 8>,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct InputRef<'a> {
+    active_groups: &'a AtomicU8,
+    groups: &'a heapless::linear_map::LinearMapView<Groups, &'a GroupData>,
 }
 
 #[derive(Debug)]
@@ -77,7 +48,7 @@ pub struct Deactivation {
 
 #[derive(Debug)]
 pub struct DeactivationGuard<'a> {
-    input: &'a Input<'a>,
+    input: InputRef<'a>,
     groups: Groups,
 }
 
@@ -185,11 +156,6 @@ impl<'a> Input<'a> {
             .push((groups, keyboard))
             .map_err(|_| CapacityExceededError)
     }
-
-    fn active_groups(&self) -> Groups {
-        Groups(self.active_groups.load(Ordering::Relaxed))
-    }
-
     /// Processes a keyboard input state.
     pub fn keyboard_input(
         &self,
@@ -203,15 +169,45 @@ impl<'a> Input<'a> {
         event.groups = groups & self.active_groups();
         (!event.groups.is_empty()).then_some(super::Event::Keyboard(event))
     }
-    pub fn activate(&self, groups: Groups) {
+
+    #[inline]
+    fn active_groups(&self) -> Groups {
+        Groups(self.active_groups.load(Ordering::Relaxed))
+    }
+
+    pub fn as_ref(&'a self) -> InputRef<'a> {
+        InputRef {
+            active_groups: &self.active_groups,
+            groups: &self.groups,
+        }
+    }
+}
+
+impl Default for InputRef<'_> {
+    fn default() -> Self {
+        Self::DUMMY
+    }
+}
+
+impl<'a> InputRef<'a> {
+    pub(crate) const DUMMY: InputRef<'static> = InputRef {
+        active_groups: &DUMMY_ACTIVE_GROUPS,
+        groups: &heapless::linear_map::LinearMap::<_, _, 0>::new(),
+    };
+    #[inline]
+    fn active_groups(&self) -> Groups {
+        Groups(self.active_groups.load(Ordering::Relaxed))
+    }
+
+    pub fn activate(self, groups: Groups) {
         self.active_groups.fetch_or(groups.0, Ordering::Relaxed);
     }
-    pub fn deactivate(&self, groups: Groups) -> Deactivation {
+    pub fn deactivate(self, groups: Groups) -> Deactivation {
         self.active_groups.fetch_and(!groups.0, Ordering::Relaxed);
         Deactivation { groups }
     }
     pub fn traverse(
-        &self,
+        self,
         groups: Groups,
         event: super::keyboard::KeyboardEventKind,
         max: usize,
@@ -224,7 +220,7 @@ impl<'a> Input<'a> {
         };
         group.focused_path.traverse(event, max, f)
     }
-    pub fn leaf_move(&self, focus: &mut FocusState, groups: Groups) -> super::EventResult {
+    pub fn leaf_move(self, focus: &mut FocusState, groups: Groups) -> super::EventResult {
         let groups = groups & self.active_groups();
 
         if !focus.is_member_of_any(groups) {
@@ -251,7 +247,7 @@ impl<'a> Input<'a> {
             super::EventResult::new(true, true)
         }
     }
-    pub fn is_focused_any(&self, groups: Groups) -> bool {
+    pub fn is_focused_any(self, groups: Groups) -> bool {
         let groups = groups & self.active_groups();
 
         self.groups
@@ -259,28 +255,28 @@ impl<'a> Input<'a> {
             .filter(|g| (*g.0 & groups) != 0)
             .any(|g| g.1.focused_path.is_focused())
     }
-    pub fn focus(&self, groups: Groups) {
+    pub fn focus(self, groups: Groups) {
         let groups = groups & self.active_groups();
 
-        for (&g, &data) in &self.groups {
+        for (&g, &data) in self.groups {
             if (g & groups) != Groups::ZERO {
                 data.focused_path.focus();
             }
         }
     }
-    pub fn blur(&self, groups: Groups) {
+    pub fn blur(self, groups: Groups) {
         let groups = groups & self.active_groups();
 
-        for (&g, &data) in &self.groups {
+        for (&g, &data) in self.groups {
             if (g & groups) != Groups::ZERO {
                 data.focused_path.blur();
             }
         }
     }
-    pub fn reset(&self, groups: Groups) {
+    pub fn reset(self, groups: Groups) {
         let groups = groups & self.active_groups();
 
-        for (&g, &data) in &self.groups {
+        for (&g, &data) in self.groups {
             if (g & groups) != Groups::ZERO {
                 data.focused_path.reset();
             }
@@ -340,7 +336,7 @@ impl Deactivation {
     pub fn into_guard<'a>(self, input: &'a Input<'a>) -> DeactivationGuard<'a> {
         DeactivationGuard {
             groups: self.groups,
-            input,
+            input: input.as_ref(),
         }
     }
 }

@@ -1,7 +1,7 @@
 use core::time::Duration;
 
 use crate::{
-    event::input::{Groups, Input},
+    event::input::{Groups, Input, InputRef},
     layout::LayoutDirection,
 };
 
@@ -16,7 +16,7 @@ pub trait LayoutEnvironment {
 #[derive(Default, Debug, Clone, Copy)]
 pub struct DefaultEnvironment<'a> {
     pub app_time: Duration,
-    pub input: Option<&'a Input<'a>>,
+    pub input: InputRef<'a>,
 }
 
 impl<'a> DefaultEnvironment<'a> {
@@ -24,14 +24,14 @@ impl<'a> DefaultEnvironment<'a> {
     pub const fn new(app_time: Duration) -> Self {
         Self {
             app_time,
-            input: None,
+            input: InputRef::DUMMY,
         }
     }
 
     #[must_use]
-    pub const fn input(self, input: &'a Input<'a>) -> Self {
+    pub fn input(self, input: &'a Input<'a>) -> Self {
         Self {
-            input: Some(input),
+            input: input.as_ref(),
             ..self
         }
     }
@@ -41,7 +41,7 @@ impl<'a> DefaultEnvironment<'a> {
     pub const fn non_animated() -> Self {
         Self {
             app_time: Duration::new(0, 0),
-            input: None,
+            input: InputRef::DUMMY,
         }
     }
 }
@@ -55,9 +55,8 @@ impl LayoutEnvironment for DefaultEnvironment<'_> {
         self.app_time
     }
 
+    // When subtree changes, shouldn't it reset instead of blur?
     fn blur(&self, groups: Groups) {
-        if let Some(input) = self.input {
-            input.blur(groups);
-        }
+        self.input.blur(groups)
     }
 }

@@ -2,7 +2,7 @@ use crate::{
     environment::LayoutEnvironment,
     event::{
         Event, EventContext, EventResult,
-        input::{FocusState, Groups, Input, Interaction},
+        input::{FocusState, Groups, InputRef, Interaction},
     },
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
@@ -120,7 +120,7 @@ where
 
 impl<V, ViewFn, Action, Captures> ViewLayout<Captures> for PaginationView<ViewFn, Action>
 where
-    Action: Fn(PaginationAction, &Input<'_>, &mut Captures),
+    Action: Fn(PaginationAction, InputRef<'_>, &mut Captures),
     ViewFn: Fn(Interaction) -> V,
     V: ViewLayout<Captures>,
     Captures: ?Sized,
