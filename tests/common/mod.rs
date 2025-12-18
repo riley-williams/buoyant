@@ -145,8 +145,6 @@ pub fn tap<V: View<char, Data>, Data: ?Sized>(
         state,
     );
 
-    let input = input::Input::new();
-
     view.handle_event(
         &Event::Touch(Touch::new(
             0,
@@ -154,7 +152,7 @@ pub fn tap<V: View<char, Data>, Data: ?Sized>(
             embedded_touch::Phase::Started,
             Tool::Finger,
         )),
-        &buoyant::event::EventContext::new(Duration::ZERO, &input),
+        &buoyant::event::EventContext::new(Duration::ZERO),
         &mut tree,
         captures,
         state,
@@ -167,7 +165,7 @@ pub fn tap<V: View<char, Data>, Data: ?Sized>(
             embedded_touch::Phase::Ended,
             Tool::Finger,
         )),
-        &buoyant::event::EventContext::new(Duration::ZERO, &input),
+        &buoyant::event::EventContext::new(Duration::ZERO),
         &mut tree,
         captures,
         state,

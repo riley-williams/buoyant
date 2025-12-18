@@ -66,7 +66,6 @@ fn main() {
     let mut window = Window::new("Coffeeeee", &OutputSettings::default());
     let app_start = Instant::now();
     let mut touch_tracker = MouseTracker::new();
-    let input = buoyant::event::input::Input::new();
 
     let mut app_data = AppState::default();
     let mut view = root_view(&app_data);
@@ -99,7 +98,7 @@ fn main() {
 
         // Handle events
         let mut should_exit = false;
-        let context = EventContext::new(time, &input);
+        let context = EventContext::new(time);
         for event in window
             .events()
             .filter_map(|event| touch_tracker.process_event(event))

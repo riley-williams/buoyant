@@ -333,11 +333,17 @@ impl FocusState {
 }
 
 impl Deactivation {
-    pub fn into_guard<'a>(self, input: &'a Input<'a>) -> DeactivationGuard<'a> {
+    pub fn into_guard<'a>(self, input: impl Into<InputRef<'a>>) -> DeactivationGuard<'a> {
         DeactivationGuard {
             groups: self.groups,
-            input: input.as_ref(),
+            input: input.into(),
         }
+    }
+}
+
+impl<'a> From<&'a Input<'a>> for InputRef<'a> {
+    fn from(value: &'a Input<'a>) -> Self {
+        value.as_ref()
     }
 }
 
