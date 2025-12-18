@@ -164,6 +164,7 @@ where
         (self.view)(interaction).render_tree(layout, origin, env, captures, &mut state.inner)
     }
 
+    #[allow(clippy::too_many_lines)]
     fn handle_event(
         &self,
         event: &Event,
@@ -264,11 +265,11 @@ where
                     (self.action)(PaginationAction::Next, input, captures);
                     return handled;
                 }
-                (D::Vertical, K::Left | K::Right) | (D::Horizontal, K::Up | K::Down)
-                    if !self.click_to_enter =>
-                {
-                    entered.blur(k.groups);
-                    return result.merging(context.input.leaf_move(focus, k.groups));
+                (D::Vertical, K::Left | K::Right) | (D::Horizontal, K::Up | K::Down) => {
+                    if !self.click_to_enter {
+                        entered.blur(k.groups);
+                        return result.merging(context.input.leaf_move(focus, k.groups));
+                    }
                 }
                 _ => (),
                 /* fallthrough */

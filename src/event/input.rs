@@ -99,19 +99,19 @@ impl Interaction {
         Self(self.0 | if on { modifier } else { 0 })
     }
 
-    #[must_use] 
+    #[must_use]
     pub fn is_pressed(self) -> bool {
         (self.0 & Self::PRESSED) != 0
     }
-    #[must_use] 
+    #[must_use]
     pub fn is_focused(self) -> bool {
         (self.0 & Self::FOCUSED) != 0
     }
-    #[must_use] 
+    #[must_use]
     pub fn is_clicked(self) -> bool {
         (self.0 & Self::CLICKED) != 0
     }
-    #[must_use] 
+    #[must_use]
     pub fn is_long_pressed(self) -> bool {
         (self.0 & Self::LONG_PRESSED) != 0
     }
@@ -121,7 +121,7 @@ impl Group {
     /// Create a new group
     /// # Panics
     /// If group is not in range `0..8`.
-    #[must_use] 
+    #[must_use]
     pub const fn new(group: usize) -> Self {
         match Self::try_new(group) {
             Some(g) => g,
@@ -130,7 +130,7 @@ impl Group {
     }
 
     /// Create a new group
-    #[must_use] 
+    #[must_use]
     pub const fn try_new(group: usize) -> Option<Self> {
         if group < 8 {
             Some(Self(group as u8))
@@ -141,7 +141,7 @@ impl Group {
 }
 
 impl<'a> Input<'a> {
-    #[must_use] 
+    #[must_use]
     pub const fn new() -> Self {
         Self {
             active_groups: AtomicU8::new(Groups::ZERO.0),
@@ -289,27 +289,27 @@ impl<'a> Input<'a> {
 }
 
 impl FocusState {
-    #[must_use] 
+    #[must_use]
     pub const fn new(groups: Groups) -> Self {
         Self {
             groups,
             focused: Groups::ZERO,
         }
     }
-    #[must_use] 
+    #[must_use]
     pub fn should_focus(&self, groups: Groups) -> bool {
         self.is_member_of_any(groups) && !self.is_focused_all(groups)
     }
-    #[must_use] 
+    #[must_use]
     pub fn should_blur(&self, groups: Groups) -> bool {
         self.is_focused_any(groups)
     }
-    #[must_use] 
+    #[must_use]
     pub fn is_member_of_any(&self, groups: Groups) -> bool {
         let groups = groups & self.groups;
         (self.groups & groups) != 0
     }
-    #[must_use] 
+    #[must_use]
     pub fn is_member_of_all(&self, groups: Groups) -> bool {
         let groups = groups & self.groups;
         (self.groups & groups) == groups
@@ -324,12 +324,12 @@ impl FocusState {
         self.focused &= !groups;
         groups
     }
-    #[must_use] 
+    #[must_use]
     pub fn is_focused_all(&self, groups: Groups) -> bool {
         let groups = groups & self.groups;
         (self.focused & groups) == groups
     }
-    #[must_use] 
+    #[must_use]
     pub fn is_focused_any(&self, groups: Groups) -> bool {
         let groups = groups & self.groups;
         (self.focused & groups) != 0
@@ -365,7 +365,7 @@ impl Default for FocusState {
 }
 
 impl GroupData {
-    #[must_use] 
+    #[must_use]
     pub const fn new() -> Self {
         Self {
             focused_path: ComponentPath::new(),
@@ -376,12 +376,12 @@ impl GroupData {
 impl Groups {
     pub const ZERO: Self = Self(0);
 
-    #[must_use] 
+    #[must_use]
     pub const fn from_mask(mask: u8) -> Self {
         Self(mask)
     }
 
-    #[must_use] 
+    #[must_use]
     pub fn is_empty(self) -> bool {
         self.0 == 0
     }

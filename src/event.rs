@@ -70,7 +70,8 @@ impl EventResult {
         }
     }
 
-    /// merges another `EventResult` into this one.
+    /// Returns this `EventResult` but with `handled` set to `true`.
+    #[must_use]
     pub fn handled(self) -> Self {
         Self {
             handled: true,
