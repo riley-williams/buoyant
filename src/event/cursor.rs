@@ -11,6 +11,7 @@ pub struct ComponentPath {
 }
 
 impl ComponentPath {
+    #[must_use]
     pub const fn new() -> Self {
         Self {
             path: [const { Cell::new(0) }; 128],
@@ -22,7 +23,7 @@ impl ComponentPath {
 
     #[inline]
     fn current(&self) -> u8 {
-        self.path[self.offset.get() as usize].get() as u8
+        self.path[self.offset.get() as usize].get()
     }
     #[inline]
     fn set_current(&self, value: u8) {
@@ -30,6 +31,7 @@ impl ComponentPath {
     }
 
     #[cfg(test)]
+    #[allow(clippy::needless_range_loop)]
     fn path_chunk<const N: usize>(&self) -> [u8; N] {
         let mut arr = [0u8; N];
         for i in 0..N {
@@ -57,17 +59,13 @@ impl ComponentPath {
         self.len.set(0);
     }
 
-    fn is_forward(&self, kind: Kind) -> bool {
-        matches!(kind, Kind::Down | Kind::Right)
-    }
-
     pub fn traverse(
         &self,
         event: Kind,
         max: usize,
         mut f: impl FnMut(usize) -> EventResult,
     ) -> EventResult {
-        let is_forward = self.is_forward(event);
+        let is_forward = matches!(event, Kind::Down | Kind::Right);
         let offset = self.offset.get();
         let max = max as u8;
 
@@ -112,9 +110,8 @@ impl ComponentPath {
                     allowed_retry = false;
                     self.set_current(if is_forward { 0 } else { max });
                     continue;
-                } else {
-                    self.len.set(offset);
                 }
+                self.len.set(offset);
                 return result;
             }
         }
@@ -153,7 +150,7 @@ mod tests {
 
     #[derive(Debug)]
     enum Node {
-        Node(Vec<Node>),
+        Node(Vec<Self>),
         Leaf {
             id: usize,
             focusable: bool,
@@ -169,12 +166,12 @@ mod tests {
             path: &ComponentPath,
         ) -> EventResult {
             match self {
-                Node::Node(children) => {
+                Self::Node(children) => {
                     let max = children.len() - 1;
 
                     path.traverse(event, max, |i| children[i].handle(meta, event, path))
                 }
-                Node::Leaf {
+                Self::Leaf {
                     id,
                     focusable,
                     focused,
@@ -185,16 +182,12 @@ mod tests {
                         return result;
                     }
                     if *focused {
-                        if !path.is_focused() {
-                            panic!("Inconsistent focus state");
-                        }
+                        assert!(path.is_focused(), "Inconsistent focus state ({id})");
                         *focused = false;
                         meta.focused_id = None;
                         path.blur();
                     } else {
-                        if path.is_focused() {
-                            panic!("Inconsistent focus state");
-                        }
+                        assert!(!path.is_focused(), "Inconsistent focus state ({id})");
                         *focused = true;
                         meta.focused_id = Some(*id);
                         path.focus();

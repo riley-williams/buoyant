@@ -10,7 +10,7 @@ pub struct OnCancel<V, F>(V, F);
 
 impl<V, F> OnCancel<V, F> {
     pub const fn new(value: V, func: F) -> Self {
-        OnCancel(value, func)
+        Self(value, func)
     }
 }
 
@@ -74,12 +74,11 @@ impl<Captures: ?Sized, V: ViewLayout<Captures>, F: Fn(&mut Captures)> ViewLayout
 
         let mut result = self.0.handle_event(event, context, tree, captures, state);
 
-        if let Event::Keyboard(k) = event {
-            if !result.handled && k.kind == Kind::Cancel {
+        if let Event::Keyboard(k) = event
+            && !result.handled && k.kind == Kind::Cancel {
                 (self.1)(captures);
                 result.handled = true;
             }
-        }
 
         result
     }

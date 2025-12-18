@@ -371,6 +371,7 @@ where
                 result
             }
             (None, _, _) => EventResult::default(),
+            #[allow(clippy::assertions_on_constants)] // New lint?
             _ => {
                 assert!(
                     !cfg!(debug_assertions),

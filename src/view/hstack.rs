@@ -34,7 +34,7 @@ impl<T: LayoutEnvironment> LayoutEnvironment for HorizontalEnvironment<'_, T> {
         self.inner_environment.app_time()
     }
     fn blur(&self, groups: crate::event::input::Groups) {
-        self.inner_environment.blur(groups)
+        self.inner_environment.blur(groups);
     }
 }
 

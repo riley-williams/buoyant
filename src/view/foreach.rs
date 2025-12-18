@@ -112,7 +112,7 @@ impl<T: LayoutEnvironment, D: ForEachDirection> LayoutEnvironment for ForEachEnv
     }
 
     fn blur(&self, groups: crate::event::input::Groups) {
-        self.inner_environment.blur(groups)
+        self.inner_environment.blur(groups);
     }
 }
 

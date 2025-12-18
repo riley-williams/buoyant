@@ -28,6 +28,7 @@ impl<'a> DefaultEnvironment<'a> {
         }
     }
 
+    #[must_use]
     pub const fn input(self, input: &'a Input<'a>) -> Self {
         Self {
             input: Some(input),

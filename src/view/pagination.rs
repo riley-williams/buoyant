@@ -32,12 +32,20 @@ pub struct PaginationState<T> {
     inner: T,
 }
 
+/// Represents semantic action made by the user.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum PaginationAction {
+    /// Request to paginate "Forward".
     Next,
+    /// Request to paginate "Backwards".
     Previous,
+    /// Emitted when focus gets captured inside the pagination, when
+    /// `click_to_enter` is enabled.
     Enter,
+    /// When `click_to_exit` then when emitted before exiting the pagination.
+    /// When not enabled, emitted when user clicks inside the pagination.
     Submit,
+    /// Emitted when user cancels pagination, e.g. by issuing `Cancel` event.
     Escape,
 }
 
