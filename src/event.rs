@@ -120,6 +120,17 @@ impl<'a> EventContext<'a> {
     }
 }
 
+impl From<embedded_touch::Touch> for Event {
+    fn from(touch: embedded_touch::Touch) -> Self {
+        Self::Touch(touch)
+    }
+}
+impl From<keyboard::KeyboardEvent> for Event {
+    fn from(key_event: keyboard::KeyboardEvent) -> Self {
+        Self::Keyboard(key_event)
+    }
+}
+
 #[cfg(feature = "embedded-graphics-simulator")]
 pub mod simulator {
     use crate::primitives::Point;
