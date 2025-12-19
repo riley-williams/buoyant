@@ -107,7 +107,7 @@ impl<'a> EventContext<'a> {
 
     /// Creates a new `EventContext` with the given application time and input.
     #[must_use]
-    pub const fn new_witn_input(app_time: Duration, input: &'a input::Input<'a>) -> Self {
+    pub const fn new_with_input(app_time: Duration, input: &'a input::Input<'a>) -> Self {
         let input = input.as_ref();
         Self { app_time, input }
     }
