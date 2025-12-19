@@ -2,7 +2,7 @@ use crate::{
     environment::LayoutEnvironment,
     event::{
         Event, EventContext, EventResult,
-        input::{FocusState, Groups, InputRef, Interaction},
+        input::{FocusState, Groups, Interaction},
     },
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
@@ -42,8 +42,7 @@ pub enum PaginationAction {
     /// Emitted when focus gets captured inside the pagination, when
     /// `click_to_enter` is enabled.
     Enter,
-    /// When `click_to_exit` then when emitted before exiting the pagination.
-    /// When not enabled, emitted when user clicks inside the pagination.
+    /// When `click_to_exit` then when emitted before successfully exiting the pagination.
     Submit,
     /// Emitted when user cancels pagination, e.g. by issuing `Cancel` event.
     Escape,
@@ -56,6 +55,7 @@ pub struct PaginationView<ViewFn, Action> {
     direction: PaginationDirection,
     click_to_enter: bool,
     click_to_exit: bool,
+    reroute_navigation: bool,
     groups: Groups,
 }
 
@@ -72,6 +72,7 @@ impl Pagination {
             groups: groups.into(),
             click_to_enter: false,
             click_to_exit: false,
+            reroute_navigation: false,
             view,
         }
     }
@@ -88,18 +89,23 @@ impl Pagination {
             groups: groups.into(),
             click_to_enter: false,
             click_to_exit: false,
+            reroute_navigation: false,
             view,
         }
     }
 }
 
 impl<ViewFn, Action> PaginationView<ViewFn, Action> {
-    pub fn with_click_to_enter(mut self, click_to_enter: bool) -> Self {
+    pub fn click_to_enter(mut self, click_to_enter: bool) -> Self {
         self.click_to_enter = click_to_enter;
         self
     }
-    pub fn with_click_to_exit(mut self, click_to_exit: bool) -> Self {
+    pub fn click_to_exit(mut self, click_to_exit: bool) -> Self {
         self.click_to_exit = click_to_exit;
+        self
+    }
+    pub fn reroute_navigation(mut self, reroute: bool) -> Self {
+        self.reroute_navigation = reroute;
         self
     }
     fn interaction<T>(&self, state: &PaginationState<T>) -> Interaction {
@@ -120,7 +126,7 @@ where
 
 impl<V, ViewFn, Action, Captures> ViewLayout<Captures> for PaginationView<ViewFn, Action>
 where
-    Action: Fn(PaginationAction, InputRef<'_>, &mut Captures),
+    Action: Fn(PaginationAction, &mut Captures),
     ViewFn: Fn(Interaction) -> V,
     V: ViewLayout<Captures>,
     Captures: ?Sized,
@@ -182,17 +188,19 @@ where
         let interaction = self.interaction(state);
         let focus = &mut state.focus;
         let entered = &mut state.entered;
-        let input = context.input;
+        let groups = event.groups() & context.input.active_groups();
+        let should_handle = entered.is_member_of_any(groups);
         let is_click = match event {
             Event::Keyboard(k) => k.kind == K::Click,
             Event::Touch(_t) => todo!("Behave like a button"),
             _ => false,
         };
 
-        let is_entered = entered.is_focused_any(event.groups());
+        let is_entered = entered.is_focused_any(groups);
 
         if let Event::Keyboard(k) = event
             && k.kind.is_movement()
+            && should_handle
             && !is_entered
         {
             let is_across = matches!(
@@ -204,91 +212,108 @@ where
                 (D::Vertical, K::Up | K::Down) | (D::Horizontal, K::Left | K::Right),
             );
 
-            // Automatically enter if we don't need a click
+            assert!(
+                is_across != is_along,
+                "Movement can be either across or along pagination direction"
+            );
+
             if !self.click_to_enter {
-                entered.focus(k.groups);
-                // If we are moving along, focus too
+                entered.focus(groups);
                 if is_along {
                     result.merge(context.input.leaf_move(focus, k.groups));
                 }
             }
 
-            if self.click_to_enter || is_across {
+            if self.click_to_enter || (is_across && !self.reroute_navigation) {
                 return context.input.leaf_move(focus, k.groups);
             }
         }
 
-        let is_entered = entered.is_focused_any(event.groups());
+        let is_entered = entered.is_focused_any(groups);
 
-        // If wee need a click to enter and we didn't enter yet
-        if is_click && self.click_to_enter && !is_entered {
-            (self.action)(PaginationAction::Enter, input, captures);
-            entered.focus(event.groups());
+        if is_click && self.click_to_enter && !is_entered && should_handle {
+            (self.action)(PaginationAction::Enter, captures);
+            entered.focus(groups);
             return result.merging(EventResult::new(true, true));
         }
 
         if let Event::Keyboard(k) = event
             && (!self.click_to_enter || is_entered)
+            && should_handle
         {
-            // Assumption: this is keyboard event and we already entered.
             match (self.direction, k.kind) {
-                (_, K::Click) if self.click_to_exit => {
-                    (self.action)(PaginationAction::Submit, input, captures);
-                    entered.blur(k.groups);
-                    context.input.blur(state.observed_groups);
-                    state.observed_groups = Groups::default();
-                    return result.handled();
-                }
-                (_, K::Cancel | K::LongPress) if self.click_to_enter => {
-                    (self.action)(PaginationAction::Escape, input, captures);
-                    let view = (self.view)(interaction);
-                    let result =
-                        view.handle_event(event, context, render_tree, captures, &mut state.inner);
-                    return if result.handled {
-                        result
-                    } else {
-                        entered.blur(k.groups);
-                        context.input.blur(state.observed_groups);
-                        state.observed_groups = Groups::default();
-                        result.handled()
-                    };
-                }
                 (D::Vertical, K::Up) | (D::Horizontal, K::Left) => {
+                    (self.action)(PaginationAction::Previous, captures);
                     context.input.blur(state.observed_groups);
                     state.observed_groups = Groups::default();
-                    (self.action)(PaginationAction::Previous, input, captures);
-                    return handled;
+                    return handled.handled();
                 }
                 (D::Vertical, K::Down) | (D::Horizontal, K::Right) => {
+                    (self.action)(PaginationAction::Next, captures);
                     context.input.blur(state.observed_groups);
                     state.observed_groups = Groups::default();
-                    (self.action)(PaginationAction::Next, input, captures);
-                    return handled;
+                    return handled.handled();
                 }
-                (D::Vertical, K::Left | K::Right) | (D::Horizontal, K::Up | K::Down) => {
-                    if !self.click_to_enter {
-                        entered.blur(k.groups);
-                        return result.merging(context.input.leaf_move(focus, k.groups));
-                    }
+                (D::Vertical, K::Right | K::Left) | (D::Horizontal, K::Up | K::Down)
+                    if focus.is_focused_any(groups) && self.reroute_navigation =>
+                {
+                    _ = context.input.leaf_move(focus, groups);
                 }
                 _ => (),
-                /* fallthrough */
             }
         }
 
         let view = (self.view)(interaction);
         let mut result = view.handle_event(event, context, render_tree, captures, &mut state.inner);
         if result.handled {
-            state.observed_groups |= event.groups();
+            state.observed_groups |= groups;
         }
 
-        if is_click && !result.handled {
-            (self.action)(PaginationAction::Submit, input, captures);
+        if let Event::Keyboard(k) = event
+            && !self.click_to_enter
+            && !result.handled
+            && should_handle
+            && matches!(
+                (self.direction, k.kind),
+                (D::Vertical, K::Left | K::Right) | (D::Horizontal, K::Up | K::Down)
+            )
+        {
+            entered.blur(groups);
+            return result.merging(context.input.leaf_move(focus, k.groups));
+        }
+
+        if is_click && is_entered && !result.handled && self.click_to_exit && should_handle {
+            (self.action)(PaginationAction::Submit, captures);
+            entered.blur(groups);
+            context.input.blur(state.observed_groups);
+            state.observed_groups = Groups::default();
+            return result.handled();
+        }
+
+        if result.handled {
+            return result;
+        }
+
+        if let Event::Keyboard(k) = event
+            && (!self.click_to_enter || is_entered)
+            && should_handle
+        {
+            match (self.direction, k.kind) {
+                (_, K::Cancel | K::LongPress) if self.click_to_enter => {
+                    (self.action)(PaginationAction::Escape, captures);
+                    entered.blur(groups);
+                    context.input.blur(state.observed_groups);
+                    state.observed_groups = Groups::default();
+                    return result.handled();
+                }
+                _ => (),
+            }
         }
 
         if let Event::Keyboard(k) = event
             && k.kind.is_movement()
             && self.click_to_enter
+            && should_handle
         {
             result.handled = true;
         }
