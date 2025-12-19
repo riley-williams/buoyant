@@ -55,6 +55,6 @@ impl LayoutEnvironment for DefaultEnvironment<'_> {
 
     // When subtree changes, shouldn't it reset instead of blur?
     fn blur(&self, groups: Groups) {
-        self.input.blur(groups)
+        self.input.blur(groups);
     }
 }
