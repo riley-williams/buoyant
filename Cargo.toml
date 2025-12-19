@@ -65,6 +65,10 @@ required-features = ["embedded-graphics", "embedded-graphics-simulator"]
 name = "quickstart"
 required-features = ["embedded-graphics", "embedded-graphics-simulator"]
 
+[[example]]
+name = "advanced_input"
+required-features = []
+
 [workspace]
 members = ["buoyant-examples/battery"]
 

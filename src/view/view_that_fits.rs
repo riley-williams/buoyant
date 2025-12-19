@@ -3,7 +3,7 @@ use crate::{
     event::EventResult,
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimension, ProposedDimensions},
-    render::{OneOf2, OneOf3, OneOf4},
+    render,
     transition::Opacity,
     view::{ViewLayout, ViewMarker},
 };
@@ -206,7 +206,7 @@ where
     T0: ViewMarker,
     T1: ViewMarker,
 {
-    type Renderables = OneOf2<T0::Renderables, T1::Renderables>;
+    type Renderables = render::OneOf2<T0::Renderables, T1::Renderables>;
     type Transition = Opacity;
 }
 
@@ -223,7 +223,7 @@ where
     }
 
     fn build_state(&self, captures: &mut Captures) -> Self::State {
-        Branch2::Variant0(self.choices.0.build_state(captures))
+        Branch2::V0(self.choices.0.build_state(captures))
     }
 
     fn layout(
@@ -237,14 +237,14 @@ where
         let subview_offer = make_compact_offer(*offer, self.axis);
 
         // Try first choice with compact offer to see if it fits, creating new state if necessary
-        if let Branch2::Variant0(state0) = state {
+        if let Branch2::V0(state0) = state {
             let layout = self.choices.0.layout(&subview_offer, env, captures, state0);
             if offer.contains(layout.resolved_size, horizontal, vertical) {
                 // We don't actually want the compact version, so layout again with the original offer
                 let layout = self.choices.0.layout(offer, env, captures, state0);
                 return ResolvedLayout {
                     resolved_size: layout.resolved_size,
-                    sublayouts: Branch2::Variant0(layout),
+                    sublayouts: Branch2::V0(layout),
                 };
             }
         } else {
@@ -255,28 +255,28 @@ where
                 .layout(&subview_offer, env, captures, &mut state0);
             if offer.contains(layout.resolved_size, horizontal, vertical) {
                 let layout = self.choices.0.layout(offer, env, captures, &mut state0);
-                *state = Branch2::Variant0(state0);
+                *state = Branch2::V0(state0);
                 return ResolvedLayout {
                     resolved_size: layout.resolved_size,
-                    sublayouts: Branch2::Variant0(layout),
+                    sublayouts: Branch2::V0(layout),
                 };
             }
         }
 
         // Use second choice
-        if let Branch2::Variant1(state1) = state {
+        if let Branch2::V1(state1) = state {
             let layout = self.choices.1.layout(offer, env, captures, state1);
             return ResolvedLayout {
                 resolved_size: layout.resolved_size,
-                sublayouts: Branch2::Variant1(layout),
+                sublayouts: Branch2::V1(layout),
             };
         }
         let mut state1 = self.choices.1.build_state(captures);
         let layout = self.choices.1.layout(offer, env, captures, &mut state1);
-        *state = Branch2::Variant1(state1);
+        *state = Branch2::V1(state1);
         ResolvedLayout {
             resolved_size: layout.resolved_size,
-            sublayouts: Branch2::Variant1(layout),
+            sublayouts: Branch2::V1(layout),
         }
     }
 
@@ -289,11 +289,11 @@ where
         state: &mut Self::State,
     ) -> Self::Renderables {
         match (&layout.sublayouts, state) {
-            (Branch2::Variant0(l0), Branch2::Variant0(s0)) => {
-                OneOf2::Variant0(self.choices.0.render_tree(l0, origin, env, captures, s0))
+            (Branch2::V0(l0), Branch2::V0(s0)) => {
+                render::OneOf2::V0(self.choices.0.render_tree(l0, origin, env, captures, s0))
             }
-            (Branch2::Variant1(l1), Branch2::Variant1(s1)) => {
-                OneOf2::Variant1(self.choices.1.render_tree(l1, origin, env, captures, s1))
+            (Branch2::V1(l1), Branch2::V1(s1)) => {
+                render::OneOf2::V1(self.choices.1.render_tree(l1, origin, env, captures, s1))
             }
             _ => panic!("Layout/state branch mismatch"),
         }
@@ -308,11 +308,11 @@ where
         state: &mut Self::State,
     ) -> EventResult {
         match (state, render_tree) {
-            (Branch2::Variant0(s0), OneOf2::Variant0(t0)) => self
+            (Branch2::V0(s0), render::OneOf2::V0(t0)) => self
                 .choices
                 .0
                 .handle_event(event, context, t0, captures, s0),
-            (Branch2::Variant1(s1), OneOf2::Variant1(t1)) => self
+            (Branch2::V1(s1), render::OneOf2::V1(t1)) => self
                 .choices
                 .1
                 .handle_event(event, context, t1, captures, s1),
@@ -331,7 +331,7 @@ where
     T1: ViewMarker,
     T2: ViewMarker,
 {
-    type Renderables = OneOf3<T0::Renderables, T1::Renderables, T2::Renderables>;
+    type Renderables = render::OneOf3<T0::Renderables, T1::Renderables, T2::Renderables>;
     type Transition = Opacity;
 }
 
@@ -353,7 +353,7 @@ where
     }
 
     fn build_state(&self, captures: &mut Captures) -> Self::State {
-        Branch3::Variant0(self.choices.0.build_state(captures))
+        Branch3::V0(self.choices.0.build_state(captures))
     }
 
     fn layout(
@@ -367,13 +367,13 @@ where
         let subview_offer = make_compact_offer(*offer, self.axis);
 
         // Try first choice with compact offer to see if it fits, creating new state if necessary
-        if let Branch3::Variant0(state0) = state {
+        if let Branch3::V0(state0) = state {
             let layout = self.choices.0.layout(&subview_offer, env, captures, state0);
             if offer.contains(layout.resolved_size, horizontal, vertical) {
                 let layout = self.choices.0.layout(offer, env, captures, state0);
                 return ResolvedLayout {
                     resolved_size: layout.resolved_size,
-                    sublayouts: Branch3::Variant0(layout),
+                    sublayouts: Branch3::V0(layout),
                 };
             }
         } else {
@@ -384,22 +384,22 @@ where
                 .layout(&subview_offer, env, captures, &mut state0);
             if offer.contains(layout.resolved_size, horizontal, vertical) {
                 let layout = self.choices.0.layout(offer, env, captures, &mut state0);
-                *state = Branch3::Variant0(state0);
+                *state = Branch3::V0(state0);
                 return ResolvedLayout {
                     resolved_size: layout.resolved_size,
-                    sublayouts: Branch3::Variant0(layout),
+                    sublayouts: Branch3::V0(layout),
                 };
             }
         }
 
         // Try second choice
-        if let Branch3::Variant1(state1) = state {
+        if let Branch3::V1(state1) = state {
             let layout = self.choices.1.layout(&subview_offer, env, captures, state1);
             if offer.contains(layout.resolved_size, horizontal, vertical) {
                 let layout = self.choices.1.layout(offer, env, captures, state1);
                 return ResolvedLayout {
                     resolved_size: layout.resolved_size,
-                    sublayouts: Branch3::Variant1(layout),
+                    sublayouts: Branch3::V1(layout),
                 };
             }
         } else {
@@ -410,28 +410,28 @@ where
                 .layout(&subview_offer, env, captures, &mut state1);
             if offer.contains(layout.resolved_size, horizontal, vertical) {
                 let layout = self.choices.1.layout(offer, env, captures, &mut state1);
-                *state = Branch3::Variant1(state1);
+                *state = Branch3::V1(state1);
                 return ResolvedLayout {
                     resolved_size: layout.resolved_size,
-                    sublayouts: Branch3::Variant1(layout),
+                    sublayouts: Branch3::V1(layout),
                 };
             }
         }
 
         // Use third choice (fallback)
-        if let Branch3::Variant2(state2) = state {
+        if let Branch3::V2(state2) = state {
             let layout = self.choices.2.layout(offer, env, captures, state2);
             return ResolvedLayout {
                 resolved_size: layout.resolved_size,
-                sublayouts: Branch3::Variant2(layout),
+                sublayouts: Branch3::V2(layout),
             };
         }
         let mut state2 = self.choices.2.build_state(captures);
         let layout = self.choices.2.layout(offer, env, captures, &mut state2);
-        *state = Branch3::Variant2(state2);
+        *state = Branch3::V2(state2);
         ResolvedLayout {
             resolved_size: layout.resolved_size,
-            sublayouts: Branch3::Variant2(layout),
+            sublayouts: Branch3::V2(layout),
         }
     }
 
@@ -444,14 +444,14 @@ where
         state: &mut Self::State,
     ) -> Self::Renderables {
         match (&layout.sublayouts, state) {
-            (Branch3::Variant0(l0), Branch3::Variant0(s0)) => {
-                OneOf3::Variant0(self.choices.0.render_tree(l0, origin, env, captures, s0))
+            (Branch3::V0(l0), Branch3::V0(s0)) => {
+                render::OneOf3::V0(self.choices.0.render_tree(l0, origin, env, captures, s0))
             }
-            (Branch3::Variant1(l1), Branch3::Variant1(s1)) => {
-                OneOf3::Variant1(self.choices.1.render_tree(l1, origin, env, captures, s1))
+            (Branch3::V1(l1), Branch3::V1(s1)) => {
+                render::OneOf3::V1(self.choices.1.render_tree(l1, origin, env, captures, s1))
             }
-            (Branch3::Variant2(l2), Branch3::Variant2(s2)) => {
-                OneOf3::Variant2(self.choices.2.render_tree(l2, origin, env, captures, s2))
+            (Branch3::V2(l2), Branch3::V2(s2)) => {
+                render::OneOf3::V2(self.choices.2.render_tree(l2, origin, env, captures, s2))
             }
             _ => panic!("Layout/state branch mismatch"),
         }
@@ -466,15 +466,15 @@ where
         state: &mut Self::State,
     ) -> EventResult {
         match (state, render_tree) {
-            (Branch3::Variant0(s0), OneOf3::Variant0(t0)) => self
+            (Branch3::V0(s0), render::OneOf3::V0(t0)) => self
                 .choices
                 .0
                 .handle_event(event, context, t0, captures, s0),
-            (Branch3::Variant1(s1), OneOf3::Variant1(t1)) => self
+            (Branch3::V1(s1), render::OneOf3::V1(t1)) => self
                 .choices
                 .1
                 .handle_event(event, context, t1, captures, s1),
-            (Branch3::Variant2(s2), OneOf3::Variant2(t2)) => self
+            (Branch3::V2(s2), render::OneOf3::V2(t2)) => self
                 .choices
                 .2
                 .handle_event(event, context, t2, captures, s2),
@@ -493,7 +493,8 @@ where
     T2: ViewMarker,
     T3: ViewMarker,
 {
-    type Renderables = OneOf4<T0::Renderables, T1::Renderables, T2::Renderables, T3::Renderables>;
+    type Renderables =
+        render::OneOf4<T0::Renderables, T1::Renderables, T2::Renderables, T3::Renderables>;
     type Transition = Opacity;
 }
 
@@ -517,7 +518,7 @@ where
     }
 
     fn build_state(&self, captures: &mut Captures) -> Self::State {
-        Branch4::Variant0(self.choices.0.build_state(captures))
+        Branch4::V0(self.choices.0.build_state(captures))
     }
 
     fn layout(
@@ -531,13 +532,13 @@ where
         let subview_offer = make_compact_offer(*offer, self.axis);
 
         // Try first choice with compact offer to see if it fits, creating new state if necessary
-        if let Branch4::Variant0(state0) = state {
+        if let Branch4::V0(state0) = state {
             let layout = self.choices.0.layout(&subview_offer, env, captures, state0);
             if offer.contains(layout.resolved_size, horizontal, vertical) {
                 let layout = self.choices.0.layout(offer, env, captures, state0);
                 return ResolvedLayout {
                     resolved_size: layout.resolved_size,
-                    sublayouts: Branch4::Variant0(layout),
+                    sublayouts: Branch4::V0(layout),
                 };
             }
         } else {
@@ -548,22 +549,22 @@ where
                 .layout(&subview_offer, env, captures, &mut state0);
             if offer.contains(layout.resolved_size, horizontal, vertical) {
                 let layout = self.choices.0.layout(offer, env, captures, &mut state0);
-                *state = Branch4::Variant0(state0);
+                *state = Branch4::V0(state0);
                 return ResolvedLayout {
                     resolved_size: layout.resolved_size,
-                    sublayouts: Branch4::Variant0(layout),
+                    sublayouts: Branch4::V0(layout),
                 };
             }
         }
 
         // Try second choice
-        if let Branch4::Variant1(state1) = state {
+        if let Branch4::V1(state1) = state {
             let layout = self.choices.1.layout(&subview_offer, env, captures, state1);
             if offer.contains(layout.resolved_size, horizontal, vertical) {
                 let layout = self.choices.1.layout(offer, env, captures, state1);
                 return ResolvedLayout {
                     resolved_size: layout.resolved_size,
-                    sublayouts: Branch4::Variant1(layout),
+                    sublayouts: Branch4::V1(layout),
                 };
             }
         } else {
@@ -574,22 +575,22 @@ where
                 .layout(&subview_offer, env, captures, &mut state1);
             if offer.contains(layout.resolved_size, horizontal, vertical) {
                 let layout = self.choices.1.layout(offer, env, captures, &mut state1);
-                *state = Branch4::Variant1(state1);
+                *state = Branch4::V1(state1);
                 return ResolvedLayout {
                     resolved_size: layout.resolved_size,
-                    sublayouts: Branch4::Variant1(layout),
+                    sublayouts: Branch4::V1(layout),
                 };
             }
         }
 
         // Try third choice
-        if let Branch4::Variant2(state2) = state {
+        if let Branch4::V2(state2) = state {
             let layout = self.choices.2.layout(&subview_offer, env, captures, state2);
             if offer.contains(layout.resolved_size, horizontal, vertical) {
                 let layout = self.choices.2.layout(offer, env, captures, state2);
                 return ResolvedLayout {
                     resolved_size: layout.resolved_size,
-                    sublayouts: Branch4::Variant2(layout),
+                    sublayouts: Branch4::V2(layout),
                 };
             }
         } else {
@@ -600,28 +601,28 @@ where
                 .layout(&subview_offer, env, captures, &mut state2);
             if offer.contains(layout.resolved_size, horizontal, vertical) {
                 let layout = self.choices.2.layout(offer, env, captures, &mut state2);
-                *state = Branch4::Variant2(state2);
+                *state = Branch4::V2(state2);
                 return ResolvedLayout {
                     resolved_size: layout.resolved_size,
-                    sublayouts: Branch4::Variant2(layout),
+                    sublayouts: Branch4::V2(layout),
                 };
             }
         }
 
         // Use fourth choice (fallback)
-        if let Branch4::Variant3(state3) = state {
+        if let Branch4::V3(state3) = state {
             let layout = self.choices.3.layout(offer, env, captures, state3);
             return ResolvedLayout {
                 resolved_size: layout.resolved_size,
-                sublayouts: Branch4::Variant3(layout),
+                sublayouts: Branch4::V3(layout),
             };
         }
         let mut state3 = self.choices.3.build_state(captures);
         let layout = self.choices.3.layout(offer, env, captures, &mut state3);
-        *state = Branch4::Variant3(state3);
+        *state = Branch4::V3(state3);
         ResolvedLayout {
             resolved_size: layout.resolved_size,
-            sublayouts: Branch4::Variant3(layout),
+            sublayouts: Branch4::V3(layout),
         }
     }
 
@@ -634,17 +635,17 @@ where
         state: &mut Self::State,
     ) -> Self::Renderables {
         match (&layout.sublayouts, state) {
-            (Branch4::Variant0(l0), Branch4::Variant0(s0)) => {
-                OneOf4::Variant0(self.choices.0.render_tree(l0, origin, env, captures, s0))
+            (Branch4::V0(l0), Branch4::V0(s0)) => {
+                render::OneOf4::V0(self.choices.0.render_tree(l0, origin, env, captures, s0))
             }
-            (Branch4::Variant1(l1), Branch4::Variant1(s1)) => {
-                OneOf4::Variant1(self.choices.1.render_tree(l1, origin, env, captures, s1))
+            (Branch4::V1(l1), Branch4::V1(s1)) => {
+                render::OneOf4::V1(self.choices.1.render_tree(l1, origin, env, captures, s1))
             }
-            (Branch4::Variant2(l2), Branch4::Variant2(s2)) => {
-                OneOf4::Variant2(self.choices.2.render_tree(l2, origin, env, captures, s2))
+            (Branch4::V2(l2), Branch4::V2(s2)) => {
+                render::OneOf4::V2(self.choices.2.render_tree(l2, origin, env, captures, s2))
             }
-            (Branch4::Variant3(l3), Branch4::Variant3(s3)) => {
-                OneOf4::Variant3(self.choices.3.render_tree(l3, origin, env, captures, s3))
+            (Branch4::V3(l3), Branch4::V3(s3)) => {
+                render::OneOf4::V3(self.choices.3.render_tree(l3, origin, env, captures, s3))
             }
             _ => panic!("Layout/state branch mismatch"),
         }
@@ -659,19 +660,19 @@ where
         state: &mut Self::State,
     ) -> EventResult {
         match (state, render_tree) {
-            (Branch4::Variant0(s0), OneOf4::Variant0(t0)) => self
+            (Branch4::V0(s0), render::OneOf4::V0(t0)) => self
                 .choices
                 .0
                 .handle_event(event, context, t0, captures, s0),
-            (Branch4::Variant1(s1), OneOf4::Variant1(t1)) => self
+            (Branch4::V1(s1), render::OneOf4::V1(t1)) => self
                 .choices
                 .1
                 .handle_event(event, context, t1, captures, s1),
-            (Branch4::Variant2(s2), OneOf4::Variant2(t2)) => self
+            (Branch4::V2(s2), render::OneOf4::V2(t2)) => self
                 .choices
                 .2
                 .handle_event(event, context, t2, captures, s2),
-            (Branch4::Variant3(s3), OneOf4::Variant3(t3)) => self
+            (Branch4::V3(s3), render::OneOf4::V3(t3)) => self
                 .choices
                 .3
                 .handle_event(event, context, t3, captures, s3),

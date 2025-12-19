@@ -18,6 +18,7 @@ mod geometry_group;
 mod hidden;
 mod hint_background;
 mod offset;
+mod on_cancel;
 mod opacity;
 mod overlay;
 #[allow(missing_docs)]
@@ -40,6 +41,7 @@ pub(crate) use geometry_group::GeometryGroup;
 pub(crate) use hidden::Hidden;
 pub(crate) use hint_background::HintBackground;
 pub(crate) use offset::Offset;
+pub(crate) use on_cancel::OnCancel;
 pub(crate) use opacity::Opacity;
 pub(crate) use overlay::OverlayView;
 pub(crate) use padding::Padding;
@@ -552,10 +554,10 @@ pub trait ViewModifier: Sized {
     /// fn expanding_button() -> impl View<Rgb888, i32> {
     ///     Button::new(|_: &mut i32| {
     ///         // do something when pressed
-    ///     }, |is_pressed| {
+    ///     }, |a| {
     ///         Rectangle
-    ///             .scale_effect(if is_pressed { 1.2 } else { 1.0 }, UnitPoint::center())
-    ///             .animated(Animation::linear(Duration::from_millis(150)), is_pressed)
+    ///             .scale_effect(if a.is_pressed() { 1.2 } else { 1.0 }, UnitPoint::center())
+    ///             .animated(Animation::linear(Duration::from_millis(150)), a.is_pressed())
     ///     })
     /// }
     /// ```
@@ -598,5 +600,11 @@ pub trait ViewModifier: Sized {
     /// ```
     fn transition<T: crate::transition::Transition>(self, transition: T) -> Transition<Self, T> {
         Transition::new(transition, self)
+    }
+
+    /// Captures bubbling `Cancel` events and calls a closure with `Captures`.
+    /// Useful to close popup windows or exit from menus.
+    fn on_cancel<F: Fn(&mut Captures), Captures: ?Sized>(self, f: F) -> OnCancel<Self, F> {
+        OnCancel::new(self, f)
     }
 }

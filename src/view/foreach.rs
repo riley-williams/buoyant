@@ -4,6 +4,7 @@ use core::cmp::max;
 
 use crate::{
     environment::LayoutEnvironment,
+    event::{Event, EventContext, EventResult},
     layout::{HorizontalAlignment, LayoutDirection, ResolvedLayout, VerticalAlignment},
     primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions},
     transition::Opacity,
@@ -108,6 +109,10 @@ impl<T: LayoutEnvironment, D: ForEachDirection> LayoutEnvironment for ForEachEnv
 
     fn app_time(&self) -> core::time::Duration {
         self.inner_environment.app_time()
+    }
+
+    fn blur(&self, groups: crate::event::input::Groups) {
+        self.inner_environment.blur(groups);
     }
 }
 
@@ -267,14 +272,10 @@ where
         let mut sublayouts: heapless::Vec<ResolvedLayout<V::Sublayout>, N> = heapless::Vec::new();
         let mut subview_stages: heapless::Vec<(i8, bool), N> = heapless::Vec::new();
 
-        // fill sublayouts with an initial garbage layout
         // TODO: guess there are no empty views, often no extra work needed?
-        for (i, item) in self.items.iter().enumerate() {
+        for item in self.items {
             let view = (self.build_view)(item);
-            let Some(item_state) = state.get_mut(i) else {
-                break;
-            };
-            _ = sublayouts.push(view.layout(offer, env, captures, item_state));
+            _ = sublayouts.push(ResolvedLayout::default());
             _ = subview_stages.push((view.priority(), view.is_empty()));
         }
 
@@ -352,6 +353,50 @@ where
         }
 
         renderables
+    }
+
+    fn handle_event(
+        &self,
+        event: &Event,
+        context: &EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> EventResult {
+        let mut result = EventResult::default();
+        if self.items.len() > 1 {
+            let max = self.items.len() - 1;
+            if let crate::view::Event::Keyboard(k) = event {
+                return if context.input.is_focused_any(k.groups) || k.kind.is_movement() {
+                    context.input.traverse(k.groups, k.kind, max, |i| {
+                        let view = (self.build_view)(&self.items[i]);
+                        view.handle_event(
+                            event,
+                            context,
+                            &mut render_tree[i],
+                            captures,
+                            &mut state[i],
+                        )
+                    })
+                } else {
+                    result
+                };
+            }
+        }
+        for i in 0..self.items.len() {
+            let view = (self.build_view)(&self.items[i]);
+            result.merge(view.handle_event(
+                event,
+                context,
+                &mut render_tree[i],
+                captures,
+                &mut state[i],
+            ));
+            if result.handled {
+                return result;
+            }
+        }
+        result
     }
 }
 
