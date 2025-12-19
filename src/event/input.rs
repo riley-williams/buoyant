@@ -41,7 +41,7 @@ pub struct InputRef<'a> {
     groups: &'a heapless::LinearMap<Groups, &'a GroupData, 8>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Deactivation {
     groups: Groups,
 }
@@ -195,7 +195,7 @@ impl<'a> InputRef<'a> {
         groups: &heapless::linear_map::LinearMap::<_, _, 8>::new(),
     };
     #[inline]
-    fn active_groups(&self) -> Groups {
+    pub fn active_groups(&self) -> Groups {
         Groups(self.active_groups.load(Ordering::Relaxed))
     }
 
