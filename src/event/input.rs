@@ -189,12 +189,14 @@ impl Default for InputRef<'_> {
     }
 }
 
-impl<'a> InputRef<'a> {
+impl InputRef<'_> {
     pub(crate) const DUMMY: InputRef<'static> = InputRef {
         active_groups: &DUMMY_ACTIVE_GROUPS,
         groups: &heapless::linear_map::LinearMap::<_, _, 8>::new(),
     };
+
     #[inline]
+    #[must_use]
     pub fn active_groups(&self) -> Groups {
         Groups(self.active_groups.load(Ordering::Relaxed))
     }
@@ -203,6 +205,7 @@ impl<'a> InputRef<'a> {
         self.active_groups.fetch_or(groups.0, Ordering::Relaxed);
     }
 
+    #[must_use]
     pub fn deactivate(self, groups: Groups) -> Deactivation {
         self.active_groups.fetch_and(!groups.0, Ordering::Relaxed);
         Deactivation { groups }
@@ -251,6 +254,7 @@ impl<'a> InputRef<'a> {
         }
     }
 
+    #[must_use]
     pub fn is_focused_any(self, groups: Groups) -> bool {
         let groups = groups & self.active_groups();
 
