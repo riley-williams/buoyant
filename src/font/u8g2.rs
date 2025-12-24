@@ -22,6 +22,7 @@ impl<C: PixelColor> FontRender<C> for FontRenderer {
         &self,
         character: char,
         color: C,
+        _background_color: Option<C>,
         surface: &mut impl crate::surface::Surface<Color = C>,
     ) {
         let font_color = FontColor::Transparent(color);

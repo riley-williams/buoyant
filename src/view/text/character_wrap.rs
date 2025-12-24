@@ -302,7 +302,7 @@ mod tests {
     impl crate::font::Sealed for VariableWidthFont {}
 
     impl<C> FontRender<C> for VariableWidthFont {
-        fn draw(&self, _: char, _: C, _: &mut impl Surface<Color = C>) {}
+        fn draw(&self, _: char, _: C, _: Option<C>, _: &mut impl Surface<Color = C>) {}
     }
 
     #[test]

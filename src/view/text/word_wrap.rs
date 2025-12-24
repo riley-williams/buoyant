@@ -576,7 +576,7 @@ mod tests {
     impl crate::font::Sealed for VariableWidthFont {}
 
     impl<C> FontRender<C> for VariableWidthFont {
-        fn draw(&self, _: char, _: C, _: &mut impl Surface<Color = C>) {}
+        fn draw(&self, _: char, _: C, _: Option<C>, _: &mut impl Surface<Color = C>) {}
     }
 
     #[test]
@@ -813,7 +813,7 @@ mod tests {
     impl<F> crate::font::Sealed for FontTrace<F> {}
 
     impl<C, F: FontRender<C>> FontRender<C> for FontTrace<F> {
-        fn draw(&self, _: char, _: C, _: &mut impl Surface<Color = C>) {}
+        fn draw(&self, _: char, _: C, _: Option<C>, _: &mut impl Surface<Color = C>) {}
     }
 
     #[test]

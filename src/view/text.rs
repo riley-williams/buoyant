@@ -397,6 +397,7 @@ mod test {
             &self,
             _character: char,
             _color: C,
+            _background_color: Option<C>,
             _surface: &mut impl crate::surface::Surface<Color = C>,
         ) {
         }

@@ -26,7 +26,13 @@ impl Font for MonoFont<'_> {
 impl crate::font::Sealed for MonoFont<'_> {}
 
 impl<C: PixelColor> FontRender<C> for MonoFont<'_> {
-    fn draw(&self, character: char, color: C, surface: &mut impl Surface<Color = C>) {
+    fn draw(
+        &self,
+        character: char,
+        color: C,
+        _background_color: Option<C>,
+        surface: &mut impl Surface<Color = C>,
+    ) {
         let mut s = heapless::String::<1>::new();
         _ = s.push(character);
         let style = MonoTextStyleBuilder::new()

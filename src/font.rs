@@ -27,7 +27,13 @@ pub(crate) trait Sealed {}
 #[expect(private_bounds)]
 pub trait FontRender<Color>: Font + Sealed {
     /// Render the character by drawing to a surface.
-    fn draw(&self, character: char, color: Color, surface: &mut impl Surface<Color = Color>);
+    fn draw(
+        &self,
+        character: char,
+        color: Color,
+        background_color: Option<Color>,
+        surface: &mut impl Surface<Color = Color>,
+    );
 }
 
 pub trait FontMetrics {

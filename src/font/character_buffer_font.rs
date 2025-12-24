@@ -19,7 +19,14 @@ impl Font for CharacterBufferFont {
 impl crate::font::Sealed for CharacterBufferFont {}
 
 impl<C> FontRender<C> for CharacterBufferFont {
-    fn draw(&self, _character: char, _foreground: C, _surface: &mut impl Surface<Color = C>) {}
+    fn draw(
+        &self,
+        _character: char,
+        _foreground: C,
+        _background_color: Option<C>,
+        _surface: &mut impl Surface<Color = C>,
+    ) {
+    }
 }
 
 struct CharacterBufferFontMetrics;

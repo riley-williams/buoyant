@@ -262,7 +262,12 @@ where
             });
         glyphs.for_each(|glyph| {
             let mut surface = OffsetSurface::new(&mut self.surface, offset + glyph.offset);
-            font.draw(glyph.character, color, &mut surface);
+            font.draw(
+                glyph.character,
+                color,
+                self.active_layer.background_hint,
+                &mut surface,
+            );
         });
     }
 
