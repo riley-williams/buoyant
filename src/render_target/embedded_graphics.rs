@@ -3,7 +3,7 @@ use crate::font::FontRender;
 use crate::primitives::transform::CoordinateSpaceTransform;
 use crate::primitives::{Interpolate, Pixel, transform::LinearTransform};
 use crate::render_target::{LayerConfig, LayerHandle};
-use crate::surface::{AsDrawTarget, OffsetSurface};
+use crate::surface::AsDrawTarget;
 use crate::{
     primitives::{
         Point,
@@ -239,12 +239,13 @@ where
         }
     }
 
-    fn draw_glyphs<T: Into<Self::ColorFormat>>(
+    fn draw_glyphs<T: Into<Self::ColorFormat>, F: FontRender<Self::ColorFormat>>(
         &mut self,
         offset: Point,
         brush: &impl Brush<ColorFormat = T>,
         glyphs: impl Iterator<Item = Glyph>,
-        font: &impl FontRender<Self::ColorFormat>,
+        font: &F,
+        font_attributes: &F::Attributes,
     ) {
         let offset = offset.applying(&self.active_layer.transform);
         let Some(color) = brush.as_solid().map(Into::into) else {
@@ -261,12 +262,13 @@ where
                 }
             });
         glyphs.for_each(|glyph| {
-            let mut surface = OffsetSurface::new(&mut self.surface, offset + glyph.offset);
             font.draw(
                 glyph.character,
+                offset + glyph.offset,
                 color,
                 self.active_layer.background_hint,
-                &mut surface,
+                font_attributes,
+                &mut self.surface,
             );
         });
     }

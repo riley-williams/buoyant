@@ -1,12 +1,9 @@
+use crate::font;
 use crate::primitives::geometry::Rectangle;
 use crate::surface::AsDrawTarget as _;
 use embedded_graphics::Drawable;
 use embedded_graphics::mono_font::MonoFont;
-use embedded_graphics::{
-    mono_font::MonoTextStyleBuilder,
-    prelude::{PixelColor, Point as EgPoint},
-    text::Text,
-};
+use embedded_graphics::{mono_font::MonoTextStyleBuilder, prelude::PixelColor, text::Text};
 
 use crate::primitives::{Point, Size};
 use crate::surface::Surface;
@@ -14,23 +11,32 @@ use crate::surface::Surface;
 use super::{Font, FontMetrics, FontRender};
 
 impl Font for MonoFont<'_> {
-    fn metrics(&self) -> impl FontMetrics {
+    type Attributes = ();
+    fn metrics(&self, _attributes: &Self::Attributes) -> impl FontMetrics {
+        let size = self.character_size.into();
+        let v_metrics = font::VMetrics {
+            ascent: self.baseline as i32,
+            descent: self.baseline as i32 - self.character_size.height as i32,
+            line_spacing: 0,
+        };
         MonoFontMetrics {
-            size: self.character_size.into(),
-            baseline: self.baseline,
+            size,
+            v_metrics,
             advance: self.character_spacing + self.character_size.width,
         }
     }
 }
 
-impl crate::font::Sealed for MonoFont<'_> {}
+impl font::Sealed for MonoFont<'_> {}
 
 impl<C: PixelColor> FontRender<C> for MonoFont<'_> {
     fn draw(
         &self,
         character: char,
+        mut offset: Point,
         color: C,
         _background_color: Option<C>,
+        _attributes: &Self::Attributes,
         surface: &mut impl Surface<Color = C>,
     ) {
         let mut s = heapless::String::<1>::new();
@@ -39,16 +45,15 @@ impl<C: PixelColor> FontRender<C> for MonoFont<'_> {
             .font(self)
             .text_color(color)
             .build();
-        let mut point = EgPoint::zero();
-        point.y += self.baseline as i32;
-        _ = Text::new(&s, point, style).draw(&mut surface.draw_target());
+        offset.y += self.baseline as i32;
+        _ = Text::new(&s, offset.into(), style).draw(&mut surface.draw_target());
     }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 struct MonoFontMetrics {
     size: Size,
-    baseline: u32,
+    v_metrics: font::VMetrics,
     advance: u32,
 }
 
@@ -57,15 +62,11 @@ impl FontMetrics for MonoFontMetrics {
         Some(Rectangle::new(Point::zero(), self.size))
     }
 
-    fn default_line_height(&self) -> u32 {
-        self.size.height
+    fn vertical_metrics(&self) -> font::VMetrics {
+        self.v_metrics
     }
 
     fn advance(&self, _: char) -> u32 {
         self.advance
-    }
-
-    fn maximum_character_size(&self) -> Size {
-        self.size
     }
 }

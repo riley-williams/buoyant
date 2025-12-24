@@ -113,7 +113,7 @@ impl<'a, F: FontMetrics> WordWrap<'a, F> {
             self.last_non_empty_line = Some((content, self.current_y));
         }
 
-        self.current_y += self.font.default_line_height() as i32;
+        self.current_y += self.font.vertical_metrics().line_height() as i32;
 
         WrappedLine {
             content,
@@ -329,7 +329,7 @@ mod tests {
 
     #[test]
     fn empty_text() {
-        let metrics = &FONT.metrics();
+        let metrics = &FONT.metrics(&());
         let wrap = super::WordWrap::new("", 10, metrics, false);
         assert_eq!(
             wrap.map(|l| l.content).collect::<Vec<&str>>(),
@@ -340,7 +340,7 @@ mod tests {
     #[ignore = "Not sure how much I care about this behavior"]
     #[test]
     fn only_whitespace_lines_are_retained_up_to_wrapping_width() {
-        let metrics = &FONT.metrics();
+        let metrics = &FONT.metrics(&());
         let wrap = super::WordWrap::new(" ", 5, metrics, false);
         assert_eq!(wrap.map(|l| l.content).collect::<Vec<_>>(), vec![" "]);
         let wrap = super::WordWrap::new("    ", 5, metrics, false);
@@ -356,7 +356,7 @@ mod tests {
     #[ignore = "Not sure how much I care about this behavior"]
     #[test]
     fn only_whitespace_lines_are_retained_up_to_wrapping_width_after_newline() {
-        let metrics = &FONT.metrics();
+        let metrics = &FONT.metrics(&());
         let wrap = super::WordWrap::new("hello\n ", 5, metrics, false);
         assert_eq!(
             wrap.map(|l| l.content).collect::<Vec<_>>(),
@@ -386,7 +386,7 @@ mod tests {
 
     #[test]
     fn single_word() {
-        let metrics = &FONT.metrics();
+        let metrics = &FONT.metrics(&());
 
         let wrap = super::WordWrap::new("hello", 10, metrics, false);
         assert_eq!(wrap.map(|l| l.content).collect::<Vec<_>>(), vec!["hello"]);
@@ -394,7 +394,7 @@ mod tests {
 
     #[test]
     fn multiple_words_fit() {
-        let metrics = &FONT.metrics();
+        let metrics = &FONT.metrics(&());
         let wrap = super::WordWrap::new("hello world", 11, metrics, false);
         assert_eq!(
             wrap.map(|l| l.content).collect::<Vec<_>>(),
@@ -404,7 +404,7 @@ mod tests {
 
     #[test]
     fn multiple_words_wrap() {
-        let metrics = &FONT.metrics();
+        let metrics = &FONT.metrics(&());
         let wrap = super::WordWrap::new("hello world", 10, metrics, false);
         assert_eq!(
             wrap.map(|l| l.content).collect::<Vec<_>>(),
@@ -414,28 +414,28 @@ mod tests {
 
     #[test]
     fn leading_whitespace_is_retained() {
-        let metrics = &FONT.metrics();
+        let metrics = &FONT.metrics(&());
         let wrap = super::WordWrap::new("  hello", 10, metrics, false);
         assert_eq!(wrap.map(|l| l.content).collect::<Vec<_>>(), vec!["  hello"]);
     }
 
     #[test]
     fn trailing_whitespace_is_dropped_even_when_it_fits() {
-        let metrics = &FONT.metrics();
+        let metrics = &FONT.metrics(&());
         let wrap = super::WordWrap::new("hello  ", 10, metrics, false);
         assert_eq!(wrap.map(|l| l.content).collect::<Vec<_>>(), vec!["hello"]);
     }
 
     #[test]
     fn trailing_whitespace_is_dropped_instead_of_wrapped() {
-        let metrics = &FONT.metrics();
+        let metrics = &FONT.metrics(&());
         let wrap = super::WordWrap::new("hello  ", 6, metrics, false);
         assert_eq!(wrap.map(|l| l.content).collect::<Vec<_>>(), vec!["hello"]);
     }
 
     #[test]
     fn multiple_whitespace_is_dropped_when_wrapped() {
-        let metrics = &FONT.metrics();
+        let metrics = &FONT.metrics(&());
         (5..=12).for_each(|available_width| {
             let wrap = super::WordWrap::new("hello   world", available_width, metrics, false);
             assert_eq!(
@@ -447,7 +447,7 @@ mod tests {
 
     #[test]
     fn partial_words_are_wrapped_1() {
-        let metrics = &FONT.metrics();
+        let metrics = &FONT.metrics(&());
         let wrap = super::WordWrap::new("hello world", 1, metrics, false);
         assert_eq!(
             wrap.map(|l| l.content).collect::<Vec<_>>(),
@@ -457,7 +457,7 @@ mod tests {
 
     #[test]
     fn partial_words_are_wrapped_2() {
-        let metrics = &FONT.metrics();
+        let metrics = &FONT.metrics(&());
         let wrap = super::WordWrap::new("hello world", 2, metrics, false);
         assert_eq!(
             wrap.map(|l| l.content).collect::<Vec<_>>(),
@@ -468,7 +468,7 @@ mod tests {
 
     #[test]
     fn partial_words_are_wrapped_3() {
-        let metrics = &FONT.metrics();
+        let metrics = &FONT.metrics(&());
         let wrap = super::WordWrap::new("hello world", 3, metrics, false);
         assert_eq!(
             wrap.map(|l| l.content).collect::<Vec<_>>(),
@@ -479,7 +479,7 @@ mod tests {
 
     #[test]
     fn newlines_are_always_wrapped() {
-        let metrics = &FONT.metrics();
+        let metrics = &FONT.metrics(&());
         let wrap = super::WordWrap::new("hello\nworld", 10, metrics, false);
         assert_eq!(
             wrap.map(|l| l.content).collect::<Vec<_>>(),
@@ -489,7 +489,7 @@ mod tests {
 
     #[test]
     fn multiple_consecutive_newlines_produce_empty_lines() {
-        let metrics = &FONT.metrics();
+        let metrics = &FONT.metrics(&());
         let wrap = super::WordWrap::new("hello\n\nworld", 10, metrics, false);
         assert_eq!(
             wrap.map(|l| l.content).collect::<Vec<_>>(),
@@ -499,7 +499,7 @@ mod tests {
 
     #[test]
     fn spaces_after_newlines_are_retained() {
-        let metrics = &FONT.metrics();
+        let metrics = &FONT.metrics(&());
         let wrap = super::WordWrap::new("hello \n world", 10, metrics, false);
         assert_eq!(
             wrap.map(|l| l.content).collect::<Vec<_>>(),
@@ -509,7 +509,7 @@ mod tests {
 
     #[test]
     fn newlines_on_wrap_boundary_do_not_produce_empty_lines() {
-        let metrics = &FONT.metrics();
+        let metrics = &FONT.metrics(&());
         let wrap = super::WordWrap::new("hello\nworld", 5, metrics, false);
         assert_eq!(
             wrap.map(|l| l.content).collect::<Vec<_>>(),
@@ -519,7 +519,7 @@ mod tests {
 
     #[test]
     fn newlines_wrap_after_forced_overflow() {
-        let metrics = &FONT.metrics();
+        let metrics = &FONT.metrics(&());
         let wrap = super::WordWrap::new("hello\nworld", 4, metrics, false);
         // @typos-ignore
         assert_eq!(
@@ -531,7 +531,7 @@ mod tests {
 
     #[test]
     fn unicode_wraps_correctly() {
-        let metrics = &FONT.metrics();
+        let metrics = &FONT.metrics(&());
         let wrap = super::WordWrap::new("mº🦀º🦀 🦀ºº ºº 🦀", 4, metrics, false);
         assert_eq!(
             wrap.map(|l| l.content).collect::<Vec<_>>(),
@@ -548,8 +548,12 @@ mod tests {
             Some(Rectangle::new(Point::zero(), Size::new(self.advance(c), 1)))
         }
 
-        fn default_line_height(&self) -> u32 {
-            1
+        fn vertical_metrics(&self) -> crate::font::VMetrics {
+            crate::font::VMetrics {
+                ascent: 1,
+                descent: 0,
+                line_spacing: 0,
+            }
         }
 
         fn advance(&self, character: char) -> u32 {
@@ -561,14 +565,11 @@ mod tests {
                 1
             }
         }
-
-        fn maximum_character_size(&self) -> Size {
-            Size::new(9, 1)
-        }
     }
 
     impl Font for VariableWidthFont {
-        fn metrics(&self) -> impl crate::font::FontMetrics {
+        type Attributes = ();
+        fn metrics(&self, _attributes: &Self::Attributes) -> impl crate::font::FontMetrics {
             VariableWidthFontMetrics
         }
     }
@@ -576,12 +577,21 @@ mod tests {
     impl crate::font::Sealed for VariableWidthFont {}
 
     impl<C> FontRender<C> for VariableWidthFont {
-        fn draw(&self, _: char, _: C, _: Option<C>, _: &mut impl Surface<Color = C>) {}
+        fn draw(
+            &self,
+            _: char,
+            _offset: Point,
+            _: C,
+            _: Option<C>,
+            _attributes: &Self::Attributes,
+            _: &mut impl Surface<Color = C>,
+        ) {
+        }
     }
 
     #[test]
     fn variable_width_wrapping() {
-        let metrics = &VariableWidthFont.metrics();
+        let metrics = &VariableWidthFont.metrics(&());
         let wrap = super::WordWrap::new("1 2 3 4 5 6", 5, metrics, false);
         assert_eq!(
             wrap.map(|l| l.content).collect::<Vec<_>>(),
@@ -591,7 +601,7 @@ mod tests {
 
     #[test]
     fn compact_width_offer_never_wraps() {
-        let metrics = &FONT.metrics();
+        let metrics = &FONT.metrics(&());
         let wrap = super::WordWrap::new("hello world", ProposedDimension::Compact, metrics, false);
         assert_eq!(
             wrap.map(|l| l.content).collect::<Vec<_>>(),
@@ -601,7 +611,7 @@ mod tests {
 
     #[test]
     fn infinite_width_offer_never_wraps() {
-        let metrics = &FONT.metrics();
+        let metrics = &FONT.metrics(&());
         let wrap = super::WordWrap::new("hello world", ProposedDimension::Infinite, metrics, false);
         assert_eq!(
             wrap.map(|l| l.content).collect::<Vec<_>>(),
@@ -611,7 +621,7 @@ mod tests {
 
     #[test]
     fn compact_width_offer_only_wraps_explicit_newlines() {
-        let metrics = &FONT.metrics();
+        let metrics = &FONT.metrics(&());
         let wrap = super::WordWrap::new("hello\nworld", ProposedDimension::Compact, metrics, false);
         assert_eq!(
             wrap.map(|l| l.content).collect::<Vec<_>>(),
@@ -621,7 +631,7 @@ mod tests {
 
     #[test]
     fn infinite_width_offer_only_wraps_explicit_newlines() {
-        let metrics = &FONT.metrics();
+        let metrics = &FONT.metrics(&());
         let wrap =
             super::WordWrap::new("hello\nworld", ProposedDimension::Infinite, metrics, false);
         assert_eq!(
@@ -632,7 +642,7 @@ mod tests {
 
     #[test]
     fn width_is_calculated_correctly() {
-        let metrics = &FONT.metrics();
+        let metrics = &FONT.metrics(&());
         let wrap = super::WordWrap::new("hello world", 10, metrics, false);
         let lines: Vec<_> = wrap.collect();
         assert_eq!(lines[0].width, 5);
@@ -641,7 +651,7 @@ mod tests {
 
     #[test]
     fn width_is_calculated_with_variable_width() {
-        let metrics = &VariableWidthFont.metrics();
+        let metrics = &VariableWidthFont.metrics(&());
         let wrap = super::WordWrap::new("1 2 3 4 5 6", 5, metrics, false);
         let lines: Vec<_> = wrap.collect();
         assert_eq!(lines[0].width, 5); // "1 2" = 1 + 2 + 2 = 5
@@ -653,7 +663,7 @@ mod tests {
 
     #[test]
     fn precise_width_not_calculated_when_disabled() {
-        let metrics = &FONT.metrics();
+        let metrics = &FONT.metrics(&());
         let wrap = super::WordWrap::new("hello world", 10, metrics, false);
         let lines: Vec<_> = wrap.collect();
         assert_eq!(lines[0].precise_width, 0);
@@ -662,7 +672,7 @@ mod tests {
 
     #[test]
     fn precise_width_calculated_when_enabled() {
-        let metrics = &FONT.metrics();
+        let metrics = &FONT.metrics(&());
         let wrap = super::WordWrap::new("hello world", 10, metrics, true);
         let lines: Vec<_> = wrap.collect();
 
@@ -677,7 +687,7 @@ mod tests {
 
     #[test]
     fn precise_width_handles_empty_lines() {
-        let metrics = &FONT.metrics();
+        let metrics = &FONT.metrics(&());
         let wrap = super::WordWrap::new("hello\n\nworld", 10, metrics, true);
         let lines: Vec<_> = wrap.collect();
 
@@ -692,7 +702,7 @@ mod tests {
 
     #[test]
     fn precise_width_with_variable_width_font() {
-        let metrics = &VariableWidthFont.metrics();
+        let metrics = &VariableWidthFont.metrics(&());
         let wrap = super::WordWrap::new("1 2 3 4 5 6", 5, metrics, true);
         let lines: Vec<_> = wrap.collect();
 
@@ -721,7 +731,7 @@ mod tests {
 
     #[test]
     fn precise_width_with_forced_line_break() {
-        let metrics = &FONT.metrics();
+        let metrics = &FONT.metrics(&());
         let wrap = super::WordWrap::new("hello\nworld", 4, metrics, true);
         let lines: Vec<_> = wrap.collect();
 
@@ -746,7 +756,7 @@ mod tests {
 
     #[test]
     fn first_and_last_line_tracked() {
-        let metrics = &FONT.metrics();
+        let metrics = &FONT.metrics(&());
         let mut wrap = super::WordWrap::new("hello", 10, metrics, true);
 
         let lines: Vec<_> = (&mut wrap).collect();
@@ -758,7 +768,7 @@ mod tests {
 
     #[test]
     fn trailing_newlines_ignored() {
-        let metrics = &FONT.metrics();
+        let metrics = &FONT.metrics(&());
         let mut wrap = super::WordWrap::new("hello\n\nworld\n\n", 10, metrics, true);
 
         let _lines: Vec<_> = (&mut wrap).collect();
@@ -786,26 +796,23 @@ mod tests {
             self.inner.rendered_size(c)
         }
 
-        fn default_line_height(&self) -> u32 {
-            self.inner.default_line_height()
+        fn vertical_metrics(&self) -> crate::font::VMetrics {
+            self.inner.vertical_metrics()
         }
 
         fn advance(&self, character: char) -> u32 {
             *self.advance_calls.borrow_mut() += 1;
             self.inner.advance(character)
         }
-
-        fn maximum_character_size(&self) -> Size {
-            self.inner.maximum_character_size()
-        }
     }
 
     impl<F: Font> Font for FontTrace<F> {
-        fn metrics(&self) -> impl crate::font::FontMetrics {
+        type Attributes = F::Attributes;
+        fn metrics(&self, attributes: &Self::Attributes) -> impl crate::font::FontMetrics {
             TraceMetrics {
                 rendered_size_calls: &self.rendered_size_calls,
                 advance_calls: &self.advance_calls,
-                inner: self.inner.metrics(),
+                inner: self.inner.metrics(attributes),
             }
         }
     }
@@ -813,7 +820,16 @@ mod tests {
     impl<F> crate::font::Sealed for FontTrace<F> {}
 
     impl<C, F: FontRender<C>> FontRender<C> for FontTrace<F> {
-        fn draw(&self, _: char, _: C, _: Option<C>, _: &mut impl Surface<Color = C>) {}
+        fn draw(
+            &self,
+            _: char,
+            _offset: Point,
+            _: C,
+            _: Option<C>,
+            _: &Self::Attributes,
+            _: &mut impl Surface<Color = C>,
+        ) {
+        }
     }
 
     #[test]
@@ -824,7 +840,7 @@ mod tests {
             inner: FONT,
         };
 
-        let traced_font_metrics = traced_font.metrics();
+        let traced_font_metrics = traced_font.metrics(&());
 
         let wrap = super::WordWrap::new("aaaaa\nbbbbb\nccccc", 5, &traced_font_metrics, true);
 
@@ -846,7 +862,7 @@ mod tests {
             inner: FONT,
         };
 
-        let traced_font_metrics = traced_font.metrics();
+        let traced_font_metrics = traced_font.metrics(&());
 
         let wrap = super::WordWrap::new("aaaaa\nbbbbb\nccccc", 5, &traced_font_metrics, false);
 
@@ -870,6 +886,7 @@ mod tests {
         let text = Text {
             text: "aaaaa\nbbbbb\nccccc\nddddd",
             font: &traced_font,
+            attributes: Default::default(),
             alignment: crate::view::HorizontalTextAlignment::Leading,
             precise_character_bounds: true,
             wrap: crate::view::WrapStrategy::Word,
@@ -901,6 +918,7 @@ mod tests {
         let text = Text {
             text: "aaaaa\nbbbbb\nccccc\nddddd",
             font: &traced_font,
+            attributes: Default::default(),
             alignment: crate::view::HorizontalTextAlignment::Leading,
             precise_character_bounds: false,
             wrap: crate::view::WrapStrategy::Word,

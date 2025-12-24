@@ -21,6 +21,8 @@ embedded-graphics = [
   "dep:embedded-graphics",
   "dep:embedded-graphics-core",
   "dep:u8g2-fonts",
+  "dep:embedded-ttf",
+  "dep:rusttype",
 ]
 crossterm = ["dep:crossterm", "std"]
 embedded-graphics-simulator = [
@@ -43,6 +45,8 @@ embedded-touch = "^0.3.0"
 embedded-graphics-simulator = { version = "0.8.0", default-features = false, features = [
   "with-sdl",
 ], optional = true }
+embedded-ttf = { version = "^0.2.2", optional = true }
+rusttype = { version = "0.9.3", optional = true }
 
 [dev-dependencies]
 tinytga = "^0.5"
@@ -92,6 +96,7 @@ use_self = "deny"
 derive_partial_eq_without_eq = "deny"
 type_repetition_in_bounds = "deny"
 option_if_let_else = "deny"
+cast_lossless = "allow"
 
 # Disabled for now, may be worth turning on in the future
 cast_possible_wrap = "allow"

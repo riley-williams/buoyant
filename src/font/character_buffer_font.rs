@@ -11,7 +11,8 @@ use super::{Font, FontMetrics, FontRender};
 pub struct CharacterBufferFont;
 
 impl Font for CharacterBufferFont {
-    fn metrics(&self) -> impl FontMetrics {
+    type Attributes = ();
+    fn metrics(&self, _attributes: &Self::Attributes) -> impl FontMetrics {
         CharacterBufferFontMetrics
     }
 }
@@ -22,8 +23,10 @@ impl<C> FontRender<C> for CharacterBufferFont {
     fn draw(
         &self,
         _character: char,
+        _offset: Point,
         _foreground: C,
         _background_color: Option<C>,
+        _attributes: &Self::Attributes,
         _surface: &mut impl Surface<Color = C>,
     ) {
     }
@@ -35,15 +38,15 @@ impl FontMetrics for CharacterBufferFontMetrics {
         Some(Rectangle::new(Point::zero(), Size::new(1, 1)))
     }
 
-    fn default_line_height(&self) -> u32 {
-        1
+    fn vertical_metrics(&self) -> crate::font::VMetrics {
+        crate::font::VMetrics {
+            ascent: 1,
+            descent: 0,
+            line_spacing: 0,
+        }
     }
 
     fn advance(&self, _: char) -> u32 {
         1
-    }
-
-    fn maximum_character_size(&self) -> Size {
-        Size::new(1, 1)
     }
 }
