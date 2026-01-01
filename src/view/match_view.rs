@@ -243,6 +243,7 @@ where
         }
     }
 
+    #[expect(clippy::assertions_on_constants)]
     fn handle_event(
         &self,
         event: &crate::view::Event,
@@ -401,6 +402,7 @@ where
         }
     }
 
+    #[expect(clippy::assertions_on_constants)]
     fn handle_event(
         &self,
         event: &crate::view::Event,
@@ -589,6 +591,7 @@ where
         }
     }
 
+    #[expect(clippy::assertions_on_constants)]
     fn handle_event(
         &self,
         event: &crate::view::Event,
