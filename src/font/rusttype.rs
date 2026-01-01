@@ -99,16 +99,22 @@ where
 impl FontMetrics for AttributedFont<'_> {
     #[expect(clippy::cast_precision_loss)]
     fn rendered_size(&self, character: char) -> Option<Rectangle> {
-        let glyph = self
+        // The origin of the rect returned by pixel_bounding_box is relative to the baseline
+        let ascent = self
             .font
+            .v_metrics(Scale::uniform(self.attributes.size as f32))
+            .ascent;
+        self.font
             .glyph(character.into_glyph_id(self.font))
-            .scaled(rusttype::Scale::uniform(self.attributes.size as f32));
-        glyph.exact_bounding_box().map(|bb| {
-            Rectangle::new(
-                Point::new(bb.min.x as i32, bb.min.y as i32),
-                Size::new((bb.max.x - bb.min.x) as u32, (bb.max.y - bb.min.y) as u32),
-            )
-        })
+            .scaled(rusttype::Scale::uniform(self.attributes.size as f32))
+            .positioned(rusttype::Point { x: 0.0, y: ascent })
+            .pixel_bounding_box()
+            .map(|bb| {
+                Rectangle::new(
+                    Point::new(bb.min.x, bb.min.y),
+                    Size::new((bb.max.x - bb.min.x) as u32, (bb.max.y - bb.min.y) as u32),
+                )
+            })
     }
 
     #[expect(clippy::cast_precision_loss)]
@@ -117,9 +123,9 @@ impl FontMetrics for AttributedFont<'_> {
             .font
             .v_metrics(Scale::uniform(self.attributes.size as f32));
         font::VMetrics {
-            ascent: metrics.ascent.ceil() as i32,
-            descent: metrics.descent.floor() as i32,
-            line_spacing: metrics.line_gap.ceil() as i32,
+            ascent: metrics.ascent as i32,
+            descent: metrics.descent as i32,
+            line_spacing: metrics.line_gap as i32,
         }
     }
 
