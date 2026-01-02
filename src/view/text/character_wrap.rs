@@ -119,7 +119,7 @@ impl<'a, F: FontMetrics> CharacterWrap<'a, F> {
             self.last_non_empty_line = Some((content, self.current_y));
         }
 
-        self.current_y += self.font.default_line_height() as i32;
+        self.current_y += self.font.vertical_metrics().line_height() as i32;
 
         WrappedLine {
             content,
@@ -199,7 +199,7 @@ mod tests {
 
     #[test]
     fn single_word() {
-        let metrics = &FONT.metrics();
+        let metrics = &FONT.metrics(&());
         let wrap = CharacterWrap::new("hello", 10, metrics, false);
         assert_eq!(
             wrap.map(|l| l.content).collect::<Vec<&str>>(),
@@ -209,7 +209,7 @@ mod tests {
 
     #[test]
     fn breaks_anywhere_not_at_space() {
-        let metrics = &FONT.metrics();
+        let metrics = &FONT.metrics(&());
         // "hello world" is 11 chars -> width 11
         // @typos-ignore
         // available_width = 10 -> should break after 10 bytes: "hello worl", "d"
@@ -223,7 +223,7 @@ mod tests {
 
     #[test]
     fn partial_words_are_wrapped_2() {
-        let metrics = &FONT.metrics();
+        let metrics = &FONT.metrics(&());
         let wrap = CharacterWrap::new("hello world", 2, metrics, false);
         assert_eq!(
             wrap.map(|l| l.content).collect::<Vec<_>>(),
@@ -233,7 +233,7 @@ mod tests {
 
     #[test]
     fn newlines_are_respected() {
-        let metrics = &FONT.metrics();
+        let metrics = &FONT.metrics(&());
         let wrap = CharacterWrap::new("hello\nworld", 3, metrics, false);
         assert_eq!(
             wrap.map(|l| l.content).collect::<Vec<_>>(),
@@ -244,7 +244,7 @@ mod tests {
 
     #[test]
     fn compact_and_infinite_do_not_wrap_unless_newline() {
-        let metrics = &FONT.metrics();
+        let metrics = &FONT.metrics(&());
         let wrap = CharacterWrap::new("hello world", ProposedDimension::Compact, metrics, false);
         assert_eq!(
             wrap.map(|l| l.content).collect::<Vec<_>>(),
@@ -274,8 +274,12 @@ mod tests {
             Some(Rectangle::new(Point::zero(), size))
         }
 
-        fn default_line_height(&self) -> u32 {
-            1
+        fn vertical_metrics(&self) -> crate::font::VMetrics {
+            crate::font::VMetrics {
+                ascent: 1,
+                descent: 0,
+                line_spacing: 0,
+            }
         }
 
         fn advance(&self, character: char) -> u32 {
@@ -287,14 +291,11 @@ mod tests {
                 1
             }
         }
-
-        fn maximum_character_size(&self) -> Size {
-            Size::new(1, 1)
-        }
     }
 
     impl Font for VariableWidthFont {
-        fn metrics(&self) -> impl crate::font::FontMetrics {
+        type Attributes = ();
+        fn metrics(&self, _attributes: &Self::Attributes) -> impl crate::font::FontMetrics {
             VariableWidthFontMetrics
         }
     }
@@ -302,12 +303,21 @@ mod tests {
     impl crate::font::Sealed for VariableWidthFont {}
 
     impl<C> FontRender<C> for VariableWidthFont {
-        fn draw(&self, _: char, _: C, _: &mut impl Surface<Color = C>) {}
+        fn draw(
+            &self,
+            _: char,
+            _offset: Point,
+            _: C,
+            _: Option<C>,
+            _attributes: &Self::Attributes,
+            _: &mut impl Surface<Color = C>,
+        ) {
+        }
     }
 
     #[test]
     fn variable_width_respected() {
-        let metrics = &VariableWidthFont.metrics();
+        let metrics = &VariableWidthFont.metrics(&());
         // digits have widths equal to their value, spaces width 2.
         // -----
         // 1  22
@@ -328,7 +338,7 @@ mod tests {
     #[test]
     fn zero_sized_offer() {
         // The behavior of newlines in zero-width offers should be the same as with 1-width offers
-        let metrics = &FONT.metrics();
+        let metrics = &FONT.metrics(&());
         let wrap_0 = CharacterWrap::new("he\nllo", 0, metrics, false);
         assert_eq!(
             wrap_0.map(|l| l.content).collect::<Vec<_>>(),
@@ -345,7 +355,7 @@ mod tests {
     fn natural_breaks_consume_explicit_newlines() {
         // When breaking naturally before a newline, it should not produce an extra line,
         // except for a trailing newline
-        let metrics = &FONT.metrics();
+        let metrics = &FONT.metrics(&());
         let wrap = CharacterWrap::new("1\n\n3\n", 1, metrics, false);
         assert_eq!(
             wrap.map(|l| l.content).collect::<Vec<_>>(),
@@ -355,7 +365,7 @@ mod tests {
 
     #[test]
     fn unicode_wraps_correctly() {
-        let metrics = &FONT.metrics();
+        let metrics = &FONT.metrics(&());
         let wrap = CharacterWrap::new("rº🦀_🦀 🦀\nyº ºº\t🦀", 4, metrics, false);
         assert_eq!(
             wrap.map(|l| l.content).collect::<Vec<_>>(),
