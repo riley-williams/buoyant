@@ -16,6 +16,8 @@ use super::{Brush, Glyph, RenderTarget, Shape, Stroke, Surface};
 pub struct FixedTextBuffer<const W: usize, const H: usize> {
     pub text: [[char; W]; H],
     pub active_layer: LayerConfig<char>,
+    /// A flag tracking active animation. Initially true to ensure first render occurs.
+    active_animation: bool,
 }
 
 impl<const W: usize, const H: usize> FixedTextBuffer<W, H> {
@@ -52,6 +54,7 @@ impl<const W: usize, const H: usize> Default for FixedTextBuffer<W, H> {
         Self {
             text: [[' '; W]; H],
             active_layer: LayerConfig::new_sized(Size::new(W as u32, H as u32)),
+            active_animation: true,
         }
     }
 }
@@ -88,6 +91,16 @@ impl<const W: usize, const H: usize> RenderTarget for FixedTextBuffer<W, H> {
 
     fn alpha(&self) -> u8 {
         255
+    }
+
+    fn report_active_animation(&mut self) {
+        self.active_animation = true;
+    }
+
+    fn clear_animation_status(&mut self) -> bool {
+        let was_active = self.active_animation;
+        self.active_animation = false;
+        was_active
     }
 
     fn fill<C: Into<Self::ColorFormat>>(

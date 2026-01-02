@@ -40,6 +40,8 @@ use super::{Brush, Glyph, RenderTarget, Shape, Stroke};
 pub struct CrosstermRenderTarget {
     stdout: Stdout,
     active_layer: LayerConfig<Colors>,
+    /// A flag tracking active animation. Initially true.
+    active_animation: bool,
 }
 
 impl CrosstermRenderTarget {
@@ -128,6 +130,7 @@ impl Default for CrosstermRenderTarget {
         Self {
             stdout,
             active_layer: LayerConfig::new_clip(clip_rect),
+            active_animation: true,
         }
     }
 }
@@ -172,6 +175,16 @@ impl RenderTarget for CrosstermRenderTarget {
 
     fn alpha(&self) -> u8 {
         self.active_layer.alpha
+    }
+
+    fn report_active_animation(&mut self) {
+        self.active_animation = true;
+    }
+
+    fn clear_animation_status(&mut self) -> bool {
+        let was_active = self.active_animation;
+        self.active_animation = false;
+        was_active
     }
 
     fn fill<C: Into<Self::ColorFormat>>(
