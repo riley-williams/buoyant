@@ -4,6 +4,7 @@ use core::cmp::max;
 
 use crate::{
     environment::LayoutEnvironment,
+    event::EventResult,
     layout::{HorizontalAlignment, LayoutDirection, ResolvedLayout, VerticalAlignment},
     primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions},
     transition::Opacity,
@@ -352,6 +353,28 @@ where
         }
 
         renderables
+    }
+
+    fn handle_event(
+        &self,
+        event: &crate::event::Event,
+        context: &crate::event::EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> crate::event::EventResult {
+        let mut result = EventResult::default();
+        // Delegate event handling to child views
+        for (i, item) in self.items.iter().enumerate() {
+            let view = (self.build_view)(item);
+            let item_state = &mut state[i];
+            let item_render_tree = &mut render_tree[i];
+            result.merge(view.handle_event(event, context, item_render_tree, captures, item_state));
+            if result.handled {
+                return result;
+            }
+        }
+        result
     }
 }
 
