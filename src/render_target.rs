@@ -66,26 +66,28 @@ pub trait RenderTarget {
     );
 
     /// Draws a series of glyphs using the specified style and brush.
-    fn draw_glyphs<C: Into<Self::ColorFormat>>(
+    fn draw_glyphs<C: Into<Self::ColorFormat>, F: font::FontRender<Self::ColorFormat>>(
         &mut self,
         offset: Point,
         brush: &impl Brush<ColorFormat = C>,
         glyphs: impl Iterator<Item = Glyph>,
-        font: &impl font::FontRender<Self::ColorFormat>,
+        font: &F,
+        font_attributes: &F::Attributes,
     );
 
     /// Draws a string using the specified style and brush.
     ///
     /// This performs the same operation as `draw_glyphs`, but also handles
     /// glyph indexing and positioning.
-    fn draw_str<C: Into<Self::ColorFormat>>(
+    fn draw_str<C: Into<Self::ColorFormat>, F: font::FontRender<Self::ColorFormat>>(
         &mut self,
         offset: Point,
         brush: &impl Brush<ColorFormat = C>,
         text: &str,
-        font: &impl font::FontRender<Self::ColorFormat>,
+        font: &F,
+        font_attributes: &F::Attributes,
     ) {
-        let metrics = font.metrics();
+        let metrics = font.metrics(font_attributes);
         let mut x = 0;
         self.draw_glyphs(
             offset,
@@ -99,6 +101,7 @@ pub trait RenderTarget {
                 glyph
             }),
             font,
+            font_attributes,
         );
     }
 

@@ -6,12 +6,13 @@ use buoyant::environment::DefaultEnvironment;
 use buoyant::font::FontRender;
 use buoyant::if_view;
 use buoyant::primitives::ProposedDimensions;
+use buoyant::render::Render as _;
+use buoyant::render_target::EmbeddedGraphicsRenderTarget;
 use buoyant::{
     font::Font,
     primitives::{Point, Size, geometry::Rectangle},
     view::prelude::*,
 };
-use embedded_graphics::Drawable;
 
 use embedded_graphics::prelude::RgbColor;
 use embedded_graphics::{mock_display::MockDisplay, pixelcolor::Rgb888};
@@ -58,9 +59,22 @@ fn rendered_text_bounds(
     let mut display = MockDisplay::new();
     display.set_allow_out_of_bounds_drawing(true);
     display.set_allow_overdraw(true);
-    view.as_drawable(size, Rgb888::WHITE, &mut ())
-        .draw(&mut display)
-        .unwrap();
+    let mut target = EmbeddedGraphicsRenderTarget::new_hinted(&mut display, Rgb888::BLACK);
+    let mut state = view.build_state(&mut ());
+    let layout = view.layout(
+        &size.into(),
+        &DefaultEnvironment::default(),
+        &mut (),
+        &mut state,
+    );
+    let render_tree = view.render_tree(
+        &layout,
+        Point::zero(),
+        &DefaultEnvironment::default(),
+        &mut (),
+        &mut state,
+    );
+    render_tree.render(&mut target, &Rgb888::WHITE);
     if print {
         println!("{display:?}");
     }
@@ -108,6 +122,17 @@ fn precise_bounds_u8g2_glasstown() {
     exhaustively_check_precise_bounds(&FontRenderer::new::<
         u8g2_fonts::fonts::u8g2_font_glasstown_nbp_tf,
     >());
+}
+
+#[ignore = "The results are extremely close, not sure if this is a quirk of the renderer or a bug"]
+#[test]
+fn precise_bounds_otf_sniglet() {
+    exhaustively_check_precise_bounds(
+        &rusttype::Font::try_from_bytes(
+            include_bytes!("../assets/fonts/Sniglet Regular.otf") as &[u8]
+        )
+        .unwrap(),
+    );
 }
 
 #[ignore = "Significant negative offsets cause weirdness"]

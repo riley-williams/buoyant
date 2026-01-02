@@ -8,6 +8,7 @@ use crossterm::{
 use std::io::{Stdout, Write, stdout};
 
 use crate::{
+    font::FontRender,
     primitives::{
         Pixel, Point, Size,
         geometry::Rectangle,
@@ -260,12 +261,13 @@ impl RenderTarget for CrosstermRenderTarget {
         }
     }
 
-    fn draw_glyphs<C: Into<Self::ColorFormat>>(
+    fn draw_glyphs<C: Into<Self::ColorFormat>, F: FontRender<Self::ColorFormat>>(
         &mut self,
         offset: Point,
         brush: &impl Brush<ColorFormat = C>,
         glyphs: impl Iterator<Item = Glyph>,
-        _font: &impl crate::font::FontRender<Self::ColorFormat>,
+        _font: &F,
+        _font_attributes: &F::Attributes,
     ) {
         let offset = offset.applying(&self.active_layer.transform);
         let Some(color) = brush.as_solid().map(Into::into) else {

@@ -3,7 +3,7 @@ use core::ops::Range;
 use heapless::Vec;
 
 use crate::{
-    font::{FontMetrics, FontRender},
+    font::{Font, FontMetrics, FontRender},
     primitives::{Interpolate, Point, Size, geometry::Rectangle},
     render::{AnimatedJoin, AnimationDomain, Render},
     render_target::{Glyph, RenderTarget, SolidBrush},
@@ -17,24 +17,27 @@ pub struct Line {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct Text<'a, T, F, const LINES: usize> {
+pub struct Text<'a, T, F: Font, const LINES: usize> {
     pub origin: Point,
     pub size: Size,
     pub font: &'a F,
     pub text: T,
+    pub attributes: F::Attributes,
     pub alignment: HorizontalTextAlignment,
     pub lines: Vec<Line, LINES>,
     pub max_lines: u32,
     pub wrap: WrapStrategy,
 }
 
-impl<'a, T: AsRef<str>, F> Text<'a, T, F, 8> {
+// FIXME: Remove and just use struct init
+impl<'a, T: AsRef<str>, F: Font> Text<'a, T, F, 8> {
     #[expect(clippy::too_many_arguments)]
     pub fn new(
         origin: Point,
         size: Size,
         font: &'a F,
         text: T,
+        attributes: F::Attributes,
         alignment: HorizontalTextAlignment,
         lines: Vec<Line, 8>,
         max_lines: u32,
@@ -45,6 +48,7 @@ impl<'a, T: AsRef<str>, F> Text<'a, T, F, 8> {
             size,
             font,
             text,
+            attributes,
             alignment,
             lines,
             max_lines,
@@ -52,13 +56,15 @@ impl<'a, T: AsRef<str>, F> Text<'a, T, F, 8> {
         }
     }
 }
-impl<T: Clone, F, const N: usize> Clone for Text<'_, T, F, N> {
+
+impl<T: Clone, F: Font, const N: usize> Clone for Text<'_, T, F, N> {
     fn clone(&self) -> Self {
         Self {
             origin: self.origin,
             size: self.size,
             font: self.font,
             text: self.text.clone(),
+            attributes: self.attributes.clone(),
             alignment: self.alignment,
             lines: self.lines.clone(),
             max_lines: self.max_lines,
@@ -67,17 +73,23 @@ impl<T: Clone, F, const N: usize> Clone for Text<'_, T, F, N> {
     }
 }
 
-impl<T: AsRef<str>, F, const N: usize> AnimatedJoin for Text<'_, T, F, N> {
+impl<T: AsRef<str>, F: Font, const N: usize> AnimatedJoin for Text<'_, T, F, N> {
     fn join_from(&mut self, source: &Self, domain: &AnimationDomain) {
         // Text content (and line breaks) jump
         self.origin = Interpolate::interpolate(source.origin, self.origin, domain.factor);
         self.size = Interpolate::interpolate(source.size, self.size, domain.factor);
+        self.attributes = Interpolate::interpolate(
+            source.attributes.clone(),
+            self.attributes.clone(),
+            domain.factor,
+        );
     }
 }
 
 impl<C: Copy, T: AsRef<str> + Clone, F: FontRender<C>, const LINE_BREAKS: usize> Render<C>
     for Text<'_, T, F, LINE_BREAKS>
 {
+    #[expect(clippy::too_many_lines)]
     fn render(&self, render_target: &mut impl RenderTarget<ColorFormat = C>, style: &C) {
         let clip_rect = render_target.clip_rect();
         let bounding_box = Rectangle::new(self.origin, self.size);
@@ -85,11 +97,9 @@ impl<C: Copy, T: AsRef<str> + Clone, F: FontRender<C>, const LINE_BREAKS: usize>
             return;
         }
 
-        let metrics = self.font.metrics();
-
+        let metrics = self.font.metrics(&self.attributes);
         let brush = SolidBrush::new(*style);
-
-        let line_height = metrics.default_line_height();
+        let line_height = metrics.vertical_metrics().line_height();
 
         let mut height = 0;
         let mut line_count = 0;
@@ -133,6 +143,7 @@ impl<C: Copy, T: AsRef<str> + Clone, F: FontRender<C>, const LINE_BREAKS: usize>
                     glyph
                 }),
                 self.font,
+                &self.attributes,
             );
 
             height += line_height as i32;
@@ -154,7 +165,6 @@ impl<C: Copy, T: AsRef<str> + Clone, F: FontRender<C>, const LINE_BREAKS: usize>
             WrapStrategy::Word => word_wrap.next(),
             WrapStrategy::Character => character_wrap.next(),
         });
-
         let clip_rect = render_target.clip_rect();
 
         for line in wrap {
@@ -195,6 +205,7 @@ impl<C: Copy, T: AsRef<str> + Clone, F: FontRender<C>, const LINE_BREAKS: usize>
                     glyph
                 }),
                 self.font,
+                &self.attributes,
             );
 
             height += line_height as i32;
@@ -210,11 +221,18 @@ impl<C: Copy, T: AsRef<str> + Clone, F: FontRender<C>, const LINE_BREAKS: usize>
     ) {
         let origin = Interpolate::interpolate(source.origin, target.origin, domain.factor);
         let size = Interpolate::interpolate(source.size, target.size, domain.factor);
+        let attributes = Interpolate::interpolate(
+            source.attributes.clone(),
+            target.attributes.clone(),
+            domain.factor,
+        );
+
         Text {
             text: target.text.as_ref(),
             origin,
             size,
             font: target.font,
+            attributes,
             alignment: target.alignment,
             lines: target.lines.clone(),
             max_lines: target.max_lines,
@@ -243,6 +261,7 @@ mod tests {
             Size::new(100, 50),
             &font,
             "Hello",
+            (),
             HorizontalTextAlignment::Leading,
             Vec::new(),
             100,
@@ -253,6 +272,7 @@ mod tests {
             Size::new(200, 100),
             &font,
             "World",
+            (),
             HorizontalTextAlignment::Center,
             Vec::new(),
             100,
@@ -276,6 +296,7 @@ mod tests {
             Size::new(100, 50),
             &font,
             "Hello",
+            (),
             HorizontalTextAlignment::Leading,
             Vec::new(),
             100,
@@ -286,6 +307,7 @@ mod tests {
             Size::new(200, 100),
             &font,
             "World",
+            (),
             HorizontalTextAlignment::Center,
             Vec::new(),
             100,
@@ -310,6 +332,7 @@ mod tests {
             Size::new(50, 25),
             &font,
             "Start",
+            (),
             HorizontalTextAlignment::Leading,
             Vec::new(),
             100,
@@ -320,6 +343,7 @@ mod tests {
             Size::new(150, 75),
             &font,
             "End",
+            (),
             HorizontalTextAlignment::Trailing,
             Vec::new(),
             100,
