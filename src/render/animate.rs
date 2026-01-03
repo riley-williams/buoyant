@@ -112,6 +112,7 @@ impl<C, T: Render<C>, U: PartialEq + Clone> Render<C> for Animate<T, U> {
                 app_time: domain.app_time,
             }
         } else {
+            render_target.report_active_animation();
             // compute factor
             let diff = duration.saturating_sub(end_time.saturating_sub(domain.app_time));
             let factor = source.animation.curve.factor(diff, duration);
