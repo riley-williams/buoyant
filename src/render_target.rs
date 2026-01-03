@@ -44,7 +44,18 @@ pub trait RenderTarget {
         LayerFn: FnOnce(LayerHandle<Self::ColorFormat>) -> LayerHandle<Self::ColorFormat>,
         DrawFn: FnOnce(&mut Self);
 
+    /// The alpha value for the current layer.
     fn alpha(&self) -> u8;
+
+    /// Reports that an animation is active.
+    ///
+    /// If a frame passes without this being called, the render target may
+    /// choose to reduce its frame rate or enter a low-power state.
+    fn report_active_animation(&mut self);
+
+    /// Clears the active animation status, returning true if an animation was
+    /// reported as active since the last time the status was cleared.
+    fn clear_animation_status(&mut self) -> bool;
 
     /// Fills a shape using the specified style and brush.
     fn fill<C: Into<Self::ColorFormat>>(

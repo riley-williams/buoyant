@@ -1,17 +1,16 @@
 //! # Example: Espresso UI
 //!
-//! This example allows you to switch between three tabs using the left and right arrow keys.
-//! The settings can be toggled using the `b`, `w`, and `o` keys.
+//! A demo UI showing a coffee machine interface with multiple tabs, buttons, and toggles.
 //!
 //! To run this example using the `embedded_graphics` simulator, you must have the `sdl2` package installed.
 //! See [SDL2](https://github.com/Rust-SDL2/rust-sdl2) for installation instructions.
 
-mod tab_view;
+mod view;
 
 use std::time::{Duration, Instant};
 
 use buoyant::environment::DefaultEnvironment;
-use buoyant::event::{EventContext, simulator::MouseTracker};
+use buoyant::event::{EventContext, EventResult, simulator::MouseTracker};
 use buoyant::primitives::Point;
 use buoyant::render::{AnimatedJoin, AnimationDomain, Render};
 use buoyant::render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _};
@@ -76,68 +75,104 @@ fn main() {
     let mut display: SimulatorDisplay<color::Space> = SimulatorDisplay::new(size);
     let mut target = EmbeddedGraphicsRenderTarget::new_hinted(&mut display, color::BACKGROUND);
     let mut window = Window::new("Coffeeeee", &OutputSettings::default());
+    // Send at least one update to the window so it doesn't panic when fetching events
+    window.update(target.display());
+
     let app_start = Instant::now();
     let mut touch_tracker = MouseTracker::new();
 
     let mut app_data = AppState::default();
     let mut view = root_view(&app_data);
-    let mut state = view.build_state(&mut app_data);
+    let mut view_state = view.build_state(&mut app_data);
 
     // Create initial source and target trees for animation
     let time = app_start.elapsed();
     let env = DefaultEnvironment::new(time);
-    let layout = view.layout(&target.size().into(), &env, &mut app_data, &mut state);
+    let layout = view.layout(&target.size().into(), &env, &mut app_data, &mut view_state);
 
-    let mut source_tree =
-        &mut view.render_tree(&layout, Point::default(), &env, &mut app_data, &mut state);
-    let mut target_tree =
-        &mut view.render_tree(&layout, Point::default(), &env, &mut app_data, &mut state);
+    let mut source_tree = &mut view.render_tree(
+        &layout,
+        Point::default(),
+        &env,
+        &mut app_data,
+        &mut view_state,
+    );
+    let mut target_tree = &mut view.render_tree(
+        &layout,
+        Point::default(),
+        &env,
+        &mut app_data,
+        &mut view_state,
+    );
 
+    // Main event loop
     loop {
         let time = app_start.elapsed();
         let domain = AnimationDomain::top_level(time);
-
-        // Render animated transition between source and target trees
-        Render::render_animated(
-            &mut target,
-            source_tree,
-            target_tree,
-            &color::Space::WHITE,
-            &domain,
-        );
-        window.update(target.display());
-        target.clear(color::Space::BLACK);
-
-        // Handle events
-        let mut should_exit = false;
         let context = EventContext::new(time);
-        for event in window
+
+        let mut should_exit = false;
+
+        // Handle events, merging into a single result
+        let result = window
             .events()
             .filter_map(|event| touch_tracker.process_event(event))
-        {
-            if event == buoyant::event::Event::Exit {
-                should_exit = true;
-                break;
-            }
-            let result =
-                view.handle_event(&event, &context, target_tree, &mut app_data, &mut state);
-            if result.recompute_view {
-                // Join source and target trees at current time, "freezing" animation progress
-                target_tree.join_from(source_tree, &domain);
-                // Swap trees so the current target becomes the next source.
-                // Note this swaps the references instead of the whole section of memory
-                core::mem::swap(&mut source_tree, &mut target_tree);
-                // Create new view and target tree
-                view = root_view(&app_data);
-                let env = DefaultEnvironment::new(time);
-                let layout = view.layout(&target.size().into(), &env, &mut app_data, &mut state);
-                *target_tree =
-                    view.render_tree(&layout, Point::default(), &env, &mut app_data, &mut state);
-            }
-        }
+            .fold(EventResult::default(), |result, event| {
+                // Manually handle exit events and external events
+                if event == buoyant::event::Event::Exit {
+                    should_exit = true;
+                }
+                result.merging(view.handle_event(
+                    &event,
+                    &context,
+                    target_tree,
+                    &mut app_data,
+                    &mut view_state,
+                ))
+            });
 
         if should_exit {
             break;
+        }
+
+        // Only recompute the view, layout, and render trees if necessary.
+        // Additional handling may be needed to recompute the view in response to external events.
+        if result.recompute_view {
+            // Join source and target trees at current time, "freezing" animation progress
+            target_tree.join_from(source_tree, &domain);
+            // Swap trees so the current target becomes the next source.
+            // Note this swaps the references instead of the whole section of memory
+            core::mem::swap(&mut source_tree, &mut target_tree);
+            // Create new view and target tree
+            view = root_view(&app_data);
+            let env = DefaultEnvironment::new(time);
+            let layout = view.layout(&target.size().into(), &env, &mut app_data, &mut view_state);
+            *target_tree = view.render_tree(
+                &layout,
+                Point::default(),
+                &env,
+                &mut app_data,
+                &mut view_state,
+            );
+        }
+
+        // Only render if active animation was reported, the view changed, or redraw was requested
+        if target.clear_animation_status() || result.recompute_view || result.redraw {
+            // Render animated transition between source and target trees
+            Render::render_animated(
+                &mut target,
+                source_tree,
+                target_tree,
+                &color::Space::WHITE,
+                &domain,
+            );
+            // Send to the display
+            window.update(target.display());
+            // Clear for the next frame
+            target.clear(color::Space::BLACK);
+        } else {
+            // limit polling for updates to ~30 fps when idle
+            std::thread::sleep(Duration::from_millis(33));
         }
     }
 }
@@ -163,13 +198,13 @@ fn root_view(state: &AppState) -> impl View<color::Space, AppState> + use<> {
         Lens::new(tab_bar(state.tab), |state: &mut AppState| &mut state.tab),
         match_view!(state.tab, {
             Tab::Brew => {
-                tab_view::brew_tab(state)
+                view::brew_tab(state)
             },
             Tab::Clean => {
-                tab_view::clean_tab(state)
+                view::clean_tab(state)
             },
             Tab::Settings => {
-                tab_view::settings_tab(state)
+                view::settings_tab(state)
             },
         }),
     ))
