@@ -2,7 +2,7 @@
 
 ## Animating Between Render Trees
 
-To animate between two render trees, you can use the `render_animated()` method:
+To animate rendering between two render trees, use the `render_animated()` method:
 
 ```rust
 # extern crate buoyant;
@@ -53,8 +53,9 @@ Render::render_animated(
 ## Joining Trees
 
 Generally, all animations in Buoyant are interruptible. In the same way you can animate
-rendering between two trees, you can also join two trees to form a new one. This allows
-you to continuously merge and generate new trees to create a smooth animated render loop.
+rendering between two trees, two trees can be joined at a moment in time to form a new one.
+This allows continuously merging and generating new trees to drive smooth compound
+animations.
 
 Render tree types conform to `AnimatedJoin`, which allows you to create a joined tree
 at a specific point in time. With some exceptions, the result of rendering the joined tree
@@ -107,130 +108,8 @@ target_render_tree.render(&mut target, &Rgb888::BLACK);
 # }
 ```
 
-Joining trees encodes information about the partially completed animation, which allows multiple
-staggered animations to occur in a render loop.
+Joining trees encodes information about the partially completed animation, which allows
+multiple staggered animations to occur in a render loop.
 
-## Creating a Render Loop
-
-Buoyant on its own does not track whether state has changed, and you are responsible
-for managing the view and render tree lifecycle in response to state changes.
-
-Here's a minimal example that demonstrates the render loop pattern:
-
-```rust,no_run
-# extern crate buoyant;
-# extern crate embedded_graphics;
-# extern crate embedded_graphics_simulator;
-use std::time::{Duration, Instant};
-
-use buoyant::{
-    environment::DefaultEnvironment,
-    primitives::{Point, Size},
-    render::{AnimatedJoin, AnimationDomain, Render},
-    render_target::EmbeddedGraphicsRenderTarget,
-    view::prelude::*,
-};
-use embedded_graphics::{prelude::*, pixelcolor::Rgb888};
-use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
-
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
-struct AppState {
-    counter: u32,
-}
-
-fn main() {
-    let size = Size::new(200, 100);
-    let mut display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(size.into());
-    let mut target = EmbeddedGraphicsRenderTarget::new(&mut display);
-    let mut window = Window::new("Render Loop Example", &OutputSettings::default());
-    let app_start = Instant::now();
-
-    let mut captures = AppState::default();
-    let env = DefaultEnvironment::new(app_start.elapsed());
-    let mut view = root_view(&captures);
-    let mut state = view.build_state(&mut captures);
-    let layout = view.layout(&size.into(), &env, &mut captures, &mut state);
-
-    let mut source_tree = view.render_tree(
-        &layout,
-        Point::zero(),
-        &env,
-        &mut captures,
-        &mut state,
-    );
-
-    let mut target_tree = view.render_tree(
-        &layout,
-        Point::zero(),
-        &env,
-        &mut captures,
-        &mut state,
-    );
-
-    let mut rebuild_view = true;
-    'running: loop {
-        target.display_mut().clear(Rgb888::BLACK).unwrap();
-
-        // Render, animating between the source and target trees
-        Render::render_animated(
-            &mut target,
-            &source_tree,
-            &target_tree,
-            &Rgb888::WHITE,
-            &AnimationDomain::top_level(app_start.elapsed()),
-        );
-
-        window.update(target.display());
-
-        if rebuild_view {
-            rebuild_view = false;
-            // TODO: Swap pointers to source and target trees to avoid cloning
-            let time = app_start.elapsed();
-            target_tree.join_from(
-                &source_tree,
-                &AnimationDomain::top_level(time),
-            );
-            source_tree = target_tree;
-
-            view = root_view(&captures);
-            let env = DefaultEnvironment::new(time);
-            let layout = view.layout(&size.into(), &env, &mut captures, &mut state);
-
-            target_tree = view.render_tree(
-                &layout,
-                Point::zero(),
-                &env,
-                &mut captures,
-                &mut state,
-            );
-        }
-
-        for event in window.events() {
-            // TODO: handle view events by calling `view.handle_event(...)`
-            // TODO: set rebuild_view = true on event
-            if let embedded_graphics_simulator::SimulatorEvent::Quit = event {
-                break 'running;
-            }
-        }
-    }
-}
-
-fn root_view(state: &AppState) -> impl View<Rgb888, AppState> {
-    let counter = state.counter; // make sure the closure doesn't capture state
-    Button::new(
-        |state: &mut AppState| state.counter += 1,
-        move |_| {
-            Text::new_fmt::<32>(
-                format_args!("Counter: {}", counter),
-                &embedded_graphics::mono_font::ascii::FONT_10X20,
-            )
-            .foreground_color(Rgb888::WHITE)
-            .padding(Edges::All, 10)
-        }
-    )
-}
-```
-
-This loop will animate between the source and target trees, creating a new target tree when
-the state changes. The source tree is joined with the original target tree to create a new
-source tree that continues the animation from where it left off.
+Continue to [Event Loops](../interactivity/event-loops.md) for a complete  animated render
+loop example with event handling.
