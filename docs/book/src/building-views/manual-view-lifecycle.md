@@ -81,8 +81,9 @@ Relational elements like `Padding`, `Frame`s, alignment, and so on have been str
 render_tree.render(&mut display, &DEFAULT_COLOR, origin);
 ```
 
-Here, the snapshot is finally rendered to the display buffer. A default color, similar to SwiftUI's
-foreground color, is passed in. This is used for elements that don't have a color set.
+Here, the snapshot is finally rendered to the display buffer. A default color, similar to
+SwiftUI's foreground color, is passed in. This is used for elements that don't have a color
+set.
 
 ## Why?
 

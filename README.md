@@ -8,22 +8,15 @@
 Buoyant is a library for writing and rendering SwiftUI-like views in Rust,
 primarily intended for use on `no_std` memory-constrained embedded systems.
 
-Get started with the [Book](https://riley-williams.github.io/buoyant/).
-
-## Available render targets
+Get started with the [📖 Book](https://riley-williams.github.io/buoyant/), or take a
+look at the Espresso example.
 
 While this crate is primarily intended for use with embedded-graphics `DrawTarget`s, it
-can also be used to layout and render views to the terminal.
-
-- `DrawTarget`: `embedded-graphics` displays.
-- `TextBuffer`: A basic fixed-size `char` buffer. Does not respect graphemes.
-  This is primarily useful for testing and debugging.
-- `CrossTerm`: Renders colored character-pixels to a terminal using
-  the `crossterm` crate.
+can also be used to render views to the terminal with `crossterm`.
 
 ## Example
 
-Here's an animated toggle component, implemented with Buoyant:
+Here's what a simple animated toggle component could look like:
 
 ![Toggle](./docs/images/toggle.gif)
 
@@ -50,7 +43,7 @@ fn toggle_button(is_on: bool) -> impl View<Rgb565, bool> {
 }
 ```
 
-## Feature progress
+## Roadmap
 
 ### Layout and Rendering
 
@@ -58,20 +51,20 @@ Static layout and animation between layouts are relatively feature-complete, asi
 transitions. You should be able to construct most desired layouts and animations.
 
 - ✅ Stacks of heterogeneous views (VStack, HStack, ZStack)
-- 🚧 Stacks of homogeneous views (ForEach) - partial, vertical only
+- ✅ Stacks of homogeneous views (ForEach)
 - ✅ Common SwiftUI-like primitives (Spacer, Divider, ...)
 - ✅ Common SwiftUI-like modifiers (.frame, .padding, ...)
 - ✅ Conditional views, with match variable binding
-- ✅ Text (embedded-graphics Monospace and [u8g2](https://crates.io/crates/u8g2-fonts) fonts)
+- ✅ Text (embedded-graphics monospace, u8g2, and rusttype fonts)
 - ✅ Images (fixed size)
 - ✅ Interruptible Animations + Curves
 - 🚧 Transitions (partially implemented)
 - ✅ Shape stroke+fill
 - ✅ Common embedded-graphics shape primitives
 - ✅ Custom sizing with GeometryView
-- 💤 Charts
+- 🚧 Simulated alpha and antialiasing (rusttype fonts only)
+- 🚧 Charts
 - 💤 Canvas for arbitrary path/shape/raster drawing
-- 💤 Simulated alpha and antialiasing
 - 💤 Shape styles (e.g. gradients)
 
 ### Interactivity
@@ -79,17 +72,17 @@ transitions. You should be able to construct most desired layouts and animations
 Interactivity is under active development, and is not yet feature-complete.
 
 - ✅ State management
-- 🚧 Click/tap routing
+- ✅ Click/tap routing
 - ✅ Button
-- 🚧 ScrollView
-- 💤 Focus management + keyboard input
+- ✅ ScrollView
+- 🚧 Focus management + keyboard input
 - 💤 TextField
 
 ## Who should use this?
 
 This project could be used in production by the brave, but is probably better suited
-for hobby projects at this point. It's significantly better than dealing with raw
-embedded-graphics. If you're familiar with SwiftUI, you should feel especially at home.
+for hobby projects at this point. If you're familiar with SwiftUI or Jetpack Compose,
+you should feel especially at home.
 
 ## License
 
