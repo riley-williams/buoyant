@@ -347,23 +347,21 @@ macro_rules! impl_view_for_hstack {
                 let mut result = EventResult::default();
                 let max = const { count!($($n),+) - 1 };
 
-                if let crate::view::Event::Keyboard(k) = event {
-                    return if context.input.is_focused_any(k.groups) || k.kind.is_movement() {
-                        context.input.traverse(k.groups, k.kind, max, |i| match i {
-                            $(
-                                $n => self.items.$n.handle_event(
-                                    event,
-                                    context,
-                                    &mut render_tree.$n,
-                                    captures,
-                                    &mut state.$n
-                                ),
-                            )+
-                            _ => EventResult::default(),
-                        })
-                    } else {
-                        result
-                    };
+                if let crate::view::Event::Keyboard(k) = event
+                    && (context.input.is_focused_any(k.groups) || k.kind.is_movement())
+                {
+                    return context.input.traverse_linear(k.groups, k.kind, max, &mut |i| match i {
+                        $(
+                            $n => self.items.$n.handle_event(
+                                event,
+                                context,
+                                &mut render_tree.$n,
+                                captures,
+                                &mut state.$n
+                            ),
+                        )+
+                        _ => EventResult::default(),
+                    });
                 }
                 $(
                     result.merge(self.items.$n.handle_event(event, context, &mut render_tree.$n, captures, &mut state.$n));

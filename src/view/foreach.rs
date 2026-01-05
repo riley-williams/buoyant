@@ -366,21 +366,14 @@ where
         let mut result = EventResult::default();
         if self.items.len() > 1 {
             let max = self.items.len() - 1;
-            if let crate::view::Event::Keyboard(k) = event {
-                return if context.input.is_focused_any(k.groups) || k.kind.is_movement() {
-                    context.input.traverse(k.groups, k.kind, max, |i| {
-                        let view = (self.build_view)(&self.items[i]);
-                        view.handle_event(
-                            event,
-                            context,
-                            &mut render_tree[i],
-                            captures,
-                            &mut state[i],
-                        )
-                    })
-                } else {
-                    result
+            if let crate::view::Event::Keyboard(k) = event
+                && (context.input.is_focused_any(k.groups) || k.kind.is_movement())
+            {
+                let mut f = |i| {
+                    let view = (self.build_view)(&self.items[i]);
+                    view.handle_event(event, context, &mut render_tree[i], captures, &mut state[i])
                 };
+                return context.input.traverse_linear(k.groups, k.kind, max, &mut f);
             }
         }
         for i in 0..self.items.len() {

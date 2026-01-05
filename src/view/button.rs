@@ -320,6 +320,11 @@ where
 
         match event.kind {
             k if k.is_movement() => context.input.leaf_move(&mut state.0.focus, event.groups),
+            KeyboardEventKind::LongPress | KeyboardEventKind::Cancel
+                if state.0.focus.is_focused_any(event.groups) =>
+            {
+                context.input.leaf_move(&mut state.0.focus, event.groups)
+            }
             KeyboardEventKind::Click if state.0.focus.is_focused_any(event.groups) => {
                 (self.action)(captures);
 

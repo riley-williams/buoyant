@@ -219,7 +219,7 @@ where
 
             if !self.click_to_enter {
                 entered.focus(groups);
-                if is_along {
+                if is_along && !self.reroute_navigation {
                     result.merge(context.input.leaf_move(focus, k.groups));
                 }
             }
@@ -234,6 +234,11 @@ where
         if is_click && self.click_to_enter && !is_entered && should_handle {
             (self.action)(PaginationAction::Enter, captures);
             entered.focus(groups);
+            // Like, that enter couldn't unfocus previous focus and would've anyway
+            // went there, so if blurred, then focus there.
+            if !context.input.is_focused_any(self.groups) {
+                result.merge(context.input.leaf_move(focus, event.groups()));
+            }
             return result.merging(EventResult::new(true, true));
         }
 
