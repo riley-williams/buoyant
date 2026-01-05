@@ -129,7 +129,6 @@ impl ComponentPath {
             if overflow {
                 if allowed_retry {
                     allowed_retry = false;
-                    std::println!("Setting current to {next}");
                     self.set_current(next);
                     continue;
                 }
