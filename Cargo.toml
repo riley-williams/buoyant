@@ -45,7 +45,7 @@ embedded-touch = "^0.3.0"
 embedded-graphics-simulator = { version = "0.8.0", default-features = false, features = [
   "with-sdl",
 ], optional = true }
-embedded-ttf = { version = "^0.2.2", optional = true }
+embedded-ttf = { version = "^0.2.2", optional = true, default-features = false }
 rusttype = { version = "0.9.3", optional = true }
 
 [dev-dependencies]
