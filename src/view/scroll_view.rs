@@ -393,7 +393,7 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
         state: &mut Self::State,
     ) -> EventResult {
         let (result, delta) = match event {
-            Event::Scroll(delta) => (EventResult::new(true, true), *delta),
+            Event::Scroll(delta) => (EventResult::new(true, true, true), *delta),
             Event::Touch(touch) => {
                 // Only track the first touch. This could cause problems if
                 // the touch is "lost" without an ended or cancelled event.
@@ -421,18 +421,22 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
                             };
 
                             (
-                                EventResult::new(true, false).merging(self.inner.handle_event(
-                                    &event.offset(-render_tree.offset() - render_tree.inner.offset),
-                                    context,
-                                    render_tree.inner_mut(),
-                                    captures,
-                                    &mut state.inner_state,
-                                )),
+                                EventResult::new(true, false, true).merging(
+                                    self.inner.handle_event(
+                                        &event.offset(
+                                            -render_tree.offset() - render_tree.inner.offset,
+                                        ),
+                                        context,
+                                        render_tree.inner_mut(),
+                                        captures,
+                                        &mut state.inner_state,
+                                    ),
+                                ),
                                 Point::zero(),
                             )
                         } else {
                             // Touches cannot start outside the bounds, return early
-                            return EventResult::new(false, false);
+                            return EventResult::new(false, false, false);
                         }
                     }
                     Phase::Moved => match &mut state.interaction {
@@ -456,17 +460,19 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
                                 let mut cancel_event = touch.clone();
                                 cancel_event.phase = Phase::Cancelled;
                                 (
-                                    EventResult::new(true, false).merging(self.inner.handle_event(
-                                        &Event::Touch(cancel_event),
-                                        context,
-                                        render_tree.inner_mut(),
-                                        captures,
-                                        &mut state.inner_state,
-                                    )),
+                                    EventResult::new(true, false, true).merging(
+                                        self.inner.handle_event(
+                                            &Event::Touch(cancel_event),
+                                            context,
+                                            render_tree.inner_mut(),
+                                            captures,
+                                            &mut state.inner_state,
+                                        ),
+                                    ),
                                     delta,
                                 )
                             } else {
-                                (EventResult::new(true, false), delta)
+                                (EventResult::new(true, false, true), delta)
                             }
                         }
                         ScrollInteraction::Idle => (EventResult::default(), Point::zero()),
@@ -486,20 +492,22 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
                                 // If we don't set this, the scroll view will not animate the
                                 // snap back
                                 render_tree.inner.subtree.value = true;
-                                (EventResult::new(true, true), delta)
+                                (EventResult::new(true, true, true), delta)
                             } else {
                                 let touch_offset = render_tree.offset() + render_tree.inner.offset;
                                 let mut touch = touch.clone();
                                 touch.location -= touch_offset.into();
 
                                 (
-                                    EventResult::new(true, true).merging(self.inner.handle_event(
-                                        &Event::Touch(touch),
-                                        context,
-                                        render_tree.inner_mut(),
-                                        captures,
-                                        &mut state.inner_state,
-                                    )),
+                                    EventResult::new(true, true, true).merging(
+                                        self.inner.handle_event(
+                                            &Event::Touch(touch),
+                                            context,
+                                            render_tree.inner_mut(),
+                                            captures,
+                                            &mut state.inner_state,
+                                        ),
+                                    ),
                                     delta,
                                 )
                             }
@@ -518,7 +526,7 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
                     Phase::Cancelled => {
                         state.interaction = ScrollInteraction::Idle;
                         (
-                            EventResult::new(true, true).merging(self.inner.handle_event(
+                            EventResult::new(true, true, true).merging(self.inner.handle_event(
                                 event,
                                 context,
                                 render_tree.inner_mut(),

@@ -300,7 +300,7 @@ Event Groups: {groups:?}
             );
 
             self.blur(focus.blur(groups));
-            super::EventResult::new(false, true)
+            super::EventResult::new(false, true, false)
         } else {
             debug_assert!(
                 !focus.is_focused_all(groups),
@@ -311,7 +311,7 @@ Event Groups: {groups:?}
             );
 
             self.focus(focus.focus(groups));
-            super::EventResult::new(true, true)
+            super::EventResult::new(true, true, false)
         }
     }
     #[must_use]

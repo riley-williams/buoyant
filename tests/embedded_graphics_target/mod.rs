@@ -17,7 +17,7 @@ pub fn render_to_mock(view: &impl View<Rgb888, ()>, allow_overdraw: bool) -> Moc
     let mut display = MockDisplay::<Rgb888>::new();
     display.set_allow_overdraw(allow_overdraw);
     display.set_allow_out_of_bounds_drawing(false);
-    let mut target = EmbeddedGraphicsRenderTarget::new(&mut display);
+    let mut target = EmbeddedGraphicsRenderTarget::new_hinted(&mut display, Rgb888::BLACK);
 
     let env = DefaultEnvironment::default();
     let mut state = view.build_state(&mut ());

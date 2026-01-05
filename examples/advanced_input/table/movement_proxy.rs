@@ -118,7 +118,7 @@ where
         if !is_entered && (is_click || is_movement) {
             (self.action)(TableProxyAction::Enter, captures);
             entered.focus(self.groups);
-            return EventResult::new(true, true);
+            return EventResult::new(true, true, false);
         }
 
         if let Event::Keyboard(k) = event

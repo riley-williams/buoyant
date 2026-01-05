@@ -1,5 +1,5 @@
 use crate::{
-    primitives::{Size, geometry::Rectangle},
+    primitives::{Interpolate, Point, geometry::Rectangle},
     surface::Surface,
 };
 
@@ -9,13 +9,16 @@ pub use character_buffer_font::CharacterBufferFont;
 #[cfg(feature = "embedded-graphics")]
 mod embedded_mono_font;
 #[cfg(feature = "embedded-graphics")]
+mod rusttype;
+#[cfg(feature = "embedded-graphics")]
 mod u8g2;
 
 /// A font that renders individual characters at a time.
 /// Multi-character graphemes are not supported, making
 /// this primarily useful for embedded devices.
 pub trait Font {
-    fn metrics(&self) -> impl FontMetrics;
+    type Attributes: Default + Interpolate + Clone;
+    fn metrics(&self, attributes: &Self::Attributes) -> impl FontMetrics;
 }
 
 // TODO: This could probably accept a draw target instead of a surface?
@@ -27,21 +30,29 @@ pub(crate) trait Sealed {}
 #[expect(private_bounds)]
 pub trait FontRender<Color>: Font + Sealed {
     /// Render the character by drawing to a surface.
-    fn draw(&self, character: char, color: Color, surface: &mut impl Surface<Color = Color>);
+    fn draw(
+        &self,
+        character: char,
+        offset: Point,
+        color: Color,
+        background_color: Option<Color>,
+        attributes: &Self::Attributes,
+        surface: &mut impl Surface<Color = Color>,
+    );
 }
 
 pub trait FontMetrics {
     /// The rendered size and offset of a glyph, relative to the top left corner
+    #[must_use]
     fn rendered_size(&self, character: char) -> Option<Rectangle>;
 
     /// The default spacing between baselines
-    fn default_line_height(&self) -> u32;
+    #[must_use]
+    fn vertical_metrics(&self) -> VMetrics;
 
     /// The horizontal advance produced by a character
+    #[must_use]
     fn advance(&self, character: char) -> u32;
-
-    /// The maximum size of a character in this font
-    fn maximum_character_size(&self) -> Size;
 }
 
 impl<T: FontMetrics> FontMetrics for &T {
@@ -49,15 +60,36 @@ impl<T: FontMetrics> FontMetrics for &T {
         (*self).rendered_size(character)
     }
 
-    fn default_line_height(&self) -> u32 {
-        (*self).default_line_height()
+    fn vertical_metrics(&self) -> VMetrics {
+        (*self).vertical_metrics()
     }
 
     fn advance(&self, character: char) -> u32 {
         (*self).advance(character)
     }
+}
 
-    fn maximum_character_size(&self) -> Size {
-        (*self).maximum_character_size()
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct VMetrics {
+    /// The distance from the baseline to the top of the tallest character
+    pub ascent: i32,
+    /// The distance from the baseline to the bottom of the lowest character, typically negative
+    pub descent: i32,
+    /// The spacing between lines, i.e. the space between the bottom of one line's descent to the
+    /// top of the next line's ascent
+    pub line_spacing: i32,
+}
+
+impl VMetrics {
+    /// The distance between baselines
+    #[must_use]
+    pub fn line_height(&self) -> u32 {
+        (self.ascent - self.descent + self.line_spacing).max(0) as u32
     }
+}
+
+/// A Font attribute allowing customization of size.
+pub trait CustomSize {
+    #[must_use]
+    fn with_size(self, size: u32) -> Self;
 }

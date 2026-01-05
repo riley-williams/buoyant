@@ -15,6 +15,7 @@ mod image;
 #[allow(missing_docs)]
 pub mod match_view;
 mod modifier;
+mod option;
 mod pagination;
 pub mod scroll_view;
 pub mod shape;
@@ -58,9 +59,9 @@ pub mod prelude {
     };
     pub use super::{FitAxis, HorizontalTextAlignment, padding::Edges};
     pub use crate::animation::Animation;
+    pub use crate::event::input::InputExtension;
     pub use crate::layout::{Alignment, HorizontalAlignment, VerticalAlignment};
     pub use crate::view::shape::*;
-    pub use crate::event::input::InputExtension;
 }
 
 use crate::transition::Transition;

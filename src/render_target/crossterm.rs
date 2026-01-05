@@ -8,6 +8,7 @@ use crossterm::{
 use std::io::{Stdout, Write, stdout};
 
 use crate::{
+    font::FontRender,
     primitives::{
         Pixel, Point, Size,
         geometry::Rectangle,
@@ -39,6 +40,8 @@ use super::{Brush, Glyph, RenderTarget, Shape, Stroke};
 pub struct CrosstermRenderTarget {
     stdout: Stdout,
     active_layer: LayerConfig<Colors>,
+    /// A flag tracking active animation. Initially true.
+    active_animation: bool,
 }
 
 impl CrosstermRenderTarget {
@@ -127,6 +130,7 @@ impl Default for CrosstermRenderTarget {
         Self {
             stdout,
             active_layer: LayerConfig::new_clip(clip_rect),
+            active_animation: true,
         }
     }
 }
@@ -171,6 +175,16 @@ impl RenderTarget for CrosstermRenderTarget {
 
     fn alpha(&self) -> u8 {
         self.active_layer.alpha
+    }
+
+    fn report_active_animation(&mut self) {
+        self.active_animation = true;
+    }
+
+    fn clear_animation_status(&mut self) -> bool {
+        let was_active = self.active_animation;
+        self.active_animation = false;
+        was_active
     }
 
     fn fill<C: Into<Self::ColorFormat>>(
@@ -260,12 +274,13 @@ impl RenderTarget for CrosstermRenderTarget {
         }
     }
 
-    fn draw_glyphs<C: Into<Self::ColorFormat>>(
+    fn draw_glyphs<C: Into<Self::ColorFormat>, F: FontRender<Self::ColorFormat>>(
         &mut self,
         offset: Point,
         brush: &impl Brush<ColorFormat = C>,
         glyphs: impl Iterator<Item = Glyph>,
-        _font: &impl crate::font::FontRender<Self::ColorFormat>,
+        _font: &F,
+        _font_attributes: &F::Attributes,
     ) {
         let offset = offset.applying(&self.active_layer.transform);
         let Some(color) = brush.as_solid().map(Into::into) else {

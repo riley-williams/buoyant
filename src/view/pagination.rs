@@ -184,7 +184,7 @@ where
 
         let mut result = EventResult::default();
 
-        let handled = EventResult::new(true, false);
+        let handled = EventResult::new(true, false, false);
         let interaction = self.interaction(state);
         let focus = &mut state.focus;
         let entered = &mut state.entered;
@@ -239,7 +239,7 @@ where
             if !context.input.is_focused_any(self.groups) {
                 result.merge(context.input.leaf_move(focus, event.groups()));
             }
-            return result.merging(EventResult::new(true, true));
+            return result.merging(EventResult::new(true, true, false));
         }
 
         if let Event::Keyboard(k) = event

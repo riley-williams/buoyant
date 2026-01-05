@@ -79,6 +79,42 @@ fn view() -> impl View<Rgb888, ()> {
 }
 ```
 
+## `Option` as a View
+
+For simple cases where a view should be present only if a value is `Some`, `Option`
+implements `View`:
+
+```rust,no_run
+# extern crate buoyant;
+# extern crate embedded_graphics;
+# extern crate embedded_graphics_simulator;
+# use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
+#
+# const BACKGROUND_COLOR: Rgb888 = Rgb888::CSS_DARK_SLATE_GRAY;
+# const DEFAULT_COLOR: Rgb888 = Rgb888::WHITE;
+#
+# fn main() {
+#     let mut window = Window::new("Example", &OutputSettings::default());
+#     let mut display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(480, 320));
+#
+#     display.clear(BACKGROUND_COLOR).unwrap();
+#
+#     view(Some("Hello"))
+#         .as_drawable(display.size(), DEFAULT_COLOR, &mut ())
+#         .draw(&mut display)
+#         .unwrap();
+#
+#     window.show_static(&display);
+# }
+#
+# use buoyant::view::prelude::*;
+# use embedded_graphics::{mono_font::ascii::FONT_9X15, pixelcolor::Rgb888, prelude::*};
+#
+fn view(message: Option<&'static str>) -> impl View<Rgb888, ()> {
+    message.map(|s| Text::new(s, &FONT_9X15))
+}
+```
+
 ## Variable Binding with `match_view!`
 
 The `match_view!` macro is a more powerful version of `if_view!` that allows you to bind

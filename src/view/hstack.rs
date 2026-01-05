@@ -225,9 +225,10 @@ fn layout_n(
     }
 }
 
+// Helper macro to count the number of elements
 macro_rules! count {
-    () => (0);
-    ($head:tt $(, $rest:tt)*) => (1 + count!($($rest),*));
+    () => (const { 0 });
+    ($head:tt $(, $rest:tt)*) => (const { 1 + count!($($rest),*) });
 }
 
 macro_rules! impl_view_for_hstack {

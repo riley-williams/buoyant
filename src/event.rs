@@ -28,6 +28,12 @@ pub struct EventResult {
     pub handled: bool,
     /// Whether the view should be recomputed, and render trees joined.
     pub recompute_view: bool,
+    /// This flag indicates the view should be redrawn even if no animations were reported as
+    /// active.
+    ///
+    /// This should be set when a view directly modifies the render tree state
+    /// without requesting a view recompute, e.g. scrollview dragging.
+    pub redraw: bool,
 }
 
 #[non_exhaustive]
@@ -63,10 +69,11 @@ impl Event {
 impl EventResult {
     /// Creates a new `EventResult` with the specified handled state and recompute flag.
     #[must_use]
-    pub const fn new(handled: bool, recompute_view: bool) -> Self {
+    pub const fn new(handled: bool, recompute_view: bool, redraw: bool) -> Self {
         Self {
             handled,
             recompute_view,
+            redraw,
         }
     }
 
@@ -84,6 +91,7 @@ impl EventResult {
     pub fn merge(&mut self, other: Self) {
         self.handled |= other.handled;
         self.recompute_view |= other.recompute_view;
+        self.redraw |= other.redraw;
     }
 
     /// Returns the result of merging another `EventResult` into this one.
@@ -93,6 +101,7 @@ impl EventResult {
         Self {
             handled: self.handled || other.handled,
             recompute_view: self.recompute_view || other.recompute_view,
+            redraw: self.redraw || other.redraw,
         }
     }
 }

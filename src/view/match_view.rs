@@ -1,8 +1,8 @@
 use crate::{
     event::{EventContext, EventResult, input::Groups},
     layout::ResolvedLayout,
-    primitives::{Dimensions, Point, ProposedDimensions},
-    render::{self, TransitionOption},
+    primitives::{Point, ProposedDimensions},
+    render,
     transition::Opacity,
     view::{ViewLayout, ViewMarker},
 };
@@ -50,9 +50,9 @@ macro_rules! if_view {
         }
     ) => {{
         if $value {
-            $crate::view::match_view::Branch2::V0($view0)
+            $crate::view::match_view::OneOf2::V0($view0)
         } else {
-            $crate::view::match_view::Branch2::V1($view1)
+            $crate::view::match_view::OneOf2::V1($view1)
         }
     }};
 }
@@ -123,7 +123,7 @@ macro_rules! match_view {
         }
     ) => {{
         match $value {
-            $pattern0 => $crate::view::match_view::Branch1::V0($view0),
+            $pattern0 => $crate::view::match_view::OneOf1::V0($view0),
         }
     }};
 
@@ -134,8 +134,8 @@ macro_rules! match_view {
         }
     ) => {{
         match $value {
-            $pattern0 => $crate::view::match_view::Branch2::V0($view0),
-            $pattern1 => $crate::view::match_view::Branch2::V1($view1),
+            $pattern0 => $crate::view::match_view::OneOf2::V0($view0),
+            $pattern1 => $crate::view::match_view::OneOf2::V1($view1),
         }
     }};
 
@@ -147,9 +147,9 @@ macro_rules! match_view {
         }
     ) => {{
         match $value {
-            $pattern0 => $crate::view::match_view::Branch3::V0($view0),
-            $pattern1 => $crate::view::match_view::Branch3::V1($view1),
-            $pattern2 => $crate::view::match_view::Branch3::V2($view2),
+            $pattern0 => $crate::view::match_view::OneOf3::V0($view0),
+            $pattern1 => $crate::view::match_view::OneOf3::V1($view1),
+            $pattern2 => $crate::view::match_view::OneOf3::V2($view2),
         }
     }};
 
@@ -162,10 +162,10 @@ macro_rules! match_view {
         }
     ) => {{
         match $value {
-            $pattern0 => $crate::view::match_view::Branch4::V0($view0),
-            $pattern1 => $crate::view::match_view::Branch4::V1($view1),
-            $pattern2 => $crate::view::match_view::Branch4::V2($view2),
-            $pattern3 => $crate::view::match_view::Branch4::V3($view3),
+            $pattern0 => $crate::view::match_view::OneOf4::V0($view0),
+            $pattern1 => $crate::view::match_view::OneOf4::V1($view1),
+            $pattern2 => $crate::view::match_view::OneOf4::V2($view2),
+            $pattern3 => $crate::view::match_view::OneOf4::V3($view3),
         }
     }};
 
@@ -179,11 +179,11 @@ macro_rules! match_view {
         }
     ) => {{
         match $value {
-            $pattern0 => $crate::view::match_view::Branch5::V0($view0),
-            $pattern1 => $crate::view::match_view::Branch5::V1($view1),
-            $pattern2 => $crate::view::match_view::Branch5::V2($view2),
-            $pattern3 => $crate::view::match_view::Branch5::V3($view3),
-            $pattern4 => $crate::view::match_view::Branch5::V4($view4),
+            $pattern0 => $crate::view::match_view::OneOf5::V0($view0),
+            $pattern1 => $crate::view::match_view::OneOf5::V1($view1),
+            $pattern2 => $crate::view::match_view::OneOf5::V2($view2),
+            $pattern3 => $crate::view::match_view::OneOf5::V3($view3),
+            $pattern4 => $crate::view::match_view::OneOf5::V4($view4),
         }
     }};
 
@@ -198,12 +198,12 @@ macro_rules! match_view {
         }
     ) => {{
         match $value {
-            $pattern0 => $crate::view::match_view::Branch6::V0($view0),
-            $pattern1 => $crate::view::match_view::Branch6::V1($view1),
-            $pattern2 => $crate::view::match_view::Branch6::V2($view2),
-            $pattern3 => $crate::view::match_view::Branch6::V3($view3),
-            $pattern4 => $crate::view::match_view::Branch6::V4($view4),
-            $pattern5 => $crate::view::match_view::Branch6::V5($view5),
+            $pattern0 => $crate::view::match_view::OneOf6::V0($view0),
+            $pattern1 => $crate::view::match_view::OneOf6::V1($view1),
+            $pattern2 => $crate::view::match_view::OneOf6::V2($view2),
+            $pattern3 => $crate::view::match_view::OneOf6::V3($view3),
+            $pattern4 => $crate::view::match_view::OneOf6::V4($view4),
+            $pattern5 => $crate::view::match_view::OneOf6::V5($view5),
         }
     }};
 
@@ -219,13 +219,13 @@ macro_rules! match_view {
         }
     ) => {{
         match $value {
-            $pattern0 => $crate::view::match_view::Branch7::V0($view0),
-            $pattern1 => $crate::view::match_view::Branch7::V1($view1),
-            $pattern2 => $crate::view::match_view::Branch7::V2($view2),
-            $pattern3 => $crate::view::match_view::Branch7::V3($view3),
-            $pattern4 => $crate::view::match_view::Branch7::V4($view4),
-            $pattern5 => $crate::view::match_view::Branch7::V5($view5),
-            $pattern6 => $crate::view::match_view::Branch7::V6($view6),
+            $pattern0 => $crate::view::match_view::OneOf7::V0($view0),
+            $pattern1 => $crate::view::match_view::OneOf7::V1($view1),
+            $pattern2 => $crate::view::match_view::OneOf7::V2($view2),
+            $pattern3 => $crate::view::match_view::OneOf7::V3($view3),
+            $pattern4 => $crate::view::match_view::OneOf7::V4($view4),
+            $pattern5 => $crate::view::match_view::OneOf7::V5($view5),
+            $pattern6 => $crate::view::match_view::OneOf7::V6($view6),
         }
     }};
 
@@ -246,141 +246,6 @@ macro_rules! match_view {
 pub struct State<T> {
     observed_groups: Groups,
     inner: T,
-}
-
-impl<V> ViewMarker for Option<V>
-where
-    V: ViewMarker,
-{
-    type Renderables = TransitionOption<V::Renderables, V::Transition>;
-    type Transition = Opacity;
-}
-
-impl<Captures, V> ViewLayout<Captures> for Option<V>
-where
-    V: ViewLayout<Captures>,
-    Captures: ?Sized,
-{
-    type Sublayout = Option<ResolvedLayout<V::Sublayout>>;
-    type State = State<Option<V::State>>;
-
-    fn priority(&self) -> i8 {
-        self.as_ref().map_or(i8::MIN, ViewLayout::priority)
-    }
-
-    fn is_empty(&self) -> bool {
-        self.as_ref().is_none_or(ViewLayout::is_empty)
-    }
-
-    fn transition(&self) -> Self::Transition {
-        // transition is not inherited from a child
-        Opacity
-    }
-
-    fn build_state(&self, captures: &mut Captures) -> Self::State {
-        State {
-            observed_groups: Groups::default(),
-            inner: self.as_ref().map(|v| v.build_state(captures)),
-        }
-    }
-
-    fn layout(
-        &self,
-        offer: &ProposedDimensions,
-        env: &impl crate::environment::LayoutEnvironment,
-        captures: &mut Captures,
-        state: &mut Self::State,
-    ) -> ResolvedLayout<Self::Sublayout> {
-        if self.is_none() {
-            state.inner = None;
-        }
-
-        self.as_ref().map_or(
-            ResolvedLayout {
-                sublayouts: None,
-                resolved_size: Dimensions::zero(),
-            },
-            |v| {
-                let s0 = if let Some(s) = state.inner.as_mut() {
-                    s
-                } else {
-                    env.input().blur(state.observed_groups);
-                    state.observed_groups = Groups::default();
-                    state.inner = Some(v.build_state(captures));
-
-                    let Some(s) = state.inner.as_mut() else {
-                        unreachable!("Guaranteed to not be any other variant")
-                    };
-                    s
-                };
-
-                let child_layout = v.layout(offer, env, captures, s0);
-                let size = child_layout.resolved_size;
-                ResolvedLayout {
-                    sublayouts: Some(child_layout),
-                    resolved_size: size,
-                }
-            },
-        )
-    }
-
-    fn render_tree(
-        &self,
-        layout: &ResolvedLayout<Self::Sublayout>,
-        origin: Point,
-        env: &impl crate::environment::LayoutEnvironment,
-        captures: &mut Captures,
-        state: &mut Self::State,
-    ) -> Self::Renderables {
-        if self.is_none() {
-            state.inner = None;
-        }
-
-        match (self, &layout.sublayouts, &mut state.inner) {
-            (Some(v), Some(l0), Some(s0)) => TransitionOption::new_some(
-                v.render_tree(l0, origin, env, captures, s0),
-                l0.resolved_size.into(),
-                v.transition(),
-            ),
-            (None, _, _) => TransitionOption::None,
-            // This is reachable if an old layout attempts to be reused
-            _ => panic!(
-                "Layout/state branch mismatch in conditional view. Layouts cannot be reused."
-            ),
-        }
-    }
-
-    fn handle_event(
-        &self,
-        event: &crate::view::Event,
-        context: &EventContext,
-        render_tree: &mut Self::Renderables,
-        captures: &mut Captures,
-        state: &mut Self::State,
-    ) -> EventResult {
-        if self.is_none() {
-            state.inner = None;
-        }
-
-        match (self, render_tree, &mut state.inner) {
-            (Some(v), TransitionOption::Some { subtree, .. }, Some(s)) => {
-                let result = v.handle_event(event, context, subtree, captures, s);
-                if result.handled {
-                    state.observed_groups &= event.groups();
-                }
-                result
-            }
-            (None, _, _) => EventResult::default(),
-            #[allow(clippy::assertions_on_constants)] // New lint?
-            _ => {
-                assert!(
-                    !cfg!(debug_assertions),
-                    "State branch does not match view branch, likely due to improper reuse of layout."
-                );
-                EventResult::default()
-            }
-        }
-    }
 }
 
 macro_rules! define_branch {
@@ -407,7 +272,7 @@ macro_rules! define_branch {
             type Transition = Opacity;
         }
 
-        #[allow(unreachable_patterns, irrefutable_let_patterns)] // Branch1
+        #[allow(unreachable_patterns, irrefutable_let_patterns)] // OneOf1
         impl<Captures, $($variant),+> ViewLayout<Captures> for $name<$($variant),+>
             where
                 Captures: ?Sized,
@@ -536,17 +401,17 @@ macro_rules! define_branch {
     };
 }
 
-define_branch!(Branch1, OneOf1, V0);
-define_branch!(Branch2, OneOf2, V0, V1);
-define_branch!(Branch3, OneOf3, V0, V1, V2);
-define_branch!(Branch4, OneOf4, V0, V1, V2, V3);
-define_branch!(Branch5, OneOf5, V0, V1, V2, V3, V4);
-define_branch!(Branch6, OneOf6, V0, V1, V2, V3, V4, V5);
-define_branch!(Branch7, OneOf7, V0, V1, V2, V3, V4, V5, V6);
+define_branch!(OneOf1, OneOf1, V0);
+define_branch!(OneOf2, OneOf2, V0, V1);
+define_branch!(OneOf3, OneOf3, V0, V1, V2);
+define_branch!(OneOf4, OneOf4, V0, V1, V2, V3);
+define_branch!(OneOf5, OneOf5, V0, V1, V2, V3, V4);
+define_branch!(OneOf6, OneOf6, V0, V1, V2, V3, V4, V5);
+define_branch!(OneOf7, OneOf7, V0, V1, V2, V3, V4, V5, V6);
 
 #[cfg(test)]
 mod tests {
-    use super::Branch2::{self, V0, V1};
+    use super::OneOf2::{self, V0, V1};
 
     #[test]
     fn match_view() {
@@ -555,7 +420,7 @@ mod tests {
             _ => 1,
         });
 
-        assert_eq!(view, Branch2::<_, u8>::V1(1));
+        assert_eq!(view, OneOf2::<_, u8>::V1(1));
     }
 
     #[test]
@@ -604,6 +469,6 @@ mod tests {
             ThreeState::Third => 3,
         });
 
-        assert_eq!(view, super::Branch3::V1(2));
+        assert_eq!(view, super::OneOf3::V1(2));
     }
 }

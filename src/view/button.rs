@@ -328,7 +328,7 @@ where
             KeyboardEventKind::Click if state.0.focus.is_focused_any(event.groups) => {
                 (self.action)(captures);
 
-                EventResult::new(true, true)
+                EventResult::new(true, true, false)
             }
             _ => EventResult::default(),
         }
