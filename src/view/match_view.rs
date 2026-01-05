@@ -304,7 +304,7 @@ where
                 let s0 = if let Some(s) = state.inner.as_mut() {
                     s
                 } else {
-                    env.blur(state.observed_groups);
+                    env.input().blur(state.observed_groups);
                     state.observed_groups = Groups::default();
                     state.inner = Some(v.build_state(captures));
 
@@ -454,7 +454,7 @@ macro_rules! define_branch {
                             let s = if let $name::$variant(s) = &mut state.inner {
                                 s
                             } else {
-                                env.blur(state.observed_groups);
+                                env.input().blur(state.observed_groups);
                                 state.observed_groups = Groups::default();
                                 state.inner = $name::$variant(v.build_state(captures));
                                 let $name::$variant(s) = &mut state.inner else {

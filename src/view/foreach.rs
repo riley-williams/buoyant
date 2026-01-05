@@ -111,8 +111,8 @@ impl<T: LayoutEnvironment, D: ForEachDirection> LayoutEnvironment for ForEachEnv
         self.inner_environment.app_time()
     }
 
-    fn blur(&self, groups: crate::event::input::Groups) {
-        self.inner_environment.blur(groups);
+    fn input(&self) -> crate::event::input::InputRef<'_> {
+        self.inner_environment.input()
     }
 }
 

@@ -33,8 +33,8 @@ impl<T: LayoutEnvironment> LayoutEnvironment for HorizontalEnvironment<'_, T> {
     fn app_time(&self) -> core::time::Duration {
         self.inner_environment.app_time()
     }
-    fn blur(&self, groups: crate::event::input::Groups) {
-        self.inner_environment.blur(groups);
+    fn input(&self) -> crate::event::input::InputRef<'_> {
+        self.inner_environment.input()
     }
 }
 
@@ -56,6 +56,7 @@ impl<T> HStack<T> {
             spacing: 0,
         }
     }
+
     /// Sets the spacing between items in the stack.
     #[must_use]
     pub fn with_spacing(self, spacing: u32) -> Self {

@@ -1,7 +1,7 @@
 use core::time::Duration;
 
 use crate::{
-    event::input::{Groups, Input, InputRef},
+    event::input::{Input, InputRef},
     layout::LayoutDirection,
 };
 
@@ -10,7 +10,7 @@ pub trait LayoutEnvironment {
     /// The duration since the application started.
     /// This is used to drive animations.
     fn app_time(&self) -> Duration;
-    fn blur(&self, groups: Groups);
+    fn input(&self) -> InputRef<'_>;
 }
 
 #[derive(Default, Debug, Clone, Copy)]
@@ -53,8 +53,7 @@ impl LayoutEnvironment for DefaultEnvironment<'_> {
         self.app_time
     }
 
-    // When subtree changes, shouldn't it reset instead of blur?
-    fn blur(&self, groups: Groups) {
-        self.input.blur(groups);
+    fn input(&self) -> InputRef<'_> {
+        self.input
     }
 }

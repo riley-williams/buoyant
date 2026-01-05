@@ -33,8 +33,8 @@ impl<T: LayoutEnvironment> LayoutEnvironment for VerticalEnvironment<'_, T> {
     fn app_time(&self) -> core::time::Duration {
         self.inner_environment.app_time()
     }
-    fn blur(&self, groups: crate::event::input::Groups) {
-        self.inner_environment.blur(groups);
+    fn input(&self) -> crate::event::input::InputRef<'_> {
+        self.inner_environment.input()
     }
 }
 

@@ -29,7 +29,9 @@ impl LayoutEnvironment for TestEnv {
     fn app_time(&self) -> Duration {
         self.app_time
     }
-    fn blur(&self, _groups: input::Groups) {}
+    fn input(&self) -> input::InputRef<'_> {
+        input::InputRef::default()
+    }
 }
 
 impl Default for TestEnv {

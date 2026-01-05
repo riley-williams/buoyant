@@ -8,7 +8,7 @@ use crate::{
     environment::LayoutEnvironment,
     event::{
         EventContext, EventResult,
-        input::{FocusState, Groups, Interaction},
+        input::{FocusState, Groups, InputRef, Interaction},
         keyboard::{KeyboardEvent, KeyboardEventKind},
     },
     layout::ResolvedLayout,
@@ -139,10 +139,11 @@ impl<ViewFn, Inner, Action> Button<ViewFn, Inner, Action> {
         self
     }
 
-    fn interaction(&self, state: ButtonState) -> Interaction {
+    fn interaction(&self, state: ButtonState, input: InputRef<'_>) -> Interaction {
         // todo: handle button press too, and click
         let pressed = matches!(state.touch, ButtonTouchState::CaptivePressed(_));
-        let focused = state.focus.is_focused_any(self.groups);
+        let groups = input.active_groups() & self.groups;
+        let focused = state.focus.is_focused_any(groups);
         Interaction::new()
             .with(pressed, Interaction::PRESSED)
             .with(focused, Interaction::FOCUSED)
@@ -185,7 +186,7 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> ResolvedLayout<Self::Sublayout> {
-        let interaction = self.interaction(state.0);
+        let interaction = self.interaction(state.0, env.input());
 
         (self.view)(interaction).layout(offer, env, captures, &mut state.1)
     }
@@ -198,7 +199,7 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> Self::Renderables {
-        let interaction = self.interaction(state.0);
+        let interaction = self.interaction(state.0, env.input());
 
         Container::new(
             Frame::new(origin, layout.resolved_size.into()),
