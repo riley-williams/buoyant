@@ -180,7 +180,7 @@ impl<'a> Input<'a> {
     }
 
     pub fn activate(&mut self, groups: Groups) {
-        self.as_ref().activate(groups)
+        self.as_ref().activate(groups);
     }
     #[must_use]
     pub fn deactivate(&self, groups: Groups) -> Deactivation {
@@ -455,10 +455,10 @@ impl Drop for DeactivationGuard<'_> {
 
 impl InputExtension for Deactivation {
     fn into_guard(self, input: InputRef<'_>) -> DeactivationGuard<'_> {
-        Deactivation::into_guard(self, input)
+        Self::into_guard(self, input)
     }
     fn take_guard<'a>(&mut self, input: InputRef<'a>) -> DeactivationGuard<'a> {
-        let g = Deactivation::into_guard(self.clone(), input);
+        let g = Self::into_guard(self.clone(), input);
         self.activate = Groups::ZERO;
         self.reset = Groups::ZERO;
         self.deactivate = Groups::ZERO;
@@ -469,13 +469,15 @@ impl InputExtension for Deactivation {
 impl InputExtension for Option<Deactivation> {
     fn into_guard(self, input: InputRef<'_>) -> DeactivationGuard<'_> {
         let activate @ reset @ deactivate = Groups::ZERO;
-        self.map(|this| Deactivation::into_guard(this, input))
-            .unwrap_or_else(|| DeactivationGuard {
+        self.map_or_else(
+            || DeactivationGuard {
                 input,
                 activate,
                 reset,
                 deactivate,
-            })
+            },
+            |this| Deactivation::into_guard(this, input),
+        )
     }
     fn take_guard<'a>(&mut self, input: InputRef<'a>) -> DeactivationGuard<'a> {
         self.take().into_guard(input)
@@ -575,7 +577,7 @@ impl fmt::Display for Groups {
         if !this.is_empty() {
             let first = this.0.trailing_zeros();
             this.0 &= !(1 << first);
-            write!(f, "{}", first)?;
+            write!(f, "{first}")?;
         }
 
         for g in (1..8).map(Group::new).filter(|g| this.contains(*g)) {

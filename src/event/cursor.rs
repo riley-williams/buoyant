@@ -135,9 +135,8 @@ impl ComponentPath {
                 }
                 self.len.set(offset);
                 return result;
-            } else {
-                self.set_current(next);
             }
+            self.set_current(next);
         }
     }
 }
