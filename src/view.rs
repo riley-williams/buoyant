@@ -60,6 +60,7 @@ pub mod prelude {
     pub use crate::animation::Animation;
     pub use crate::layout::{Alignment, HorizontalAlignment, VerticalAlignment};
     pub use crate::view::shape::*;
+    pub use crate::event::input::InputExtension;
 }
 
 use crate::transition::Transition;
