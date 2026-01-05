@@ -11,7 +11,7 @@ use std::time::Instant;
 use buoyant::{
     environment::DefaultEnvironment,
     event::{
-        input::{self, Groups, Input},
+        input::{self, Group, Groups, Input},
         keyboard::KeyboardInput,
         // simulator::MouseTracker,
     },
@@ -30,8 +30,9 @@ use crate::{
 const FONT: u8g2_fonts::FontRenderer =
     u8g2_fonts::FontRenderer::new::<u8g2_fonts::fonts::u8g2_font_t0_13_tf>();
 
-const G0: Groups = Groups::from_mask(0b01);
-const G1: Groups = Groups::from_mask(0b10);
+const G0: Groups = Groups::from_mask(0b0001);
+const G1: Groups = Groups::from_mask(0b0010);
+const G2: Groups = Groups::from_mask(0b0100);
 
 pub fn view<'a, 'b, C: GoodPixelColor, F: Fn(&State) + 'a + Copy>(
     data: RenderData<'a, C>,
@@ -66,7 +67,7 @@ pub fn view<'a, 'b, C: GoodPixelColor, F: Fn(&State) + 'a + Copy>(
                 table_dimensions: (r, c),
             } => VStack::new((
                 hardware_input_input_line::hw_line(header, data.palette, false),
-                table::table(data, (r, c), names, ie, eu),
+                table::table(data, &state, (r, c), names, ie, eu),
                 hardware_input_input_line::hw_line(footer, data.palette, true),
             )),
             Page::Settings { header, footer } => VStack::new((
@@ -123,14 +124,15 @@ fn main() {
         ..Default::default()
     };
 
-    let [g0, g1, g2] = [0, 1, 2].map(input::Group::new);
-    let g012 = Groups::from_iter([g0, g1, g2]);
+    let [g0, g1, g2] = [0, 1, 2].map(Group::new);
 
     input.add_group(g0, &mut group_data_0).unwrap();
     input.add_group(g1, &mut group_data_1).unwrap();
     input.add_group(g2, &mut group_data_2).unwrap();
 
-    input.add_keyboard(g012, &keyboard).unwrap();
+    input.add_keyboard(G0 | G1 | G2, &keyboard).unwrap();
+
+    input.activate(G0);
 
     let mut page = mock_data::SETTINGS;
 
@@ -156,6 +158,9 @@ fn main() {
     for _ in 0usize.. {
         display.clear(PALETTE.black()).unwrap();
 
+        if let Some((i, ie)) = app_state.ie_value_update.take() {
+            todo!("{i}: {ie}");
+        }
         if let Some(action) = app_state.page_action.take() {
             match (action, page) {
                 (PageAction::Next, Page::IeTable { .. }) if page == PAGE_2 => page = SETTINGS,
@@ -199,6 +204,15 @@ fn main() {
                 &mut app_state,
                 &mut state,
             );
+            while let Some(event) = app_state.artificial_event.take() {
+                let _ = view.handle_event(
+                    &event,
+                    &context,
+                    &mut target_tree,
+                    &mut app_state,
+                    &mut state,
+                );
+            }
         }
 
         std::thread::sleep(std::time::Duration::from_millis(50));

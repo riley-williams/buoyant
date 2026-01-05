@@ -29,10 +29,15 @@ pub struct State {
     pub net_mask: u8,
     pub dhcp: bool,
     pub page_action: Option<PageAction>,
+    pub artificial_event: Option<buoyant::event::Event>,
+    pub ie_value_update: Option<(u8, f32)>,
 
     pub(crate) opened_input: Option<(IpType, Deactivation)>,
+    pub(crate) focused_table: Option<Deactivation>,
+    pub(crate) opened_cell_input: Option<(u8, Deactivation)>,
 
     pub(crate) temporary_ip: TemporaryIp,
+    pub(crate) temporary_ie: TemporaryIe,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -85,6 +90,13 @@ pub enum HwCell {
 pub enum IeName<'a> {
     Known(&'a str),
     Addr((u8, u8), (u8, u8, u8)),
+}
+
+#[derive(Copy, Clone, Debug)]
+pub struct TemporaryIe {
+    pub sign: bool,
+    pub int: [u8; 3],
+    pub frac: [u8; 3],
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -160,9 +172,15 @@ impl Default for State {
             net_mask: 0,
             dhcp: true,
             page_action: None,
+            artificial_event: None,
+            ie_value_update: None,
 
             opened_input: None,
+            focused_table: None,
+            opened_cell_input: None,
+
             temporary_ip: Ipv4Addr::UNSPECIFIED.into(),
+            temporary_ie: TemporaryIe::zero(),
         }
     }
 }
@@ -198,5 +216,52 @@ impl TryFrom<TemporaryIp> for Ipv4Addr {
             *dst = src.try_into()?;
         }
         Ok(Self::from(arr))
+    }
+}
+
+impl TemporaryIe {
+    pub fn zero() -> Self {
+        Self {
+            sign: false,
+            int: [0, 0, 0],
+            frac: [0, 0, 0],
+        }
+    }
+}
+
+impl From<f32> for TemporaryIe {
+    fn from(value: f32) -> Self {
+        let int = value.abs().trunc();
+        let frac = ((value - int).abs() * 100.0) as u32;
+        let int = int as u32;
+        let [i0, i1, i2] = [
+            (int / 100 % 10) as u8,
+            (int / 10 % 10) as u8,
+            (int % 10) as u8,
+        ];
+        let [f0, f1, f2] = [
+            (frac / 100 % 10) as u8,
+            (frac / 10 % 10) as u8,
+            (frac % 10) as u8,
+        ];
+        Self {
+            sign: value.is_sign_positive(),
+            int: [i0, i1, i2],
+            frac: [f0, f1, f2],
+        }
+    }
+}
+
+impl From<TemporaryIe> for f32 {
+    fn from(
+        TemporaryIe {
+            sign,
+            int: [i0, i1, i2],
+            frac: [f0, f1, f2],
+        }: TemporaryIe,
+    ) -> Self {
+        let int: f32 = (i0 as f32) * 100.0 + (i1 as f32) * 10.0 + (i2 as f32);
+        let frac: f32 = (f0 as f32) * 0.1 + (f1 as f32) * 0.01 + (f2 as f32) * 0.001;
+        (int + frac).copysign(if sign { 1.0 } else { -1.0 })
     }
 }

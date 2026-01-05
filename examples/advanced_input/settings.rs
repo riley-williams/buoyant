@@ -22,7 +22,7 @@ pub fn settings<'a, 'b, C: GoodPixelColor, F: Fn(&State) + 'a>(
     let toggle_dhcp = funnel(|s| s.dhcp = !s.dhcp);
     let enter_ip = |t: IpType| {
         funnel(move |s| {
-            s.opened_input = Some((t, i.deactivate(G0)));
+            s.opened_input = Some((t, i.replace(G0, G1)));
             s.temporary_ip = match t {
                 IpType::StaticIp => s.static_ip.into(),
                 IpType::Gateway => s.gateway.into(),
@@ -31,11 +31,9 @@ pub fn settings<'a, 'b, C: GoodPixelColor, F: Fn(&State) + 'a>(
         })
     };
     let set_ip = |t: IpType| {
-        // activate
         funnel(move |s| {
             if let Ok(ip) = s.temporary_ip.try_into() {
-                i.reset(G1); // todo: make guard to that atomically
-                s.opened_input.take().map(|(_, d)| d.into_guard(i));
+                s.opened_input.take_guard(i);
                 match t {
                     IpType::StaticIp => s.static_ip = ip,
                     IpType::Gateway => s.gateway = ip,
@@ -44,10 +42,7 @@ pub fn settings<'a, 'b, C: GoodPixelColor, F: Fn(&State) + 'a>(
             }
         })
     };
-    let cancel_ip = funnel(move |s| {
-        i.reset(G1); // todo: make guard to that atomically
-        s.opened_input.take().map(|(_, d)| d.into_guard(i));
-    });
+    let cancel_ip = funnel(move |s| _ = s.opened_input.take_guard(i));
 
     let static_ip = state.static_ip;
     let net_mask = state.net_mask;
