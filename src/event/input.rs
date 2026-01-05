@@ -212,15 +212,31 @@ impl InputRef<'_> {
         self,
         groups: Groups,
         event: super::keyboard::KeyboardEventKind,
-        max: usize,
-        f: impl FnMut(usize) -> super::EventResult,
+        initial: u8,
+        i: impl Fn(u8, super::keyboard::KeyboardEventKind) -> (bool, u8),
+        f: &mut dyn FnMut(usize) -> super::EventResult,
     ) -> super::EventResult {
         let groups = groups & self.active_groups();
         // TODO: traverse multiple groups with one event
         let Some((_, group)) = self.groups.iter().find(|&(&g, _)| (g & groups) != 0) else {
             return super::EventResult::default();
         };
-        group.focused_path.traverse(event, max, f)
+        group.focused_path.traverse(event, initial, i, f)
+    }
+    #[inline(never)]
+    pub fn traverse_linear(
+        self,
+        groups: Groups,
+        event: super::keyboard::KeyboardEventKind,
+        max: usize,
+        f: &mut dyn FnMut(usize) -> super::EventResult,
+    ) -> super::EventResult {
+        let groups = groups & self.active_groups();
+        // TODO: traverse multiple groups with one event
+        let Some((_, group)) = self.groups.iter().find(|&(&g, _)| (g & groups) != 0) else {
+            return super::EventResult::default();
+        };
+        group.focused_path.traverse_linear(event, max, f)
     }
     pub fn leaf_move(self, focus: &mut FocusState, groups: Groups) -> super::EventResult {
         let groups = groups & self.active_groups();
@@ -229,12 +245,13 @@ impl InputRef<'_> {
             return super::EventResult::default();
         }
 
-        // todo: debug assert that there is a sound path there
-
         if self.is_focused_any(groups) {
             debug_assert!(
                 focus.is_focused_any(groups),
-                "Included press must transition from focused to unfocused, but it is already unfocused.",
+                "Current phase is focused->blurred, but the leaf is already blurred, not focused.
+State is corrupted.
+Event Groups: {groups:?}
+",
             );
 
             self.blur(focus.blur(groups));
@@ -242,7 +259,10 @@ impl InputRef<'_> {
         } else {
             debug_assert!(
                 !focus.is_focused_all(groups),
-                "Included press must transition from unfocused to focused, but it is already focused.",
+                "Current phase is blurred->focused, but the leaf is already focused, not blurred.
+State is corrupted.
+Event Groups: {groups:?}
+",
             );
 
             self.focus(focus.focus(groups));

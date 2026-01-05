@@ -59,22 +59,48 @@ impl ComponentPath {
         self.len.set(0);
     }
 
-    pub fn traverse(
+    pub fn traverse_linear(
         &self,
         event: Kind,
         max: usize,
+        f: impl FnMut(usize) -> EventResult,
+    ) -> EventResult {
+        let max = max as u8;
+        let is_forward = matches!(event, Kind::Down | Kind::Right);
+        self.traverse(
+            event,
+            if is_forward { 0 } else { max },
+            move |current, kind| -> (bool, u8) {
+                // fixme: it probably never gonna happen that those aren't equal,
+                //        so can we just require user of `traverse` to curry it?
+                let is_forward = matches!(kind, Kind::Down | Kind::Right);
+                match () {
+                    () if is_forward && current == max => (true, 0),
+                    () if is_forward => (false, current + 1),
+                    () if !is_forward && current == 0 => (true, max),
+                    () if !is_forward => (false, current - 1),
+                    () => (false, current),
+                }
+            },
+            f,
+        )
+    }
+
+    pub fn traverse(
+        &self,
+        event: Kind,
+        initial: u8,
+        i: impl Fn(u8, Kind) -> (bool, u8),
         mut f: impl FnMut(usize) -> EventResult,
     ) -> EventResult {
-        let is_forward = matches!(event, Kind::Down | Kind::Right);
         let offset = self.offset.get();
-        let max = max as u8;
 
         let mut result = EventResult::default();
         let mut allowed_retry = offset == 0;
 
         if self.len.get() == offset {
             if event.is_movement() {
-                self.set_current(if is_forward { 0 } else { max });
+                self.set_current(initial);
                 self.len.set(offset + 1);
             } else {
                 return result;
@@ -99,32 +125,19 @@ impl ComponentPath {
             // Remove the path to unsuccessful child
             self.len.set(offset + 1);
 
-            let overflow = if is_forward {
-                self.delta(1, max)
-            } else {
-                self.delta(-1, 0)
-            };
-
+            let (overflow, next) = i(current, event);
             if overflow {
                 if allowed_retry {
                     allowed_retry = false;
-                    self.set_current(if is_forward { 0 } else { max });
+                    std::println!("Setting current to {next}");
+                    self.set_current(next);
                     continue;
                 }
                 self.len.set(offset);
                 return result;
+            } else {
+                self.set_current(next);
             }
-        }
-    }
-
-    #[inline]
-    pub fn delta(&self, delta: i8, bound: u8) -> bool {
-        let current = self.current();
-        if current == bound {
-            true
-        } else {
-            self.set_current((current as i8 + delta) as u8);
-            false
         }
     }
 }
@@ -169,7 +182,7 @@ mod tests {
                 Self::Node(children) => {
                     let max = children.len() - 1;
 
-                    path.traverse(event, max, |i| children[i].handle(meta, event, path))
+                    path.traverse_linear(event, max, |i| children[i].handle(meta, event, path))
                 }
                 Self::Leaf {
                     id,
