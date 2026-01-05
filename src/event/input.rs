@@ -244,7 +244,7 @@ impl InputRef<'_> {
         // remove already active from `to` to not disable them in drop
         let (from, deactivate) = (from & active, to & !active);
         // We are not doing multithreading, it is atomic to have the dummy input ref,
-        // it is fine to race there. Proper solution is a compare exchage loop.
+        // it is fine to race there. Proper solution is a compare exchange loop.
         self.active_groups.fetch_and(!from.0, Ordering::Relaxed);
         self.active_groups.fetch_or(to.0, Ordering::Relaxed);
         Deactivation {
