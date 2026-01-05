@@ -244,8 +244,8 @@ macro_rules! match_view {
 
 #[derive(Default, Debug)]
 pub struct State<T> {
-    observed_groups: Groups,
-    inner: T,
+    pub(crate) observed_groups: Groups,
+    pub(crate) inner: T,
 }
 
 macro_rules! define_branch {

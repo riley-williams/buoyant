@@ -1,10 +1,10 @@
 use crate::{
-    event::{EventContext, EventResult},
+    event::{EventContext, EventResult, input::Groups},
     layout::ResolvedLayout,
     primitives::{Dimensions, Point, ProposedDimensions},
     render::TransitionOption,
     transition::Opacity,
-    view::{ViewLayout, ViewMarker},
+    view::{ViewLayout, ViewMarker, match_view::State},
 };
 
 impl<V> ViewMarker for Option<V>
@@ -21,7 +21,7 @@ where
     Captures: ?Sized,
 {
     type Sublayout = Option<ResolvedLayout<V::Sublayout>>;
-    type State = Option<V::State>;
+    type State = State<Option<V::State>>;
 
     fn priority(&self) -> i8 {
         self.as_ref().map_or(i8::MIN, ViewLayout::priority)
@@ -37,7 +37,10 @@ where
     }
 
     fn build_state(&self, captures: &mut Captures) -> Self::State {
-        self.as_ref().map(|v| v.build_state(captures))
+        State {
+            observed_groups: Groups::default(),
+            inner: self.as_ref().map(|v| v.build_state(captures)),
+        }
     }
 
     fn layout(
@@ -47,17 +50,24 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> ResolvedLayout<Self::Sublayout> {
+        if self.is_none() {
+            state.inner = None;
+        }
+
         self.as_ref().map_or(
             ResolvedLayout {
                 sublayouts: None,
                 resolved_size: Dimensions::zero(),
             },
             |v| {
-                let s0 = if let Some(s) = state {
+                let s0 = if let Some(s) = state.inner.as_mut() {
                     s
                 } else {
-                    *state = Some(v.build_state(captures));
-                    let Some(s) = state else {
+                    env.input().blur(state.observed_groups);
+                    state.observed_groups = Groups::default();
+                    state.inner = Some(v.build_state(captures));
+
+                    let Some(s) = state.inner.as_mut() else {
                         unreachable!("Guaranteed to not be any other variant")
                     };
                     s
@@ -81,7 +91,11 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> Self::Renderables {
-        match (self, &layout.sublayouts, state) {
+        if self.is_none() {
+            state.inner = None;
+        }
+
+        match (self, &layout.sublayouts, &mut state.inner) {
             (Some(v), Some(l0), Some(s0)) => TransitionOption::new_some(
                 v.render_tree(l0, origin, env, captures, s0),
                 l0.resolved_size.into(),
@@ -104,9 +118,17 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> EventResult {
-        match (self, render_tree, state) {
+        if self.is_none() {
+            state.inner = None;
+        }
+
+        match (self, render_tree, &mut state.inner) {
             (Some(v), TransitionOption::Some { subtree, .. }, Some(s)) => {
-                v.handle_event(event, context, subtree, captures, s)
+                let result = v.handle_event(event, context, subtree, captures, s);
+                if result.handled {
+                    state.observed_groups &= event.groups();
+                }
+                result
             }
             (None, _, _) => EventResult::default(),
             _ => {
