@@ -1,14 +1,16 @@
+use core::time::Duration;
+
 use crate::state::{BatteryStatus, CellState, PortState};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ChargeSim {
     pub battery: BatteryStatus,
-    last_update: std::time::Instant,
+    last_update: core::time::Duration,
 }
 
 impl ChargeSim {
     #[must_use]
-    pub fn new(capacity: f32) -> Self {
+    pub fn new(capacity: f32, app_time: Duration) -> Self {
         let battery = BatteryStatus {
             ports: PortState {
                 usbc1_power: 0.0,
@@ -24,14 +26,13 @@ impl ChargeSim {
         };
         Self {
             battery,
-            last_update: std::time::Instant::now(),
+            last_update: app_time,
         }
     }
 
-    pub fn update(&mut self) {
-        let now = std::time::Instant::now();
-        let elapsed = now - self.last_update;
-        self.last_update = now;
+    pub fn update(&mut self, app_time: Duration) {
+        let elapsed = app_time.abs_diff(self.last_update);
+        self.last_update = app_time;
         let net_power = self.battery.net_power();
         let hours_elapsed = elapsed.as_secs_f32() / 3600.0;
         self.battery.cell_state.cycle_count +=

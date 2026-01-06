@@ -34,7 +34,7 @@ fn main() {
     let mut target = EmbeddedGraphicsRenderTarget::new_hinted(&mut display, color::BACKGROUND);
     let app_start = Instant::now();
 
-    let simulator = ChargeSim::new(1.0);
+    let simulator = ChargeSim::new(1.0, app_start.elapsed());
     let mut app = App::new(simulator);
 
     let mut source_tree = app.tree(target.size().into(), app_start.elapsed());
@@ -85,7 +85,7 @@ fn main() {
                 SimulatorEvent::Quit => break 'running,
                 SimulatorEvent::KeyDown { keycode, .. } => match keycode {
                     Keycode::Space if button_down.is_unpressed() => {
-                        button_down = ButtonState::Pressed(Instant::now());
+                        button_down = ButtonState::Pressed(app_start.elapsed());
                     }
                     Keycode::Num1 => {
                         app.state_mut().simulator.battery.ports.usbc1_power =
@@ -104,7 +104,7 @@ fn main() {
                 SimulatorEvent::KeyUp { keycode, .. } if keycode == Keycode::Space => {
                     if button_down
                         .pressed()
-                        .is_some_and(|i| i.elapsed().as_millis() <= 1000)
+                        .is_some_and(|i| (app_start.elapsed().abs_diff(i)).as_millis() <= 1000)
                     {
                         app.state_mut().screen.increment();
                     }
@@ -117,13 +117,13 @@ fn main() {
 
         if button_down
             .pressed()
-            .is_some_and(|i| i.elapsed().as_millis() > 1000)
+            .is_some_and(|i| (app_start.elapsed().abs_diff(i)).as_millis() > 1000)
         {
             app.state_mut().auto_off = !app.state().auto_off;
             button_down = ButtonState::Reset;
         }
 
-        app.state_mut().simulator.update();
+        app.state_mut().simulator.update(app_start.elapsed());
     }
 }
 
