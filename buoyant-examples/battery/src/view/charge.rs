@@ -62,24 +62,26 @@ fn port_power_view(power: &PortState) -> impl View<ColorFormat, ()> + use<> {
 
 #[expect(clippy::cast_precision_loss)]
 fn port_power_row(port_name: &str, power: i32) -> impl View<ColorFormat, ()> + use<'_> {
-    let mut formatted_power = heapless::String::<8>::new();
-    // save a few thousand cycles by not being lazy with fp
-    _ = write!(formatted_power, "{:.1}w", power.abs() as f32); // ignore write failure
     HStack::new((
-        Text::new(port_name, &font::BODY)
+        Text::new(port_name, &font::BODY_BOLD)
+            .with_precise_bounds()
             .foreground_color(color::CONTENT)
+            .fixed_size(true, true)
             .flex_frame()
-            .with_min_width(6 * 2)
+            .with_min_width(24)
             .padding(Edges::Vertical, 5)
             .padding(Edges::Leading, 5),
         match power {
             p if p > 0 => Text::new("^", &font::BODY),
             p if p < 0 => Text::new("*", &font::BODY),
             _ => Text::new("-", &font::BODY),
-        },
+        }
+        .with_precise_bounds(),
         Spacer::default(),
-        Text::new(formatted_power, &font::BODY_BOLD)
+        Text::new_fmt::<32>(format_args!("{:.1}w", power.abs() as f32), &font::BODY_BOLD)
+            .with_precise_bounds()
             .multiline_text_alignment(HorizontalTextAlignment::Trailing)
+            .fixed_size(true, true)
             .foreground_color(if power == 0 {
                 color::GREY
             } else {
@@ -97,7 +99,7 @@ fn port_power_row(port_name: &str, power: i32) -> impl View<ColorFormat, ()> + u
                 RoundedRectangle::new(5),
             ),
     ))
-    .with_spacing(SPACING * 2)
+    .with_spacing(SPACING)
     .padding(Edges::All, 3)
     .background_color(color::SECONDARY_BACKGROUND, RoundedRectangle::new(8))
 }

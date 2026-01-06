@@ -1,4 +1,4 @@
-use std::time::{Duration, Instant};
+use core::time::Duration;
 
 use buoyant::view::prelude::*;
 use buoyant::{environment::DefaultEnvironment, primitives::ProposedDimensions, render::Render};
@@ -8,7 +8,7 @@ use crate::{charge_simulator::ChargeSim, color, view::Screen};
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ButtonState {
     Unpressed,
-    Pressed(Instant),
+    Pressed(Duration),
     Reset,
 }
 
@@ -19,7 +19,7 @@ impl ButtonState {
     }
 
     #[must_use]
-    pub fn pressed(&self) -> Option<Instant> {
+    pub fn pressed(&self) -> Option<Duration> {
         if let Self::Pressed(i) = self {
             Some(*i)
         } else {
