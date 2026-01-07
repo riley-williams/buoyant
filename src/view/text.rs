@@ -59,6 +59,14 @@ pub struct WrappedLine<'a> {
     pub max_x: i32,
 }
 
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
+pub struct Sublayout {
+    line_ranges: heapless::Vec<crate::render::text::Line, 8, u8>,
+    manual_offset: (i16, i16),
+    wrap_size: (u16, u16),
+    line_count: u16,
+}
+
 /// The alignment of multiline text. This has no effect on single-line text.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum HorizontalTextAlignment {
@@ -209,12 +217,7 @@ where
     T: AsRef<str> + Clone,
     F: Font,
 {
-    type Sublayout = (
-        heapless::Vec<crate::render::text::Line, 8>,
-        Point,
-        Size,
-        u32,
-    );
+    type Sublayout = Sublayout;
     type State = ();
 
     fn transition(&self) -> Self::Transition {
@@ -346,7 +349,12 @@ where
         }
 
         ResolvedLayout {
-            sublayouts: (line_ranges, manual_offset, wrap_size, line_count),
+            sublayouts: Sublayout {
+                line_ranges,
+                manual_offset: (manual_offset.x as i16, manual_offset.y as i16),
+                wrap_size: (wrap_size.width as u16, wrap_size.height as u16),
+                line_count: line_count as u16,
+            },
             resolved_size: size.into(),
         }
     }
@@ -359,15 +367,24 @@ where
         _captures: &mut Captures,
         _state: &mut Self::State,
     ) -> Self::Renderables {
+        let Sublayout {
+            line_ranges,
+            manual_offset,
+            wrap_size,
+            line_count,
+        } = &layout.sublayouts;
         render::Text::new(
-            origin + layout.sublayouts.1,
-            layout.sublayouts.2,
+            (
+                origin.x as i16 + manual_offset.0,
+                origin.y as i16 + manual_offset.1,
+            ),
+            *wrap_size,
             self.font,
             self.text.clone(),
             self.attributes.clone(),
             self.alignment,
-            layout.sublayouts.0.clone(),
-            layout.sublayouts.3,
+            line_ranges.clone(),
+            *line_count,
             self.wrap,
         )
     }

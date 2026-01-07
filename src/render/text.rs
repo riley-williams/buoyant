@@ -1,5 +1,3 @@
-use core::ops::Range;
-
 use heapless::Vec;
 
 use crate::{
@@ -11,36 +9,41 @@ use crate::{
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[repr(Rust, packed)]
 pub struct Line {
-    pub range: Range<usize>,
-    pub pixel_width: u32,
+    pub range: (u16, u16),
+    pub pixel_width: u8,
 }
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Text<'a, T, F: Font, const LINES: usize> {
-    pub origin: Point,
-    pub size: Size,
+    pub origin: (i16, i16),
+    pub size: (u16, u16),
     pub font: &'a F,
     pub text: T,
     pub attributes: F::Attributes,
     pub alignment: HorizontalTextAlignment,
-    pub lines: Vec<Line, LINES>,
-    pub max_lines: u32,
+    pub lines: Vec<Line, LINES, u8>,
+    pub max_lines: u16,
     pub wrap: WrapStrategy,
+}
+
+impl<const N: usize, T, F: Font> Text<'_, T, F, N> {
+    const _ASSERT_LINES_FIT_IN_U8: () = assert!(N <= u8::MAX as usize);
 }
 
 // FIXME: Remove and just use struct init
 impl<'a, T: AsRef<str>, F: Font> Text<'a, T, F, 8> {
     #[expect(clippy::too_many_arguments)]
     pub fn new(
-        origin: Point,
-        size: Size,
+        origin: (i16, i16),
+        size: (u16, u16),
         font: &'a F,
         text: T,
         attributes: F::Attributes,
         alignment: HorizontalTextAlignment,
-        lines: Vec<Line, 8>,
-        max_lines: u32,
+        lines: Vec<Line, 8, u8>,
+        max_lines: u16,
         wrap: WrapStrategy,
     ) -> Self {
         Self {
@@ -59,6 +62,8 @@ impl<'a, T: AsRef<str>, F: Font> Text<'a, T, F, 8> {
 
 impl<T: Clone, F: Font, const N: usize> Clone for Text<'_, T, F, N> {
     fn clone(&self) -> Self {
+        () = Self::_ASSERT_LINES_FIT_IN_U8;
+
         Self {
             origin: self.origin,
             size: self.size,
@@ -75,6 +80,8 @@ impl<T: Clone, F: Font, const N: usize> Clone for Text<'_, T, F, N> {
 
 impl<T: AsRef<str>, F: Font, const N: usize> AnimatedJoin for Text<'_, T, F, N> {
     fn join_from(&mut self, source: &Self, domain: &AnimationDomain) {
+        () = Self::_ASSERT_LINES_FIT_IN_U8;
+
         // Text content (and line breaks) jump
         self.origin = Interpolate::interpolate(source.origin, self.origin, domain.factor);
         self.size = Interpolate::interpolate(source.size, self.size, domain.factor);
@@ -92,8 +99,10 @@ impl<C: Copy, T: AsRef<str> + Clone, F: FontRender<C>, const LINE_BREAKS: usize>
     #[expect(clippy::too_many_lines)]
     fn render(&self, render_target: &mut impl RenderTarget<ColorFormat = C>, style: &C) {
         let clip_rect = render_target.clip_rect();
-        let bounding_box = Rectangle::new(self.origin, self.size);
-        if self.size.area() == 0 || !bounding_box.intersects(&clip_rect) {
+        let origin = Point::new(self.origin.0 as i32, self.origin.1 as i32);
+        let size = Size::new(self.size.0 as u32, self.size.1 as u32);
+        let bounding_box = Rectangle::new(origin, size);
+        if size.width == 0 || size.height == 0 || !bounding_box.intersects(&clip_rect) {
             return;
         }
 
@@ -112,23 +121,24 @@ impl<C: Copy, T: AsRef<str> + Clone, F: FontRender<C>, const LINE_BREAKS: usize>
 
             let line_x = self
                 .alignment
-                .align(self.size.width as i32, line.pixel_width as i32)
-                + self.origin.x;
+                .align(size.width as i32, line.pixel_width as i32)
+                + origin.x;
 
             let mut x = 0;
 
-            let line_offset = Point::new(line_x, self.origin.y + height);
+            let line_offset = Point::new(line_x, origin.y + height);
             let line_bounding_box =
-                Rectangle::new(line_offset, Size::new(line.pixel_width, line_height));
+                Rectangle::new(line_offset, Size::new(line.pixel_width as u32, line_height));
 
             if !line_bounding_box.intersects(&clip_rect) {
                 height += line_height as i32;
-                if height >= self.size.height as i32 {
+                if height >= size.height as i32 {
                     break;
                 }
                 continue;
             }
-            let Some(s) = self.text.as_ref().get(line.range.clone()) else {
+            let range = line.range.0 as usize..line.range.1 as usize;
+            let Some(s) = self.text.as_ref().get(range) else {
                 continue; // Skip invalid lines
             };
             render_target.draw_glyphs(
@@ -150,7 +160,10 @@ impl<C: Copy, T: AsRef<str> + Clone, F: FontRender<C>, const LINE_BREAKS: usize>
         }
         let remaining_text = self.lines.last().map_or(self.text.as_ref(), |last_range| {
             // Get the remaining text after the last line
-            self.text.as_ref().get(last_range.range.end..).unwrap_or("")
+            self.text
+                .as_ref()
+                .get(last_range.range.1 as usize..)
+                .unwrap_or("")
         });
         if remaining_text.is_empty() {
             return;
@@ -158,9 +171,8 @@ impl<C: Copy, T: AsRef<str> + Clone, F: FontRender<C>, const LINE_BREAKS: usize>
         // Pass false for precise wrapping, it doesn't affect rendered lines.
         // The width passed here should be the advance-based width, not the tighter precise
         //  bounding box width so that the text is wrapped the same.
-        let mut word_wrap = WordWrap::new(remaining_text, self.size.width, &metrics, false);
-        let mut character_wrap =
-            CharacterWrap::new(remaining_text, self.size.width, &metrics, false);
+        let mut word_wrap = WordWrap::new(remaining_text, size.width, &metrics, false);
+        let mut character_wrap = CharacterWrap::new(remaining_text, size.width, &metrics, false);
         let wrap = core::iter::from_fn(|| match self.wrap {
             WrapStrategy::Word => word_wrap.next(),
             WrapStrategy::Character => character_wrap.next(),
@@ -175,10 +187,10 @@ impl<C: Copy, T: AsRef<str> + Clone, F: FontRender<C>, const LINE_BREAKS: usize>
 
             let width = line.width;
 
-            let line_x = self.alignment.align(self.size.width as i32, width as i32) + self.origin.x;
+            let line_x = self.alignment.align(size.width as i32, width as i32) + origin.x;
             let mut x = 0;
 
-            let line_offset = Point::new(line_x, self.origin.y + height);
+            let line_offset = Point::new(line_x, origin.y + height);
             let line_bounding_box = Rectangle::new(line_offset, Size::new(width, line_height));
             if line_bounding_box.origin.y > clip_rect.origin.y + clip_rect.size.height as i32 {
                 break;
@@ -187,7 +199,7 @@ impl<C: Copy, T: AsRef<str> + Clone, F: FontRender<C>, const LINE_BREAKS: usize>
                 < clip_rect.origin.y
             {
                 height += line_height as i32;
-                if height >= self.size.height as i32 {
+                if height >= size.height as i32 {
                     break;
                 }
                 continue;
@@ -257,8 +269,8 @@ mod tests {
     fn animated_join_at_start() {
         let font = CharacterBufferFont;
         let source = Text::new(
-            Point::new(0, 0),
-            Size::new(100, 50),
+            (0, 0),
+            (100, 50),
             &font,
             "Hello",
             (),
@@ -268,8 +280,8 @@ mod tests {
             WrapStrategy::Word,
         );
         let mut target = Text::new(
-            Point::new(50, 25),
-            Size::new(200, 100),
+            (50, 25),
+            (200, 100),
             &font,
             "World",
             (),
@@ -292,8 +304,8 @@ mod tests {
     fn animated_join_at_end() {
         let font = CharacterBufferFont;
         let source = Text::new(
-            Point::new(0, 0),
-            Size::new(100, 50),
+            (0, 0),
+            (100, 50),
             &font,
             "Hello",
             (),
@@ -303,8 +315,8 @@ mod tests {
             WrapStrategy::Word,
         );
         let original_target = Text::new(
-            Point::new(50, 25),
-            Size::new(200, 100),
+            (50, 25),
+            (200, 100),
             &font,
             "World",
             (),
@@ -328,8 +340,8 @@ mod tests {
     fn animated_join_interpolates_position_and_size() {
         let font = CharacterBufferFont;
         let source = Text::new(
-            Point::new(0, 0),
-            Size::new(50, 25),
+            (0, 0),
+            (50, 25),
             &font,
             "Start",
             (),
@@ -339,8 +351,8 @@ mod tests {
             WrapStrategy::Word,
         );
         let original_target = Text::new(
-            Point::new(100, 50),
-            Size::new(150, 75),
+            (100, 50),
+            (150, 75),
             &font,
             "End",
             (),
@@ -354,15 +366,10 @@ mod tests {
         target.join_from(&source, &animation_domain(128));
 
         // Position and size should be interpolated
-        assert!(target.origin.x > source.origin.x && target.origin.x < original_target.origin.x);
-        assert!(target.origin.y > source.origin.y && target.origin.y < original_target.origin.y);
-        assert!(
-            target.size.width > source.size.width && target.size.width < original_target.size.width
-        );
-        assert!(
-            target.size.height > source.size.height
-                && target.size.height < original_target.size.height
-        );
+        assert!(target.origin.0 > source.origin.0 && target.origin.0 < original_target.origin.0);
+        assert!(target.origin.1 > source.origin.1 && target.origin.1 < original_target.origin.1);
+        assert!(target.size.0 > source.size.0 && target.size.0 < original_target.size.0);
+        assert!(target.size.1 > source.size.1 && target.size.1 < original_target.size.1);
 
         // Text and alignment should come from target
         assert_eq!(target.text, original_target.text);
