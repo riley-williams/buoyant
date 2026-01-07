@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use buoyant::{
     environment::{DefaultEnvironment, LayoutEnvironment},
-    event::Event,
+    event::{Event, input},
     layout::{Alignment, LayoutDirection},
     primitives::{Point, ProposedDimensions, Size},
     render_target::FixedTextBuffer,
@@ -28,6 +28,9 @@ impl LayoutEnvironment for TestEnv {
 
     fn app_time(&self) -> Duration {
         self.app_time
+    }
+    fn input(&self) -> input::InputRef<'_> {
+        input::InputRef::default()
     }
 }
 

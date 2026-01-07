@@ -53,6 +53,15 @@ impl Interpolate for f64 {
     }
 }
 
+impl<A: Interpolate, B: Interpolate> Interpolate for (A, B) {
+    fn interpolate(from: Self, to: Self, amount: u8) -> Self {
+        (
+            A::interpolate(from.0, to.0, amount),
+            B::interpolate(from.1, to.1, amount),
+        )
+    }
+}
+
 impl Interpolate for char {
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
         if amount < 127 { from } else { to }

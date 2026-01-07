@@ -3,7 +3,7 @@ use crate::font::FontRender;
 use crate::primitives::transform::CoordinateSpaceTransform;
 use crate::primitives::{Interpolate, Pixel, transform::LinearTransform};
 use crate::render_target::{LayerConfig, LayerHandle};
-use crate::surface::{AsDrawTarget, OffsetSurface};
+use crate::surface::AsDrawTarget;
 use crate::{
     primitives::{
         Point,
@@ -63,6 +63,9 @@ impl<D: DrawTarget> Surface for DrawTargetSurface<'_, D> {
 pub struct EmbeddedGraphicsRenderTarget<D: Surface> {
     surface: D,
     active_layer: LayerConfig<D::Color>,
+    /// A flag tracking active animation. This is initialized to true to prevent issues displaying
+    /// the first frame.
+    active_animation: bool,
 }
 
 impl<'a, D> EmbeddedGraphicsRenderTarget<DrawTargetSurface<'a, D>>
@@ -77,6 +80,7 @@ where
         Self {
             surface: DrawTargetSurface(display),
             active_layer: LayerConfig::new_clip(clip_rect),
+            active_animation: true,
         }
     }
 
@@ -87,6 +91,7 @@ where
         Self {
             surface: DrawTargetSurface(display),
             active_layer: LayerConfig::new_clip(clip_rect).with_background_hint(background_hint),
+            active_animation: true,
         }
     }
 
@@ -137,6 +142,16 @@ where
 
     fn alpha(&self) -> u8 {
         self.active_layer.alpha
+    }
+
+    fn report_active_animation(&mut self) {
+        self.active_animation = true;
+    }
+
+    fn clear_animation_status(&mut self) -> bool {
+        let was_active = self.active_animation;
+        self.active_animation = false;
+        was_active
     }
 
     fn fill<T: Into<Self::ColorFormat>>(
@@ -239,12 +254,13 @@ where
         }
     }
 
-    fn draw_glyphs<T: Into<Self::ColorFormat>>(
+    fn draw_glyphs<T: Into<Self::ColorFormat>, F: FontRender<Self::ColorFormat>>(
         &mut self,
         offset: Point,
         brush: &impl Brush<ColorFormat = T>,
         glyphs: impl Iterator<Item = Glyph>,
-        font: &impl FontRender<Self::ColorFormat>,
+        font: &F,
+        font_attributes: &F::Attributes,
     ) {
         let offset = offset.applying(&self.active_layer.transform);
         let Some(color) = brush.as_solid().map(Into::into) else {
@@ -261,8 +277,14 @@ where
                 }
             });
         glyphs.for_each(|glyph| {
-            let mut surface = OffsetSurface::new(&mut self.surface, offset + glyph.offset);
-            font.draw(glyph.character, color, &mut surface);
+            font.draw(
+                glyph.character,
+                offset + glyph.offset,
+                color,
+                self.active_layer.background_hint,
+                font_attributes,
+                &mut self.surface,
+            );
         });
     }
 

@@ -36,17 +36,17 @@ fn scroll_view() -> impl View<char, TestState> {
 fn button(c: char) -> impl View<char, u8> + use<> {
     Button::new(
         |i: &mut u8| *i += 1,
-        move |is_pressed| {
+        move |a| {
             Rectangle
                 .frame()
                 .with_height(2)
                 .flex_infinite_width(HorizontalAlignment::Center)
-                .foreground_color(if is_pressed { 'X' } else { c })
+                .foreground_color(if a.is_pressed() { 'X' } else { c })
         },
     )
 }
 
-fn ctx(secs: u64) -> EventContext {
+fn ctx(secs: u64) -> EventContext<'static> {
     EventContext::new(Duration::from_secs(secs))
 }
 

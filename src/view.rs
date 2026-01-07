@@ -15,6 +15,8 @@ mod image;
 #[allow(missing_docs)]
 pub mod match_view;
 mod modifier;
+mod option;
+mod pagination;
 pub mod scroll_view;
 pub mod shape;
 mod spacer;
@@ -36,6 +38,7 @@ pub use hstack::HStack;
 pub use image::Image;
 pub use modifier::aspect_ratio;
 pub use modifier::padding;
+pub use pagination::{Pagination, PaginationAction, PaginationDirection};
 pub use scroll_view::ScrollView;
 pub use spacer::Spacer;
 pub(crate) use text::{CharacterWrap, WordWrap};
@@ -56,6 +59,7 @@ pub mod prelude {
     };
     pub use super::{FitAxis, HorizontalTextAlignment, padding::Edges};
     pub use crate::animation::Animation;
+    pub use crate::event::input::InputExtension;
     pub use crate::layout::{Alignment, HorizontalAlignment, VerticalAlignment};
     pub use crate::view::shape::*;
 }
@@ -120,12 +124,12 @@ pub trait ViewLayout<Captures: ?Sized>: ViewMarker {
     ///
     /// This state is created once when the view is first initialized and is intended
     /// to persist across multiple layout/render cycles.
-    type State: 'static;
+    type State: Default + 'static;
 
     /// The computed layout of the view and its subviews.
     ///
     /// Size is represented here, but placement is deferred to the render tree.
-    type Sublayout: Clone + PartialEq + 'static;
+    type Sublayout: Default + Clone + PartialEq + 'static;
 
     /// The layout priority of the view. Higher priority views are more likely to
     /// be given the size they want

@@ -1,6 +1,6 @@
 use crate::{
     environment::LayoutEnvironment,
-    font::{Font, FontMetrics},
+    font::{CustomSize, Font, FontMetrics},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimension, ProposedDimensions, Size},
     render::{self},
@@ -40,10 +40,11 @@ pub enum WrapStrategy {
 /// }
 /// ```
 #[derive(Debug, Clone)]
-pub struct Text<'a, T, F> {
+pub struct Text<'a, T, F: Font> {
     #[allow(clippy::struct_field_names)]
     pub(crate) text: T,
     pub(crate) font: &'a F,
+    pub(crate) attributes: F::Attributes,
     pub(crate) alignment: HorizontalTextAlignment,
     pub(crate) precise_character_bounds: bool,
     pub(crate) wrap: WrapStrategy,
@@ -56,6 +57,14 @@ pub struct WrappedLine<'a> {
     pub precise_width: u32,
     pub min_x: i32,
     pub max_x: i32,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
+pub struct Sublayout {
+    line_ranges: heapless::Vec<crate::render::text::Line, 8, u8>,
+    manual_offset: (i16, i16),
+    wrap_size: (u16, u16),
+    line_count: u16,
 }
 
 /// The alignment of multiline text. This has no effect on single-line text.
@@ -80,13 +89,14 @@ impl HorizontalTextAlignment {
     }
 }
 
-impl<'a, T: AsRef<str>, F> Text<'a, T, F> {
+impl<'a, T: AsRef<str>, F: Font> Text<'a, T, F> {
     #[allow(missing_docs)]
     #[must_use]
     pub fn new(text: T, font: &'a F) -> Self {
         Self {
             text,
             font,
+            attributes: F::Attributes::default(),
             alignment: HorizontalTextAlignment::default(),
             precise_character_bounds: false,
             wrap: WrapStrategy::Word,
@@ -100,7 +110,7 @@ impl<'a, T: AsRef<str>, F> Text<'a, T, F> {
     }
 }
 
-impl<T, F> Text<'_, T, F> {
+impl<T, F: Font> Text<'_, T, F> {
     /// Calculate the vertical extent (min y, max y) for a line of text.
     /// This is used for first and last lines to determine vertical bounds.
     fn calculate_vertical_extent(
@@ -132,7 +142,7 @@ impl<T, F> Text<'_, T, F> {
     }
 }
 
-impl<'a, F> Text<'a, (), F> {
+impl<'a, F: Font> Text<'a, (), F> {
     /// A convenience constructor for [`Text`] backed by an owned [`heapless::String<N>`]
     /// and formatted with the result of [`format_args!`].
     ///
@@ -157,7 +167,7 @@ impl<'a, F> Text<'a, (), F> {
     }
 }
 
-impl<T, F> Text<'_, T, F> {
+impl<T, F: Font> Text<'_, T, F> {
     /// Sets the alignment of multiline text.
     #[must_use]
     pub fn multiline_text_alignment(self, alignment: HorizontalTextAlignment) -> Self {
@@ -169,6 +179,8 @@ impl<T, F> Text<'_, T, F> {
     /// This option is particularly useful for displaying tightly bordered
     /// text.
     ///
+    /// Not all fonts support precise character bounds.
+    ///
     /// Note that when using precision bounds, the baselines of text
     /// arranged horizontally are no longer guaranteed to align.
     #[must_use]
@@ -178,13 +190,24 @@ impl<T, F> Text<'_, T, F> {
     }
 }
 
-impl<T: PartialEq, F> PartialEq for Text<'_, T, F> {
+impl<T, F: Font<Attributes: CustomSize>> Text<'_, T, F> {
+    /// Sets the font size
+    #[must_use]
+    pub fn with_font_size(self, size: u32) -> Self {
+        Text {
+            attributes: self.attributes.with_size(size),
+            ..self
+        }
+    }
+}
+
+impl<T: PartialEq, F: Font> PartialEq for Text<'_, T, F> {
     fn eq(&self, other: &Self) -> bool {
         self.text == other.text
     }
 }
 
-impl<'a, T: Clone, F> ViewMarker for Text<'a, T, F> {
+impl<'a, T: Clone, F: Font> ViewMarker for Text<'a, T, F> {
     type Renderables = render::Text<'a, T, F, 8>;
     type Transition = Opacity;
 }
@@ -194,12 +217,7 @@ where
     T: AsRef<str> + Clone,
     F: Font,
 {
-    type Sublayout = (
-        heapless::Vec<crate::render::text::Line, 8>,
-        Point,
-        Size,
-        u32,
-    );
+    type Sublayout = Sublayout;
     type State = ();
 
     fn transition(&self) -> Self::Transition {
@@ -215,8 +233,8 @@ where
         _captures: &mut Captures,
         _state: &mut Self::State,
     ) -> ResolvedLayout<Self::Sublayout> {
-        let metrics = self.font.metrics();
-        let line_height = metrics.default_line_height();
+        let metrics = self.font.metrics(&self.attributes);
+        let line_height = metrics.vertical_metrics().line_height();
 
         let max_line_count = match offer.height {
             ProposedDimension::Exact(h) => h / line_height,
@@ -331,7 +349,12 @@ where
         }
 
         ResolvedLayout {
-            sublayouts: (line_ranges, manual_offset, wrap_size, line_count),
+            sublayouts: Sublayout {
+                line_ranges,
+                manual_offset: (manual_offset.x as i16, manual_offset.y as i16),
+                wrap_size: (wrap_size.width as u16, wrap_size.height as u16),
+                line_count: line_count as u16,
+            },
             resolved_size: size.into(),
         }
     }
@@ -344,14 +367,24 @@ where
         _captures: &mut Captures,
         _state: &mut Self::State,
     ) -> Self::Renderables {
+        let Sublayout {
+            line_ranges,
+            manual_offset,
+            wrap_size,
+            line_count,
+        } = &layout.sublayouts;
         render::Text::new(
-            origin + layout.sublayouts.1,
-            layout.sublayouts.2,
+            (
+                origin.x as i16 + manual_offset.0,
+                origin.y as i16 + manual_offset.1,
+            ),
+            *wrap_size,
             self.font,
             self.text.clone(),
+            self.attributes.clone(),
             self.alignment,
-            layout.sublayouts.0.clone(),
-            layout.sublayouts.3,
+            line_ranges.clone(),
+            *line_count,
             self.wrap,
         )
     }
@@ -385,7 +418,8 @@ mod test {
     }
 
     impl Font for ArbitraryFont {
-        fn metrics(&self) -> impl FontMetrics {
+        type Attributes = ();
+        fn metrics(&self, _customization: &Self::Attributes) -> impl FontMetrics {
             &self.metrics
         }
     }
@@ -396,7 +430,10 @@ mod test {
         fn draw(
             &self,
             _character: char,
+            _offset: Point,
             _color: C,
+            _background_color: Option<C>,
+            _customization: &Self::Attributes,
             _surface: &mut impl crate::surface::Surface<Color = C>,
         ) {
         }
@@ -416,16 +453,16 @@ mod test {
             ))
         }
 
-        fn default_line_height(&self) -> u32 {
-            self.line_height
+        fn vertical_metrics(&self) -> crate::font::VMetrics {
+            crate::font::VMetrics {
+                ascent: self.line_height as i32,
+                descent: 0,
+                line_spacing: 0,
+            }
         }
 
         fn advance(&self, _: char) -> u32 {
             self.character_width
-        }
-
-        fn maximum_character_size(&self) -> Size {
-            Size::new(self.character_width, self.line_height)
         }
     }
 

@@ -1,4 +1,5 @@
 use core::cmp::max;
+use paste::paste;
 
 use crate::{
     environment::LayoutEnvironment,
@@ -29,9 +30,11 @@ impl<T: LayoutEnvironment> LayoutEnvironment for VerticalEnvironment<'_, T> {
     fn layout_direction(&self) -> LayoutDirection {
         LayoutDirection::Vertical
     }
-
     fn app_time(&self) -> core::time::Duration {
         self.inner_environment.app_time()
+    }
+    fn input(&self) -> crate::event::input::InputRef<'_> {
+        self.inner_environment.input()
     }
 }
 
@@ -40,12 +43,6 @@ impl<'a, T: LayoutEnvironment> From<&'a T> for VerticalEnvironment<'a, T> {
         Self {
             inner_environment: environment,
         }
-    }
-}
-
-impl<T> PartialEq for VStack<T> {
-    fn eq(&self, other: &Self) -> bool {
-        self.spacing == other.spacing && self.alignment == other.alignment
     }
 }
 
@@ -81,6 +78,12 @@ impl<T> VStack<T> {
     #[must_use]
     pub fn lazy(self) -> FixedSize<Self> {
         FixedSize::new(false, true, self)
+    }
+}
+
+impl<T> PartialEq for VStack<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.spacing == other.spacing && self.alignment == other.alignment
     }
 }
 
@@ -216,32 +219,36 @@ fn layout_n(
     }
 }
 
-use paste::paste;
+// Helper macro to count the number of elements
+macro_rules! count {
+    () => (const { 0 });
+    ($head:tt $(, $rest:tt)*) => (const { 1 + count!($($rest),*) });
+}
 
 macro_rules! impl_view_for_vstack {
     ($(($n:tt, $type:ident)),+) => {
         paste! {
-        impl<$($type),+> ViewMarker for VStack<($($type),+)>
+        impl<$($type),+> ViewMarker for VStack<($($type,)+)>
         where
             $($type: ViewMarker),+
         {
-            type Renderables = ($($type::Renderables),+);
+            type Renderables = ($($type::Renderables,)+);
             type Transition = crate::transition::Opacity;
         }
 
-        impl<$($type),+, Captures: ?Sized> ViewLayout<Captures> for VStack<($($type),+)>
+        impl<$($type),+, Captures: ?Sized> ViewLayout<Captures> for VStack<($($type,)+)>
         where
             $($type: ViewLayout<Captures>),+
         {
-            type State = ($($type::State),+);
-            type Sublayout = ($(ResolvedLayout<$type::Sublayout>),+);
+            type State = ($($type::State,)+);
+            type Sublayout = ($(ResolvedLayout<$type::Sublayout>,)+);
 
             fn transition(&self) -> Self::Transition {
                 crate::transition::Opacity
             }
 
             fn build_state(&self, captures: &mut Captures) -> Self::State {
-                ($(self.items.$n.build_state(captures)),+)
+                ($(self.items.$n.build_state(captures),)+)
             }
 
             fn layout(
@@ -252,21 +259,24 @@ macro_rules! impl_view_for_vstack {
                 state: &mut Self::State,
             ) -> ResolvedLayout<Self::Sublayout> {
                 const N: usize = count!($($n),+);
+
+                let mut layout = ResolvedLayout {
+                    sublayouts: ($(ResolvedLayout::<$type::Sublayout>::default(),)+),
+                    resolved_size: Dimensions::default(),
+                };
+
                 let env = &VerticalEnvironment::from(env);
 
                 let captures_cell = RefCell::new(captures);
 
                 $(
-                    let mut [<c$n>]: Option<ResolvedLayout<$type::Sublayout>> = None;
-                )+
-
-                $(
+                    let sublayout = &mut layout.sublayouts.$n;
                     let mut [<f$n>] = |size: ProposedDimensions| {
                         // Calls to this layout cannot overlap, so this borrow will not conflict
                         let mut captures = captures_cell.borrow_mut();
                         let layout = self.items.$n.layout(&size, env, &mut *captures, &mut state.$n);
                         let size = layout.resolved_size;
-                        [<c$n>] = Some(layout);
+                        *sublayout = layout;
                         size
                     };
                 )+
@@ -280,10 +290,8 @@ macro_rules! impl_view_for_vstack {
                 let mut flexibilities: [Dimension; N] = [Dimension::new(0); N];
                 let mut subviews_indices: [usize; N] = [0; N];
                 let total_size = layout_n(&mut subviews, *offer, self.spacing, &mut flexibilities, &mut subviews_indices);
-                ResolvedLayout {
-                    sublayouts: ($([<c$n>].unwrap()),+),
-                    resolved_size: total_size,
-                }
+                layout.resolved_size = total_size;
+                layout
             }
 
             #[allow(unused_assignments)]
@@ -321,7 +329,7 @@ macro_rules! impl_view_for_vstack {
                     }
                 )+
 
-                ($([<subtree_$n>]),+)
+                ($([<subtree_$n>],)+)
             }
 
             fn handle_event(
@@ -333,6 +341,24 @@ macro_rules! impl_view_for_vstack {
                 state: &mut Self::State,
             ) -> EventResult {
                 let mut result = EventResult::default();
+                let max = const { count!($($n),+) - 1 };
+
+                if let crate::view::Event::Keyboard(k) = event
+                    && (context.input.is_focused_any(k.groups) || k.kind.is_movement())
+                {
+                    return context.input.traverse_linear(k.groups, k.kind, max, &mut |i| match i {
+                        $(
+                            $n => self.items.$n.handle_event(
+                                event,
+                                context,
+                                &mut render_tree.$n,
+                                captures,
+                                &mut state.$n
+                            ),
+                        )+
+                        _ => EventResult::default(),
+                    });
+                }
                 $(
                     result.merge(self.items.$n.handle_event(event, context, &mut render_tree.$n, captures, &mut state.$n));
                     if result.handled {
@@ -346,19 +372,7 @@ macro_rules! impl_view_for_vstack {
     };
 }
 
-// Smarter count?
-// macro_rules! count_tts {
-//     () => { 0 };
-//     ($odd:tt $($a:tt $b:tt)*) => { (count_tts!($($a)*) << 1) | 1 };
-//     ($($a:tt $even:tt)*) => { count_tts!($($a)*) << 1 };
-// }
-
-// Helper macro to count the number of elements
-macro_rules! count {
-    () => (0);
-    ($head:tt $(, $rest:tt)*) => (1 + count!($($rest),*));
-}
-
+impl_view_for_vstack!((0, T0));
 impl_view_for_vstack!((0, T0), (1, T1));
 impl_view_for_vstack!((0, T0), (1, T1), (2, T2));
 impl_view_for_vstack!((0, T0), (1, T1), (2, T2), (3, T3));

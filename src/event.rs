@@ -2,11 +2,16 @@ use core::time::Duration;
 
 use crate::primitives::Point;
 
+pub mod cursor;
+pub mod input;
+pub mod keyboard;
+
 /// An interaction event that can be handled by a view.
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
 pub enum Event {
     Touch(embedded_touch::Touch),
+    Keyboard(keyboard::KeyboardEvent),
     /// A scroll event with the given offset.
     Scroll(Point),
     /// External state changed which may affect the view.
@@ -15,6 +20,27 @@ pub enum Event {
     External,
     /// The app should exit
     Exit,
+}
+
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct EventResult {
+    /// Whether the event was handled by the view.
+    pub handled: bool,
+    /// Whether the view should be recomputed, and render trees joined.
+    pub recompute_view: bool,
+    /// This flag indicates the view should be redrawn even if no animations were reported as
+    /// active.
+    ///
+    /// This should be set when a view directly modifies the render tree state
+    /// without requesting a view recompute, e.g. scrollview dragging.
+    pub redraw: bool,
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct EventContext<'a> {
+    pub app_time: Duration,
+    pub input: input::InputRef<'a>,
 }
 
 impl Event {
@@ -26,27 +52,37 @@ impl Event {
             Self::Touch(touch) => {
                 touch.location += offset.into();
             }
-            Self::Scroll(_) | Self::External | Self::Exit => {}
+            Self::Keyboard(_) | Self::Scroll(_) | Self::External | Self::Exit => {}
         }
         event
     }
-}
 
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
-pub struct EventResult {
-    /// Whether the event was handled by the view.
-    pub handled: bool,
-    /// Whether the view should be recomputed, and render trees joined.
-    pub recompute_view: bool,
+    #[must_use]
+    pub fn groups(&self) -> input::Groups {
+        match self {
+            Self::Keyboard(k) => k.groups,
+            _ => input::Groups::default(),
+        }
+    }
 }
 
 impl EventResult {
     /// Creates a new `EventResult` with the specified handled state and recompute flag.
     #[must_use]
-    pub const fn new(handled: bool, recompute_view: bool) -> Self {
+    pub const fn new(handled: bool, recompute_view: bool, redraw: bool) -> Self {
         Self {
             handled,
             recompute_view,
+            redraw,
+        }
+    }
+
+    /// Returns this `EventResult` but with `handled` set to `true`.
+    #[must_use]
+    pub fn handled(self) -> Self {
+        Self {
+            handled: true,
+            ..self
         }
     }
 
@@ -55,6 +91,7 @@ impl EventResult {
     pub fn merge(&mut self, other: Self) {
         self.handled |= other.handled;
         self.recompute_view |= other.recompute_view;
+        self.redraw |= other.redraw;
     }
 
     /// Returns the result of merging another `EventResult` into this one.
@@ -64,21 +101,42 @@ impl EventResult {
         Self {
             handled: self.handled || other.handled,
             recompute_view: self.recompute_view || other.recompute_view,
+            redraw: self.redraw || other.redraw,
         }
     }
 }
 
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct EventContext {
-    pub app_time: Duration,
-}
-
-impl EventContext {
-    /// Creates a new `EventContext` with the given application time.
+impl<'a> EventContext<'a> {
+    /// Creates a new `EventContext` with the given application time and input.
     #[must_use]
     pub const fn new(app_time: Duration) -> Self {
-        Self { app_time }
+        let input = input::InputRef::DUMMY;
+        Self { app_time, input }
+    }
+
+    /// Creates a new `EventContext` with the given application time and input.
+    #[must_use]
+    pub const fn new_with_input(app_time: Duration, input: &'a input::Input<'a>) -> Self {
+        let input = input.as_ref();
+        Self { app_time, input }
+    }
+
+    /// Creates a new `EventContext` with the given application time and input.
+    #[must_use]
+    pub const fn input(self, input: &'a input::Input<'a>) -> Self {
+        let input = input.as_ref();
+        Self { input, ..self }
+    }
+}
+
+impl From<embedded_touch::Touch> for Event {
+    fn from(touch: embedded_touch::Touch) -> Self {
+        Self::Touch(touch)
+    }
+}
+impl From<keyboard::KeyboardEvent> for Event {
+    fn from(key_event: keyboard::KeyboardEvent) -> Self {
+        Self::Keyboard(key_event)
     }
 }
 

@@ -44,7 +44,18 @@ pub trait RenderTarget {
         LayerFn: FnOnce(LayerHandle<Self::ColorFormat>) -> LayerHandle<Self::ColorFormat>,
         DrawFn: FnOnce(&mut Self);
 
+    /// The alpha value for the current layer.
     fn alpha(&self) -> u8;
+
+    /// Reports that an animation is active.
+    ///
+    /// If a frame passes without this being called, the render target may
+    /// choose to reduce its frame rate or enter a low-power state.
+    fn report_active_animation(&mut self);
+
+    /// Clears the active animation status, returning true if an animation was
+    /// reported as active since the last time the status was cleared.
+    fn clear_animation_status(&mut self) -> bool;
 
     /// Fills a shape using the specified style and brush.
     fn fill<C: Into<Self::ColorFormat>>(
@@ -66,26 +77,28 @@ pub trait RenderTarget {
     );
 
     /// Draws a series of glyphs using the specified style and brush.
-    fn draw_glyphs<C: Into<Self::ColorFormat>>(
+    fn draw_glyphs<C: Into<Self::ColorFormat>, F: font::FontRender<Self::ColorFormat>>(
         &mut self,
         offset: Point,
         brush: &impl Brush<ColorFormat = C>,
         glyphs: impl Iterator<Item = Glyph>,
-        font: &impl font::FontRender<Self::ColorFormat>,
+        font: &F,
+        font_attributes: &F::Attributes,
     );
 
     /// Draws a string using the specified style and brush.
     ///
     /// This performs the same operation as `draw_glyphs`, but also handles
     /// glyph indexing and positioning.
-    fn draw_str<C: Into<Self::ColorFormat>>(
+    fn draw_str<C: Into<Self::ColorFormat>, F: font::FontRender<Self::ColorFormat>>(
         &mut self,
         offset: Point,
         brush: &impl Brush<ColorFormat = C>,
         text: &str,
-        font: &impl font::FontRender<Self::ColorFormat>,
+        font: &F,
+        font_attributes: &F::Attributes,
     ) {
-        let metrics = font.metrics();
+        let metrics = font.metrics(font_attributes);
         let mut x = 0;
         self.draw_glyphs(
             offset,
@@ -99,6 +112,7 @@ pub trait RenderTarget {
                 glyph
             }),
             font,
+            font_attributes,
         );
     }
 

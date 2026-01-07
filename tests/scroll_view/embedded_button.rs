@@ -15,11 +15,11 @@ fn scroll_view() -> impl View<char, u8> {
     ScrollView::new(VStack::new((
         Button::new(
             |i: &mut u8| *i += 1,
-            |is_pressed| {
+            |a| {
                 Rectangle
                     .frame()
                     .with_height(4)
-                    .foreground_color(if is_pressed { 'A' } else { 'a' })
+                    .foreground_color(if a.is_pressed() { 'A' } else { 'a' })
             },
         ),
         Rectangle.frame().with_height(4).foreground_color('b'),

@@ -4,7 +4,7 @@ use core::cmp::max;
 
 use crate::{
     environment::LayoutEnvironment,
-    event::EventResult,
+    event::{Event, EventContext, EventResult},
     layout::{HorizontalAlignment, LayoutDirection, ResolvedLayout, VerticalAlignment},
     primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions},
     transition::Opacity,
@@ -109,6 +109,10 @@ impl<T: LayoutEnvironment, D: ForEachDirection> LayoutEnvironment for ForEachEnv
 
     fn app_time(&self) -> core::time::Duration {
         self.inner_environment.app_time()
+    }
+
+    fn input(&self) -> crate::event::input::InputRef<'_> {
+        self.inner_environment.input()
     }
 }
 
@@ -268,14 +272,10 @@ where
         let mut sublayouts: heapless::Vec<ResolvedLayout<V::Sublayout>, N> = heapless::Vec::new();
         let mut subview_stages: heapless::Vec<(i8, bool), N> = heapless::Vec::new();
 
-        // fill sublayouts with an initial garbage layout
         // TODO: guess there are no empty views, often no extra work needed?
-        for (i, item) in self.items.iter().enumerate() {
+        for item in self.items {
             let view = (self.build_view)(item);
-            let Some(item_state) = state.get_mut(i) else {
-                break;
-            };
-            _ = sublayouts.push(view.layout(offer, env, captures, item_state));
+            _ = sublayouts.push(ResolvedLayout::default());
             _ = subview_stages.push((view.priority(), view.is_empty()));
         }
 
@@ -357,19 +357,34 @@ where
 
     fn handle_event(
         &self,
-        event: &crate::event::Event,
-        context: &crate::event::EventContext,
+        event: &Event,
+        context: &EventContext,
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
-    ) -> crate::event::EventResult {
+    ) -> EventResult {
         let mut result = EventResult::default();
-        // Delegate event handling to child views
-        for (i, item) in self.items.iter().enumerate() {
-            let view = (self.build_view)(item);
-            let item_state = &mut state[i];
-            let item_render_tree = &mut render_tree[i];
-            result.merge(view.handle_event(event, context, item_render_tree, captures, item_state));
+        if self.items.len() > 1 {
+            let max = self.items.len() - 1;
+            if let crate::view::Event::Keyboard(k) = event
+                && (context.input.is_focused_any(k.groups) || k.kind.is_movement())
+            {
+                let mut f = |i| {
+                    let view = (self.build_view)(&self.items[i]);
+                    view.handle_event(event, context, &mut render_tree[i], captures, &mut state[i])
+                };
+                return context.input.traverse_linear(k.groups, k.kind, max, &mut f);
+            }
+        }
+        for i in 0..self.items.len() {
+            let view = (self.build_view)(&self.items[i]);
+            result.merge(view.handle_event(
+                event,
+                context,
+                &mut render_tree[i],
+                captures,
+                &mut state[i],
+            ));
             if result.handled {
                 return result;
             }
