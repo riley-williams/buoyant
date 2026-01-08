@@ -292,6 +292,24 @@ pub enum Branch4<V0, V1, V2, V3> {
     Variant3(V3),
 }
 
+impl<V0: Default, V1> Default for Branch2<V0, V1> {
+    fn default() -> Self {
+        Self::Variant0(V0::default())
+    }
+}
+
+impl<V0: Default, V1, V2> Default for Branch3<V0, V1, V2> {
+    fn default() -> Self {
+        Self::Variant0(V0::default())
+    }
+}
+
+impl<V0: Default, V1, V2, V3> Default for Branch4<V0, V1, V2, V3> {
+    fn default() -> Self {
+        Self::Variant0(V0::default())
+    }
+}
+
 impl<V0, V1> ViewMarker for Branch2<V0, V1>
 where
     V0: ViewMarker,

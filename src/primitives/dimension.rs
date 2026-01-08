@@ -171,7 +171,7 @@ impl core::ops::Div<u32> for ProposedDimension {
 /// The dimension of a single axis
 /// `u16::MAX` is treated as infinity, and this type mostly exists to prevent accidental panics from
 /// operations overflowing
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Dimension(pub u32);
 
 impl Dimension {
@@ -356,7 +356,7 @@ impl core::ops::SubAssign<u32> for Dimension {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Dimensions {
     pub width: Dimension,
     pub height: Dimension,

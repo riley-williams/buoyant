@@ -268,14 +268,10 @@ where
         let mut sublayouts: heapless::Vec<ResolvedLayout<V::Sublayout>, N> = heapless::Vec::new();
         let mut subview_stages: heapless::Vec<(i8, bool), N> = heapless::Vec::new();
 
-        // fill sublayouts with an initial garbage layout
         // TODO: guess there are no empty views, often no extra work needed?
-        for (i, item) in self.items.iter().enumerate() {
+        for item in self.items {
             let view = (self.build_view)(item);
-            let Some(item_state) = state.get_mut(i) else {
-                break;
-            };
-            _ = sublayouts.push(view.layout(offer, env, captures, item_state));
+            _ = sublayouts.push(ResolvedLayout::default());
             _ = subview_stages.push((view.priority(), view.is_empty()));
         }
 
