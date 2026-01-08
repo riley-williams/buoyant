@@ -241,7 +241,7 @@ where
     V: ViewLayout<Captures>,
     F: Fn(&'a I) -> V,
 {
-    type Sublayout = heapless::Vec<ResolvedLayout<V::Sublayout>, N>;
+    type Sublayout = ResolvedLayout<heapless::Vec<ResolvedLayout<V::Sublayout>, N>>;
     type State = heapless::Vec<V::State, N>;
 
     fn transition(&self) -> Self::Transition {
@@ -311,11 +311,12 @@ where
             sublayouts,
             resolved_size: size,
         }
+        .nested()
     }
 
     fn render_tree(
         &self,
-        layout: &ResolvedLayout<Self::Sublayout>,
+        layout: &Self::Sublayout,
         origin: Point,
         env: &impl LayoutEnvironment,
         captures: &mut Captures,
@@ -338,7 +339,7 @@ where
 
             // TODO: If we include an ID here, rows can be animated and transitioned
             let item = renderables.push(view.render_tree(
-                item_layout,
+                &item_layout.sublayouts,
                 aligned_origin,
                 env,
                 captures,

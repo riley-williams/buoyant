@@ -308,22 +308,22 @@ macro_rules! define_branch {
 
             fn render_tree(
                 &self,
-                layout: &ResolvedLayout<Self::Sublayout>,
+                layout: &Self::Sublayout,
                 origin: Point,
                 env: &impl crate::environment::LayoutEnvironment,
                 captures: &mut Captures,
                 state: &mut Self::State,
             ) -> Self::Renderables {
-                match (self, &layout.sublayouts) {
+                match (self, layout) {
                     $(
                     (Self::$variant(v), $name::$variant(l0)) => {
                         // apparently consumes a lot less stack than matching on state too
                         if let $name::$variant(s) = state {
-                            render::$name::$variant(v.render_tree(l0, origin, env, captures, s))
+                            render::$name::$variant(v.render_tree(&l0.sublayouts, origin, env, captures, s))
                         } else {
                             let mut s = v.build_state(captures);
                             let renderables =
-                                render::$name::$variant(v.render_tree(l0, origin, env, captures, &mut s));
+                                render::$name::$variant(v.render_tree(&l0.sublayouts, origin, env, captures, &mut s));
                             *state = $name::$variant(s);
                             renderables
                         }

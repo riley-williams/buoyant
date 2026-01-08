@@ -75,15 +75,15 @@ where
 
     fn render_tree(
         &self,
-        layout: &ResolvedLayout<Self::Sublayout>,
+        layout: &Self::Sublayout,
         origin: Point,
         env: &impl crate::environment::LayoutEnvironment,
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> Self::Renderables {
-        match (self, &layout.sublayouts, state) {
+        match (self, layout, state) {
             (Some(v), Some(l0), Some(s0)) => TransitionOption::new_some(
-                v.render_tree(l0, origin, env, captures, s0),
+                v.render_tree(&l0.sublayouts, origin, env, captures, s0),
                 l0.resolved_size.into(),
                 v.transition(),
             ),

@@ -109,7 +109,7 @@ fn render_view(target: &mut CrosstermRenderTarget, view: &impl View<Colors, ()>)
     let env = DefaultEnvironment::default();
     let mut state = view.build_state(&mut ());
     let layout = view.layout(&size.into(), &env, &mut (), &mut state);
-    let tree = view.render_tree(&layout, Point::zero(), &env, &mut (), &mut state);
+    let tree = view.render_tree(&layout.sublayouts, Point::zero(), &env, &mut (), &mut state);
     tree.render(
         target,
         &Colors {

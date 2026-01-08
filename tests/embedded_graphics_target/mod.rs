@@ -22,7 +22,7 @@ pub fn render_to_mock(view: &impl View<Rgb888, ()>, allow_overdraw: bool) -> Moc
     let env = DefaultEnvironment::default();
     let mut state = view.build_state(&mut ());
     let layout = view.layout(&target.size().into(), &env, &mut (), &mut state);
-    let tree = view.render_tree(&layout, Point::zero(), &env, &mut (), &mut state);
+    let tree = view.render_tree(&layout.sublayouts, Point::zero(), &env, &mut (), &mut state);
     tree.render(&mut target, &Rgb888::WHITE);
 
     display

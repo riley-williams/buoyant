@@ -82,7 +82,7 @@ where
 
     fn render_tree(
         &self,
-        layout: &ResolvedLayout<Self::Sublayout>,
+        layout: &Self::Sublayout,
         origin: Point,
         env: &impl LayoutEnvironment,
         captures: &mut Captures,
@@ -103,7 +103,7 @@ where
                 ),
             );
         let background_shape = self.background_shape.render_tree(
-            &background_layout,
+            &background_layout.sublayouts,
             background_origin,
             env,
             &mut (),

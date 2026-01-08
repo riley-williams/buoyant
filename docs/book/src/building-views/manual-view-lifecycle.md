@@ -39,7 +39,7 @@ fn main() {
 
     let mut app_state = view.build_state(&mut app_data);
     let layout = view.layout(&size.into(), &environment, &mut app_data, &mut app_state);
-    let render_tree = view.render_tree(&layout, origin, &environment, &mut app_data, &mut app_state);
+    let render_tree = view.render_tree(&layout.sublayouts, origin, &environment, &mut app_data, &mut app_state);
 
     render_tree.render(&mut target, &DEFAULT_COLOR);
 

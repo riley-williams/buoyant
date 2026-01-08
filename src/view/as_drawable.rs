@@ -59,7 +59,13 @@ where
         let env = DefaultEnvironment::non_animated();
         let mut state = self.build_state(captures);
         let layout = self.layout(&size.into(), &env, captures, &mut state);
-        let render_tree = self.render_tree(&layout, Point::zero(), &env, captures, &mut state);
+        let render_tree = self.render_tree(
+            &layout.sublayouts,
+            Point::zero(),
+            &env,
+            captures,
+            &mut state,
+        );
         DrawableView {
             render_tree,
             default_color,

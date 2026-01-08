@@ -4,7 +4,7 @@ use crate::{
     environment::LayoutEnvironment,
     event::{EventContext, EventResult},
     layout::ResolvedLayout,
-    primitives::{Frame, ProposedDimensions, Size},
+    primitives::{Dimensions, Frame, ProposedDimensions, Size},
     render::Container,
     transition::Opacity,
     view::{Event, ViewLayout, ViewMarker},
@@ -98,7 +98,7 @@ where
     ViewFn: Fn(Size) -> Inner,
 {
     type State = Option<Inner::State>;
-    type Sublayout = ();
+    type Sublayout = Dimensions;
 
     fn transition(&self) -> Self::Transition {
         Opacity
@@ -120,32 +120,33 @@ where
         let size = offer.resolve_most_flexible(0, 1);
         ResolvedLayout {
             resolved_size: size,
-            sublayouts: (),
+            sublayouts: size,
         }
     }
 
     fn render_tree(
         &self,
-        layout: &ResolvedLayout<Self::Sublayout>,
+        layout: &Self::Sublayout,
         origin: crate::primitives::Point,
         env: &impl LayoutEnvironment,
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> Self::Renderables {
-        let size = layout.resolved_size.into();
+        let size = (*layout).into();
         let view = (self.inner)(size);
-        let proposal = layout.resolved_size.into();
+        let proposal = (*layout).into();
         let frame = Frame::new(origin, size);
         if let Some(inner_state) = state {
             let layout = view.layout(&proposal, env, captures, inner_state);
             Container::new(
                 frame,
-                view.render_tree(&layout, origin, env, captures, inner_state),
+                view.render_tree(&layout.sublayouts, origin, env, captures, inner_state),
             )
         } else {
             let mut inner_state = view.build_state(captures);
             let layout = view.layout(&proposal, env, captures, &mut inner_state);
-            let renderables = view.render_tree(&layout, origin, env, captures, &mut inner_state);
+            let renderables =
+                view.render_tree(&layout.sublayouts, origin, env, captures, &mut inner_state);
             *state = Some(inner_state);
             Container::new(frame, renderables)
         }

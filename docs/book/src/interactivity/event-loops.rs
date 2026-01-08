@@ -34,10 +34,20 @@ fn main() {
     let env = DefaultEnvironment::new(time);
     let layout = view.layout(&size.into(), &env, &mut count, &mut state);
 
-    let mut source_tree =
-        &mut view.render_tree(&layout, Point::zero(), &env, &mut count, &mut state);
-    let mut target_tree =
-        &mut view.render_tree(&layout, Point::zero(), &env, &mut count, &mut state);
+    let mut source_tree = &mut view.render_tree(
+        &layout.sublayouts,
+        Point::zero(),
+        &env,
+        &mut count,
+        &mut state,
+    );
+    let mut target_tree = &mut view.render_tree(
+        &layout.sublayouts,
+        Point::zero(),
+        &env,
+        &mut count,
+        &mut state,
+    );
 
     // ANCHOR: event_loop
     // Main event loop
@@ -85,7 +95,13 @@ fn main() {
             view = counter_view(count);
             let env = DefaultEnvironment::new(time);
             let layout = view.layout(&size.into(), &env, &mut count, &mut state);
-            *target_tree = view.render_tree(&layout, Point::zero(), &env, &mut count, &mut state);
+            *target_tree = view.render_tree(
+                &layout.sublayouts,
+                Point::zero(),
+                &env,
+                &mut count,
+                &mut state,
+            );
         }
         // ANCHOR_END: recompute_view
 
