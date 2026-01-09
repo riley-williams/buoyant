@@ -1,5 +1,5 @@
 use crate::primitives::{
-    Point, Size,
+    Interpolate, Point, Size,
     transform::{CoordinateSpaceTransform, LinearTransform},
 };
 
@@ -94,6 +94,15 @@ impl CoordinateSpaceTransform for Rectangle {
         Self {
             origin: self.origin.applying_inverse(transform),
             size: self.size.applying_inverse(transform),
+        }
+    }
+}
+
+impl Interpolate for Rectangle {
+    fn interpolate(from: Self, to: Self, amount: u8) -> Self {
+        Self {
+            origin: Interpolate::interpolate(from.origin, to.origin, amount),
+            size: Interpolate::interpolate(from.size, to.size, amount),
         }
     }
 }

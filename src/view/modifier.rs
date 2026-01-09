@@ -9,6 +9,7 @@ mod animated;
 pub mod aspect_ratio;
 mod background;
 mod background_color;
+mod clipped;
 mod erase_captures;
 mod fixed_frame;
 mod fixed_size;
@@ -30,6 +31,7 @@ pub(crate) use animated::Animated;
 pub(crate) use aspect_ratio::AspectRatio;
 pub(crate) use background::BackgroundView;
 pub(crate) use background_color::BackgroundColor;
+pub(crate) use clipped::Clipped;
 pub(crate) use erase_captures::EraseCaptures;
 use fixed::traits::ToFixed;
 pub(crate) use fixed_frame::FixedFrame;
@@ -210,6 +212,11 @@ pub trait ViewModifier: Sized + ViewMarker {
     /// ```
     fn background_color<C, S: Shape>(self, color: C, in_shape: S) -> BackgroundColor<Self, C, S> {
         BackgroundColor::new(self, color, in_shape)
+    }
+
+    /// Clips the modified view to its bounds.
+    fn clipped(self) -> Clipped<Self> {
+        Clipped::new(self)
     }
 
     /// Converts the captures of a parent view to [`()`]

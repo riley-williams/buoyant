@@ -331,7 +331,7 @@ impl<'a, C: Interpolate + Copy> LayerHandle<'a, C> {
         // maintain clip rect in global coordinate space
         // use zero-sized rectangle if the intersection is empty
         self.layer.clip_rect = clip_rect
-            .applying_inverse(&self.layer.transform)
+            .applying(&self.layer.transform)
             .intersection(&self.layer.clip_rect)
             .unwrap_or_else(|| Rectangle::new(Point::zero(), Size::new(0, 0)));
         self
@@ -456,9 +456,7 @@ mod tests {
 
         LayerHandle::new(&mut layer).clip(&new_clip);
 
-        // New clip rect should be inverse transformed, then intersected with existing clip rect
-        let transformed_clip =
-            new_clip.applying_inverse(&LinearTransform::new(Point::new(4, 8), 2.0));
+        let transformed_clip = new_clip.applying(&LinearTransform::new(Point::new(4, 8), 2.0));
         let expected_clip = transformed_clip
             .intersection(&Rectangle::new(Point::zero(), Size::new(100, 100)))
             .unwrap();

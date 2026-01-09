@@ -11,6 +11,7 @@ use core::time::Duration;
 use crate::render_target::RenderTarget;
 
 mod animate;
+mod clipped;
 pub mod collections;
 mod container;
 mod empty;
@@ -29,6 +30,7 @@ mod transform;
 mod transition_option;
 
 pub use animate::Animate;
+pub use clipped::Clipped;
 pub use container::Container;
 pub use hint_background::HintBackground;
 #[cfg(feature = "embedded-graphics")]
