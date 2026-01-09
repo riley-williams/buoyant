@@ -120,15 +120,20 @@ fn precise_bounds_u8g2_glasstown() {
     >());
 }
 
-#[ignore = "The results are extremely close, not sure if this is a quirk of the renderer or a bug"]
-#[test]
-fn precise_bounds_otf_sniglet() {
-    exhaustively_check_precise_bounds(
-        &rusttype::Font::try_from_bytes(
-            include_bytes!("../assets/fonts/Sniglet Regular.otf") as &[u8]
-        )
-        .unwrap(),
-    );
+#[cfg(feature = "rusttype-fonts")]
+mod rusttype {
+    use super::exhaustively_check_precise_bounds;
+
+    #[ignore = "The results are extremely close, not sure if this is a quirk of the renderer or a bug"]
+    #[test]
+    fn precise_bounds_otf_sniglet() {
+        exhaustively_check_precise_bounds(
+            &rusttype::Font::try_from_bytes(
+                include_bytes!("../assets/fonts/Sniglet Regular.otf") as &[u8]
+            )
+            .unwrap(),
+        );
+    }
 }
 
 #[ignore = "Significant negative offsets cause weirdness"]
