@@ -59,6 +59,13 @@ pub struct WrappedLine<'a> {
     pub max_x: i32,
 }
 
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
+pub struct Sublayout {
+    manual_offset: (i16, i16),
+    wrap_size: (u16, u16),
+    line_count: u16,
+}
+
 /// The alignment of multiline text. This has no effect on single-line text.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum HorizontalTextAlignment {
@@ -94,6 +101,7 @@ impl<'a, T: AsRef<str>, F: Font> Text<'a, T, F> {
             wrap: WrapStrategy::Word,
         }
     }
+
     /// Sets the wrapping strategy for the text.
     #[must_use]
     pub fn with_wrap_strategy(mut self, strategy: WrapStrategy) -> Self {
@@ -102,41 +110,41 @@ impl<'a, T: AsRef<str>, F: Font> Text<'a, T, F> {
     }
 }
 
-impl<T, F: Font> Text<'_, T, F> {
-    /// Calculate the vertical extent (min y, max y) for a line of text.
-    /// This is used for first and last lines to determine vertical bounds.
-    fn calculate_vertical_extent(
-        metrics: &impl FontMetrics,
-        text: &str,
-        y_offset: i32,
-    ) -> Option<(i32, i32)> {
-        if text.is_empty() {
-            return None;
-        }
+/// Calculate the vertical extent (min y, max y) for a line of text.
+/// This is used for first and last lines to determine vertical bounds.
+fn calculate_vertical_extent(
+    metrics: &impl FontMetrics,
+    text: &str,
+    y_offset: i32,
+) -> Option<(i32, i32)> {
+    if text.is_empty() {
+        return None;
+    }
 
-        let mut min_y = i32::MAX;
-        let mut max_y = i32::MIN;
+    let mut min_y = i32::MAX;
+    let mut max_y = i32::MIN;
 
-        for ch in text.chars() {
-            if let Some(char_bounds) = metrics.rendered_size(ch) {
-                let top = char_bounds.origin.y + y_offset;
-                let bottom = top + char_bounds.size.height as i32;
-                min_y = core::cmp::min(min_y, top);
-                max_y = core::cmp::max(max_y, bottom);
-            }
+    for ch in text.chars() {
+        if let Some(char_bounds) = metrics.rendered_size(ch) {
+            let top = char_bounds.origin.y + y_offset;
+            let bottom = top + char_bounds.size.height as i32;
+            min_y = core::cmp::min(min_y, top);
+            max_y = core::cmp::max(max_y, bottom);
         }
+    }
 
-        if min_y <= max_y {
-            Some((min_y, max_y))
-        } else {
-            None
-        }
+    if min_y <= max_y {
+        Some((min_y, max_y))
+    } else {
+        None
     }
 }
 
 impl<'a, F: Font> Text<'a, (), F> {
-    /// A convenience constructor for [`Text`] backed by an owned [`heapless::String<N>`]
+    /// A convenience constructor for [`Text`] backed by an owned [`heapless::String<N, u8>`]
     /// and formatted with the result of [`format_args!`].
+    ///
+    /// Use [`Text::new_fmt_long<N, L>`] when more than 255 characters are needed.
     ///
     /// # Examples
     ///
@@ -152,8 +160,46 @@ impl<'a, F: Font> Text<'a, (), F> {
     pub fn new_fmt<const N: usize>(
         args: core::fmt::Arguments<'_>,
         font: &'a F,
-    ) -> Text<'a, heapless::String<N>, F> {
-        let mut s = heapless::String::<N>::new();
+    ) -> Text<'a, heapless::String<N, u8>, F> {
+        const {
+            assert!(
+                u8::MAX as usize >= N,
+                "N is larger than 255, use `Text::new_fmt_long::<N, L>` instead"
+            );
+        };
+        let mut s = heapless::String::<N, u8>::new();
+        _ = s.write_fmt(args);
+        Text::new(s, font)
+    }
+
+    /// A convenience constructor for [`Text`] backed by an owned [`heapless::String<N, LenT>`]
+    /// and formatted with the result of [`format_args!`].
+    ///
+    /// Use this variant when more than 255 characters are needed.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use buoyant::view::prelude::*;
+    /// # use embedded_graphics::mono_font::ascii::FONT_9X15_BOLD;
+    /// # use embedded_graphics::pixelcolor::Rgb888;
+    /// #
+    /// fn legal_disclaimer(content: &str) -> impl View<Rgb888, ()> + use<> {
+    ///    Text::new_fmt_long::<10_000, u16>(format_args!("Nothing suspiscious here: {content}"), &FONT_9X15_BOLD)
+    /// }
+    /// ```
+    pub fn new_fmt_long<const N: usize, LenT: heapless::LenType>(
+        args: core::fmt::Arguments<'_>,
+        font: &'a F,
+    ) -> Text<'a, heapless::String<N, LenT>, F> {
+        const {
+            assert!(
+                LenT::MAX_USIZE >= N,
+                "N is larger than what `LenT` can hold, use a larger `LenT` type or reduce the capacity"
+            );
+        };
+
+        let mut s = heapless::String::<N, LenT>::new();
         _ = s.write_fmt(args);
         Text::new(s, font)
     }
@@ -200,7 +246,7 @@ impl<T: PartialEq, F: Font> PartialEq for Text<'_, T, F> {
 }
 
 impl<'a, T: Clone, F: Font> ViewMarker for Text<'a, T, F> {
-    type Renderables = render::Text<'a, T, F, 8>;
+    type Renderables = render::Text<'a, T, F>;
     type Transition = Opacity;
 }
 
@@ -209,12 +255,7 @@ where
     T: AsRef<str> + Clone,
     F: Font,
 {
-    type Sublayout = (
-        heapless::Vec<crate::render::text::Line, 8>,
-        Point,
-        Size,
-        u32,
-    );
+    type Sublayout = Sublayout;
     type State = ();
 
     fn transition(&self) -> Self::Transition {
@@ -239,8 +280,7 @@ where
         };
 
         let mut size = Size::zero();
-        // TODO: actually calculate this
-        let line_ranges = heapless::Vec::new();
+
         let mut whitespace = WordWrap::new(
             self.text.as_ref(),
             offer.width,
@@ -306,7 +346,7 @@ where
 
             if let Some((first_line, first_y)) = first_non_empty
                 && let Some((first_min_y, first_max_y)) =
-                    Self::calculate_vertical_extent(&metrics, first_line, *first_y)
+                    calculate_vertical_extent(&metrics, first_line, *first_y)
             {
                 min_y = first_min_y;
                 max_y = first_max_y;
@@ -315,7 +355,7 @@ where
 
             if let Some((last_line, last_y)) = last_non_empty
                 && let Some((last_min_y, last_max_y)) =
-                    Self::calculate_vertical_extent(&metrics, last_line, *last_y)
+                    calculate_vertical_extent(&metrics, last_line, *last_y)
             {
                 if has_vertical_extent {
                     // Union with first line extent
@@ -345,8 +385,14 @@ where
             size = Size::new(precise_width, precise_height);
         }
 
+        let sublayouts = Sublayout {
+            manual_offset: (manual_offset.x as i16, manual_offset.y as i16),
+            wrap_size: (wrap_size.width as u16, wrap_size.height as u16),
+            line_count: line_count as u16,
+        };
+
         ResolvedLayout {
-            sublayouts: (line_ranges, manual_offset, wrap_size, line_count),
+            sublayouts,
             resolved_size: size.into(),
         }
     }
@@ -359,19 +405,37 @@ where
         _captures: &mut Captures,
         _state: &mut Self::State,
     ) -> Self::Renderables {
-        render::Text::new(
-            origin + layout.sublayouts.1,
-            layout.sublayouts.2,
-            self.font,
-            self.text.clone(),
-            self.attributes.clone(),
-            self.alignment,
-            layout.sublayouts.0.clone(),
-            layout.sublayouts.3,
-            self.wrap,
-        )
+        let Sublayout {
+            manual_offset,
+            wrap_size,
+            line_count,
+        } = &layout.sublayouts;
+        render::Text {
+            origin: origin + Point::new(manual_offset.0.into(), manual_offset.1.into()),
+            size: *wrap_size,
+            font: self.font,
+            text: self.text.clone(),
+            attributes: self.attributes.clone(),
+            alignment: self.alignment,
+            max_lines: *line_count,
+            wrap: self.wrap,
+        }
     }
 }
+
+/// ```compile_fail
+/// # use buoyant::view::prelude::*;
+/// # use embedded_graphics::mono_font::ascii::FONT_9X15_BOLD;
+/// let _ = Text::new_fmt::<256>(format_args!("abc {}", 123), &FONT_9X15_BOLD);
+/// ```
+///
+/// ```compile_fail
+/// # use buoyant::view::prelude::*;
+/// # use embedded_graphics::mono_font::ascii::FONT_9X15_BOLD;
+/// let _ = Text::new_fmt_long::<100_000, u16>(format_args!("abc {}", 123), &FONT_9X15_BOLD);
+/// ```
+#[expect(unused)]
+struct CheckLengthCompileError;
 
 #[cfg(test)]
 mod test {
