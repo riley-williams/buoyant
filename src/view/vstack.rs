@@ -243,7 +243,8 @@ macro_rules! impl_view_for_vstack {
             $($type: ViewLayout<Captures>),+
         {
             type State = ($($type::State),+);
-            type Sublayout = ($(ResolvedLayout<$type::Sublayout>),+);
+            // FIXME: Could just be width + sublayouts?
+            type Sublayout = ResolvedLayout<($(ResolvedLayout<$type::Sublayout>),+)>;
 
             fn transition(&self) -> Self::Transition {
                 crate::transition::Opacity
@@ -292,13 +293,13 @@ macro_rules! impl_view_for_vstack {
                 ResolvedLayout {
                     sublayouts: ($([<c$n>].unwrap()),+),
                     resolved_size: total_size,
-                }
+                }.nested()
             }
 
             #[allow(unused_assignments)]
             fn render_tree(
                 &self,
-                layout: &ResolvedLayout<Self::Sublayout>,
+                layout: &Self::Sublayout,
                 origin: Point,
                 env: &impl LayoutEnvironment,
                 captures: &mut Captures,
@@ -317,7 +318,7 @@ macro_rules! impl_view_for_vstack {
                     );
 
                     let [<subtree_$n>] = self.items.$n.render_tree(
-                        &layout.sublayouts.$n,
+                        &layout.sublayouts.$n.sublayouts,
                         offset,
                         env,
                         captures,
@@ -440,7 +441,7 @@ where
 
     fn render_tree(
         &self,
-        layout: &ResolvedLayout<Self::Sublayout>,
+        layout: &Self::Sublayout,
         origin: Point,
         env: &impl LayoutEnvironment,
         captures: &mut Captures,

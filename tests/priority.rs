@@ -19,9 +19,18 @@ fn oversized_layout_vstack() {
     let mut state = view.build_state(&mut ());
     let layout = view.layout(&offer.into(), &env, &mut (), &mut state);
     assert_eq!(layout.resolved_size, Dimensions::new(10, 10));
-    assert_eq!(layout.sublayouts.0.resolved_size, Dimensions::new(5, 1));
-    assert_eq!(layout.sublayouts.1.resolved_size, Dimensions::new(10, 2));
-    assert_eq!(layout.sublayouts.2.resolved_size, Dimensions::new(10, 9));
+    assert_eq!(
+        layout.sublayouts.sublayouts.0.resolved_size,
+        Dimensions::new(5, 1)
+    );
+    assert_eq!(
+        layout.sublayouts.sublayouts.1.resolved_size,
+        Dimensions::new(10, 2)
+    );
+    assert_eq!(
+        layout.sublayouts.sublayouts.2.resolved_size,
+        Dimensions::new(10, 9)
+    );
 }
 
 /// The greedy lower priority view with a non-zero min size results in a layout overflow
@@ -38,7 +47,16 @@ fn oversized_layout_hstack() {
     let mut state = view.build_state(&mut ());
     let layout = view.layout(&offer.into(), &env, &mut (), &mut state);
     assert_eq!(layout.resolved_size, Dimensions::new(10, 10));
-    assert_eq!(layout.sublayouts.0.resolved_size, Dimensions::new(5, 1));
-    assert_eq!(layout.sublayouts.1.resolved_size, Dimensions::new(2, 10));
-    assert_eq!(layout.sublayouts.2.resolved_size, Dimensions::new(5, 10));
+    assert_eq!(
+        layout.sublayouts.sublayouts.0.resolved_size,
+        Dimensions::new(5, 1)
+    );
+    assert_eq!(
+        layout.sublayouts.sublayouts.1.resolved_size,
+        Dimensions::new(2, 10)
+    );
+    assert_eq!(
+        layout.sublayouts.sublayouts.2.resolved_size,
+        Dimensions::new(5, 10)
+    );
 }

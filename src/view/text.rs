@@ -399,7 +399,7 @@ where
 
     fn render_tree(
         &self,
-        layout: &ResolvedLayout<Self::Sublayout>,
+        layout: &Self::Sublayout,
         origin: Point,
         _env: &impl LayoutEnvironment,
         _captures: &mut Captures,
@@ -409,7 +409,7 @@ where
             manual_offset,
             wrap_size,
             line_count,
-        } = &layout.sublayouts;
+        } = &layout;
         render::Text {
             origin: origin + Point::new(manual_offset.0.into(), manual_offset.1.into()),
             size: *wrap_size,

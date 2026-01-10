@@ -84,7 +84,7 @@ fn test_undersized_layout_3_left_pad() {
     assert_eq!(layout.resolved_size, Dimensions::new(10, 1));
     let mut buffer = FixedTextBuffer::<10, 1>::default();
     hstack
-        .render_tree(&layout, Point::zero(), &env, &mut (), &mut state)
+        .render_tree(&layout.sublayouts, Point::zero(), &env, &mut (), &mut state)
         .render(&mut buffer, &' ');
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "1234567   ");
@@ -106,7 +106,7 @@ fn test_undersized_layout_3_right_pad_space() {
     assert_eq!(layout.resolved_size, Dimensions::new(10, 1));
     let mut buffer = FixedTextBuffer::<10, 1>::default();
     hstack
-        .render_tree(&layout, Point::zero(), &env, &mut (), &mut state)
+        .render_tree(&layout.sublayouts, Point::zero(), &env, &mut (), &mut state)
         .render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "  234 5678");
 }
@@ -129,7 +129,7 @@ fn test_oversized_layout_3_leading_pad_space() {
     assert_eq!(layout.resolved_size, Dimensions::new(10, 1));
     let mut buffer = FixedTextBuffer::<10, 1>::default();
     hstack
-        .render_tree(&layout, Point::zero(), &env, &mut (), &mut state)
+        .render_tree(&layout.sublayouts, Point::zero(), &env, &mut (), &mut state)
         .render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), " 234 56789");
 }
@@ -150,7 +150,7 @@ fn test_undersized_layout_3_middle_pad() {
     assert_eq!(layout.resolved_size, Dimensions::new(10, 1));
     let mut buffer = FixedTextBuffer::<10, 1>::default();
     hstack
-        .render_tree(&layout, Point::zero(), &env, &mut (), &mut state)
+        .render_tree(&layout.sublayouts, Point::zero(), &env, &mut (), &mut state)
         .render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "234   5678");
 }
@@ -173,7 +173,7 @@ fn test_oversized_layout_3_middle_pad_space() {
     assert_eq!(layout.resolved_size, Dimensions::new(10, 1));
     let mut buffer = FixedTextBuffer::<10, 1>::default();
     hstack
-        .render_tree(&layout, Point::zero(), &env, &mut (), &mut state)
+        .render_tree(&layout.sublayouts, Point::zero(), &env, &mut (), &mut state)
         .render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "234  56789");
 }
@@ -196,7 +196,7 @@ fn test_oversized_layout_3_trailing_pad_space() {
     assert_eq!(layout.resolved_size, Dimensions::new(10, 1));
     let mut buffer = FixedTextBuffer::<10, 1>::default();
     hstack
-        .render_tree(&layout, Point::zero(), &env, &mut (), &mut state)
+        .render_tree(&layout.sublayouts, Point::zero(), &env, &mut (), &mut state)
         .render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "234 56789 ");
 }
@@ -217,7 +217,7 @@ fn test_layout_3_remainder_allocation() {
     let mut state = hstack.build_state(&mut ());
     let layout = hstack.layout(&offer.into(), &env, &mut (), &mut state);
     hstack
-        .render_tree(&layout, Point::zero(), &env, &mut (), &mut state)
+        .render_tree(&layout.sublayouts, Point::zero(), &env, &mut (), &mut state)
         .render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aaabbcc   ");
 
@@ -225,7 +225,7 @@ fn test_layout_3_remainder_allocation() {
     let mut state = hstack.build_state(&mut ());
     let layout = hstack.layout(&offer.into(), &env, &mut (), &mut state);
     hstack
-        .render_tree(&layout, Point::zero(), &env, &mut (), &mut state)
+        .render_tree(&layout.sublayouts, Point::zero(), &env, &mut (), &mut state)
         .render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aaabbbcc  ");
 
@@ -233,7 +233,7 @@ fn test_layout_3_remainder_allocation() {
     let mut state = hstack.build_state(&mut ());
     let layout = hstack.layout(&offer.into(), &env, &mut (), &mut state);
     hstack
-        .render_tree(&layout, Point::zero(), &env, &mut (), &mut state)
+        .render_tree(&layout.sublayouts, Point::zero(), &env, &mut (), &mut state)
         .render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aaabbbccc ");
 
@@ -241,7 +241,7 @@ fn test_layout_3_remainder_allocation() {
     let mut state = hstack.build_state(&mut ());
     let layout = hstack.layout(&offer.into(), &env, &mut (), &mut state);
     hstack
-        .render_tree(&layout, Point::zero(), &env, &mut (), &mut state)
+        .render_tree(&layout.sublayouts, Point::zero(), &env, &mut (), &mut state)
         .render(&mut buffer, &' ');
     assert_eq!(buffer.text[0].iter().collect::<String>(), "aaabbbccc ");
 }

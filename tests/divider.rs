@@ -31,7 +31,7 @@ fn test_horizontal_render() {
     let mut buffer = FixedTextBuffer::<5, 5>::default();
     let env = TestEnv::default().with_direction(LayoutDirection::Horizontal);
     let layout = divider.layout(&buffer.size().into(), &env, &mut (), &mut ());
-    let tree = divider.render_tree(&layout, Point::new(0, 0), &env, &mut (), &mut ());
+    let tree = divider.render_tree(&layout.sublayouts, Point::new(0, 0), &env, &mut (), &mut ());
     tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0][0], '|');
     assert_eq!(buffer.text[4][0], '|');
@@ -44,7 +44,7 @@ fn test_vertical_render() {
     let mut buffer = FixedTextBuffer::<5, 5>::default();
     let env = TestEnv::default().with_direction(LayoutDirection::Vertical);
     let layout = divider.layout(&buffer.size().into(), &env, &mut (), &mut ());
-    let tree = divider.render_tree(&layout, Point::new(0, 0), &env, &mut (), &mut ());
+    let tree = divider.render_tree(&layout.sublayouts, Point::new(0, 0), &env, &mut (), &mut ());
     tree.render(&mut buffer, &' ');
     assert_eq!(buffer.text[0][0], '-');
     assert_eq!(buffer.text[0][4], '-');

@@ -55,7 +55,7 @@ impl<Captures: ?Sized, V> ViewLayout<Captures> for Padding<V>
 where
     V: ViewLayout<Captures>,
 {
-    type Sublayout = ResolvedLayout<V::Sublayout>;
+    type Sublayout = V::Sublayout;
     type State = V::State;
 
     fn priority(&self) -> i8 {
@@ -96,17 +96,15 @@ where
             width: offer.width - extra_width,
             height: offer.height - extra_height,
         };
-        let child_layout = self.inner.layout(&padded_offer, env, captures, state);
+        let mut child_layout = self.inner.layout(&padded_offer, env, captures, state);
         let padding_size = child_layout.resolved_size + Size::new(extra_width, extra_height);
-        ResolvedLayout {
-            sublayouts: child_layout,
-            resolved_size: padding_size,
-        }
+        child_layout.resolved_size = padding_size;
+        child_layout
     }
 
     fn render_tree(
         &self,
-        layout: &ResolvedLayout<Self::Sublayout>,
+        layout: &Self::Sublayout,
         origin: Point,
         env: &impl LayoutEnvironment,
         captures: &mut Captures,
@@ -119,7 +117,7 @@ where
             Edges::Bottom | Edges::Trailing => (0, 0),
         };
         self.inner.render_tree(
-            &layout.sublayouts,
+            layout,
             origin + Point::new(leading as i32, top as i32),
             env,
             captures,

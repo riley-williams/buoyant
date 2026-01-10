@@ -41,7 +41,7 @@ impl ViewMarker for Divider {
 
 impl<Captures: ?Sized> ViewLayout<Captures> for Divider {
     type State = ();
-    type Sublayout = ();
+    type Sublayout = Dimensions;
 
     fn priority(&self) -> i8 {
         i8::MAX
@@ -71,14 +71,14 @@ impl<Captures: ?Sized> ViewLayout<Captures> for Divider {
             },
         };
         ResolvedLayout {
-            sublayouts: (),
+            sublayouts: size,
             resolved_size: size,
         }
     }
 
     fn render_tree(
         &self,
-        layout: &ResolvedLayout<Self::Sublayout>,
+        layout: &Self::Sublayout,
         origin: Point,
         _env: &impl LayoutEnvironment,
         _captures: &mut Captures,
@@ -86,7 +86,7 @@ impl<Captures: ?Sized> ViewLayout<Captures> for Divider {
     ) -> Self::Renderables {
         crate::render::Rect {
             origin,
-            size: layout.resolved_size.into(),
+            size: (*layout).into(),
         }
     }
 }

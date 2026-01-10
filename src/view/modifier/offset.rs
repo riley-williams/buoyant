@@ -62,7 +62,7 @@ where
 
     fn render_tree(
         &self,
-        layout: &ResolvedLayout<Self::Sublayout>,
+        layout: &Self::Sublayout,
         origin: crate::primitives::Point,
         env: &impl LayoutEnvironment,
         captures: &mut Captures,

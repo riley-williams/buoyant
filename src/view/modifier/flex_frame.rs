@@ -151,6 +151,13 @@ fn clamp_optional<T: Ord + Copy>(mut value: T, min: Option<T>, max: Option<T>) -
     value.max(min.unwrap_or(value))
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Layout<T> {
+    inner: T,
+    frame_size: Dimensions,
+    inner_size: Dimensions,
+}
+
 impl<V> ViewMarker for FlexFrame<V>
 where
     V: ViewMarker,
@@ -163,7 +170,7 @@ impl<Captures: ?Sized, V> ViewLayout<Captures> for FlexFrame<V>
 where
     V: ViewLayout<Captures>,
 {
-    type Sublayout = ResolvedLayout<V::Sublayout>;
+    type Sublayout = Layout<V::Sublayout>;
     type State = V::State;
 
     fn priority(&self) -> i8 {
@@ -260,15 +267,21 @@ where
             height: h,
         };
 
+        let layout = Layout {
+            inner: sublayout.sublayouts,
+            frame_size: resolved_size,
+            inner_size: sublayout.resolved_size,
+        };
+
         ResolvedLayout {
-            sublayouts: sublayout,
+            sublayouts: layout,
             resolved_size,
         }
     }
 
     fn render_tree(
         &self,
-        layout: &ResolvedLayout<Self::Sublayout>,
+        layout: &Self::Sublayout,
         origin: Point,
         env: &impl LayoutEnvironment,
         captures: &mut Captures,
@@ -277,17 +290,17 @@ where
         let new_origin = origin
             + Point::new(
                 self.horizontal_alignment.align(
-                    layout.resolved_size.width.into(),
-                    layout.sublayouts.resolved_size.width.into(),
+                    layout.frame_size.width.into(),
+                    layout.inner_size.width.into(),
                 ),
                 self.vertical_alignment.align(
-                    layout.resolved_size.height.into(),
-                    layout.sublayouts.resolved_size.height.into(),
+                    layout.frame_size.height.into(),
+                    layout.inner_size.height.into(),
                 ),
             );
 
         self.child
-            .render_tree(&layout.sublayouts, new_origin, env, captures, state)
+            .render_tree(&layout.inner, new_origin, env, captures, state)
     }
 
     fn handle_event(

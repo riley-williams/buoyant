@@ -80,7 +80,13 @@ where
     let env = DefaultEnvironment::default();
     let mut state = view.build_state(captures);
     let layout = view.layout(&size.into(), &env, captures, &mut state);
-    view.render_tree(&layout, Point::zero(), &env, captures, &mut state)
+    view.render_tree(
+        &layout.sublayouts,
+        Point::zero(),
+        &env,
+        captures,
+        &mut state,
+    )
 }
 
 #[allow(dead_code)]
@@ -137,7 +143,7 @@ pub fn tap<V: View<char, Data>, Data: ?Sized>(
     );
 
     let mut tree = view.render_tree(
-        &layout,
+        &layout.sublayouts,
         Point::zero(),
         &DefaultEnvironment::default(),
         captures,

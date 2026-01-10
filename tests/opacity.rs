@@ -21,7 +21,7 @@ fn nonzero_opacity_hands_off_event() {
         &mut state,
     );
     let mut tree = view.render_tree(
-        &layout,
+        &layout.sublayouts,
         Point::zero(),
         &DefaultEnvironment::default(),
         &mut x,
@@ -68,7 +68,7 @@ fn zero_opacity_skips_event_handling() {
         &mut state,
     );
     let mut tree = view.render_tree(
-        &layout,
+        &layout.sublayouts,
         Point::zero(),
         &DefaultEnvironment::default(),
         &mut x,

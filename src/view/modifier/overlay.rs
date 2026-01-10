@@ -39,7 +39,7 @@ where
     T: ViewLayout<Captures>,
     U: ViewLayout<Captures>,
 {
-    type Sublayout = (ResolvedLayout<T::Sublayout>, ResolvedLayout<U::Sublayout>);
+    type Sublayout = ResolvedLayout<T::Sublayout>;
     // Tuples are rendered first to last
     type State = (T::State, U::State);
 
@@ -70,6 +70,21 @@ where
     ) -> ResolvedLayout<Self::Sublayout> {
         let foreground_layout = self.foreground.layout(offer, env, captures, &mut state.0);
         let foreground_size = foreground_layout.resolved_size;
+        ResolvedLayout {
+            sublayouts: foreground_layout,
+            resolved_size: foreground_size,
+        }
+    }
+
+    fn render_tree(
+        &self,
+        layout: &Self::Sublayout,
+        origin: Point,
+        env: &impl LayoutEnvironment,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> Self::Renderables {
+        let foreground_size = layout.resolved_size;
         // Propose the foreground size to the overlay
         // This would benefit from splitting layout into separate functions for the various offers
         let overlay_offer = ProposedDimensions {
@@ -80,37 +95,23 @@ where
             .overlay
             .layout(&overlay_offer, env, captures, &mut state.1);
 
-        ResolvedLayout {
-            sublayouts: (foreground_layout, overlay_layout),
-            resolved_size: foreground_size,
-        }
-    }
-
-    fn render_tree(
-        &self,
-        layout: &ResolvedLayout<Self::Sublayout>,
-        origin: Point,
-        env: &impl LayoutEnvironment,
-        captures: &mut Captures,
-        state: &mut Self::State,
-    ) -> Self::Renderables {
         let new_origin = origin
             + Point::new(
                 self.alignment.horizontal().align(
                     layout.resolved_size.width.into(),
-                    layout.sublayouts.1.resolved_size.width.into(),
+                    overlay_layout.resolved_size.width.into(),
                 ),
                 self.alignment.vertical().align(
                     layout.resolved_size.height.into(),
-                    layout.sublayouts.1.resolved_size.height.into(),
+                    overlay_layout.resolved_size.height.into(),
                 ),
             );
 
         (
             self.foreground
-                .render_tree(&layout.sublayouts.0, origin, env, captures, &mut state.0),
+                .render_tree(&layout.sublayouts, origin, env, captures, &mut state.0),
             self.overlay.render_tree(
-                &layout.sublayouts.1,
+                &overlay_layout.sublayouts,
                 new_origin,
                 env,
                 captures,

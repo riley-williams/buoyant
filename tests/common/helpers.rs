@@ -78,5 +78,5 @@ pub fn tree<V: View<char, Data>, Data: ?Sized>(
 ) -> V::Renderables {
     let env = DefaultEnvironment::new(time);
     let layout = view.layout(&size.into(), &env, captures, state);
-    view.render_tree(&layout, Point::zero(), &env, captures, state)
+    view.render_tree(&layout.sublayouts, Point::zero(), &env, captures, state)
 }

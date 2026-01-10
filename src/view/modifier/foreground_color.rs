@@ -62,7 +62,7 @@ impl<Color: Interpolate + Clone, Captures: ?Sized, Inner: ViewLayout<Captures>> 
 
     fn render_tree(
         &self,
-        layout: &ResolvedLayout<Self::Sublayout>,
+        layout: &Self::Sublayout,
         origin: Point,
         env: &impl LayoutEnvironment,
         captures: &mut Captures,

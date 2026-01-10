@@ -8,7 +8,7 @@ use crate::{
     animation::Animation,
     event::{Event, EventContext, EventResult},
     layout::ResolvedLayout,
-    primitives::{Point, ProposedDimension, ProposedDimensions, Size},
+    primitives::{Dimensions, Point, ProposedDimension, ProposedDimensions, Size},
     render::{Animate, Capsule, Offset, ScrollRenderable},
     transition::Opacity,
     view::{ViewLayout, ViewMarker},
@@ -220,7 +220,7 @@ impl<Inner: ViewMarker> ViewMarker for ScrollView<Inner> {
 
 impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<Inner> {
     type State = ScrollViewState<Inner::State>;
-    type Sublayout = ResolvedLayout<Inner::Sublayout>;
+    type Sublayout = Dimensions;
 
     fn transition(&self) -> Self::Transition {
         Opacity
@@ -238,12 +238,25 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
     fn layout(
         &self,
         offer: &crate::primitives::ProposedDimensions,
+        _env: &impl crate::environment::LayoutEnvironment,
+        _captures: &mut Captures,
+        _state: &mut Self::State,
+    ) -> ResolvedLayout<Self::Sublayout> {
+        let dimensions = offer.resolve_most_flexible(0, 1);
+        ResolvedLayout {
+            sublayouts: dimensions,
+            resolved_size: dimensions,
+        }
+    }
+
+    fn render_tree(
+        &self,
+        layout: &Self::Sublayout,
+        origin: crate::primitives::Point,
         env: &impl crate::environment::LayoutEnvironment,
         captures: &mut Captures,
         state: &mut Self::State,
-    ) -> ResolvedLayout<Self::Sublayout> {
-        let dimensions = offer.resolve_most_flexible(0, 1);
-
+    ) -> Self::Renderables {
         let (horizontal_padding, vertical_padding) = if !self.bar_config.overlaps_content
             && self.bar_config.visibility == ScrollBarVisibility::Always
         {
@@ -258,12 +271,14 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
         };
 
         let (inner_width, inner_height) = match self.direction {
-            ScrollDirection::Vertical => {
-                (offer.width - horizontal_padding, ProposedDimension::Compact)
-            }
-            ScrollDirection::Horizontal => {
-                (ProposedDimension::Compact, offer.height - vertical_padding)
-            }
+            ScrollDirection::Vertical => (
+                ProposedDimension::Exact(Into::<u32>::into(layout.width) - horizontal_padding),
+                ProposedDimension::Compact,
+            ),
+            ScrollDirection::Horizontal => (
+                ProposedDimension::Compact,
+                ProposedDimension::Exact(Into::<u32>::into(layout.height) - vertical_padding),
+            ),
             ScrollDirection::Both => (ProposedDimension::Compact, ProposedDimension::Compact),
         };
 
@@ -271,24 +286,11 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
         let inner_layout = self
             .inner
             .layout(&inner_offer, env, captures, &mut state.inner_state);
-        ResolvedLayout {
-            sublayouts: inner_layout,
-            resolved_size: dimensions,
-        }
-    }
 
-    fn render_tree(
-        &self,
-        layout: &crate::layout::ResolvedLayout<Self::Sublayout>,
-        origin: crate::primitives::Point,
-        env: &impl crate::environment::LayoutEnvironment,
-        captures: &mut Captures,
-        state: &mut Self::State,
-    ) -> Self::Renderables {
-        let scroll_view_width = layout.resolved_size.width.0;
-        let scroll_view_height = layout.resolved_size.height.0;
-        let inner_view_width = layout.sublayouts.resolved_size.width.0;
-        let inner_view_height = layout.sublayouts.resolved_size.height.0;
+        let scroll_view_width: u32 = layout.width.into();
+        let scroll_view_height: u32 = layout.height.into();
+        let inner_view_width: u32 = inner_layout.resolved_size.width.0;
+        let inner_view_height: u32 = inner_layout.resolved_size.height.0;
 
         let permitted_offset_x = inner_view_width.saturating_sub(scroll_view_width) as i32;
         let permitted_offset_y = inner_view_height.saturating_sub(scroll_view_height) as i32;
@@ -354,7 +356,7 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
 
         let inner_origin = subview_offset;
         let inner_render_tree = self.inner.render_tree(
-            &layout.sublayouts,
+            &inner_layout.sublayouts,
             Point::zero(),
             env,
             captures,

@@ -68,7 +68,7 @@ fn rendered_text_bounds(
         &mut state,
     );
     let render_tree = view.render_tree(
-        &layout,
+        &layout.sublayouts,
         Point::zero(),
         &DefaultEnvironment::default(),
         &mut (),

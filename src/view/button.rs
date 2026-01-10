@@ -117,7 +117,7 @@ where
     ViewFn: Fn(bool) -> Inner,
 {
     type State = (ButtonState, Inner::State);
-    type Sublayout = Inner::Sublayout;
+    type Sublayout = ResolvedLayout<Inner::Sublayout>;
 
     fn transition(&self) -> Self::Transition {
         Opacity
@@ -137,19 +137,23 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> ResolvedLayout<Self::Sublayout> {
-        match state.0 {
+        let inner_layout = match state.0 {
             ButtonState::CaptivePressed(_) => {
                 (self.view)(true).layout(offer, env, captures, &mut state.1)
             }
             ButtonState::AtRest | ButtonState::Captive(_) => {
                 (self.view)(false).layout(offer, env, captures, &mut state.1)
             }
+        };
+        ResolvedLayout {
+            resolved_size: inner_layout.resolved_size,
+            sublayouts: inner_layout,
         }
     }
 
     fn render_tree(
         &self,
-        layout: &ResolvedLayout<Self::Sublayout>,
+        layout: &Self::Sublayout,
         origin: crate::primitives::Point,
         env: &impl LayoutEnvironment,
         captures: &mut Captures,
@@ -158,12 +162,20 @@ where
         Container::new(
             Frame::new(origin, layout.resolved_size.into()),
             match state.0 {
-                ButtonState::CaptivePressed(_) => {
-                    (self.view)(true).render_tree(layout, origin, env, captures, &mut state.1)
-                }
-                ButtonState::AtRest | ButtonState::Captive(_) => {
-                    (self.view)(false).render_tree(layout, origin, env, captures, &mut state.1)
-                }
+                ButtonState::CaptivePressed(_) => (self.view)(true).render_tree(
+                    &layout.sublayouts,
+                    origin,
+                    env,
+                    captures,
+                    &mut state.1,
+                ),
+                ButtonState::AtRest | ButtonState::Captive(_) => (self.view)(false).render_tree(
+                    &layout.sublayouts,
+                    origin,
+                    env,
+                    captures,
+                    &mut state.1,
+                ),
             },
         )
     }

@@ -98,6 +98,18 @@ pub struct ResolvedLayout<C: Clone + PartialEq> {
     pub resolved_size: Dimensions,
 }
 
+impl<C: Clone + PartialEq> ResolvedLayout<C> {
+    pub fn nested(self) -> ResolvedLayout<Self> {
+        ResolvedLayout {
+            sublayouts: Self {
+                sublayouts: self.sublayouts,
+                resolved_size: self.resolved_size,
+            },
+            resolved_size: self.resolved_size,
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Axis {
     FixedWidth(u32),

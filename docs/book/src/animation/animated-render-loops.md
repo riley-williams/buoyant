@@ -29,12 +29,12 @@ To animate rendering between two render trees, use the `render_animated()` metho
 # let source_view = view();
 # let mut view_state = source_view.build_state(&mut ());
 # let source_layout = source_view.layout(&Size::new(200, 100).into(), &environment, &mut captures, &mut view_state);
-let source_render_tree = source_view.render_tree(&source_layout, Point::zero(), &environment, &mut captures, &mut view_state);
+let source_render_tree = source_view.render_tree(&source_layout.sublayouts, Point::zero(), &environment, &mut captures, &mut view_state);
 
 # let environment = DefaultEnvironment::new(app_time);
 # let target_view = view();
 # let target_layout = target_view.layout(&Size::new(200, 100).into(), &environment, &mut captures, &mut view_state);
-let target_render_tree = target_view.render_tree(&target_layout, Point::zero(), &environment, &mut captures, &mut view_state);
+let target_render_tree = target_view.render_tree(&target_layout.sublayouts, Point::zero(), &environment, &mut captures, &mut view_state);
 
 Render::render_animated(
     &mut target,
@@ -86,12 +86,12 @@ is the same as rendering the two trees with `render_animated()`.
 # let source_view = view();
 # let mut view_state = source_view.build_state(&mut ());
 # let source_layout = source_view.layout(&Size::new(200, 100).into(), &environment, &mut captures, &mut view_state);
-let source_render_tree = source_view.render_tree(&source_layout, Point::zero(), &environment, &mut captures, &mut view_state);
+let source_render_tree = source_view.render_tree(&source_layout.sublayouts, Point::zero(), &environment, &mut captures, &mut view_state);
 
 # let environment = DefaultEnvironment::new(app_time);
 # let target_view = view();
 # let target_layout = target_view.layout(&Size::new(200, 100).into(), &environment, &mut captures, &mut view_state);
-let mut target_render_tree = target_view.render_tree(&target_layout, Point::zero(), &environment, &mut captures, &mut view_state);
+let mut target_render_tree = target_view.render_tree(&target_layout.sublayouts, Point::zero(), &environment, &mut captures, &mut view_state);
 
 // Join two trees into the target
 target_render_tree.join_from(
