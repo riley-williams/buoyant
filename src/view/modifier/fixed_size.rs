@@ -15,7 +15,7 @@ pub struct FixedSize<T> {
     child: T,
 }
 
-impl<T> FixedSize<T> {
+impl<T: ViewMarker> FixedSize<T> {
     pub const fn new(horizontal: bool, vertical: bool, child: T) -> Self {
         Self {
             horizontal,

@@ -13,7 +13,7 @@ pub struct Transition<V, T> {
     transition: T,
 }
 
-impl<V, T> Transition<V, T> {
+impl<V: ViewMarker, T> Transition<V, T> {
     #[allow(missing_docs)]
     pub const fn new(transition: T, child: V) -> Self {
         Self { child, transition }

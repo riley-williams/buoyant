@@ -75,7 +75,7 @@ pub struct GeometryReader<ViewFn, Inner> {
     _view_marker: PhantomData<Inner>,
 }
 
-impl<ViewFn: Fn(Size) -> Inner, Inner> GeometryReader<ViewFn, Inner> {
+impl<ViewFn: Fn(Size) -> Inner, Inner: ViewMarker> GeometryReader<ViewFn, Inner> {
     #[allow(missing_docs)]
     #[must_use]
     pub fn new(inner: ViewFn) -> Self {

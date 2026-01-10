@@ -15,7 +15,7 @@ pub struct OverlayView<T, U> {
     alignment: Alignment,
 }
 
-impl<T, U> OverlayView<T, U> {
+impl<T: ViewMarker, U: ViewMarker> OverlayView<T, U> {
     pub const fn new(foreground: T, overlay: U, alignment: Alignment) -> Self {
         Self {
             foreground,

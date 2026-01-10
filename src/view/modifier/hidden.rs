@@ -11,7 +11,7 @@ pub struct Hidden<T> {
     child: T,
 }
 
-impl<T> Hidden<T> {
+impl<T: ViewMarker> Hidden<T> {
     pub const fn new(child: T) -> Self {
         Self { child }
     }

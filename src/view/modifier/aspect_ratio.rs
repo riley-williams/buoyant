@@ -35,7 +35,7 @@ pub struct AspectRatio<T> {
     child: T,
 }
 
-impl<T> AspectRatio<T> {
+impl<T: ViewMarker> AspectRatio<T> {
     #[allow(missing_docs)]
     #[must_use]
     pub const fn new(child: T, aspect_ratio: Ratio, content_mode: ContentMode) -> Self {

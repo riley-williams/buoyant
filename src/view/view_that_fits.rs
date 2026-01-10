@@ -86,7 +86,7 @@ pub struct ViewThatFits<T> {
     choices: T,
 }
 
-impl<T> ViewThatFits<(T,)> {
+impl<T: ViewMarker> ViewThatFits<(T,)> {
     #[allow(missing_docs)]
     #[must_use]
     pub const fn new(axis: FitAxis, view: T) -> Self {
@@ -97,10 +97,10 @@ impl<T> ViewThatFits<(T,)> {
     }
 }
 
-impl<T> ViewThatFits<(T,)> {
+impl<T: ViewMarker> ViewThatFits<(T,)> {
     /// An alternative view to use if the first one does not fit.
     #[must_use]
-    pub fn or<V>(self, alternate: V) -> ViewThatFits<(T, V)> {
+    pub fn or<V: ViewMarker>(self, alternate: V) -> ViewThatFits<(T, V)> {
         ViewThatFits {
             axis: self.axis,
             choices: (self.choices.0, alternate),
@@ -113,7 +113,7 @@ macro_rules! derive_or {
         impl<T0, $($type),*> ViewThatFits<(T0, $($type),*)> {
             /// An alternative view to use if the first one does not fit.
             #[must_use]
-            pub fn or<V>(self, alternate: V) -> ViewThatFits<(T0, $($type),*, V)> {
+            pub fn or<V: ViewMarker>(self, alternate: V) -> ViewThatFits<(T0, $($type),*, V)> {
                 ViewThatFits {
                     axis: self.axis,
                     choices: (self.choices.0, $(self.choices.$n),*, alternate),

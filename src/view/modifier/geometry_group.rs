@@ -12,7 +12,7 @@ pub struct GeometryGroup<InnerView> {
     inner: InnerView,
 }
 
-impl<InnerView> GeometryGroup<InnerView> {
+impl<InnerView: ViewMarker> GeometryGroup<InnerView> {
     pub const fn new(view: InnerView) -> Self {
         Self { inner: view }
     }

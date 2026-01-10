@@ -15,7 +15,7 @@ pub struct BackgroundView<T, U> {
     alignment: Alignment,
 }
 
-impl<T, U> BackgroundView<T, U> {
+impl<T: ViewMarker, U: ViewMarker> BackgroundView<T, U> {
     pub const fn new(foreground: T, background: U, alignment: Alignment) -> Self {
         Self {
             foreground,
