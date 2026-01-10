@@ -91,14 +91,14 @@ fn main() {
     let layout = view.layout(&target.size().into(), &env, &mut app_data, &mut view_state);
 
     let mut source_tree = &mut view.render_tree(
-        &layout,
+        &layout.sublayouts,
         Point::default(),
         &env,
         &mut app_data,
         &mut view_state,
     );
     let mut target_tree = &mut view.render_tree(
-        &layout,
+        &layout.sublayouts,
         Point::default(),
         &env,
         &mut app_data,
@@ -148,7 +148,7 @@ fn main() {
             let env = DefaultEnvironment::new(time);
             let layout = view.layout(&target.size().into(), &env, &mut app_data, &mut view_state);
             *target_tree = view.render_tree(
-                &layout,
+                &layout.sublayouts,
                 Point::default(),
                 &env,
                 &mut app_data,

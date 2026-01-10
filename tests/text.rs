@@ -87,7 +87,7 @@ fn test_clipped_text_is_centered_correctly() {
 
     assert_eq!(layout.resolved_size, Dimensions::new(13, 2));
 
-    let tree = view.render_tree(&layout, Point::zero(), &env, &mut (), &mut ());
+    let tree = view.render_tree(&layout.sublayouts, Point::zero(), &env, &mut (), &mut ());
     tree.render(&mut buffer, &' ');
 
     let lines = [
@@ -119,7 +119,7 @@ fn test_clipped_text_trails_correctly() {
 
     assert_eq!(layout.resolved_size, Dimensions::new(13, 2));
 
-    let tree = view.render_tree(&layout, Point::zero(), &env, &mut (), &mut ());
+    let tree = view.render_tree(&layout.sublayouts, Point::zero(), &env, &mut (), &mut ());
     tree.render(&mut buffer, &' ');
 
     let lines = [

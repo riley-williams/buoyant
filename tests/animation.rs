@@ -235,13 +235,25 @@ fn partial_animation_join() {
     let mut env = DefaultEnvironment::new(Duration::from_millis(0));
     let mut state = view.build_state(&mut ());
     let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
-    let mut source_tree = view.render_tree(&layout, Point::default(), &env, &mut (), &mut state);
+    let mut source_tree = view.render_tree(
+        &layout.sublayouts,
+        Point::default(),
+        &env,
+        &mut (),
+        &mut state,
+    );
 
     // change both x and y
     // don't update the env app time, so both frames are generated at the same time
     view = stacked_bars_3_value(1, 1, 1, HorizontalAlignment::Trailing);
     let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
-    let mut target_tree = view.render_tree(&layout, Point::default(), &env, &mut (), &mut state);
+    let mut target_tree = view.render_tree(
+        &layout.sublayouts,
+        Point::default(),
+        &env,
+        &mut (),
+        &mut state,
+    );
 
     // initial render sets target animation times
     Render::render_animated(
@@ -288,7 +300,13 @@ fn partial_animation_join() {
     env.app_time = Duration::from_millis(1050);
     view = stacked_bars_3_value(1, 2, 1, HorizontalAlignment::Leading);
     let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
-    target_tree = view.render_tree(&layout, Point::default(), &env, &mut (), &mut state);
+    target_tree = view.render_tree(
+        &layout.sublayouts,
+        Point::default(),
+        &env,
+        &mut (),
+        &mut state,
+    );
 
     // The previous y animation should continue, but x should jump because the state changed
     // without a change in value
@@ -387,11 +405,23 @@ fn jump_toggle_animation() {
     let mut state = view.build_state(&mut ());
     let mut env = DefaultEnvironment::new(Duration::from_millis(0));
     let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
-    let mut source_tree = view.render_tree(&layout, Point::default(), &env, &mut (), &mut state);
+    let mut source_tree = view.render_tree(
+        &layout.sublayouts,
+        Point::default(),
+        &env,
+        &mut (),
+        &mut state,
+    );
 
     view = toggle_move(true, HorizontalAlignment::Trailing);
     let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
-    let mut target_tree = view.render_tree(&layout, Point::default(), &env, &mut (), &mut state);
+    let mut target_tree = view.render_tree(
+        &layout.sublayouts,
+        Point::default(),
+        &env,
+        &mut (),
+        &mut state,
+    );
 
     // initial render sets target animation times
     Render::render_animated(
@@ -434,7 +464,13 @@ fn jump_toggle_animation() {
     env.app_time = Duration::from_millis(550);
     view = toggle_move(true, HorizontalAlignment::Leading);
     let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
-    target_tree = view.render_tree(&layout, Point::default(), &env, &mut (), &mut state);
+    target_tree = view.render_tree(
+        &layout.sublayouts,
+        Point::default(),
+        &env,
+        &mut (),
+        &mut state,
+    );
 
     Render::render_animated(
         &mut buffer,
@@ -488,12 +524,24 @@ fn nested_toggle_animation() {
     let mut state = view.build_state(&mut ());
     let mut env = DefaultEnvironment::new(Duration::from_millis(0));
     let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
-    let mut source_tree = view.render_tree(&layout, Point::default(), &env, &mut (), &mut state);
+    let mut source_tree = view.render_tree(
+        &layout.sublayouts,
+        Point::default(),
+        &env,
+        &mut (),
+        &mut state,
+    );
 
     // don't update the env app time, so both frames are generated at the same time
     view = toggle_stack(true);
     let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
-    let mut target_tree = view.render_tree(&layout, Point::default(), &env, &mut (), &mut state);
+    let mut target_tree = view.render_tree(
+        &layout.sublayouts,
+        Point::default(),
+        &env,
+        &mut (),
+        &mut state,
+    );
 
     // initial render sets target animation times
     Render::render_animated(
@@ -546,7 +594,13 @@ fn nested_toggle_animation() {
     env.app_time = Duration::from_millis(550);
     view = toggle_stack(true);
     let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
-    target_tree = view.render_tree(&layout, Point::default(), &env, &mut (), &mut state);
+    target_tree = view.render_tree(
+        &layout.sublayouts,
+        Point::default(),
+        &env,
+        &mut (),
+        &mut state,
+    );
 
     Render::render_animated(
         &mut buffer,

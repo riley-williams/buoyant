@@ -159,7 +159,7 @@ where
 
     fn render_tree(
         &self,
-        layout: &ResolvedLayout<Self::Sublayout>,
+        layout: &Self::Sublayout,
         origin: Point,
         env: &impl LayoutEnvironment,
         captures: &mut Captures,
@@ -282,19 +282,27 @@ where
 
     fn render_tree(
         &self,
-        layout: &ResolvedLayout<Self::Sublayout>,
+        layout: &Self::Sublayout,
         origin: Point,
         env: &impl LayoutEnvironment,
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> Self::Renderables {
-        match (&layout.sublayouts, state) {
-            (OneOf2::V0(l0), OneOf2::V0(s0)) => {
-                render::OneOf2::V0(self.choices.0.render_tree(l0, origin, env, captures, s0))
-            }
-            (OneOf2::V1(l1), OneOf2::V1(s1)) => {
-                render::OneOf2::V1(self.choices.1.render_tree(l1, origin, env, captures, s1))
-            }
+        match (layout, state) {
+            (OneOf2::V0(l0), OneOf2::V0(s0)) => render::OneOf2::V0(self.choices.0.render_tree(
+                &l0.sublayouts,
+                origin,
+                env,
+                captures,
+                s0,
+            )),
+            (OneOf2::V1(l1), OneOf2::V1(s1)) => render::OneOf2::V1(self.choices.1.render_tree(
+                &l1.sublayouts,
+                origin,
+                env,
+                captures,
+                s1,
+            )),
             _ => panic!("Layout/state branch mismatch"),
         }
     }
@@ -437,22 +445,34 @@ where
 
     fn render_tree(
         &self,
-        layout: &ResolvedLayout<Self::Sublayout>,
+        layout: &Self::Sublayout,
         origin: Point,
         env: &impl LayoutEnvironment,
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> Self::Renderables {
-        match (&layout.sublayouts, state) {
-            (OneOf3::V0(l0), OneOf3::V0(s0)) => {
-                render::OneOf3::V0(self.choices.0.render_tree(l0, origin, env, captures, s0))
-            }
-            (OneOf3::V1(l1), OneOf3::V1(s1)) => {
-                render::OneOf3::V1(self.choices.1.render_tree(l1, origin, env, captures, s1))
-            }
-            (OneOf3::V2(l2), OneOf3::V2(s2)) => {
-                render::OneOf3::V2(self.choices.2.render_tree(l2, origin, env, captures, s2))
-            }
+        match (layout, state) {
+            (OneOf3::V0(l0), OneOf3::V0(s0)) => render::OneOf3::V0(self.choices.0.render_tree(
+                &l0.sublayouts,
+                origin,
+                env,
+                captures,
+                s0,
+            )),
+            (OneOf3::V1(l1), OneOf3::V1(s1)) => render::OneOf3::V1(self.choices.1.render_tree(
+                &l1.sublayouts,
+                origin,
+                env,
+                captures,
+                s1,
+            )),
+            (OneOf3::V2(l2), OneOf3::V2(s2)) => render::OneOf3::V2(self.choices.2.render_tree(
+                &l2.sublayouts,
+                origin,
+                env,
+                captures,
+                s2,
+            )),
             _ => panic!("Layout/state branch mismatch"),
         }
     }
@@ -628,25 +648,41 @@ where
 
     fn render_tree(
         &self,
-        layout: &ResolvedLayout<Self::Sublayout>,
+        layout: &Self::Sublayout,
         origin: Point,
         env: &impl LayoutEnvironment,
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> Self::Renderables {
-        match (&layout.sublayouts, state) {
-            (OneOf4::V0(l0), OneOf4::V0(s0)) => {
-                render::OneOf4::V0(self.choices.0.render_tree(l0, origin, env, captures, s0))
-            }
-            (OneOf4::V1(l1), OneOf4::V1(s1)) => {
-                render::OneOf4::V1(self.choices.1.render_tree(l1, origin, env, captures, s1))
-            }
-            (OneOf4::V2(l2), OneOf4::V2(s2)) => {
-                render::OneOf4::V2(self.choices.2.render_tree(l2, origin, env, captures, s2))
-            }
-            (OneOf4::V3(l3), OneOf4::V3(s3)) => {
-                render::OneOf4::V3(self.choices.3.render_tree(l3, origin, env, captures, s3))
-            }
+        match (&layout, state) {
+            (OneOf4::V0(l0), OneOf4::V0(s0)) => render::OneOf4::V0(self.choices.0.render_tree(
+                &l0.sublayouts,
+                origin,
+                env,
+                captures,
+                s0,
+            )),
+            (OneOf4::V1(l1), OneOf4::V1(s1)) => render::OneOf4::V1(self.choices.1.render_tree(
+                &l1.sublayouts,
+                origin,
+                env,
+                captures,
+                s1,
+            )),
+            (OneOf4::V2(l2), OneOf4::V2(s2)) => render::OneOf4::V2(self.choices.2.render_tree(
+                &l2.sublayouts,
+                origin,
+                env,
+                captures,
+                s2,
+            )),
+            (OneOf4::V3(l3), OneOf4::V3(s3)) => render::OneOf4::V3(self.choices.3.render_tree(
+                &l3.sublayouts,
+                origin,
+                env,
+                captures,
+                s3,
+            )),
             _ => panic!("Layout/state branch mismatch"),
         }
     }

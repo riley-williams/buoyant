@@ -62,7 +62,13 @@ where
     let env = DefaultEnvironment::default();
     let view = (view)(app_state);
     let layout = view.layout(&size.into(), &env, app_state, view_state);
-    view.render_tree(&layout, Point::zero(), &env, app_state, view_state)
+    view.render_tree(
+        &layout.sublayouts,
+        Point::zero(),
+        &env,
+        app_state,
+        view_state,
+    )
 }
 
 #[test]

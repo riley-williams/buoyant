@@ -29,7 +29,7 @@ impl<Captures: ?Sized, T> ViewLayout<Captures> for Hidden<T>
 where
     T: ViewLayout<Captures>,
 {
-    type Sublayout = T::Sublayout;
+    type Sublayout = ();
     type State = T::State;
 
     fn priority(&self) -> i8 {
@@ -55,12 +55,16 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> ResolvedLayout<Self::Sublayout> {
-        self.child.layout(offer, env, captures, state)
+        let layout = self.child.layout(offer, env, captures, state);
+        ResolvedLayout {
+            sublayouts: (),
+            resolved_size: layout.resolved_size,
+        }
     }
 
     fn render_tree(
         &self,
-        _layout: &ResolvedLayout<Self::Sublayout>,
+        _layout: &Self::Sublayout,
         _origin: Point,
         _env: &impl LayoutEnvironment,
         _captures: &mut Captures,

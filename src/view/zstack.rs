@@ -98,7 +98,7 @@ macro_rules! impl_view_for_zstack {
         where
             $($type: ViewLayout<Captures>),+
         {
-            type Sublayout = ($(ResolvedLayout<$type::Sublayout>),+);
+            type Sublayout = ResolvedLayout<($(ResolvedLayout<$type::Sublayout>),+)>;
             type State = ($($type::State),+);
 
             fn transition(&self) -> Self::Transition {
@@ -121,6 +121,9 @@ macro_rules! impl_view_for_zstack {
                 )+
                 let mut size = layout0.resolved_size $(.union([<layout$n>].resolved_size))+;
 
+                // FIXME: Move this logic to render_tree. It doesn't affect the reported size. Also
+                    // fixes the other fixme
+
                 if matches!(offer.width, ProposedDimension::Compact) || matches!(offer.height, ProposedDimension::Compact) {
                     // FIXME: The `.into()` here is almost certainly wrong.
                     // While it would be unusual for a view to respond requesting infinite
@@ -142,12 +145,12 @@ macro_rules! impl_view_for_zstack {
                         [<layout$n>]
                     ),+),
                     resolved_size: size.intersecting_proposal(offer),
-                }
+                }.nested()
             }
 
             fn render_tree(
                 &self,
-                layout: &ResolvedLayout<Self::Sublayout>,
+                layout: &Self::Sublayout,
                 origin: Point,
                 env: &impl LayoutEnvironment,
                 captures: &mut Captures,
@@ -169,7 +172,7 @@ macro_rules! impl_view_for_zstack {
 
                 (
                     $(
-                        self.items.$n.render_tree(&layout.sublayouts.$n, [<offset_$n>], env, captures, &mut state.$n)
+                        self.items.$n.render_tree(&layout.sublayouts.$n.sublayouts, [<offset_$n>], env, captures, &mut state.$n)
                     ),+
                 )
             }
@@ -281,7 +284,7 @@ where
 
     fn render_tree(
         &self,
-        layout: &ResolvedLayout<Self::Sublayout>,
+        layout: &Self::Sublayout,
         origin: Point,
         env: &impl LayoutEnvironment,
         captures: &mut Captures,

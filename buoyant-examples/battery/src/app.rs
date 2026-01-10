@@ -87,7 +87,7 @@ impl App {
         let mut state = view.build_state(&mut ());
         let layout = view.layout(&dimensions, &env, &mut (), &mut state);
         view.render_tree(
-            &layout,
+            &layout.sublayouts,
             buoyant::primitives::Point::zero(),
             &env,
             &mut (),

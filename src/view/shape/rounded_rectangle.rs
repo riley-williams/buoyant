@@ -1,7 +1,7 @@
 use crate::{
     environment::LayoutEnvironment,
     layout::ResolvedLayout,
-    primitives::{Point, ProposedDimensions},
+    primitives::{Dimensions, Point, ProposedDimensions},
     transition::Opacity,
     view::{ViewLayout, ViewMarker},
 };
@@ -30,7 +30,7 @@ impl ViewMarker for RoundedRectangle {
 }
 
 impl<Captures: ?Sized> ViewLayout<Captures> for RoundedRectangle {
-    type Sublayout = ();
+    type Sublayout = Dimensions;
     type State = ();
 
     fn transition(&self) -> Self::Transition {
@@ -46,15 +46,16 @@ impl<Captures: ?Sized> ViewLayout<Captures> for RoundedRectangle {
         _captures: &mut Captures,
         _state: &mut Self::State,
     ) -> ResolvedLayout<Self::Sublayout> {
+        let dimensions = offer.resolve_most_flexible(0, 1);
         ResolvedLayout {
-            sublayouts: (),
-            resolved_size: offer.resolve_most_flexible(0, 1),
+            sublayouts: dimensions,
+            resolved_size: dimensions,
         }
     }
 
     fn render_tree(
         &self,
-        layout: &ResolvedLayout<Self::Sublayout>,
+        layout: &Self::Sublayout,
         origin: Point,
         _env: &impl LayoutEnvironment,
         _captures: &mut Captures,
@@ -62,7 +63,7 @@ impl<Captures: ?Sized> ViewLayout<Captures> for RoundedRectangle {
     ) -> Self::Renderables {
         crate::render::RoundedRect {
             origin,
-            size: layout.resolved_size.into(),
+            size: (*layout).into(),
             corner_radius: self.corner_radius,
         }
     }

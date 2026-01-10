@@ -43,7 +43,7 @@ impl<Captures: ?Sized, V> ViewLayout<Captures> for ScaleEffect<V>
 where
     V: ViewLayout<Captures>,
 {
-    type Sublayout = V::Sublayout;
+    type Sublayout = ResolvedLayout<V::Sublayout>;
     type State = V::State;
 
     fn priority(&self) -> i8 {
@@ -69,12 +69,17 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> ResolvedLayout<Self::Sublayout> {
-        self.inner.layout(offer, env, captures, state)
+        let inner_layout = self.inner.layout(offer, env, captures, state);
+
+        ResolvedLayout {
+            resolved_size: inner_layout.resolved_size,
+            sublayouts: inner_layout,
+        }
     }
 
     fn render_tree(
         &self,
-        layout: &ResolvedLayout<Self::Sublayout>,
+        layout: &Self::Sublayout,
         origin: Point,
         env: &impl LayoutEnvironment,
         captures: &mut Captures,
@@ -84,7 +89,7 @@ where
         let anchor = self.anchor.in_view_bounds(&frame);
         render::Transform::new(
             self.inner
-                .render_tree(layout, -anchor, env, captures, state),
+                .render_tree(&layout.sublayouts, -anchor, env, captures, state),
             LinearTransform::new(origin + anchor, self.scale),
         )
     }

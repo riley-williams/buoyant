@@ -1,7 +1,7 @@
 use crate::{
     environment::LayoutEnvironment,
     layout::ResolvedLayout,
-    primitives::{Point, ProposedDimensions},
+    primitives::{Dimensions, Point, ProposedDimensions},
     transition::Opacity,
     view::{ViewLayout, ViewMarker},
 };
@@ -21,7 +21,7 @@ impl ViewMarker for Capsule {
 
 impl<Captures: ?Sized> ViewLayout<Captures> for Capsule {
     type State = ();
-    type Sublayout = ();
+    type Sublayout = Dimensions;
 
     fn transition(&self) -> Self::Transition {
         Opacity
@@ -36,15 +36,16 @@ impl<Captures: ?Sized> ViewLayout<Captures> for Capsule {
         _captures: &mut Captures,
         _state: &mut Self::State,
     ) -> ResolvedLayout<Self::Sublayout> {
+        let dimensions = offer.resolve_most_flexible(0, 1);
         ResolvedLayout {
-            sublayouts: (),
+            sublayouts: dimensions,
             resolved_size: offer.resolve_most_flexible(0, 1),
         }
     }
 
     fn render_tree(
         &self,
-        layout: &ResolvedLayout<Self::Sublayout>,
+        layout: &Self::Sublayout,
         origin: Point,
         _env: &impl LayoutEnvironment,
         _captures: &mut Captures,
@@ -52,7 +53,7 @@ impl<Captures: ?Sized> ViewLayout<Captures> for Capsule {
     ) -> Self::Renderables {
         crate::render::Capsule {
             origin,
-            size: layout.resolved_size.into(),
+            size: (*layout).into(),
         }
     }
 }

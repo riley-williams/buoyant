@@ -61,7 +61,7 @@ impl<Captures: ?Sized> ViewLayout<Captures> for Spacer {
 
     fn render_tree(
         &self,
-        _layout: &ResolvedLayout<Self::Sublayout>,
+        _layout: &Self::Sublayout,
         _origin: Point,
         _env: &impl LayoutEnvironment,
         _captures: &mut Captures,

@@ -29,7 +29,7 @@ impl ViewMarker for Circle {
 
 impl<Captures: ?Sized> ViewLayout<Captures> for Circle {
     type State = ();
-    type Sublayout = ();
+    type Sublayout = crate::primitives::Dimension;
 
     fn transition(&self) -> Self::Transition {
         Opacity
@@ -47,7 +47,7 @@ impl<Captures: ?Sized> ViewLayout<Captures> for Circle {
         let minimum_dimension = offer.width.min(offer.height).resolve_most_flexible(0, 1);
 
         ResolvedLayout {
-            sublayouts: (),
+            sublayouts: minimum_dimension,
             resolved_size: Dimensions {
                 width: minimum_dimension,
                 height: minimum_dimension,
@@ -57,7 +57,7 @@ impl<Captures: ?Sized> ViewLayout<Captures> for Circle {
 
     fn render_tree(
         &self,
-        layout: &ResolvedLayout<Self::Sublayout>,
+        layout: &Self::Sublayout,
         origin: Point,
         _env: &impl LayoutEnvironment,
         _captures: &mut Captures,
@@ -65,7 +65,7 @@ impl<Captures: ?Sized> ViewLayout<Captures> for Circle {
     ) -> Self::Renderables {
         crate::render::Circle {
             origin,
-            diameter: layout.resolved_size.width.into(),
+            diameter: (*layout).into(),
         }
     }
 }
