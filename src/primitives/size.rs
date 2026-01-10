@@ -85,6 +85,15 @@ impl From<Size> for embedded_graphics_core::geometry::Size {
     }
 }
 
+impl<T: Into<u32>> From<(T, T)> for Size {
+    fn from(value: (T, T)) -> Self {
+        Self {
+            width: value.0.into(),
+            height: value.1.into(),
+        }
+    }
+}
+
 impl Interpolate for Size {
     fn interpolate(from: Self, to: Self, amount: u8) -> Self {
         Self {
