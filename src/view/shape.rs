@@ -15,7 +15,7 @@ use crate::{
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
     render::{
-        StrokedShape,
+        AnimatedJoin, StrokedShape,
         shape::{AsShapePrimitive, Inset},
     },
     transition::Opacity,
@@ -27,6 +27,8 @@ pub trait Shape:
     ViewMarker<Renderables: Inset + AsShapePrimitive> + ViewLayout<(), State = ()>
 {
     /// Draws a shape with a stroke instead of filling it.
+    ///
+    /// The stroke is drawn inside the shape's bounds.
     #[must_use]
     fn stroked(self, line_width: u32) -> Stroked<Self> {
         Stroked::new(self, StrokeOffset::Inner, line_width)
@@ -66,7 +68,7 @@ pub struct Stroked<T> {
     line_width: u32,
 }
 
-impl<T> Stroked<T> {
+impl<T: ViewMarker<Renderables: Inset + AsShapePrimitive>> Stroked<T> {
     /// Creates a new stroked shape with the given style and line width.
     const fn new(shape: T, style: StrokeOffset, line_width: u32) -> Self {
         Self {
@@ -85,7 +87,7 @@ impl<T: ViewMarker> ViewMarker for Stroked<T> {
 impl<T, Captures: ?Sized> ViewLayout<Captures> for Stroked<T>
 where
     T: ViewLayout<Captures>,
-    T::Renderables: Inset + crate::render::AnimatedJoin + Clone + AsShapePrimitive,
+    T::Renderables: Inset + AnimatedJoin + Clone + AsShapePrimitive,
 {
     type Sublayout = T::Sublayout;
     type State = T::State;

@@ -251,3 +251,29 @@ where
         (*self).handle_event(event, context, render_tree, captures, state)
     }
 }
+
+// This implementation of ViewMarker intentionally has no associated ViewLayout Implementation.
+// This allows the Stack::new to add bounds on the constructor for better error messages
+macro_rules! impl_marker_for_tuple {
+    ($($type:ident),+) => {
+
+        impl<$($type),+> ViewMarker for ($($type),+,)
+        where
+            $($type: ViewMarker),+
+        {
+            type Renderables = ();
+            type Transition = crate::transition::Opacity;
+        }
+    }
+}
+
+impl_marker_for_tuple!(T0);
+impl_marker_for_tuple!(T0, T1);
+impl_marker_for_tuple!(T0, T1, T2);
+impl_marker_for_tuple!(T0, T1, T2, T3);
+impl_marker_for_tuple!(T0, T1, T2, T3, T4);
+impl_marker_for_tuple!(T0, T1, T2, T3, T4, T5);
+impl_marker_for_tuple!(T0, T1, T2, T3, T4, T5, T6);
+impl_marker_for_tuple!(T0, T1, T2, T3, T4, T5, T6, T7);
+impl_marker_for_tuple!(T0, T1, T2, T3, T4, T5, T6, T7, T8);
+impl_marker_for_tuple!(T0, T1, T2, T3, T4, T5, T6, T7, T8, T9);

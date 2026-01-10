@@ -15,7 +15,7 @@ pub struct FixedFrame<T> {
     child: T,
 }
 
-impl<T> FixedFrame<T> {
+impl<T: ViewMarker> FixedFrame<T> {
     pub const fn new(child: T) -> Self {
         Self {
             width: None,

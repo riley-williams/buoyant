@@ -49,7 +49,7 @@ impl<T> PartialEq for VStack<T> {
     }
 }
 
-impl<T> VStack<T> {
+impl<T: ViewMarker> VStack<T> {
     #[allow(missing_docs)]
     #[must_use]
     pub fn new(items: T) -> Self {
@@ -79,7 +79,10 @@ impl<T> VStack<T> {
     /// available space. However, child views which have no intrinsic ideal size, such as
     /// shapes, may become zero-sized if not contained within e.g. `.fixed_frame`.
     #[must_use]
-    pub fn lazy(self) -> FixedSize<Self> {
+    pub fn lazy(self) -> FixedSize<Self>
+    where
+        Self: ViewMarker,
+    {
         FixedSize::new(false, true, self)
     }
 }

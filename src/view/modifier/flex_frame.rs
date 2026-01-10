@@ -19,7 +19,7 @@ pub struct FlexFrame<T> {
     vertical_alignment: VerticalAlignment,
 }
 
-impl<T> FlexFrame<T> {
+impl<T: ViewMarker> FlexFrame<T> {
     pub fn new(child: T) -> Self {
         Self {
             child,
@@ -63,6 +63,13 @@ impl<T> FlexFrame<T> {
     /// Sets the frame to expand to fill as much horizontal space as possible.
     pub const fn with_infinite_max_width(mut self) -> Self {
         self.max_width = Some(Dimension::infinite());
+        self
+    }
+
+    /// Sets the frame to expand to fill as much space as possible.
+    pub const fn with_infinite_max_dimensions(mut self) -> Self {
+        self.max_width = Some(Dimension::infinite());
+        self.max_height = Some(Dimension::infinite());
         self
     }
 

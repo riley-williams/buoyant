@@ -128,6 +128,7 @@ impl<const N: usize> ForEach<N> {
     pub fn new<'a, I, V, F>(items: &'a [I], build_view: F) -> ForEachView<'a, N, I, V, F, Vertical>
     where
         F: Fn(&'a I) -> V,
+        V: ViewMarker,
     {
         Self::new_vertical(items, build_view)
     }
@@ -139,6 +140,7 @@ impl<const N: usize> ForEach<N> {
     ) -> ForEachView<'a, N, I, V, F, Vertical>
     where
         F: Fn(&'a I) -> V,
+        V: ViewMarker,
     {
         ForEachView {
             items,

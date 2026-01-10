@@ -124,7 +124,7 @@ pub struct ScrollView<Inner> {
     direction: ScrollDirection,
 }
 
-impl<Inner> ScrollView<Inner> {
+impl<Inner: ViewMarker> ScrollView<Inner> {
     /// Constructs a new [`ScrollView`] with the given inner view.
     #[must_use]
     pub fn new(inner: Inner) -> Self {

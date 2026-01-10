@@ -13,7 +13,7 @@ pub struct Offset<T> {
     offset: Point,
 }
 
-impl<T> Offset<T> {
+impl<T: ViewMarker> Offset<T> {
     pub const fn new(child: T, offset: Point) -> Self {
         Self { child, offset }
     }

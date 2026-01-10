@@ -14,7 +14,7 @@ pub struct HintBackground<T, C> {
     hint_color: C,
 }
 
-impl<T, C> HintBackground<T, C> {
+impl<T: ViewMarker, C> HintBackground<T, C> {
     pub const fn new(inner: T, hint_color: C) -> Self {
         Self { inner, hint_color }
     }
