@@ -18,7 +18,7 @@ pub struct BackgroundColor<T, C, S> {
     background_shape: S,
 }
 
-impl<T, C, S: Shape> BackgroundColor<T, C, S> {
+impl<T: ViewMarker, C, S: Shape> BackgroundColor<T, C, S> {
     pub const fn new(foreground: T, background_color: C, background_shape: S) -> Self {
         Self {
             foreground,

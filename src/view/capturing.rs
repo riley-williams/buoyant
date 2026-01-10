@@ -14,7 +14,7 @@ pub struct Lens<InnerView, CaptureFn> {
     capture_fn: CaptureFn,
 }
 
-impl<InnerView, CaptureFn> Lens<InnerView, CaptureFn> {
+impl<InnerView: ViewMarker, CaptureFn> Lens<InnerView, CaptureFn> {
     #[allow(missing_docs)]
     #[must_use]
     pub fn new<OuterCapture, InnerCapture>(inner: InnerView, capture_fn: CaptureFn) -> Self

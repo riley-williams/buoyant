@@ -43,7 +43,7 @@ impl<'a, T: LayoutEnvironment> From<&'a T> for HorizontalEnvironment<'a, T> {
     }
 }
 
-impl<T> HStack<T> {
+impl<T: ViewMarker> HStack<T> {
     #[allow(missing_docs)]
     #[must_use]
     pub fn new(items: T) -> Self {
@@ -72,7 +72,10 @@ impl<T> HStack<T> {
     /// available space. However, child views which have no intrinsic ideal size, such as
     /// shapes, may become zero-sized if not contained within e.g. `.fixed_frame`.
     #[must_use]
-    pub fn lazy(self) -> FixedSize<Self> {
+    pub fn lazy(self) -> FixedSize<Self>
+    where
+        Self: ViewMarker,
+    {
         FixedSize::new(true, false, self)
     }
 }

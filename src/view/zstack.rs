@@ -72,7 +72,7 @@ impl<T> ZStack<T> {
     }
 }
 
-impl<T> ZStack<T> {
+impl<T: ViewMarker> ZStack<T> {
     #[allow(missing_docs)]
     pub fn new(items: T) -> Self {
         Self {

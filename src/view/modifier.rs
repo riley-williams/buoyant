@@ -57,7 +57,7 @@ use crate::{
 impl<T> ViewModifier for T where T: ViewMarker {}
 
 /// Modifiers that extend the functionality of views.
-pub trait ViewModifier: Sized {
+pub trait ViewModifier: Sized + ViewMarker {
     /// Applies an animation to a view tree. All views in the tree will be animated according to
     /// the animation curve provided when the value changes. The elapsed duration will be reset
     /// if the value changes before the animation is complete.
@@ -168,7 +168,11 @@ pub trait ViewModifier: Sized {
     ///         .foreground_color(Rgb565::WHITE)
     /// }
     /// ```
-    fn background<U>(self, alignment: Alignment, background: U) -> BackgroundView<Self, U> {
+    fn background<U: ViewMarker>(
+        self,
+        alignment: Alignment,
+        background: U,
+    ) -> BackgroundView<Self, U> {
         BackgroundView::new(self, background, alignment)
     }
 
@@ -464,10 +468,7 @@ pub trait ViewModifier: Sized {
     /// }
     /// ```
     fn opacity(self, opacity: u8) -> Opacity<Self> {
-        opacity::Opacity {
-            inner: self,
-            opacity,
-        }
+        opacity::Opacity::new(self, opacity)
     }
 
     /// Overlay uses the modified view to compute bounds, and renders the overlay
@@ -514,7 +515,7 @@ pub trait ViewModifier: Sized {
     ///         .background_color(Rgb888::RED, Capsule)
     /// }
     /// ```
-    fn overlay<U>(self, alignment: Alignment, overlay: U) -> OverlayView<Self, U> {
+    fn overlay<U: ViewMarker>(self, alignment: Alignment, overlay: U) -> OverlayView<Self, U> {
         OverlayView::new(self, overlay, alignment)
     }
 

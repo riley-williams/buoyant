@@ -14,7 +14,7 @@ pub struct ForegroundStyle<V, S> {
     style: S,
 }
 
-impl<V, S> ForegroundStyle<V, S> {
+impl<V: ViewMarker, S> ForegroundStyle<V, S> {
     pub const fn new(style: S, inner: V) -> Self {
         Self { inner, style }
     }

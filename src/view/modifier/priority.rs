@@ -18,7 +18,7 @@ pub struct Priority<T> {
     child: T,
 }
 
-impl<T> Priority<T> {
+impl<T: ViewMarker> Priority<T> {
     #[allow(missing_docs)]
     pub const fn new(priority: i8, child: T) -> Self {
         Self { priority, child }

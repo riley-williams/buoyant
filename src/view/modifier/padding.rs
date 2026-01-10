@@ -29,7 +29,7 @@ pub struct Padding<T> {
     inner: T,
 }
 
-impl<T> Padding<T> {
+impl<T: ViewMarker> Padding<T> {
     #[allow(missing_docs)]
     pub const fn new(edges: Edges, padding: u32, inner: T) -> Self {
         Self {

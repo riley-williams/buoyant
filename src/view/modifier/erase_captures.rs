@@ -23,7 +23,7 @@ pub struct EraseCaptures<T> {
     inner: T,
 }
 
-impl<T> EraseCaptures<T> {
+impl<T: ViewMarker> EraseCaptures<T> {
     #[allow(missing_docs)]
     #[must_use]
     pub fn new(inner: T) -> Self {

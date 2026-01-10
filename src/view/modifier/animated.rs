@@ -15,7 +15,7 @@ pub struct Animated<InnerView, Value> {
     value: Value,
 }
 
-impl<InnerView, Value: PartialEq> Animated<InnerView, Value> {
+impl<InnerView: ViewMarker, Value: PartialEq> Animated<InnerView, Value> {
     pub const fn new(inner: InnerView, animation: Animation, value: Value) -> Self {
         Self {
             inner,

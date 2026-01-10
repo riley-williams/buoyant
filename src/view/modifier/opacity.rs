@@ -9,8 +9,16 @@ use crate::{
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Opacity<V> {
-    pub inner: V,
-    pub opacity: u8,
+    inner: V,
+    opacity: u8,
+}
+
+impl<V: ViewMarker> Opacity<V> {
+    #[allow(missing_docs)]
+    #[must_use]
+    pub const fn new(inner: V, opacity: u8) -> Self {
+        Self { inner, opacity }
+    }
 }
 
 impl<V> ViewMarker for Opacity<V>

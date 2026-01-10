@@ -21,7 +21,7 @@ pub struct ScaleEffect<V> {
     pub anchor: UnitPoint,
 }
 
-impl<V> ScaleEffect<V> {
+impl<V: ViewMarker> ScaleEffect<V> {
     pub fn new(inner: V, scale: ScaleFactor, anchor: UnitPoint) -> Self {
         Self {
             inner,
