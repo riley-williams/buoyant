@@ -8,7 +8,7 @@ pub use character_buffer_font::CharacterBufferFont;
 
 #[cfg(feature = "embedded-graphics")]
 mod embedded_mono_font;
-#[cfg(feature = "embedded-graphics")]
+#[cfg(feature = "rusttype-fonts")]
 mod rusttype;
 #[cfg(feature = "embedded-graphics")]
 mod u8g2;

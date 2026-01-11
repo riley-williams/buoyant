@@ -1,6 +1,6 @@
 [package]
 name = "buoyant"
-version = "0.7.0-alpha.1"
+version = "0.7.0-alpha.2"
 authors = ["Riley Williams"]
 edition = "2024"
 license = "MIT OR Apache-2.0"
@@ -21,14 +21,19 @@ embedded-graphics = [
   "dep:embedded-graphics",
   "dep:embedded-graphics-core",
   "dep:u8g2-fonts",
-  "dep:embedded-ttf",
-  "dep:rusttype",
 ]
-crossterm = ["dep:crossterm", "std"]
 embedded-graphics-simulator = [
   "embedded-graphics",
   "dep:embedded-graphics-simulator",
 ]
+# This could in theory be made no-std compatible, still requires alloc
+rusttype-fonts = [
+  "std",
+  "embedded-graphics",
+  "dep:rusttype",
+  "dep:embedded-ttf",
+]
+crossterm = ["std", "dep:crossterm"]
 
 [dependencies]
 crossterm = { version = ">=0.28.0, <0.30.0", optional = true }
@@ -45,8 +50,10 @@ embedded-touch = "^0.3.0"
 embedded-graphics-simulator = { version = "0.8.0", default-features = false, features = [
   "with-sdl",
 ], optional = true }
-embedded-ttf = { version = "^0.2.2", optional = true, default-features = false }
-rusttype = { version = "0.9.3", optional = true }
+embedded-ttf = { version = "^0.2.2", optional = true, default-features = false, features = [
+  "std",
+] }
+rusttype = { version = "^0.9.3", optional = true }
 
 [dev-dependencies]
 tinytga = "^0.5"
