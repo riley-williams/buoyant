@@ -16,7 +16,7 @@ mod fixed_text_buffer;
 pub use fixed_text_buffer::FixedTextBuffer;
 
 use crate::{
-    font::{self, FontMetrics as _},
+    font,
     image::EmptyImage,
     primitives::{
         Interpolate, Point, Size,
@@ -86,37 +86,8 @@ pub trait RenderTarget {
         glyphs: impl Iterator<Item = Glyph>,
         font: &F,
         font_attributes: &F::Attributes,
+        conservative_bounds: &Rectangle,
     );
-
-    /// Draws a string using the specified style and brush.
-    ///
-    /// This performs the same operation as `draw_glyphs`, but also handles
-    /// glyph indexing and positioning.
-    fn draw_str<C: Into<Self::ColorFormat>, F: font::FontRender<Self::ColorFormat>>(
-        &mut self,
-        offset: Point,
-        brush: &impl Brush<ColorFormat = C>,
-        text: &str,
-        font: &F,
-        font_attributes: &F::Attributes,
-    ) {
-        let metrics = font.metrics(font_attributes);
-        let mut x = 0;
-        self.draw_glyphs(
-            offset,
-            brush,
-            text.chars().map(|c| {
-                let glyph = Glyph {
-                    character: c,
-                    offset: Point::new(x, 0),
-                };
-                x += metrics.advance(glyph.character) as i32;
-                glyph
-            }),
-            font,
-            font_attributes,
-        );
-    }
 
     /// Obtain a raw surface to directly write pixels.
     ///
@@ -131,7 +102,7 @@ pub trait RenderTarget {
     /// # use embedded_graphics::pixelcolor::Rgb888;
     /// # use embedded_graphics::mock_display::MockDisplay;
     /// use tinytga::Tga;
-    /// use crate::buoyant::surface::AsDrawTarget;
+    /// use crate::buoyant::render_target::surface::AsDrawTarget;
     ///
     /// let mut display = MockDisplay::<Rgb888>::new();
     /// let mut target = EmbeddedGraphicsRenderTarget::new(&mut display);

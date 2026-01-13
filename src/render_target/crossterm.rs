@@ -280,6 +280,7 @@ impl RenderTarget for CrosstermRenderTarget {
         glyphs: impl Iterator<Item = Glyph>,
         _font: &F,
         _font_attributes: &F::Attributes,
+        _conservative_bounds: &Rectangle,
     ) {
         let offset = offset.applying(&self.active_layer.transform);
         let Some(color) = brush.as_solid().map(Into::into) else {

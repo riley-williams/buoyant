@@ -1,10 +1,10 @@
 use crate::primitives::{
     Interpolate, Point, Size,
+    geometry::Intersection,
     transform::{CoordinateSpaceTransform, LinearTransform},
 };
 
 use super::{PathEl, Shape, ShapePathIter};
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Rectangle {
     pub origin: Point,
@@ -36,6 +36,39 @@ impl Rectangle {
             && self.origin.y <= point.y
             && point.x < (self.origin.x + self.size.width as i32)
             && point.y < (self.origin.y + self.size.height as i32)
+    }
+
+    /// Determines the relationship of `other` relative to `self`.
+    ///
+    /// Returns:
+    /// - [`Intersection::Contains`] if `other` is completely inside `self`
+    /// - [`Intersection::Overlaps`] if `other` partially overlaps with `self`
+    /// - [`Intersection::NonIntersecting`] if `other` does not intersect with `self`
+    #[allow(dead_code, reason = "unused with some feature combinations")]
+    #[must_use]
+    pub(crate) fn intersection_with(&self, other: &Self) -> Intersection {
+        let self_right = self.origin.x + self.size.width as i32;
+        let self_bottom = self.origin.y + self.size.height as i32;
+        let other_right = other.origin.x + other.size.width as i32;
+        let other_bottom = other.origin.y + other.size.height as i32;
+
+        // Check if other is completely contained within self
+        let contained = self.origin.x <= other.origin.x
+            && self.origin.y <= other.origin.y
+            && other_right <= self_right
+            && other_bottom <= self_bottom;
+
+        if contained {
+            Intersection::Contains
+        } else if self.origin.x < other_right
+            && self_right > other.origin.x
+            && self.origin.y < other_bottom
+            && self_bottom > other.origin.y
+        {
+            Intersection::Overlaps
+        } else {
+            Intersection::NonIntersecting
+        }
     }
 
     #[must_use]
@@ -414,5 +447,110 @@ mod tests {
         let union2 = rect2.union(&rect1);
 
         assert_eq!(union1, union2);
+    }
+
+    #[test]
+    fn containment_fully_contained() {
+        let outer = Rectangle::new(Point::new(0, 0), Size::new(100, 100));
+        let inner = Rectangle::new(Point::new(25, 25), Size::new(50, 50));
+
+        assert_eq!(outer.intersection_with(&inner), Intersection::Contains);
+    }
+
+    #[test]
+    fn containment_partially_contained() {
+        let rect1 = Rectangle::new(Point::new(0, 0), Size::new(50, 50));
+        let rect2 = Rectangle::new(Point::new(25, 25), Size::new(50, 50));
+
+        assert_eq!(rect1.intersection_with(&rect2), Intersection::Overlaps);
+        assert_eq!(rect2.intersection_with(&rect1), Intersection::Overlaps);
+    }
+
+    #[test]
+    fn containment_non_intersecting() {
+        let rect1 = Rectangle::new(Point::new(0, 0), Size::new(10, 10));
+        let rect2 = Rectangle::new(Point::new(20, 20), Size::new(10, 10));
+
+        assert_eq!(
+            rect1.intersection_with(&rect2),
+            Intersection::NonIntersecting
+        );
+        assert_eq!(
+            rect2.intersection_with(&rect1),
+            Intersection::NonIntersecting
+        );
+    }
+
+    #[test]
+    fn containment_identical_rectangles() {
+        let rect1 = Rectangle::new(Point::new(10, 10), Size::new(30, 30));
+        let rect2 = Rectangle::new(Point::new(10, 10), Size::new(30, 30));
+
+        assert_eq!(rect1.intersection_with(&rect2), Intersection::Contains);
+    }
+
+    #[test]
+    fn containment_inner_contains_outer_is_partial() {
+        let outer = Rectangle::new(Point::new(0, 0), Size::new(100, 100));
+        let inner = Rectangle::new(Point::new(25, 25), Size::new(50, 50));
+
+        // inner cannot fully contain outer, so it's partial
+        assert_eq!(inner.intersection_with(&outer), Intersection::Overlaps);
+    }
+
+    #[test]
+    fn containment_touching_edges_is_non_intersecting() {
+        let rect1 = Rectangle::new(Point::new(0, 0), Size::new(10, 10));
+        let rect2 = Rectangle::new(Point::new(10, 0), Size::new(10, 10));
+
+        assert_eq!(
+            rect1.intersection_with(&rect2),
+            Intersection::NonIntersecting
+        );
+    }
+
+    #[test]
+    fn containment_with_negative_coordinates() {
+        let outer = Rectangle::new(Point::new(-50, -50), Size::new(100, 100));
+        let inner = Rectangle::new(Point::new(-25, -25), Size::new(50, 50));
+
+        assert_eq!(outer.intersection_with(&inner), Intersection::Contains);
+        assert_eq!(inner.intersection_with(&outer), Intersection::Overlaps);
+    }
+
+    /// Zero-area rects should still work, these bounds commonly arise from the Line primitive
+    #[test]
+    fn containment_with_zero_dimension() {
+        let outer = Rectangle::new(Point::new(0, 0), Size::new(100, 100));
+        let inner_horizontal = Rectangle::new(Point::new(10, 10), Size::new(50, 0));
+        let inner_vertical = Rectangle::new(Point::new(10, 10), Size::new(0, 50));
+
+        assert_eq!(
+            outer.intersection_with(&inner_horizontal),
+            Intersection::Contains
+        );
+
+        assert_eq!(
+            outer.intersection_with(&inner_vertical),
+            Intersection::Contains
+        );
+    }
+
+    /// Zero-area rects should still work, these bounds commonly arise from the Line primitive
+    #[test]
+    fn containment_with_zero_dimension_overlap() {
+        let outer = Rectangle::new(Point::new(0, 0), Size::new(100, 100));
+        let inner_horizontal = Rectangle::new(Point::new(-10, 10), Size::new(50, 0));
+        let inner_vertical = Rectangle::new(Point::new(10, -10), Size::new(0, 50));
+
+        assert_eq!(
+            outer.intersection_with(&inner_horizontal),
+            Intersection::Overlaps
+        );
+
+        assert_eq!(
+            outer.intersection_with(&inner_vertical),
+            Intersection::Overlaps
+        );
     }
 }

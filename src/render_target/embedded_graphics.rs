@@ -1,16 +1,15 @@
 use crate::color::AlphaColor;
 use crate::font::FontRender;
-use crate::primitives::transform::CoordinateSpaceTransform;
-use crate::primitives::{Interpolate, transform::LinearTransform};
-use crate::render_target::{
-    LayerConfig, LayerHandle, surface::AsDrawTarget, surface::DrawTargetSurface,
-};
 use crate::{
     primitives::{
-        Point,
-        geometry::{Circle, Line, PathEl, Rectangle, RoundedRectangle},
+        Interpolate, Point,
+        geometry::{Circle, Intersection, Line, PathEl, Rectangle, RoundedRectangle},
+        transform::{CoordinateSpaceTransform, LinearTransform},
     },
-    render_target::{Brush, RenderTarget, Shape},
+    render_target::{
+        Brush, LayerConfig, LayerHandle, RenderTarget, Shape,
+        surface::{AsDrawTarget, ClippedSurface, DrawTargetSurface},
+    },
 };
 
 use embedded_graphics::{
@@ -229,6 +228,7 @@ where
         glyphs: impl Iterator<Item = Glyph>,
         font: &F,
         font_attributes: &F::Attributes,
+        conservative_bounds: &Rectangle,
     ) {
         let offset = offset.applying(&self.active_layer.transform);
         let Some(color) = brush.as_solid().map(Into::into) else {
@@ -244,16 +244,37 @@ where
                     color
                 }
             });
-        glyphs.for_each(|glyph| {
-            font.draw(
-                glyph.character,
-                offset + glyph.offset,
-                color,
-                self.active_layer.background_hint,
-                font_attributes,
-                &mut self.surface,
-            );
-        });
+
+        let text_bounds = conservative_bounds.applying(&self.active_layer.transform);
+        let clip_rect = self.active_layer.clip_rect.clone();
+        match clip_rect.intersection_with(&text_bounds) {
+            Intersection::Contains => {
+                glyphs.for_each(|glyph| {
+                    font.draw(
+                        glyph.character,
+                        offset + glyph.offset,
+                        color,
+                        self.active_layer.background_hint,
+                        font_attributes,
+                        &mut self.surface,
+                    );
+                });
+            }
+            Intersection::Overlaps => {
+                let mut surface = ClippedSurface::new(&mut self.surface, clip_rect);
+                glyphs.for_each(|glyph| {
+                    font.draw(
+                        glyph.character,
+                        offset + glyph.offset,
+                        color,
+                        self.active_layer.background_hint,
+                        font_attributes,
+                        &mut surface,
+                    );
+                });
+            }
+            Intersection::NonIntersecting => (),
+        }
     }
 
     fn raw_surface(&mut self) -> &mut impl Surface<Color = Self::ColorFormat> {
