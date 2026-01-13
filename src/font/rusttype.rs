@@ -13,7 +13,7 @@ use rusttype::{IntoGlyphId, Scale};
 use crate::font::{self, CustomSize};
 use crate::primitives::{Interpolate, Point};
 use crate::primitives::{Size, geometry::Rectangle};
-use crate::surface::AsDrawTarget;
+use crate::render_target::surface::AsDrawTarget;
 
 use super::{Font, FontMetrics, FontRender};
 
@@ -73,7 +73,7 @@ where
         color: C,
         background_color: Option<C>,
         attributes: &Self::Attributes,
-        surface: &mut impl crate::surface::Surface<Color = C>,
+        surface: &mut impl crate::render_target::Surface<Color = C>,
     ) {
         let mut font = FontTextStyleBuilder::new(self.clone())
             .font_size(attributes.size)

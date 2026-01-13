@@ -262,7 +262,7 @@ mod tests {
     use crate::font::{Font, FontMetrics, FontRender};
     use crate::primitives::geometry::Rectangle;
     use crate::primitives::{Point, ProposedDimensions, Size};
-    use crate::surface::Surface;
+    use crate::render_target::Surface;
     use crate::view::{Text, ViewLayout};
     use crate::{font::CharacterBufferFont, primitives::ProposedDimension};
     use core::cell::RefCell;

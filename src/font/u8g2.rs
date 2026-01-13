@@ -4,7 +4,7 @@ use u8g2_fonts::{
     types::{FontColor, VerticalPosition},
 };
 
-use crate::surface::AsDrawTarget;
+use crate::render_target::surface::{AsDrawTarget, Surface};
 use crate::{
     font,
     primitives::{Point, geometry::Rectangle},
@@ -29,7 +29,7 @@ impl<C: PixelColor> FontRender<C> for FontRenderer {
         color: C,
         _background_color: Option<C>,
         _attributes: &Self::Attributes,
-        surface: &mut impl crate::surface::Surface<Color = C>,
+        surface: &mut impl Surface<Color = C>,
     ) {
         let font_color = FontColor::Transparent(color);
         let mut draw_target = surface.draw_target();

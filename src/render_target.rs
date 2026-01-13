@@ -6,6 +6,9 @@ mod embedded_graphics;
 #[cfg(feature = "embedded-graphics")]
 pub use embedded_graphics::EmbeddedGraphicsRenderTarget;
 
+pub mod surface;
+pub use surface::Surface;
+
 #[cfg(feature = "crossterm")]
 pub use crossterm::CrosstermRenderTarget;
 
@@ -20,7 +23,6 @@ use crate::{
         geometry::{Rectangle, Shape},
         transform::{CoordinateSpaceTransform as _, LinearTransform, ScaleFactor},
     },
-    surface::Surface,
 };
 
 pub trait RenderTarget {

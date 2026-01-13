@@ -1,6 +1,6 @@
 use crate::{
     primitives::{Interpolate, Point, geometry::Rectangle},
-    surface::Surface,
+    render_target::Surface,
 };
 
 mod character_buffer_font;

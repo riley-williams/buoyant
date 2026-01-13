@@ -1,6 +1,6 @@
 use crate::{
     primitives::{Point, Size, geometry::Rectangle},
-    surface::Surface,
+    render_target::Surface,
 };
 
 use super::{Font, FontMetrics, FontRender};

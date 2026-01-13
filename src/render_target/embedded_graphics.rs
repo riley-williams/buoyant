@@ -1,9 +1,10 @@
 use crate::color::AlphaColor;
 use crate::font::FontRender;
 use crate::primitives::transform::CoordinateSpaceTransform;
-use crate::primitives::{Interpolate, Pixel, transform::LinearTransform};
-use crate::render_target::{LayerConfig, LayerHandle};
-use crate::surface::AsDrawTarget;
+use crate::primitives::{Interpolate, transform::LinearTransform};
+use crate::render_target::{
+    LayerConfig, LayerHandle, surface::AsDrawTarget, surface::DrawTargetSurface,
+};
 use crate::{
     primitives::{
         Point,
@@ -25,39 +26,6 @@ use embedded_graphics::{
 };
 
 use super::{Glyph, ImageBrush, Stroke, Surface};
-
-#[derive(Debug)]
-pub struct DrawTargetSurface<'a, D: DrawTarget>(&'a mut D);
-
-impl<D: DrawTarget> Surface for DrawTargetSurface<'_, D> {
-    type Color = D::Color;
-
-    fn size(&self) -> crate::primitives::Size {
-        self.0.bounding_box().size.into()
-    }
-
-    fn draw_iter<I>(&mut self, pixels: I)
-    where
-        I: IntoIterator<Item = Pixel<Self::Color>>,
-    {
-        _ = self.0.draw_iter(pixels.into_iter().map(Into::into));
-    }
-
-    fn fill_contiguous<I>(&mut self, area: &Rectangle, colors: I)
-    where
-        I: IntoIterator<Item = Self::Color>,
-    {
-        _ = self.0.fill_contiguous(&area.clone().into(), colors);
-    }
-
-    fn fill_solid(&mut self, area: &Rectangle, color: Self::Color) {
-        _ = self.0.fill_solid(&area.clone().into(), color);
-    }
-
-    fn clear(&mut self, color: Self::Color) {
-        _ = self.0.clear(color);
-    }
-}
 
 #[derive(Debug)]
 pub struct EmbeddedGraphicsRenderTarget<D: Surface> {

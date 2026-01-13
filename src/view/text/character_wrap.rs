@@ -191,7 +191,7 @@ mod tests {
     use crate::primitives::Size;
     use crate::primitives::geometry::Rectangle;
     use crate::primitives::{Point, ProposedDimension};
-    use crate::surface::Surface;
+    use crate::render_target::Surface;
     use std::vec::Vec;
     use std::{self, vec};
 

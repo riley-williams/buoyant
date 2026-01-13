@@ -481,7 +481,7 @@ mod test {
             _color: C,
             _background_color: Option<C>,
             _customization: &Self::Attributes,
-            _surface: &mut impl crate::surface::Surface<Color = C>,
+            _surface: &mut impl crate::render_target::Surface<Color = C>,
         ) {
         }
     }

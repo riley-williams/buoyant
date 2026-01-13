@@ -14,8 +14,7 @@ use crate::{
         geometry::Rectangle,
         transform::{CoordinateSpaceTransform, LinearTransform},
     },
-    render_target::{LayerConfig, LayerHandle},
-    surface::Surface,
+    render_target::{LayerConfig, LayerHandle, surface::Surface},
 };
 
 use super::{Brush, Glyph, RenderTarget, Shape, Stroke};

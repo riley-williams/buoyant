@@ -1,6 +1,5 @@
 use buoyant::{
-    render_target::{EmbeddedGraphicsRenderTarget, RenderTarget},
-    surface::AsDrawTarget,
+    render_target::{EmbeddedGraphicsRenderTarget, RenderTarget, surface::AsDrawTarget},
     view::prelude::*,
 };
 use embedded_graphics::{

@@ -68,8 +68,7 @@ mod embedded_graphics {
     use crate::{
         primitives::{Interpolate as _, Point},
         render::Render,
-        render_target::RenderTarget,
-        surface::AsDrawTarget,
+        render_target::{RenderTarget, surface::AsDrawTarget},
     };
 
     use super::Image;
