@@ -12,6 +12,7 @@ use crate::{
     },
 };
 
+use embedded_graphics::prelude::DrawTargetExt;
 use embedded_graphics::{
     Drawable,
     draw_target::DrawTarget,
@@ -130,9 +131,6 @@ where
     ) {
         let transform = transform.into().applying(&self.active_layer.transform);
         let bounding_box = shape.bounding_box().applying(&transform);
-        if !bounding_box.intersects(&self.active_layer.clip_rect) {
-            return;
-        }
 
         // Convert the brush to the embedded_graphics color
         if let Some(color) = brush.as_solid().map(Into::into) {
@@ -148,25 +146,58 @@ where
                 });
             let style = PrimitiveStyleBuilder::new().fill_color(color).build();
 
-            // Handle different shape types
-            if let Some(line) = shape.as_line() {
-                self.draw_line(&line, &transform, &style);
-            } else if let Some(rect) = shape.as_rect() {
-                self.draw_rectangle(&rect, &transform, &style);
-            } else if let Some(circle) = shape.as_circle() {
-                self.draw_circle(&circle, &transform, &style);
-            } else if let Some(rounded_rect) = shape.as_rounded_rect() {
-                self.draw_rounded_rectangle(&rounded_rect, &transform, &style);
-            } else {
-                // For generic shapes, convert the path elements to lines
-                self.draw_path_shape(shape, transform.offset, &style);
+            match self.active_layer.clip_rect.intersection_with(&bounding_box) {
+                Intersection::Contains => {
+                    let mut target = self.surface.draw_target();
+                    if let Some(line) = shape.as_line() {
+                        draw_line(&mut target, &line, &transform, &style);
+                    } else if let Some(rect) = shape.as_rect() {
+                        draw_rectangle(&mut target, &rect, &transform, &style);
+                    } else if let Some(circle) = shape.as_circle() {
+                        draw_circle(&mut target, &circle, &transform, &style);
+                    } else if let Some(rounded_rect) = shape.as_rounded_rect() {
+                        draw_rounded_rectangle(&mut target, &rounded_rect, &transform, &style);
+                    } else {
+                        draw_path_shape(&mut target, shape, transform.offset, &style);
+                    }
+                }
+                Intersection::Overlaps => {
+                    // For now, we just draw on a clipped surface
+                    let mut target = self.surface.draw_target();
+                    let mut target = target.clipped(&self.active_layer.clip_rect.clone().into());
+                    if let Some(line) = shape.as_line() {
+                        draw_line(&mut target, &line, &transform, &style);
+                    } else if let Some(rect) = shape.as_rect() {
+                        draw_rectangle(&mut target, &rect, &transform, &style);
+                    } else if let Some(circle) = shape.as_circle() {
+                        draw_circle(&mut target, &circle, &transform, &style);
+                    } else if let Some(rounded_rect) = shape.as_rounded_rect() {
+                        draw_rounded_rectangle(&mut target, &rounded_rect, &transform, &style);
+                    } else {
+                        draw_path_shape(&mut target, shape, transform.offset, &style);
+                    }
+                }
+                Intersection::NonIntersecting => (),
             }
         } else if let Some(image) = brush.as_image() {
             // only support rectangles for now
             let Some(rect) = shape.as_rect() else { return };
-            // FIXME: Apply brush transform and clip to shape bounds
-            self.surface
-                .fill_contiguous(&rect, image.color_iter().map(Into::into));
+
+            match self.active_layer.clip_rect.intersection_with(&bounding_box) {
+                Intersection::Contains => {
+                    // FIXME: Apply brush transform and clip to shape bounds
+                    self.surface
+                        .fill_contiguous(&rect, image.color_iter().map(Into::into));
+                }
+                Intersection::Overlaps => {
+                    // There might be a more efficient way to do this
+                    let mut surface =
+                        ClippedSurface::new(&mut self.surface, self.active_layer.clip_rect.clone());
+                    // FIXME: Apply brush transform and clip to shape bounds
+                    surface.fill_contiguous(&rect, image.color_iter().map(Into::into));
+                }
+                Intersection::NonIntersecting => (),
+            }
         } else {
             // no support for custom brushes yet
         }
@@ -182,9 +213,6 @@ where
     ) {
         let transform = transform.into().applying(&self.active_layer.transform);
         let bounding_box = shape.bounding_box().applying(&transform);
-        if !bounding_box.intersects(&self.active_layer.clip_rect) {
-            return;
-        }
 
         // Convert the brush to the embedded_graphics color.
         // Only solid strokes are implemented
@@ -208,16 +236,38 @@ where
             .stroke_color(color)
             .build();
 
-        if let Some(line) = shape.as_line() {
-            self.draw_line(&line, &transform, &style);
-        } else if let Some(rect) = shape.as_rect() {
-            self.draw_rectangle(&rect, &transform, &style);
-        } else if let Some(circle) = shape.as_circle() {
-            self.draw_circle(&circle, &transform, &style);
-        } else if let Some(rounded_rect) = shape.as_rounded_rect() {
-            self.draw_rounded_rectangle(&rounded_rect, &transform, &style);
-        } else {
-            self.draw_path_shape(shape, transform.offset, &style);
+        match self.active_layer.clip_rect.intersection_with(&bounding_box) {
+            Intersection::Contains => {
+                let mut target = self.surface.draw_target();
+                if let Some(line) = shape.as_line() {
+                    draw_line(&mut target, &line, &transform, &style);
+                } else if let Some(rect) = shape.as_rect() {
+                    draw_rectangle(&mut target, &rect, &transform, &style);
+                } else if let Some(circle) = shape.as_circle() {
+                    draw_circle(&mut target, &circle, &transform, &style);
+                } else if let Some(rounded_rect) = shape.as_rounded_rect() {
+                    draw_rounded_rectangle(&mut target, &rounded_rect, &transform, &style);
+                } else {
+                    draw_path_shape(&mut target, shape, transform.offset, &style);
+                }
+            }
+            Intersection::Overlaps => {
+                // For now, we just draw on a clipped surface
+                let mut target = self.surface.draw_target();
+                let mut target = target.clipped(&self.active_layer.clip_rect.clone().into());
+                if let Some(line) = shape.as_line() {
+                    draw_line(&mut target, &line, &transform, &style);
+                } else if let Some(rect) = shape.as_rect() {
+                    draw_rectangle(&mut target, &rect, &transform, &style);
+                } else if let Some(circle) = shape.as_circle() {
+                    draw_circle(&mut target, &circle, &transform, &style);
+                } else if let Some(rounded_rect) = shape.as_rounded_rect() {
+                    draw_rounded_rectangle(&mut target, &rounded_rect, &transform, &style);
+                } else {
+                    draw_path_shape(&mut target, shape, transform.offset, &style);
+                }
+            }
+            Intersection::NonIntersecting => (),
         }
     }
 
@@ -282,115 +332,111 @@ where
     }
 }
 
-impl<D, C> EmbeddedGraphicsRenderTarget<D>
-where
-    D: Surface<Color = C>,
-    C: PixelColor,
-{
-    fn draw_line(&mut self, line: &Line, transform: &LinearTransform, style: &PrimitiveStyle<C>) {
-        let line: EgLine = line.applying(transform).into();
-        _ = line
-            .into_styled(*style)
-            .draw(&mut self.surface.draw_target());
-    }
+fn draw_line<C: PixelColor>(
+    target: &mut impl DrawTarget<Color = C>,
+    line: &Line,
+    transform: &LinearTransform,
+    style: &PrimitiveStyle<C>,
+) {
+    let line: EgLine = line.applying(transform).into();
+    _ = line.into_styled(*style).draw(target);
+}
 
-    fn draw_rectangle(
-        &mut self,
-        rect: &Rectangle,
-        transform: &LinearTransform,
-        style: &PrimitiveStyle<C>,
-    ) {
-        let eg_rect: EgRectangle = rect.applying(transform).into();
-        let _ = eg_rect
-            .into_styled(*style)
-            .draw(&mut self.surface.draw_target());
-    }
+fn draw_rectangle<C: PixelColor>(
+    target: &mut impl DrawTarget<Color = C>,
+    rect: &Rectangle,
+    transform: &LinearTransform,
+    style: &PrimitiveStyle<C>,
+) {
+    let eg_rect: EgRectangle = rect.applying(transform).into();
+    let _ = eg_rect.into_styled(*style).draw(target);
+}
 
-    fn draw_rounded_rectangle(
-        &mut self,
-        rect: &RoundedRectangle,
-        transform: &LinearTransform,
-        style: &PrimitiveStyle<C>,
-    ) {
-        let eg_rounded_rect: EgRoundedRectangle = rect.applying(transform).into();
+fn draw_rounded_rectangle<C: PixelColor>(
+    target: &mut impl DrawTarget<Color = C>,
+    rect: &RoundedRectangle,
+    transform: &LinearTransform,
+    style: &PrimitiveStyle<C>,
+) {
+    let eg_rounded_rect: EgRoundedRectangle = rect.applying(transform).into();
 
-        let _ = eg_rounded_rect
-            .into_styled(*style)
-            .draw(&mut self.surface.draw_target());
-    }
+    let _ = eg_rounded_rect.into_styled(*style).draw(target);
+}
 
-    fn draw_circle(
-        &mut self,
-        circle: &Circle,
-        transform: &LinearTransform,
-        style: &PrimitiveStyle<C>,
-    ) {
-        let circle: EgCircle = circle.applying(transform).into();
+fn draw_circle<C: PixelColor>(
+    target: &mut impl DrawTarget<Color = C>,
+    circle: &Circle,
+    transform: &LinearTransform,
+    style: &PrimitiveStyle<C>,
+) {
+    let circle: EgCircle = circle.applying(transform).into();
 
-        _ = circle
-            .into_styled(*style)
-            .draw(&mut self.surface.draw_target());
-    }
+    _ = circle.into_styled(*style).draw(target);
+}
 
-    fn draw_path_shape(&mut self, shape: &impl Shape, offset: Point, style: &PrimitiveStyle<C>) {
-        // Simplistic approach: convert each path segment to a line
-        let mut last_point = None;
+fn draw_path_shape<C: PixelColor>(
+    target: &mut impl DrawTarget<Color = C>,
+    shape: &impl Shape,
+    offset: Point,
+    style: &PrimitiveStyle<C>,
+) {
+    // Simplistic approach: convert each path segment to a line
+    let mut last_point = None;
 
-        for element in shape.path_elements(1) {
-            match element {
-                PathEl::MoveTo(point) => {
-                    last_point = Some(Point::new(point.x + offset.x, point.y + offset.y));
+    for element in shape.path_elements(1) {
+        match element {
+            PathEl::MoveTo(point) => {
+                last_point = Some(Point::new(point.x + offset.x, point.y + offset.y));
+            }
+            PathEl::LineTo(point) => {
+                if let Some(start) = last_point {
+                    let end = Point::new(point.x + offset.x, point.y + offset.y);
+
+                    let start_eg = EgPoint::new(start.x, start.y);
+                    let end_eg = EgPoint::new(end.x, end.y);
+
+                    let eg_line = EgLine::new(start_eg, end_eg).into_styled(*style);
+                    let _ = eg_line.draw(target);
+
+                    last_point = Some(end);
                 }
-                PathEl::LineTo(point) => {
-                    if let Some(start) = last_point {
-                        let end = Point::new(point.x + offset.x, point.y + offset.y);
+            }
+            PathEl::QuadTo(_control, point) => {
+                // FIXME: Simplify quadratic curves to straight lines for now
+                if let Some(start) = last_point {
+                    let end = Point::new(point.x + offset.x, point.y + offset.y);
 
-                        let start_eg = EgPoint::new(start.x, start.y);
-                        let end_eg = EgPoint::new(end.x, end.y);
+                    let start_eg = EgPoint::new(start.x, start.y);
+                    let end_eg = EgPoint::new(end.x, end.y);
 
-                        let eg_line = EgLine::new(start_eg, end_eg).into_styled(*style);
-                        let _ = eg_line.draw(&mut self.surface.draw_target());
+                    let eg_line = EgLine::new(start_eg, end_eg).into_styled(*style);
+                    let _ = eg_line.draw(target);
 
-                        last_point = Some(end);
-                    }
+                    last_point = Some(end);
                 }
-                PathEl::QuadTo(_control, point) => {
-                    // FIXME: Simplify quadratic curves to straight lines for now
-                    if let Some(start) = last_point {
-                        let end = Point::new(point.x + offset.x, point.y + offset.y);
+            }
+            PathEl::CurveTo(_control1, _control2, point) => {
+                // FIXME: Simplify cubic curves to straight lines for now
+                if let Some(start) = last_point {
+                    let end = Point::new(point.x + offset.x, point.y + offset.y);
 
-                        let start_eg = EgPoint::new(start.x, start.y);
-                        let end_eg = EgPoint::new(end.x, end.y);
+                    let start_eg = EgPoint::new(start.x, start.y);
+                    let end_eg = EgPoint::new(end.x, end.y);
 
-                        let eg_line = EgLine::new(start_eg, end_eg).into_styled(*style);
-                        let _ = eg_line.draw(&mut self.surface.draw_target());
+                    let eg_line = EgLine::new(start_eg, end_eg).into_styled(*style);
+                    let _ = eg_line.draw(target);
 
-                        last_point = Some(end);
-                    }
+                    last_point = Some(end);
                 }
-                PathEl::CurveTo(_control1, _control2, point) => {
-                    // FIXME: Simplify cubic curves to straight lines for now
-                    if let Some(start) = last_point {
-                        let end = Point::new(point.x + offset.x, point.y + offset.y);
+            }
+            PathEl::ClosePath => {
+                // Close the path by drawing a line back to the starting point
+                if let (Some(start), Some(first)) = (last_point, last_point) {
+                    let start_eg = EgPoint::new(start.x, start.y);
+                    let end_eg = EgPoint::new(first.x, first.y);
 
-                        let start_eg = EgPoint::new(start.x, start.y);
-                        let end_eg = EgPoint::new(end.x, end.y);
-
-                        let eg_line = EgLine::new(start_eg, end_eg).into_styled(*style);
-                        let _ = eg_line.draw(&mut self.surface.draw_target());
-
-                        last_point = Some(end);
-                    }
-                }
-                PathEl::ClosePath => {
-                    // Close the path by drawing a line back to the starting point
-                    if let (Some(start), Some(first)) = (last_point, last_point) {
-                        let start_eg = EgPoint::new(start.x, start.y);
-                        let end_eg = EgPoint::new(first.x, first.y);
-
-                        let eg_line = EgLine::new(start_eg, end_eg).into_styled(*style);
-                        let _ = eg_line.draw(&mut self.surface.draw_target());
-                    }
+                    let eg_line = EgLine::new(start_eg, end_eg).into_styled(*style);
+                    let _ = eg_line.draw(target);
                 }
             }
         }
