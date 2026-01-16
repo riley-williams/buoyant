@@ -1,5 +1,6 @@
 use crate::color::AlphaColor;
 use crate::font::FontRender;
+use crate::render_target::surface::OffsetSurface;
 use crate::{
     primitives::{
         Interpolate, Point,
@@ -327,8 +328,10 @@ where
         }
     }
 
-    fn raw_surface(&mut self) -> &mut impl Surface<Color = Self::ColorFormat> {
-        &mut self.surface
+    fn raw_surface(&mut self) -> impl Surface<Color = Self::ColorFormat> + '_ {
+        let offset_surface =
+            OffsetSurface::new(&mut self.surface, self.active_layer.transform.offset);
+        ClippedSurface::new(offset_surface, self.active_layer.clip_rect.clone())
     }
 }
 

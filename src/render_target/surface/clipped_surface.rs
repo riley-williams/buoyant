@@ -5,18 +5,18 @@ use crate::{
 
 /// A surface which draws with a specified offset.
 #[derive(Debug)]
-pub struct ClippedSurface<'a, S> {
-    surface: &'a mut S,
+pub struct ClippedSurface<S> {
+    surface: S,
     clip_rect: Rectangle,
 }
 
-impl<'a, S: Surface> ClippedSurface<'a, S> {
-    pub fn new(surface: &'a mut S, clip_rect: Rectangle) -> Self {
+impl<S: Surface> ClippedSurface<S> {
+    pub fn new(surface: S, clip_rect: Rectangle) -> Self {
         Self { surface, clip_rect }
     }
 }
 
-impl<S: Surface> Surface for ClippedSurface<'_, S> {
+impl<S: Surface> Surface for ClippedSurface<S> {
     type Color = S::Color;
 
     fn size(&self) -> Size {

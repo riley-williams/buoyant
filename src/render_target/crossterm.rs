@@ -294,7 +294,7 @@ impl RenderTarget for CrosstermRenderTarget {
         }
     }
 
-    fn raw_surface(&mut self) -> &mut impl Surface<Color = Self::ColorFormat> {
+    fn raw_surface(&mut self) -> impl Surface<Color = Self::ColorFormat> + '_ {
         self
     }
 }

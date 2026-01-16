@@ -130,3 +130,33 @@ where
         Ok(())
     }
 }
+
+impl<T: Surface> Surface for &mut T {
+    type Color = T::Color;
+
+    fn size(&self) -> Size {
+        (**self).size()
+    }
+
+    fn draw_iter<I>(&mut self, pixels: I)
+    where
+        I: IntoIterator<Item = Pixel<Self::Color>>,
+    {
+        (**self).draw_iter(pixels);
+    }
+
+    fn fill_contiguous<I>(&mut self, area: &Rectangle, colors: I)
+    where
+        I: IntoIterator<Item = Self::Color>,
+    {
+        (**self).fill_contiguous(area, colors);
+    }
+
+    fn fill_solid(&mut self, area: &Rectangle, color: Self::Color) {
+        (**self).fill_solid(area, color);
+    }
+
+    fn clear(&mut self, color: Self::Color) {
+        (**self).clear(color);
+    }
+}

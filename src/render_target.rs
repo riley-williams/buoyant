@@ -112,7 +112,7 @@ pub trait RenderTarget {
     ///
     /// img.draw(&mut target.raw_surface().draw_target());
     /// ```
-    fn raw_surface(&mut self) -> &mut impl Surface<Color = Self::ColorFormat>;
+    fn raw_surface(&mut self) -> impl Surface<Color = Self::ColorFormat> + '_;
 }
 
 /// Positioned glyph.

@@ -5,18 +5,18 @@ use crate::{
 
 /// A surface which draws with a specified offset.
 #[derive(Debug)]
-pub struct OffsetSurface<'a, S> {
-    surface: &'a mut S,
+pub struct OffsetSurface<S> {
+    surface: S,
     offset: Point,
 }
 
-impl<'a, S: Surface> OffsetSurface<'a, S> {
-    pub fn new(surface: &'a mut S, offset: Point) -> Self {
+impl<S: Surface> OffsetSurface<S> {
+    pub fn new(surface: S, offset: Point) -> Self {
         Self { surface, offset }
     }
 }
 
-impl<S: Surface> Surface for OffsetSurface<'_, S> {
+impl<S: Surface> Surface for OffsetSurface<S> {
     type Color = S::Color;
 
     fn size(&self) -> Size {
