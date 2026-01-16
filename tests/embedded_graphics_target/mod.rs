@@ -1,4 +1,4 @@
-mod clipped;
+mod clipping;
 mod images;
 mod misc;
 mod shapes;
