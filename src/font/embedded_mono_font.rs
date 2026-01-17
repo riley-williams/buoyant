@@ -1,12 +1,12 @@
 use crate::font;
 use crate::primitives::geometry::Rectangle;
-use crate::surface::AsDrawTarget as _;
+use crate::render_target::surface::AsDrawTarget as _;
 use embedded_graphics::Drawable;
 use embedded_graphics::mono_font::MonoFont;
 use embedded_graphics::{mono_font::MonoTextStyleBuilder, prelude::PixelColor, text::Text};
 
 use crate::primitives::{Point, Size};
-use crate::surface::Surface;
+use crate::render_target::Surface;
 
 use super::{Font, FontMetrics, FontRender};
 

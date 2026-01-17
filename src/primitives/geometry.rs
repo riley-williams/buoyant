@@ -85,3 +85,15 @@ impl<const N: usize> ShapePathIter<N> {
         Self { elements, index: 0 }
     }
 }
+
+/// Describes the relationship between two rectangles.
+#[allow(dead_code, reason = "unused with some feature combinations")]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum Intersection {
+    /// The other rectangle is completely inside this rectangle.
+    Contains,
+    /// The other rectangle partially overlaps with this rectangle.
+    Overlaps,
+    /// The other rectangle does not intersect with this rectangle.
+    NonIntersecting,
+}

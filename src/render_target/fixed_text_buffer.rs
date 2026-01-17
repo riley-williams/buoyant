@@ -178,6 +178,7 @@ impl<const W: usize, const H: usize> RenderTarget for FixedTextBuffer<W, H> {
         glyphs: impl Iterator<Item = Glyph>,
         _font: &F,
         _font_attributes: &F::Attributes,
+        _conservative_bounds: &Rectangle,
     ) {
         let offset = offset.applying(&self.active_layer.transform);
         for glyph in glyphs {
@@ -185,7 +186,7 @@ impl<const W: usize, const H: usize> RenderTarget for FixedTextBuffer<W, H> {
         }
     }
 
-    fn raw_surface(&mut self) -> &mut impl Surface<Color = Self::ColorFormat> {
+    fn raw_surface(&mut self) -> impl Surface<Color = Self::ColorFormat> + '_ {
         self
     }
 }

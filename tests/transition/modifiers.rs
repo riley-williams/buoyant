@@ -10,23 +10,24 @@ use buoyant::{
 fn all_the_modifiers() -> impl View<char, ()> {
     Circle
         .transition(Slide::top())
+        .priority(1)
         .animated(
             Animation::linear(std::time::Duration::from_millis(100)),
             false,
         )
         .aspect_ratio(Ratio::Ideal, ContentMode::Fill)
         .background(Alignment::Bottom, Rectangle)
+        .clipped()
         .erase_captures()
         .fixed_size(true, false)
         .flex_frame()
         .foreground_color('e')
         .frame_sized(125, 125)
         .geometry_group()
-        .hidden()
+        .hint_background_color('b')
         .offset(10, 10)
         .overlay(Alignment::BottomTrailing, Rectangle)
         .padding(Edges::All, 10)
-        .priority(1)
 }
 
 #[test]
@@ -58,5 +59,16 @@ fn modifiers_hand_off_transition() {
             ViewLayout::<()>::transition(&view).opacity(Direction::Out, factor),
             Slide::top().opacity(Direction::Out, factor),
         );
+    }
+}
+
+// doesn't really belong here...
+// also in a module because I smartly have two methods named priority
+mod passthrough {
+    #[test]
+    fn modifiers_pass_through_priority() {
+        use buoyant::view::ViewLayout;
+        let view = super::all_the_modifiers();
+        assert_eq!(view.priority(), 1);
     }
 }

@@ -14,8 +14,7 @@ use crate::{
         geometry::Rectangle,
         transform::{CoordinateSpaceTransform, LinearTransform},
     },
-    render_target::{LayerConfig, LayerHandle},
-    surface::Surface,
+    render_target::{LayerConfig, LayerHandle, surface::Surface},
 };
 
 use super::{Brush, Glyph, RenderTarget, Shape, Stroke};
@@ -281,6 +280,7 @@ impl RenderTarget for CrosstermRenderTarget {
         glyphs: impl Iterator<Item = Glyph>,
         _font: &F,
         _font_attributes: &F::Attributes,
+        _conservative_bounds: &Rectangle,
     ) {
         let offset = offset.applying(&self.active_layer.transform);
         let Some(color) = brush.as_solid().map(Into::into) else {
@@ -294,7 +294,7 @@ impl RenderTarget for CrosstermRenderTarget {
         }
     }
 
-    fn raw_surface(&mut self) -> &mut impl Surface<Color = Self::ColorFormat> {
+    fn raw_surface(&mut self) -> impl Surface<Color = Self::ColorFormat> + '_ {
         self
     }
 }

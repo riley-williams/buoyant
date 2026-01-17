@@ -6,6 +6,9 @@ mod embedded_graphics;
 #[cfg(feature = "embedded-graphics")]
 pub use embedded_graphics::EmbeddedGraphicsRenderTarget;
 
+pub mod surface;
+pub use surface::Surface;
+
 #[cfg(feature = "crossterm")]
 pub use crossterm::CrosstermRenderTarget;
 
@@ -13,14 +16,13 @@ mod fixed_text_buffer;
 pub use fixed_text_buffer::FixedTextBuffer;
 
 use crate::{
-    font::{self, FontMetrics as _},
+    font,
     image::EmptyImage,
     primitives::{
         Interpolate, Point, Size,
         geometry::{Rectangle, Shape},
         transform::{CoordinateSpaceTransform as _, LinearTransform, ScaleFactor},
     },
-    surface::Surface,
 };
 
 pub trait RenderTarget {
@@ -84,37 +86,8 @@ pub trait RenderTarget {
         glyphs: impl Iterator<Item = Glyph>,
         font: &F,
         font_attributes: &F::Attributes,
+        conservative_bounds: &Rectangle,
     );
-
-    /// Draws a string using the specified style and brush.
-    ///
-    /// This performs the same operation as `draw_glyphs`, but also handles
-    /// glyph indexing and positioning.
-    fn draw_str<C: Into<Self::ColorFormat>, F: font::FontRender<Self::ColorFormat>>(
-        &mut self,
-        offset: Point,
-        brush: &impl Brush<ColorFormat = C>,
-        text: &str,
-        font: &F,
-        font_attributes: &F::Attributes,
-    ) {
-        let metrics = font.metrics(font_attributes);
-        let mut x = 0;
-        self.draw_glyphs(
-            offset,
-            brush,
-            text.chars().map(|c| {
-                let glyph = Glyph {
-                    character: c,
-                    offset: Point::new(x, 0),
-                };
-                x += metrics.advance(glyph.character) as i32;
-                glyph
-            }),
-            font,
-            font_attributes,
-        );
-    }
 
     /// Obtain a raw surface to directly write pixels.
     ///
@@ -129,7 +102,7 @@ pub trait RenderTarget {
     /// # use embedded_graphics::pixelcolor::Rgb888;
     /// # use embedded_graphics::mock_display::MockDisplay;
     /// use tinytga::Tga;
-    /// use crate::buoyant::surface::AsDrawTarget;
+    /// use crate::buoyant::render_target::surface::AsDrawTarget;
     ///
     /// let mut display = MockDisplay::<Rgb888>::new();
     /// let mut target = EmbeddedGraphicsRenderTarget::new(&mut display);
@@ -139,7 +112,7 @@ pub trait RenderTarget {
     ///
     /// img.draw(&mut target.raw_surface().draw_target());
     /// ```
-    fn raw_surface(&mut self) -> &mut impl Surface<Color = Self::ColorFormat>;
+    fn raw_surface(&mut self) -> impl Surface<Color = Self::ColorFormat> + '_;
 }
 
 /// Positioned glyph.
@@ -331,7 +304,7 @@ impl<'a, C: Interpolate + Copy> LayerHandle<'a, C> {
         // maintain clip rect in global coordinate space
         // use zero-sized rectangle if the intersection is empty
         self.layer.clip_rect = clip_rect
-            .applying_inverse(&self.layer.transform)
+            .applying(&self.layer.transform)
             .intersection(&self.layer.clip_rect)
             .unwrap_or_else(|| Rectangle::new(Point::zero(), Size::new(0, 0)));
         self
@@ -456,9 +429,7 @@ mod tests {
 
         LayerHandle::new(&mut layer).clip(&new_clip);
 
-        // New clip rect should be inverse transformed, then intersected with existing clip rect
-        let transformed_clip =
-            new_clip.applying_inverse(&LinearTransform::new(Point::new(4, 8), 2.0));
+        let transformed_clip = new_clip.applying(&LinearTransform::new(Point::new(4, 8), 2.0));
         let expected_clip = transformed_clip
             .intersection(&Rectangle::new(Point::zero(), Size::new(100, 100)))
             .unwrap();

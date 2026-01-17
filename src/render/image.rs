@@ -63,13 +63,15 @@ impl<T: ?Sized> AnimatedJoin for Image<'_, T> {
 
 #[cfg(feature = "embedded-graphics")]
 mod embedded_graphics {
-    use embedded_graphics::{draw_target::DrawTargetExt, image::ImageDrawable};
+    use embedded_graphics::{
+        draw_target::DrawTargetExt,
+        image::{ImageDrawable, ImageDrawableExt},
+    };
 
     use crate::{
         primitives::{Interpolate as _, Point},
         render::Render,
-        render_target::RenderTarget,
-        surface::AsDrawTarget,
+        render_target::{RenderTarget, surface::AsDrawTarget},
     };
 
     use super::Image;
@@ -79,8 +81,8 @@ mod embedded_graphics {
             render_target: &mut impl RenderTarget<ColorFormat = I::Color>,
             _style: &I::Color,
         ) {
-            // TODO: Only render a sub-image if the image is clipped?
-            _ = self.image.draw(
+            let clip_area = render_target.clip_rect();
+            _ = self.image.sub_image(&clip_area.into()).draw(
                 &mut render_target
                     .raw_surface()
                     .draw_target()

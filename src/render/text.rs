@@ -118,32 +118,30 @@ impl<C: Copy, T: AsRef<str> + Clone, F: FontRender<C>> Render<C> for Text<'_, T,
             if line_bounding_box.origin.y > clip_rect.origin.y + clip_rect.size.height as i32 {
                 break;
             }
+            // FIXME: This could skip all the initial lines outside the loop
             if (line_bounding_box.origin.y + line_bounding_box.size.height as i32)
                 < clip_rect.origin.y
             {
                 height += line_height as i32;
-                if height >= size.height as i32 {
-                    break;
-                }
-                continue;
+            } else {
+                render_target.draw_glyphs(
+                    line_offset,
+                    &brush,
+                    line.content.chars().map(|c| {
+                        let glyph = Glyph {
+                            character: c,
+                            offset: Point::new(x, 0),
+                        };
+                        x += metrics.advance(glyph.character) as i32;
+                        glyph
+                    }),
+                    self.font,
+                    &self.attributes,
+                    &line_bounding_box,
+                );
+
+                height += line_height as i32;
             }
-
-            render_target.draw_glyphs(
-                line_offset,
-                &brush,
-                line.content.chars().map(|c| {
-                    let glyph = Glyph {
-                        character: c,
-                        offset: Point::new(x, 0),
-                    };
-                    x += metrics.advance(glyph.character) as i32;
-                    glyph
-                }),
-                self.font,
-                &self.attributes,
-            );
-
-            height += line_height as i32;
         }
     }
 
