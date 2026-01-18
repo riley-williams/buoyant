@@ -1,11 +1,28 @@
 use crate::{
     event::{EventContext, EventResult},
+    focus::{DefaultFocus, FocusEvent, FocusStateChange},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
     render,
     transition::Opacity,
     view::{ViewLayout, ViewMarker},
 };
+
+/// Helper macro to construct the last variant of a OneOfN enum with DefaultFocus
+#[macro_export]
+#[doc(hidden)]
+macro_rules! last_variant_focus {
+    // Base case: single variant left - this is the last one
+    ($name:ident, $variant:ident) => {
+        $name::$variant($variant::default_last())
+    };
+    // Recursive case: skip first variant, recurse with rest
+    ($name:ident, $first:ident, $($rest:ident),+) => {
+        $crate::last_variant_focus!($name, $($rest),+)
+    };
+}
+
+pub use last_variant_focus;
 
 /// A view that conditionally renders its arms based on a boolean expression.
 ///
@@ -229,12 +246,18 @@ macro_rules! define_branch {
                 $variant($variant),
             )+
         }
-        impl <$($variant),+> Default for $name<$($variant),+>
+
+        impl <$($variant),+> DefaultFocus for $name<$($variant),+>
         where
-            V0: Default,
+            $($variant: DefaultFocus,)+
         {
-            fn default() -> Self {
-                $name::V0(V0::default())
+            fn default_first() -> Self {
+                $name::V0(V0::default_first())
+            }
+
+            fn default_last() -> Self {
+                // Use a helper to get the last variant
+                last_variant_focus!($name, $($variant),+)
             }
         }
 
@@ -252,6 +275,7 @@ macro_rules! define_branch {
         {
             type Sublayout = $name<$(ResolvedLayout<$variant::Sublayout>),+>;
             type State = $name<$( $variant::State ),+>;
+            type FocusTree = $name<$($variant::FocusTree),+>;
 
             fn priority(&self) -> i8 {
                 match self {
@@ -359,6 +383,31 @@ macro_rules! define_branch {
                     }
                 }
             }
+
+            fn focus(
+                &self,
+                event: &FocusEvent,
+                context: &EventContext,
+                render_tree: &mut Self::Renderables,
+                captures: &mut Captures,
+                state: &mut Self::State,
+                focus: &mut Self::FocusTree,
+            ) -> FocusStateChange {
+                match (self, render_tree, state) {
+                    $((Self::$variant(v), render::$name::$variant(t), $name::$variant(s)) => {
+                        if let $name::$variant(f) = focus {
+                            v.focus(event, context, t, captures, s, f)
+                        } else {
+                            // FIXME: this allocation/copy could be avoided
+                            let mut f = DefaultFocus::default_first();
+                            let r = v.focus(event, context, t, captures, s, &mut f);
+                            *focus = $name::$variant(f);
+                            r
+                        }
+                    })+
+                    _ => FocusStateChange::Exhausted,
+                }
+            }
         }
     };
 }
@@ -370,6 +419,9 @@ define_branch!(OneOf4, V0, V1, V2, V3);
 define_branch!(OneOf5, V0, V1, V2, V3, V4);
 define_branch!(OneOf6, V0, V1, V2, V3, V4, V5);
 define_branch!(OneOf7, V0, V1, V2, V3, V4, V5, V6);
+define_branch!(OneOf8, V0, V1, V2, V3, V4, V5, V6, V7);
+define_branch!(OneOf9, V0, V1, V2, V3, V4, V5, V6, V7, V8);
+define_branch!(OneOf10, V0, V1, V2, V3, V4, V5, V6, V7, V8, V9);
 
 #[cfg(test)]
 mod tests {

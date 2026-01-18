@@ -1,5 +1,6 @@
 use crate::{
     environment::LayoutEnvironment,
+    focus::{FocusEvent, FocusStateChange},
     font::{CustomSize, Font, FontMetrics},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimension, ProposedDimensions, Size},
@@ -11,6 +12,8 @@ use core::fmt::Write;
 
 mod character_wrap;
 mod word_wrap;
+
+use crate::event::EventResult;
 
 pub use character_wrap::CharacterWrap;
 pub use word_wrap::WordWrap;
@@ -257,6 +260,7 @@ where
 {
     type Sublayout = Sublayout;
     type State = ();
+    type FocusTree = ();
 
     fn transition(&self) -> Self::Transition {
         Opacity
@@ -420,6 +424,30 @@ where
             max_lines: *line_count,
             wrap: self.wrap,
         }
+    }
+
+    fn handle_event(
+        &self,
+        _event: &crate::view::Event,
+        _context: &crate::event::EventContext,
+        _render_tree: &mut Self::Renderables,
+        _captures: &mut Captures,
+        _state: &mut Self::State,
+    ) -> EventResult {
+        EventResult::default()
+    }
+
+    fn focus(
+        &self,
+        _event: &FocusEvent,
+        _context: &crate::event::EventContext,
+        _render_tree: &mut Self::Renderables,
+        _captures: &mut Captures,
+        _state: &mut Self::State,
+        _focus: &mut Self::FocusTree,
+    ) -> FocusStateChange {
+        // FIXME: check for text mask
+        FocusStateChange::Exhausted
     }
 }
 

@@ -10,10 +10,16 @@ mod view;
 use std::time::{Duration, Instant};
 
 use buoyant::environment::DefaultEnvironment;
+use buoyant::event::simulator::EventType;
 use buoyant::event::{EventContext, EventResult, simulator::MouseTracker};
-use buoyant::primitives::Point;
+use buoyant::focus::{
+    ContentShape, DefaultFocus, FocusAction, FocusDirection, FocusEvent, FocusStateChange, Role,
+    RoleMask,
+};
+use buoyant::primitives::transform::LinearTransform;
+use buoyant::primitives::{Point, geometry};
 use buoyant::render::{AnimatedJoin, AnimationDomain, Render};
-use buoyant::render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _};
+use buoyant::render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _, SolidBrush, Stroke};
 use buoyant::{animation::Animation, if_view, match_view, view::prelude::*};
 use embedded_graphics::prelude::*;
 use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
@@ -70,6 +76,7 @@ mod color {
     pub const FOREGROUND_SECONDARY: Space = Space::CSS_LIGHT_SLATE_GRAY;
 }
 
+#[expect(clippy::too_many_lines)]
 fn main() {
     let size = Size::new(480, 320);
     let mut display: SimulatorDisplay<color::Space> = SimulatorDisplay::new(size);
@@ -105,6 +112,27 @@ fn main() {
         &mut view_state,
     );
 
+    // obtain initial focus
+    let mut focus_state = DefaultFocus::default_first();
+    let result = view.focus(
+        &FocusEvent::new(
+            buoyant::focus::FocusAction::Focus(FocusDirection::Forward),
+            Role::Button.mask(),
+        ),
+        &EventContext::new(time),
+        target_tree,
+        &mut app_data,
+        &mut view_state,
+        &mut focus_state,
+    );
+    let mut focus_rect = ContentShape::Empty;
+    match result {
+        FocusStateChange::Focused { shape, result: _ } => {
+            focus_rect = shape;
+        }
+        FocusStateChange::Exhausted => (),
+    }
+
     // Main event loop
     loop {
         let time = app_start.elapsed();
@@ -113,22 +141,41 @@ fn main() {
 
         let mut should_exit = false;
 
-        // Handle events, merging into a single result
+        // Handle touch events, merging into a single result
         let result = window
             .events()
             .filter_map(|event| touch_tracker.process_event(event))
-            .fold(EventResult::default(), |result, event| {
-                // Manually handle exit events and external events
-                if event == buoyant::event::Event::Exit {
-                    should_exit = true;
+            .fold(EventResult::default(), |result, event| match event {
+                EventType::Event(event) => {
+                    // Manually handle exit events and external events
+                    if event == buoyant::event::Event::Exit {
+                        should_exit = true;
+                    }
+                    result.merging(view.handle_event(
+                        &event,
+                        &context,
+                        target_tree,
+                        &mut app_data,
+                        &mut view_state,
+                    ))
                 }
-                result.merging(view.handle_event(
-                    &event,
-                    &context,
-                    target_tree,
-                    &mut app_data,
-                    &mut view_state,
-                ))
+                EventType::Focus(focus_action) => {
+                    let result = view.focus(
+                        &FocusEvent::new(focus_action, Role::Button.mask()),
+                        &context,
+                        target_tree,
+                        &mut app_data,
+                        &mut view_state,
+                        &mut focus_state,
+                    );
+                    match result {
+                        FocusStateChange::Focused { shape, result } => {
+                            focus_rect = shape;
+                            result
+                        }
+                        FocusStateChange::Exhausted => EventResult::new(false, false, true),
+                    }
+                }
             });
 
         if should_exit {
@@ -158,6 +205,25 @@ fn main() {
 
         // Only render if active animation was reported, the view changed, or redraw was requested
         if target.clear_animation_status() || result.recompute_view || result.redraw {
+            // If items are animating or view changed, obtain updated focus shape
+            let result = view.focus(
+                &FocusEvent::new(
+                    FocusAction::Focus(FocusDirection::Forward),
+                    Role::Button.mask(),
+                ),
+                &context,
+                target_tree,
+                &mut app_data,
+                &mut view_state,
+                &mut focus_state,
+            );
+            match result {
+                FocusStateChange::Focused { shape, .. } => {
+                    focus_rect = shape;
+                }
+                FocusStateChange::Exhausted => (),
+            }
+
             // Render animated transition between source and target trees
             Render::render_animated(
                 &mut target,
@@ -166,6 +232,22 @@ fn main() {
                 &color::Space::WHITE,
                 &domain,
             );
+            // Draw focus overlay, if available
+            let stroke = Stroke::new(2);
+            let brush = SolidBrush::new(color::Space::CSS_YELLOW);
+            match &focus_rect {
+                ContentShape::Rectangle(rect) => {
+                    target.stroke(&stroke, LinearTransform::identity(), &brush, None, rect);
+                }
+                ContentShape::RoundedRectangle(rrect) => {
+                    target.stroke(&stroke, LinearTransform::identity(), &brush, None, rrect);
+                }
+                ContentShape::Circle(circle) => {
+                    target.stroke(&stroke, LinearTransform::identity(), &brush, None, circle);
+                }
+                ContentShape::Empty | _ => {}
+            }
+
             // Send to the display
             window.update(target.display());
             // Clear for the next frame
@@ -191,6 +273,7 @@ struct AppState {
     pub stop_on_weight: bool,
     pub auto_off: bool,
     pub auto_brew: bool,
+    pub clean_overlay: Option<u32>,
 }
 
 fn root_view(state: &AppState) -> impl View<color::Space, AppState> + use<> {
@@ -208,6 +291,7 @@ fn root_view(state: &AppState) -> impl View<color::Space, AppState> + use<> {
             },
         }),
     ))
+    .popover(state.clean_overlay, view::clean::clean_overlay)
 }
 
 fn tab_bar(tab: Tab) -> impl View<color::Space, Tab> + use<> {

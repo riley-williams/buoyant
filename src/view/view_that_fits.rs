@@ -1,6 +1,7 @@
 use crate::{
     environment::LayoutEnvironment,
     event::EventResult,
+    focus::{FocusEvent, FocusStateChange},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimension, ProposedDimensions},
     render,
@@ -138,6 +139,7 @@ where
 {
     type Sublayout = T::Sublayout;
     type State = T::State;
+    type FocusTree = T::FocusTree;
 
     fn transition(&self) -> Self::Transition {
         Opacity
@@ -182,6 +184,20 @@ where
             .0
             .handle_event(event, context, render_tree, captures, state)
     }
+
+    fn focus(
+        &self,
+        event: &FocusEvent,
+        context: &crate::event::EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+        focus: &mut Self::FocusTree,
+    ) -> FocusStateChange {
+        self.choices
+            .0
+            .focus(event, context, render_tree, captures, state, focus)
+    }
 }
 
 const fn make_compact_offer(from_offer: ProposedDimensions, axis: FitAxis) -> ProposedDimensions {
@@ -217,6 +233,7 @@ where
 {
     type Sublayout = OneOf2<ResolvedLayout<T0::Sublayout>, ResolvedLayout<T1::Sublayout>>;
     type State = OneOf2<T0::State, T1::State>;
+    type FocusTree = (); // FIXME
 
     fn transition(&self) -> Self::Transition {
         Opacity
@@ -331,6 +348,19 @@ where
             }
         }
     }
+
+    fn focus(
+        &self,
+        _event: &FocusEvent,
+        _context: &crate::event::EventContext,
+        _render_tree: &mut Self::Renderables,
+        _captures: &mut Captures,
+        _state: &mut Self::State,
+        _focus: &mut Self::FocusTree,
+    ) -> FocusStateChange {
+        // FIXME: implement focus for ViewThatFits
+        FocusStateChange::Exhausted
+    }
 }
 
 impl<T0, T1, T2> ViewMarker for ViewThatFits<(T0, T1, T2)>
@@ -355,6 +385,7 @@ where
         ResolvedLayout<T2::Sublayout>,
     >;
     type State = OneOf3<T0::State, T1::State, T2::State>;
+    type FocusTree = (); // FIXME
 
     fn transition(&self) -> Self::Transition {
         Opacity
@@ -499,10 +530,22 @@ where
                 .2
                 .handle_event(event, context, t2, captures, s2),
             _ => {
-                // FIXME: I think it's better here to build new state
                 panic!("Layout/state branch mismatch");
             }
         }
+    }
+
+    fn focus(
+        &self,
+        _event: &FocusEvent,
+        _context: &crate::event::EventContext,
+        _render_tree: &mut Self::Renderables,
+        _captures: &mut Captures,
+        _state: &mut Self::State,
+        _focus: &mut Self::FocusTree,
+    ) -> FocusStateChange {
+        // FIXME: implement focus for ViewThatFits
+        FocusStateChange::Exhausted
     }
 }
 
@@ -532,6 +575,7 @@ where
         ResolvedLayout<T3::Sublayout>,
     >;
     type State = OneOf4<T0::State, T1::State, T2::State, T3::State>;
+    type FocusTree = (); // FIXME
 
     fn transition(&self) -> Self::Transition {
         Opacity
@@ -713,9 +757,21 @@ where
                 .3
                 .handle_event(event, context, t3, captures, s3),
             _ => {
-                // FIXME: I think it's better here to build new state
                 panic!("Layout/state branch mismatch");
             }
         }
+    }
+
+    fn focus(
+        &self,
+        _event: &FocusEvent,
+        _context: &crate::event::EventContext,
+        _render_tree: &mut Self::Renderables,
+        _captures: &mut Captures,
+        _state: &mut Self::State,
+        _focus: &mut Self::FocusTree,
+    ) -> FocusStateChange {
+        // FIXME: implement focus for ViewThatFits
+        FocusStateChange::Exhausted
     }
 }

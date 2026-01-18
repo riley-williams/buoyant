@@ -1,6 +1,7 @@
 use crate::{
     environment::LayoutEnvironment,
     event::EventResult,
+    focus::{FocusEvent, FocusStateChange},
     layout::ResolvedLayout,
     primitives::{Interpolate, Point, ProposedDimensions},
     render::ShadeSubtree,
@@ -33,6 +34,7 @@ impl<Color: Interpolate + Clone, Captures: ?Sized, Inner: ViewLayout<Captures>> 
 {
     type Sublayout = Inner::Sublayout;
     type State = Inner::State;
+    type FocusTree = Inner::FocusTree;
 
     fn priority(&self) -> i8 {
         self.inner.priority()
@@ -84,5 +86,24 @@ impl<Color: Interpolate + Clone, Captures: ?Sized, Inner: ViewLayout<Captures>> 
     ) -> EventResult {
         self.inner
             .handle_event(event, context, &mut render_tree.subtree, captures, state)
+    }
+
+    fn focus(
+        &self,
+        event: &FocusEvent,
+        context: &crate::event::EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+        focus: &mut Self::FocusTree,
+    ) -> FocusStateChange {
+        self.inner.focus(
+            event,
+            context,
+            &mut render_tree.subtree,
+            captures,
+            state,
+            focus,
+        )
     }
 }

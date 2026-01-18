@@ -1,5 +1,7 @@
 use crate::{
     environment::LayoutEnvironment,
+    event::EventResult,
+    focus::{FocusEvent, FocusStateChange},
     layout::ResolvedLayout,
     primitives::{Dimensions, Point, ProposedDimensions},
     transition::Opacity,
@@ -32,6 +34,7 @@ impl ViewMarker for RoundedRectangle {
 impl<Captures: ?Sized> ViewLayout<Captures> for RoundedRectangle {
     type Sublayout = Dimensions;
     type State = ();
+    type FocusTree = ();
 
     fn transition(&self) -> Self::Transition {
         Opacity
@@ -66,5 +69,28 @@ impl<Captures: ?Sized> ViewLayout<Captures> for RoundedRectangle {
             size: (*layout).into(),
             corner_radius: self.corner_radius,
         }
+    }
+
+    fn handle_event(
+        &self,
+        _event: &crate::view::Event,
+        _context: &crate::event::EventContext,
+        _render_tree: &mut Self::Renderables,
+        _captures: &mut Captures,
+        _state: &mut Self::State,
+    ) -> EventResult {
+        EventResult::default()
+    }
+
+    fn focus(
+        &self,
+        _event: &FocusEvent,
+        _context: &crate::event::EventContext,
+        _render_tree: &mut Self::Renderables,
+        _captures: &mut Captures,
+        _state: &mut Self::State,
+        _focus: &mut Self::FocusTree,
+    ) -> FocusStateChange {
+        FocusStateChange::Exhausted
     }
 }

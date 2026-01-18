@@ -1,6 +1,7 @@
 use crate::{
     environment::LayoutEnvironment,
     event::{EventContext, EventResult},
+    focus::{FocusEvent, FocusStateChange},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
     transition::Opacity,
@@ -43,6 +44,7 @@ impl<
 {
     type State = InnerView::State;
     type Sublayout = InnerView::Sublayout;
+    type FocusTree = InnerView::FocusTree;
 
     fn priority(&self) -> i8 {
         self.inner.priority()
@@ -98,6 +100,25 @@ impl<
             render_tree,
             (self.capture_fn)(captures),
             state,
+        )
+    }
+
+    fn focus(
+        &self,
+        event: &FocusEvent,
+        context: &EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+        focus: &mut Self::FocusTree,
+    ) -> FocusStateChange {
+        self.inner.focus(
+            event,
+            context,
+            render_tree,
+            (self.capture_fn)(captures),
+            state,
+            focus,
         )
     }
 }

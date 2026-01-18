@@ -1,6 +1,7 @@
 use crate::{
     environment::LayoutEnvironment,
     event::EventResult,
+    focus::{FocusEvent, FocusStateChange},
     layout::{Alignment, ResolvedLayout},
     primitives::{Point, ProposedDimension, ProposedDimensions},
     view::{ViewLayout, ViewMarker},
@@ -42,6 +43,8 @@ where
     type Sublayout = ResolvedLayout<T::Sublayout>;
     // Tuples are rendered first to last
     type State = (T::State, U::State);
+    // FIXME: Is this expected to move focus into the overlay?
+    type FocusTree = T::FocusTree;
 
     fn priority(&self) -> i8 {
         self.foreground.priority()
@@ -138,5 +141,25 @@ where
         self.foreground
             .handle_event(event, context, &mut render_tree.0, captures, &mut state.0)
             .merging(overlay_result)
+    }
+
+    fn focus(
+        &self,
+        event: &FocusEvent,
+        context: &crate::event::EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+        focus: &mut Self::FocusTree,
+    ) -> FocusStateChange {
+        // FIXME: check which is focused, pass to forground then overlay if unhandled
+        self.foreground.focus(
+            event,
+            context,
+            &mut render_tree.0,
+            captures,
+            &mut state.0,
+            focus,
+        )
     }
 }

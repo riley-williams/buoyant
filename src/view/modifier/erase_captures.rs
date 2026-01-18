@@ -1,6 +1,7 @@
 use crate::{
     environment::LayoutEnvironment,
     event::EventResult,
+    focus::{FocusEvent, FocusStateChange},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
     view::{ViewLayout, ViewMarker},
@@ -42,6 +43,7 @@ where
 impl<T: ViewLayout<()>, Captures: ?Sized> ViewLayout<Captures> for EraseCaptures<T> {
     type State = T::State;
     type Sublayout = T::Sublayout;
+    type FocusTree = T::FocusTree;
 
     fn priority(&self) -> i8 {
         self.inner.priority()
@@ -90,5 +92,18 @@ impl<T: ViewLayout<()>, Captures: ?Sized> ViewLayout<Captures> for EraseCaptures
     ) -> EventResult {
         self.inner
             .handle_event(event, context, render_tree, &mut (), state)
+    }
+
+    fn focus(
+        &self,
+        event: &FocusEvent,
+        context: &crate::event::EventContext,
+        render_tree: &mut Self::Renderables,
+        _captures: &mut Captures,
+        state: &mut Self::State,
+        focus: &mut Self::FocusTree,
+    ) -> FocusStateChange {
+        self.inner
+            .focus(event, context, render_tree, &mut (), state, focus)
     }
 }

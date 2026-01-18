@@ -3,8 +3,9 @@ use core::marker::PhantomData;
 use crate::{
     environment::LayoutEnvironment,
     event::{EventContext, EventResult},
+    focus::{FocusEvent, FocusStateChange},
     layout::ResolvedLayout,
-    primitives::{Dimensions, Frame, ProposedDimensions, Size},
+    primitives::{Dimensions, ProposedDimensions, Size, geometry::Rectangle},
     render::Container,
     transition::Opacity,
     view::{Event, ViewLayout, ViewMarker},
@@ -99,6 +100,7 @@ where
 {
     type State = Option<Inner::State>;
     type Sublayout = Dimensions;
+    type FocusTree = Inner::FocusTree;
 
     fn transition(&self) -> Self::Transition {
         Opacity
@@ -135,7 +137,7 @@ where
         let size = (*layout).into();
         let view = (self.inner)(size);
         let proposal = (*layout).into();
-        let frame = Frame::new(origin, size);
+        let frame = Rectangle::new(origin, size);
         if let Some(inner_state) = state {
             let layout = view.layout(&proposal, env, captures, inner_state);
             Container::new(
@@ -178,6 +180,40 @@ where
                 &mut render_tree.child,
                 captures,
                 &mut inner_state,
+            );
+            *state = Some(inner_state);
+            result
+        }
+    }
+
+    fn focus(
+        &self,
+        event: &FocusEvent,
+        context: &EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+        focus: &mut Self::FocusTree,
+    ) -> FocusStateChange {
+        let view = (self.inner)(render_tree.frame.size);
+        if let Some(inner_state) = state {
+            view.focus(
+                event,
+                context,
+                &mut render_tree.child,
+                captures,
+                inner_state,
+                focus,
+            )
+        } else {
+            let mut inner_state = view.build_state(captures);
+            let result = view.focus(
+                event,
+                context,
+                &mut render_tree.child,
+                captures,
+                &mut inner_state,
+                focus,
             );
             *state = Some(inner_state);
             result

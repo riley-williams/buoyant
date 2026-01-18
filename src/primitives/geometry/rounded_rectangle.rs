@@ -22,6 +22,13 @@ impl RoundedRectangle {
             radius,
         }
     }
+
+    /// Offsets the circle by the given point
+    #[must_use]
+    pub fn offset(mut self, offset: Point) -> Self {
+        self.origin += offset;
+        self
+    }
 }
 
 impl CoordinateSpaceTransform for RoundedRectangle {

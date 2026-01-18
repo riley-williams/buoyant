@@ -7,8 +7,9 @@ use embedded_touch::Phase;
 use crate::{
     environment::LayoutEnvironment,
     event::{EventContext, EventResult},
+    focus::{ContentShape, FocusAction, FocusEvent, FocusStateChange, Role},
     layout::ResolvedLayout,
-    primitives::{Frame, ProposedDimensions},
+    primitives::{ProposedDimensions, geometry::Rectangle},
     render::Container,
     transition::Opacity,
     view::{Event, ViewLayout, ViewMarker},
@@ -118,6 +119,7 @@ where
 {
     type State = (ButtonState, Inner::State);
     type Sublayout = ResolvedLayout<Inner::Sublayout>;
+    type FocusTree = Inner::FocusTree;
 
     fn transition(&self) -> Self::Transition {
         Opacity
@@ -160,7 +162,7 @@ where
         state: &mut Self::State,
     ) -> Self::Renderables {
         Container::new(
-            Frame::new(origin, layout.resolved_size.into()),
+            Rectangle::new(origin, layout.resolved_size.into()),
             match state.0 {
                 ButtonState::CaptivePressed(_) => (self.view)(true).render_tree(
                     &layout.sublayouts,
@@ -253,5 +255,36 @@ where
             }
         }
         result
+    }
+
+    fn focus(
+        &self,
+        event: &FocusEvent,
+        _context: &EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        _state: &mut Self::State,
+        _focus: &mut Self::FocusTree,
+    ) -> FocusStateChange {
+        if !event.roles.contains(Role::Button) {
+            return FocusStateChange::Exhausted;
+        }
+
+        match event.action {
+            FocusAction::Next | FocusAction::Previous | FocusAction::Blur => {
+                FocusStateChange::Exhausted
+            }
+            FocusAction::Focus(_) => FocusStateChange::Focused {
+                shape: ContentShape::Rectangle(render_tree.frame.clone()),
+                result: EventResult::new(true, false, true),
+            },
+            FocusAction::Select => {
+                (self.action)(captures);
+                FocusStateChange::Focused {
+                    shape: ContentShape::Rectangle(render_tree.frame.clone()),
+                    result: EventResult::new(true, true, true),
+                }
+            }
+        }
     }
 }

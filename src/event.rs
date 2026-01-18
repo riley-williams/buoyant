@@ -32,6 +32,8 @@ impl Event {
     }
 }
 
+// FIXME: convert these flags to use a bitmask
+
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct EventResult {
     /// Whether the event was handled by the view.
@@ -93,15 +95,36 @@ impl EventContext {
 
 #[cfg(feature = "embedded-graphics-simulator")]
 pub mod simulator {
-    use crate::primitives::Point;
+    use crate::{
+        focus::{FocusAction, FocusEvent},
+        primitives::Point,
+    };
 
     use super::Event;
-    use embedded_graphics_simulator::SimulatorEvent;
+    use embedded_graphics_simulator::{SimulatorEvent, sdl2::Keycode};
     use embedded_touch::{Phase, PointerButton, Tool, Touch, TouchPoint};
 
     #[derive(Debug, Default)]
     pub struct MouseTracker {
         touch: Option<Touch>,
+    }
+
+    #[derive(Debug, Clone, PartialEq)]
+    pub enum EventType {
+        Event(Event),
+        Focus(FocusAction),
+    }
+
+    impl From<Event> for EventType {
+        fn from(event: Event) -> Self {
+            Self::Event(event)
+        }
+    }
+
+    impl From<FocusAction> for EventType {
+        fn from(event: FocusAction) -> Self {
+            Self::Focus(event)
+        }
     }
 
     impl MouseTracker {
@@ -110,7 +133,7 @@ pub mod simulator {
             Self { touch: None }
         }
 
-        pub fn process_event(&mut self, event: SimulatorEvent) -> Option<Event> {
+        pub fn process_event(&mut self, event: SimulatorEvent) -> Option<EventType> {
             match event {
                 SimulatorEvent::MouseButtonDown { point, mouse_btn } => {
                     let touch = Touch {
@@ -122,7 +145,7 @@ pub mod simulator {
                         },
                     };
                     self.touch = Some(touch.clone());
-                    Some(Event::Touch(touch))
+                    Some(Event::Touch(touch).into())
                 }
                 SimulatorEvent::MouseButtonUp { point, mouse_btn } => {
                     let touch = Touch {
@@ -135,13 +158,13 @@ pub mod simulator {
                     };
 
                     self.touch = None;
-                    Some(Event::Touch(touch))
+                    Some(Event::Touch(touch).into())
                 }
                 SimulatorEvent::MouseMove { point } => {
                     if let Some(touch) = &mut self.touch {
                         touch.location = TouchPoint::new(point.x, point.y);
                         touch.phase = Phase::Moved;
-                        Some(Event::Touch(touch.clone()))
+                        Some(Event::Touch(touch.clone()).into())
                     } else {
                         let touch = Touch {
                             id: 0,
@@ -152,7 +175,7 @@ pub mod simulator {
                             },
                         };
 
-                        Some(Event::Touch(touch))
+                        Some(Event::Touch(touch).into())
                     }
                 }
                 SimulatorEvent::MouseWheel {
@@ -161,19 +184,30 @@ pub mod simulator {
                 } => {
                     if direction == embedded_graphics_simulator::sdl2::MouseWheelDirection::Flipped
                     {
-                        Some(Event::Scroll(Point::new(
-                            scroll_delta.x * 4,
-                            scroll_delta.y * 4,
-                        )))
+                        Some(
+                            Event::Scroll(Point::new(scroll_delta.x * 4, scroll_delta.y * 4))
+                                .into(),
+                        )
                     } else {
-                        Some(Event::Scroll(Point::new(
-                            -scroll_delta.x * 4,
-                            -scroll_delta.y * 4,
-                        )))
+                        Some(
+                            Event::Scroll(Point::new(-scroll_delta.x * 4, -scroll_delta.y * 4))
+                                .into(),
+                        )
                     }
                 }
-                SimulatorEvent::Quit => Some(Event::Exit),
-                SimulatorEvent::KeyDown { .. } | SimulatorEvent::KeyUp { .. } => None,
+                SimulatorEvent::Quit => Some(Event::Exit.into()),
+                SimulatorEvent::KeyDown { .. } => None,
+                SimulatorEvent::KeyUp {
+                    keycode,
+                    keymod: _,
+                    repeat: _,
+                } => match keycode {
+                    Keycode::Return | Keycode::Space => Some(FocusAction::Select.into()),
+                    Keycode::Backspace => Some(FocusAction::Blur.into()),
+                    Keycode::Left | Keycode::Up => Some(FocusAction::Previous.into()),
+                    Keycode::Right | Keycode::Down => Some(FocusAction::Next.into()),
+                    _ => None,
+                },
             }
         }
     }
