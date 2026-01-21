@@ -16,6 +16,7 @@ mod image;
 pub mod match_view;
 mod modifier;
 mod option;
+pub mod paginate;
 pub mod scroll_view;
 pub mod shape;
 mod spacer;
@@ -37,6 +38,7 @@ pub use hstack::HStack;
 pub use image::Image;
 pub use modifier::aspect_ratio;
 pub use modifier::padding;
+pub use paginate::Paginate;
 pub use scroll_view::ScrollView;
 pub use spacer::Spacer;
 pub(crate) use text::{CharacterWrap, WordWrap};
@@ -61,6 +63,7 @@ pub mod prelude {
     pub use crate::view::shape::*;
 }
 
+use crate::focus::{DefaultFocus, FocusEvent, FocusStateChange};
 use crate::transition::Transition;
 use crate::{
     environment::LayoutEnvironment,
@@ -128,6 +131,8 @@ pub trait ViewLayout<Captures: ?Sized>: ViewMarker {
     /// Size is represented here, but placement is deferred to the render tree.
     type Sublayout: Clone + PartialEq + 'static;
 
+    type FocusTree: Clone + DefaultFocus + 'static;
+
     /// The layout priority of the view. Higher priority views are more likely to
     /// be given the size they want
     fn priority(&self) -> i8 {
@@ -176,16 +181,28 @@ pub trait ViewLayout<Captures: ?Sized>: ViewMarker {
     ) -> Self::Renderables;
 
     /// Process an event
+    ///
+    /// For container views, this typically involves forwarding the event to all child views.
+    /// Leaf views may respond with [`EventResult::default()`] to defer handling of the event.
     fn handle_event(
         &self,
-        _event: &Event,
-        _context: &EventContext,
-        _render_tree: &mut Self::Renderables,
-        _captures: &mut Captures,
-        _state: &mut Self::State,
-    ) -> EventResult {
-        EventResult::default()
-    }
+        event: &Event,
+        context: &EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> EventResult;
+
+    /// Process a focus event
+    fn focus(
+        &self,
+        event: &FocusEvent,
+        context: &EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+        focus: &mut Self::FocusTree,
+    ) -> FocusStateChange;
 }
 
 impl<T> ViewMarker for &T
@@ -202,6 +219,7 @@ where
 {
     type State = T::State;
     type Sublayout = T::Sublayout;
+    type FocusTree = T::FocusTree;
 
     fn transition(&self) -> Self::Transition {
         (*self).transition()
@@ -249,6 +267,18 @@ where
         state: &mut Self::State,
     ) -> EventResult {
         (*self).handle_event(event, context, render_tree, captures, state)
+    }
+
+    fn focus(
+        &self,
+        event: &FocusEvent,
+        context: &EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+        focus: &mut Self::FocusTree,
+    ) -> FocusStateChange {
+        (*self).focus(event, context, render_tree, captures, state, focus)
     }
 }
 

@@ -7,8 +7,11 @@ use embedded_touch::Phase;
 use crate::{
     animation::Animation,
     event::{Event, EventContext, EventResult},
+    focus::{FocusEvent, FocusStateChange},
     layout::ResolvedLayout,
-    primitives::{Dimensions, Point, ProposedDimension, ProposedDimensions, Size},
+    primitives::{
+        Dimensions, Point, ProposedDimension, ProposedDimensions, Size, geometry::Rectangle,
+    },
     render::{Animate, Capsule, Offset, ScrollRenderable},
     transition::Opacity,
     view::{ViewLayout, ViewMarker},
@@ -221,6 +224,7 @@ impl<Inner: ViewMarker> ViewMarker for ScrollView<Inner> {
 impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<Inner> {
     type State = ScrollViewState<Inner::State>;
     type Sublayout = Dimensions;
+    type FocusTree = Inner::FocusTree;
 
     fn transition(&self) -> Self::Transition {
         Opacity
@@ -633,6 +637,74 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
                 subview_offset,
             );
             render_tree.set_bars(horizontal_bar, vertical_bar);
+        }
+
+        result
+    }
+
+    fn focus(
+        &self,
+        event: &FocusEvent,
+        context: &EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+        focus: &mut Self::FocusTree,
+    ) -> FocusStateChange {
+        // FIXME: Adjust ScrollView offset as a result of child focus movement
+        let mut result = self.inner.focus(
+            event,
+            context,
+            render_tree.inner_mut(),
+            captures,
+            &mut state.inner_state,
+            focus,
+        );
+
+        if let FocusStateChange::Focused {
+            shape,
+            result: event_result,
+        } = &mut result
+            && let Some(frame) = shape.bounding_box()
+        {
+            let scroll_view_frame = render_tree.bounds();
+            let inner_offset = render_tree.offset();
+
+            let target_frame = Rectangle::new(
+                frame.origin + inner_offset + render_tree.inner.offset,
+                frame.size,
+            );
+
+            let mut new_offset = state.scroll_offset;
+
+            // Adjust vertical offset
+            if target_frame.origin.y < scroll_view_frame.origin.y {
+                // Target is above visible area
+                new_offset.y += scroll_view_frame.origin.y - target_frame.origin.y;
+                event_result.redraw = true;
+            } else if target_frame.y_end() > scroll_view_frame.y_end() {
+                // Target is below visible area
+                new_offset.y -= target_frame.y_end() - scroll_view_frame.y_end();
+                event_result.redraw = true;
+            }
+
+            // Adjust horizontal offset
+            if target_frame.origin.x < scroll_view_frame.origin.x {
+                // Target is left of visible area
+                new_offset.x += scroll_view_frame.origin.x - target_frame.origin.x;
+                event_result.redraw = true;
+            } else if target_frame.x_end() > scroll_view_frame.x_end() {
+                // Target is right of visible area
+                new_offset.x -= target_frame.x_end() - scroll_view_frame.x_end();
+                event_result.redraw = true;
+            }
+
+            state.scroll_offset = new_offset;
+            *render_tree.offset_mut() = new_offset;
+            // Adjust shape with offset
+            *shape = shape
+                .clone()
+                .offset(render_tree.offset() + render_tree.inner.offset);
         }
 
         result

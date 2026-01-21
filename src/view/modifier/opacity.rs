@@ -1,6 +1,7 @@
 use crate::{
     environment::LayoutEnvironment,
     event::EventResult,
+    focus::{FocusEvent, FocusStateChange},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
     render,
@@ -35,6 +36,7 @@ where
 {
     type Sublayout = V::Sublayout;
     type State = V::State;
+    type FocusTree = V::FocusTree;
 
     fn priority(&self) -> i8 {
         self.inner.priority()
@@ -84,10 +86,34 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> EventResult {
+        // FIXME: Handle focus moves when the old focus was inside the
+        // now invisible element?
         if self.opacity == 0 {
             return EventResult::default();
         }
         self.inner
             .handle_event(event, context, &mut render_tree.subtree, captures, state)
+    }
+
+    fn focus(
+        &self,
+        event: &FocusEvent,
+        context: &crate::event::EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+        focus: &mut Self::FocusTree,
+    ) -> FocusStateChange {
+        if self.opacity == 0 {
+            return FocusStateChange::Exhausted;
+        }
+        self.inner.focus(
+            event,
+            context,
+            &mut render_tree.subtree,
+            captures,
+            state,
+            focus,
+        )
     }
 }

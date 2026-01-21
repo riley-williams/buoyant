@@ -1,6 +1,7 @@
 use crate::{
     environment::LayoutEnvironment,
     event::EventResult,
+    focus::{FocusEvent, FocusStateChange},
     layout::{Alignment, ResolvedLayout},
     primitives::{Point, ProposedDimension, ProposedDimensions},
     view::{ViewLayout, ViewMarker},
@@ -42,6 +43,7 @@ where
     type Sublayout = ResolvedLayout<T::Sublayout>;
     // Tuples are rendered first to last
     type State = (T::State, U::State);
+    type FocusTree = T::FocusTree;
 
     fn priority(&self) -> i8 {
         self.foreground.priority()
@@ -142,5 +144,29 @@ where
         self.background
             .handle_event(event, context, &mut render_tree.0, captures, &mut state.1)
             .merging(foreground_result)
+    }
+
+    fn focus(
+        &self,
+        event: &FocusEvent,
+        context: &crate::event::EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+        focus: &mut Self::FocusTree,
+    ) -> FocusStateChange {
+        // Foreground handles focus first
+        let foreground_result = self.foreground.focus(
+            event,
+            context,
+            &mut render_tree.1,
+            captures,
+            &mut state.0,
+            focus,
+        );
+        if foreground_result != FocusStateChange::Exhausted {
+            return foreground_result;
+        }
+        foreground_result
     }
 }

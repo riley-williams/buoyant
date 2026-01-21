@@ -56,6 +56,14 @@ macro_rules! define_branch {
                 }
             }
         }
+
+        impl<$($variant),+> Default for $name<$($variant),+>
+            where V0: Default,
+        {
+            fn default() -> Self {
+                Self::V0(V0::default())
+            }
+        }
     }
 }
 
@@ -67,3 +75,6 @@ define_branch!(OneOf4, V0, V1, V2, V3);
 define_branch!(OneOf5, V0, V1, V2, V3, V4);
 define_branch!(OneOf6, V0, V1, V2, V3, V4, V5);
 define_branch!(OneOf7, V0, V1, V2, V3, V4, V5, V6);
+define_branch!(OneOf8, V0, V1, V2, V3, V4, V5, V6, V7);
+define_branch!(OneOf9, V0, V1, V2, V3, V4, V5, V6, V7, V8);
+define_branch!(OneOf10, V0, V1, V2, V3, V4, V5, V6, V7, V8, V9);

@@ -23,6 +23,7 @@ mod opacity;
 mod overlay;
 #[allow(missing_docs)]
 pub mod padding;
+mod popover;
 mod priority;
 mod scale_effect;
 mod transition;
@@ -45,6 +46,7 @@ pub(crate) use offset::Offset;
 pub(crate) use opacity::Opacity;
 pub(crate) use overlay::OverlayView;
 pub(crate) use padding::Padding;
+pub(crate) use popover::Popover;
 pub(crate) use priority::Priority;
 pub(crate) use scale_effect::ScaleEffect;
 pub(crate) use transition::Transition;
@@ -529,6 +531,15 @@ pub trait ViewModifier: Sized + ViewMarker {
     /// Applies padding to the specified edges
     fn padding(self, edges: padding::Edges, amount: u32) -> Padding<Self> {
         Padding::new(edges, amount, self)
+    }
+
+    fn popover<U, ViewFn, T>(self, value: Option<T>, popover: ViewFn) -> Popover<Self, ViewFn, U, T>
+    where
+        ViewFn: for<'a> Fn(&'a T) -> U,
+        U: ViewMarker,
+        T: Clone,
+    {
+        Popover::new(self, value, popover)
     }
 
     /// Sets the priority of the view layout.

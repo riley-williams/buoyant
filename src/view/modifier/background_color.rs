@@ -1,6 +1,7 @@
 use crate::{
     environment::LayoutEnvironment,
     event::EventResult,
+    focus::{FocusEvent, FocusStateChange},
     layout::{HorizontalAlignment, ResolvedLayout, VerticalAlignment},
     primitives::{Point, ProposedDimensions},
     render::{HintBackground, ShadeSubtree},
@@ -47,6 +48,7 @@ where
 {
     type Sublayout = ResolvedLayout<T::Sublayout>;
     type State = T::State;
+    type FocusTree = T::FocusTree;
 
     fn priority(&self) -> i8 {
         self.foreground.priority()
@@ -128,5 +130,24 @@ where
     ) -> EventResult {
         self.foreground
             .handle_event(event, context, &mut render_tree.1.subtree, captures, state)
+    }
+
+    fn focus(
+        &self,
+        event: &FocusEvent,
+        context: &crate::event::EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+        focus: &mut Self::FocusTree,
+    ) -> FocusStateChange {
+        self.foreground.focus(
+            event,
+            context,
+            &mut render_tree.1.subtree,
+            captures,
+            state,
+            focus,
+        )
     }
 }

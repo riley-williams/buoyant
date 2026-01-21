@@ -1,6 +1,7 @@
 use crate::{
     environment::LayoutEnvironment,
     event::{EventContext, EventResult},
+    focus::{FocusEvent, FocusStateChange},
     layout::{Alignment, HorizontalAlignment, ResolvedLayout, VerticalAlignment},
     primitives::{Point, ProposedDimension, ProposedDimensions},
     view::{ViewLayout, ViewMarker},
@@ -84,7 +85,7 @@ impl<T: ViewMarker> ZStack<T> {
 }
 
 macro_rules! impl_view_for_zstack {
-    ($(($n:tt, $type:ident)),+) => {
+    ($ct:tt, $(($n:tt, $type:ident)),+) => {
         paste! {
         impl<$($type),+> ViewMarker for ZStack<($($type),+)>
         where
@@ -100,6 +101,7 @@ macro_rules! impl_view_for_zstack {
         {
             type Sublayout = ResolvedLayout<($(ResolvedLayout<$type::Sublayout>),+)>;
             type State = ($($type::State),+);
+            type FocusTree = super::match_view::[<OneOf $ct>]<$($type::FocusTree),+>;
 
             fn transition(&self) -> Self::Transition {
                 crate::transition::Opacity
@@ -187,24 +189,44 @@ macro_rules! impl_view_for_zstack {
             ) -> EventResult {
                 let mut result = EventResult::default();
                 $(
-                    result.merge(self.items.$n.handle_event(event, context, &mut render_tree.$n, captures, &mut state.$n));
+                    result.merge(self.items.$n.handle_event(
+                        event,
+                        context,
+                        &mut render_tree.$n,
+                        captures,
+                        &mut state.$n,
+                    ));
                     if result.handled {
                         return result;
                     }
                 )+
                 result
             }
+
+            fn focus(
+                &self,
+                _event: &FocusEvent,
+                _context: &EventContext,
+                _render_tree: &mut Self::Renderables,
+                _captures: &mut Captures,
+                _state: &mut Self::State,
+                _focus: &mut Self::FocusTree,
+            ) -> FocusStateChange {
+                // FIXME: implement focus move
+                FocusStateChange::Exhausted
+            }
         }
     }
     }
 }
 
-impl_view_for_zstack!((0, T0), (1, T1));
-impl_view_for_zstack!((0, T0), (1, T1), (2, T2));
-impl_view_for_zstack!((0, T0), (1, T1), (2, T2), (3, T3));
-impl_view_for_zstack!((0, T0), (1, T1), (2, T2), (3, T3), (4, T4));
-impl_view_for_zstack!((0, T0), (1, T1), (2, T2), (3, T3), (4, T4), (5, T5));
+impl_view_for_zstack!(2, (0, T0), (1, T1));
+impl_view_for_zstack!(3, (0, T0), (1, T1), (2, T2));
+impl_view_for_zstack!(4, (0, T0), (1, T1), (2, T2), (3, T3));
+impl_view_for_zstack!(5, (0, T0), (1, T1), (2, T2), (3, T3), (4, T4));
+impl_view_for_zstack!(6, (0, T0), (1, T1), (2, T2), (3, T3), (4, T4), (5, T5));
 impl_view_for_zstack!(
+    7,
     (0, T0),
     (1, T1),
     (2, T2),
@@ -214,6 +236,7 @@ impl_view_for_zstack!(
     (6, T6)
 );
 impl_view_for_zstack!(
+    8,
     (0, T0),
     (1, T1),
     (2, T2),
@@ -224,6 +247,7 @@ impl_view_for_zstack!(
     (7, T7)
 );
 impl_view_for_zstack!(
+    9,
     (0, T0),
     (1, T1),
     (2, T2),
@@ -235,6 +259,7 @@ impl_view_for_zstack!(
     (8, T8)
 );
 impl_view_for_zstack!(
+    10,
     (0, T0),
     (1, T1),
     (2, T2),
@@ -263,6 +288,7 @@ where
 {
     type Sublayout = T::Sublayout;
     type State = T::State;
+    type FocusTree = T::FocusTree;
 
     fn transition(&self) -> Self::Transition {
         crate::transition::Opacity
@@ -306,5 +332,19 @@ where
         self.items
             .0
             .handle_event(event, context, render_tree, captures, state)
+    }
+
+    fn focus(
+        &self,
+        event: &FocusEvent,
+        context: &EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+        focus: &mut Self::FocusTree,
+    ) -> FocusStateChange {
+        self.items
+            .0
+            .focus(event, context, render_tree, captures, state, focus)
     }
 }

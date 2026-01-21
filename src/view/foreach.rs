@@ -4,10 +4,12 @@ use core::cmp::max;
 
 use crate::{
     environment::LayoutEnvironment,
-    event::EventResult,
+    event::{EventContext, EventResult},
+    focus::{DefaultFocus, FocusEvent, FocusStateChange},
     layout::{HorizontalAlignment, LayoutDirection, ResolvedLayout, VerticalAlignment},
     primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions},
     transition::Opacity,
+    view::Event,
     view::{ViewLayout, ViewMarker},
 };
 
@@ -235,14 +237,46 @@ where
     type Transition = Opacity;
 }
 
+#[derive(Debug, Clone)]
+pub struct Focus<T: DefaultFocus> {
+    index: usize,
+    tree: T,
+}
+
+impl<T: DefaultFocus> DefaultFocus for Focus<T> {
+    fn default_first() -> Self {
+        Self {
+            index: 0,
+            tree: T::default_first(),
+        }
+    }
+
+    fn default_last() -> Self {
+        // For ForEach, we don't know the count at compile time,
+        // so we use usize::MAX as a sentinel to indicate "last"
+        Self {
+            index: usize::MAX,
+            tree: T::default_last(),
+        }
+    }
+}
+
+impl<T: DefaultFocus> Default for Focus<T> {
+    fn default() -> Self {
+        Self::default_first()
+    }
+}
+
 impl<'a, const N: usize, I, V, F, Captures: ?Sized, D: ForEachDirection> ViewLayout<Captures>
     for ForEachView<'a, N, I, V, F, D>
 where
     V: ViewLayout<Captures>,
+    V::FocusTree: DefaultFocus,
     F: Fn(&'a I) -> V,
 {
     type Sublayout = ResolvedLayout<heapless::Vec<ResolvedLayout<V::Sublayout>, N>>;
     type State = heapless::Vec<V::State, N>;
+    type FocusTree = Focus<V::FocusTree>;
 
     fn transition(&self) -> Self::Transition {
         Opacity
@@ -360,8 +394,8 @@ where
 
     fn handle_event(
         &self,
-        event: &crate::event::Event,
-        context: &crate::event::EventContext,
+        event: &Event,
+        context: &EventContext,
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
@@ -378,6 +412,19 @@ where
             }
         }
         result
+    }
+
+    fn focus(
+        &self,
+        _event: &FocusEvent,
+        _context: &EventContext,
+        _render_tree: &mut Self::Renderables,
+        _captures: &mut Captures,
+        _state: &mut Self::State,
+        _focus: &mut Self::FocusTree,
+    ) -> FocusStateChange {
+        // FIXME: implement focus traversal for ForEach
+        FocusStateChange::Exhausted
     }
 }
 

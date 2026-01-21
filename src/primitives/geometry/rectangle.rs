@@ -104,6 +104,23 @@ impl Rectangle {
             size: Size::new((x2 - x1) as u32, (y2 - y1) as u32),
         }
     }
+
+    #[must_use]
+    pub const fn x_end(&self) -> i32 {
+        self.origin.x + self.size.width as i32
+    }
+
+    #[must_use]
+    pub const fn y_end(&self) -> i32 {
+        self.origin.y + self.size.height as i32
+    }
+
+    /// Offsets the rectangle by the given point
+    #[must_use]
+    pub fn offset(mut self, offset: Point) -> Self {
+        self.origin += offset;
+        self
+    }
 }
 
 impl Default for Rectangle {
@@ -149,6 +166,25 @@ impl From<embedded_graphics_core::primitives::Rectangle> for Rectangle {
         }
     }
 }
+
+impl From<Rectangle> for crate::render::Rect {
+    fn from(value: Rectangle) -> Self {
+        Self {
+            origin: value.origin,
+            size: value.size,
+        }
+    }
+}
+
+impl From<crate::render::Rect> for Rectangle {
+    fn from(value: crate::render::Rect) -> Self {
+        Self {
+            origin: value.origin,
+            size: value.size,
+        }
+    }
+}
+
 impl Shape for Rectangle {
     type PathElementsIter<'iter>
         = ShapePathIter<5>

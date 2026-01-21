@@ -1,5 +1,7 @@
 use crate::{
     environment::LayoutEnvironment,
+    event::EventResult,
+    focus::{FocusEvent, FocusStateChange},
     layout::{LayoutDirection, ResolvedLayout},
     primitives::{Dimensions, Point, ProposedDimensions},
     transition::Opacity,
@@ -42,6 +44,7 @@ impl ViewMarker for Divider {
 impl<Captures: ?Sized> ViewLayout<Captures> for Divider {
     type State = ();
     type Sublayout = Dimensions;
+    type FocusTree = ();
 
     fn priority(&self) -> i8 {
         i8::MAX
@@ -88,5 +91,28 @@ impl<Captures: ?Sized> ViewLayout<Captures> for Divider {
             origin,
             size: (*layout).into(),
         }
+    }
+
+    fn handle_event(
+        &self,
+        _event: &crate::view::Event,
+        _context: &crate::event::EventContext,
+        _render_tree: &mut Self::Renderables,
+        _captures: &mut Captures,
+        _state: &mut Self::State,
+    ) -> EventResult {
+        EventResult::default()
+    }
+
+    fn focus(
+        &self,
+        _event: &FocusEvent,
+        _context: &crate::event::EventContext,
+        _render_tree: &mut Self::Renderables,
+        _captures: &mut Captures,
+        _state: &mut Self::State,
+        _focus: &mut Self::FocusTree,
+    ) -> FocusStateChange {
+        FocusStateChange::Exhausted
     }
 }

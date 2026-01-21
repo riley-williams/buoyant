@@ -4,6 +4,7 @@ use paste::paste;
 use crate::{
     environment::LayoutEnvironment,
     event::{EventContext, EventResult},
+    focus::{DefaultFocus, FocusAction, FocusDirection, FocusEvent, FocusStateChange},
     layout::{LayoutDirection, ResolvedLayout, VerticalAlignment},
     primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions},
     view::{ViewLayout, ViewMarker, modifier::FixedSize},
@@ -231,7 +232,7 @@ macro_rules! count {
 }
 
 macro_rules! impl_view_for_hstack {
-    ($(($n:tt, $type:ident)),+) => {
+    ($ct:tt, $(($n:tt, $type:ident)),+) => {
         paste! {
         impl<$($type),+> ViewMarker for HStack<($($type),+)>
         where
@@ -248,6 +249,7 @@ macro_rules! impl_view_for_hstack {
             type State = ($($type::State),+);
             // FIXME: Could just be height + sublayouts?
             type Sublayout = ResolvedLayout<($(ResolvedLayout<$type::Sublayout>),+)>;
+            type FocusTree = super::match_view::[<OneOf $ct>]<$($type::FocusTree),+>;
 
             fn transition(&self) -> Self::Transition {
                 crate::transition::Opacity
@@ -361,17 +363,98 @@ macro_rules! impl_view_for_hstack {
                 )+
                 result
             }
+
+            #[allow(unused_assignments)]
+            fn focus(
+                &self,
+                event: &FocusEvent,
+                context: &EventContext,
+                render_tree: &mut Self::Renderables,
+                captures: &mut Captures,
+                state: &mut Self::State,
+                focus: &mut Self::FocusTree,
+            ) -> FocusStateChange {
+                use super::match_view::[<OneOf $ct>];
+
+                // Track which child index we're currently trying
+                let mut current: usize = match focus {
+                    $(
+                        [<OneOf $ct>]::[<V $n>](_) => $n,
+                    )+
+                };
+
+                // The event to use - initially the original event, but when entering
+                // a new child during navigation we switch to a Focus event
+                let mut current_event = event.clone();
+
+                loop {
+                    // Try focus on the current child
+                    let result = match focus {
+                        $(
+                            [<OneOf $ct>]::[<V $n>](f) => {
+                                self.items.$n.focus(&current_event, context, &mut render_tree.$n, captures, &mut state.$n, f)
+                            }
+                        )+
+                    };
+
+                    // If the child handled it (not exhausted), return the result
+                    if result != FocusStateChange::Exhausted {
+                        return result;
+                    }
+
+                    // Child is exhausted, try to move based on action
+                    match event.action {
+                        FocusAction::Blur => {
+                            // FIXME: this is not a "container" in the focus sense.
+                            // Should enter currently focused child, API is not complete here...
+                            return FocusStateChange::Exhausted;
+                        }
+                        FocusAction::Focus(FocusDirection::Forward) | FocusAction::Select | FocusAction::Next => {
+                            // Advance to next child
+                            current += 1;
+                            match current {
+                                $(
+                                    $n => {
+                                        *focus = [<OneOf $ct>]::[<V $n>](DefaultFocus::default_first());
+                                    }
+                                )+
+                                _ => return FocusStateChange::Exhausted,
+                            }
+                            // When entering a new child, use Focus action (forward)
+                            current_event = FocusEvent::new(FocusAction::Focus(FocusDirection::Forward), event.roles);
+                        }
+                        FocusAction::Focus(FocusDirection::Backward) | FocusAction::Previous => {
+                            // Go to previous child
+                            if current == 0 {
+                                return FocusStateChange::Exhausted;
+                            }
+                            current -= 1;
+                            match current {
+                                $(
+                                    $n => {
+                                        *focus = [<OneOf $ct>]::[<V $n>](DefaultFocus::default_last());
+                                    }
+                                )+
+                                _ => return FocusStateChange::Exhausted,
+                            }
+                            // When entering a new child, use Focus action (backward)
+                            current_event = FocusEvent::new(FocusAction::Focus(FocusDirection::Backward), event.roles);
+                        }
+                    }
+                }
+            }
         }
         }
     };
 }
 
-impl_view_for_hstack!((0, T0), (1, T1));
-impl_view_for_hstack!((0, T0), (1, T1), (2, T2));
-impl_view_for_hstack!((0, T0), (1, T1), (2, T2), (3, T3));
-impl_view_for_hstack!((0, T0), (1, T1), (2, T2), (3, T3), (4, T4));
-impl_view_for_hstack!((0, T0), (1, T1), (2, T2), (3, T3), (4, T4), (5, T5));
+impl_view_for_hstack!(2, (0, T0), (1, T1));
+impl_view_for_hstack!(3, (0, T0), (1, T1), (2, T2));
+impl_view_for_hstack!(4, (0, T0), (1, T1), (2, T2), (3, T3));
+impl_view_for_hstack!(5, (0, T0), (1, T1), (2, T2), (3, T3), (4, T4));
+impl_view_for_hstack!(6, (0, T0), (1, T1), (2, T2), (3, T3), (4, T4), (5, T5));
 impl_view_for_hstack!(
+    7,
     (0, T0),
     (1, T1),
     (2, T2),
@@ -380,7 +463,9 @@ impl_view_for_hstack!(
     (5, T5),
     (6, T6)
 );
+
 impl_view_for_hstack!(
+    8,
     (0, T0),
     (1, T1),
     (2, T2),
@@ -391,6 +476,7 @@ impl_view_for_hstack!(
     (7, T7)
 );
 impl_view_for_hstack!(
+    9,
     (0, T0),
     (1, T1),
     (2, T2),
@@ -402,6 +488,7 @@ impl_view_for_hstack!(
     (8, T8)
 );
 impl_view_for_hstack!(
+    10,
     (0, T0),
     (1, T1),
     (2, T2),
@@ -430,6 +517,7 @@ where
 {
     type Sublayout = T::Sublayout;
     type State = T::State;
+    type FocusTree = T::FocusTree;
 
     fn transition(&self) -> Self::Transition {
         crate::transition::Opacity
@@ -473,5 +561,19 @@ where
         self.items
             .0
             .handle_event(event, context, render_tree, captures, state)
+    }
+
+    fn focus(
+        &self,
+        event: &FocusEvent,
+        context: &EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+        focus: &mut Self::FocusTree,
+    ) -> FocusStateChange {
+        self.items
+            .0
+            .focus(event, context, render_tree, captures, state, focus)
     }
 }

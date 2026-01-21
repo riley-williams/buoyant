@@ -1,5 +1,5 @@
 use crate::{
-    primitives::{Frame, Interpolate},
+    primitives::{Interpolate, geometry::Rectangle},
     render::{AnimatedJoin, Render},
     render_target::RenderTarget,
 };
@@ -12,19 +12,20 @@ use super::AnimationDomain;
 /// would otherwise be available.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Container<T> {
-    pub frame: Frame,
+    pub frame: Rectangle,
     pub child: T,
 }
 
 impl<T> Container<T> {
-    pub const fn new(frame: Frame, child: T) -> Self {
+    pub const fn new(frame: Rectangle, child: T) -> Self {
         Self { frame, child }
     }
 }
 
 impl<T: AnimatedJoin> AnimatedJoin for Container<T> {
     fn join_from(&mut self, source: &Self, domain: &AnimationDomain) {
-        self.frame = Frame::interpolate(source.frame, self.frame, domain.factor);
+        self.frame =
+            Rectangle::interpolate(source.frame.clone(), self.frame.clone(), domain.factor);
         self.child.join_from(&source.child, domain);
     }
 }

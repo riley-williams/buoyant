@@ -1,11 +1,22 @@
 use crate::{
     event::{EventContext, EventResult},
+    focus::{DefaultFocus, FocusEvent, FocusStateChange},
     layout::ResolvedLayout,
     primitives::{Dimensions, Point, ProposedDimensions},
     render::TransitionOption,
     transition::Opacity,
     view::{ViewLayout, ViewMarker},
 };
+
+impl<T: DefaultFocus> DefaultFocus for Option<T> {
+    fn default_first() -> Self {
+        Some(T::default_first())
+    }
+
+    fn default_last() -> Self {
+        Some(T::default_last())
+    }
+}
 
 impl<V> ViewMarker for Option<V>
 where
@@ -22,6 +33,7 @@ where
 {
     type Sublayout = Option<ResolvedLayout<V::Sublayout>>;
     type State = Option<V::State>;
+    type FocusTree = Option<V::FocusTree>;
 
     fn priority(&self) -> i8 {
         self.as_ref().map_or(i8::MIN, ViewLayout::priority)
@@ -116,6 +128,23 @@ where
                 );
                 EventResult::default()
             }
+        }
+    }
+
+    fn focus(
+        &self,
+        event: &FocusEvent,
+        context: &EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+        focus: &mut Self::FocusTree,
+    ) -> FocusStateChange {
+        match (self, render_tree, state, focus) {
+            (Some(v), TransitionOption::Some { subtree, .. }, Some(s), Some(f)) => {
+                v.focus(event, context, subtree, captures, s, f)
+            }
+            _ => FocusStateChange::Exhausted,
         }
     }
 }

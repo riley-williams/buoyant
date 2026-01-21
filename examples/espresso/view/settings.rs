@@ -10,6 +10,9 @@ use std::time::Duration;
 pub fn settings_tab(state: &AppState) -> impl View<color::Space, AppState> + use<> {
     ScrollView::new(
         VStack::new((
+            Text::new("Settings", &*font::FONT)
+                .with_font_size(font::HEADING_SIZE)
+                .foreground_color(color::Space::WHITE),
             toggle_text(
                 "Auto brew",
                 state.auto_brew,
@@ -19,6 +22,10 @@ pub fn settings_tab(state: &AppState) -> impl View<color::Space, AppState> + use
                     state.auto_brew = !state.auto_brew;
                 },
             ),
+            Rectangle
+                .frame_sized(10, 100)
+                .foreground_color(color::Space::CSS_LIGHT_GRAY)
+                .opacity(128),
             toggle_text(
                 "Stop on weight",
                 state.stop_on_weight,
