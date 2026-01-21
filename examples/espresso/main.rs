@@ -173,7 +173,10 @@ fn main() {
                             focus_rect = shape;
                             result
                         }
-                        FocusStateChange::Exhausted => EventResult::new(false, false, true),
+                        FocusStateChange::Exhausted => {
+                            focus_rect = ContentShape::Empty;
+                            EventResult::new(false, true, true)
+                        }
                     }
                 }
             });
@@ -268,12 +271,19 @@ enum Tab {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
+struct CleanSettings {
+    pub frequency: u32,
+    pub time: u32,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 struct AppState {
     pub tab: Tab,
     pub stop_on_weight: bool,
     pub auto_off: bool,
     pub auto_brew: bool,
-    pub clean_overlay: Option<u32>,
+    pub clean_overlay: Option<CleanSettings>,
+    pub clean_settings: CleanSettings,
 }
 
 fn root_view(state: &AppState) -> impl View<color::Space, AppState> + use<> {
@@ -291,7 +301,7 @@ fn root_view(state: &AppState) -> impl View<color::Space, AppState> + use<> {
             },
         }),
     ))
-    .popover(state.clean_overlay, view::clean::clean_overlay)
+    .popover(state.clean_overlay.clone(), view::clean::clean_overlay)
 }
 
 fn tab_bar(tab: Tab) -> impl View<color::Space, Tab> + use<> {

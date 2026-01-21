@@ -1,10 +1,11 @@
-use core::marker::PhantomData;
+use core::{marker::PhantomData, time::Duration};
 
 use crate::{
+    animation::Animation,
     event::{Event, EventContext, EventResult},
     focus::{DefaultFocus, FocusAction, FocusDirection, FocusEvent, FocusStateChange},
     layout::ResolvedLayout,
-    render::TransitionOption,
+    render::{Animate, TransitionOption},
     view::{ViewLayout, ViewMarker},
 };
 
@@ -80,7 +81,7 @@ impl<Inner: ViewMarker, ViewFn, Overlay: ViewMarker, T> ViewMarker
 {
     type Renderables = (
         Inner::Renderables,
-        TransitionOption<Overlay::Renderables, Overlay::Transition>,
+        Animate<TransitionOption<Overlay::Renderables, Overlay::Transition>, bool>,
     );
 
     type Transition = Inner::Transition;
@@ -171,7 +172,15 @@ where
             }
             _ => TransitionOption::None,
         };
-        (inner_tree, overlay_tree)
+        (
+            inner_tree,
+            Animate::new(
+                overlay_tree,
+                Animation::ease_out(Duration::from_millis(300)),
+                env.app_time(),
+                self.value.is_some(),
+            ),
+        )
     }
 
     fn handle_event(
@@ -183,7 +192,11 @@ where
         state: &mut Self::State,
     ) -> EventResult {
         // FIXME: State handling?
-        match (&self.value, &mut render_tree.1, &mut state.overlay_state) {
+        match (
+            &self.value,
+            &mut render_tree.1.subtree,
+            &mut state.overlay_state,
+        ) {
             (Some(v), TransitionOption::Some { subtree, .. }, Some(s)) => {
                 let overlay_view = (self.view_fn)(v);
                 overlay_view.handle_event(event, context, subtree, captures, s)
@@ -218,12 +231,13 @@ where
                 .overlay_state
                 .get_or_insert_with(|| view.build_state(captures));
 
-            if let TransitionOption::Some { subtree, .. } = &mut render_tree.1 {
+            if let TransitionOption::Some { subtree, .. } = &mut render_tree.1.subtree {
                 let result = view.focus(event, context, subtree, captures, overlay_state, subfocus);
 
                 if matches!(result, FocusStateChange::Exhausted) {
                     match self.behavior {
                         Behavior::Wrap => {
+                            // FIXME: Wrap the other way too
                             *subfocus = DefaultFocus::default_first();
                             return view.focus(
                                 event,
@@ -236,6 +250,7 @@ where
                         }
                         Behavior::Terminate => {
                             // Refocus on last element
+                            // FIXME: The other way too
                             view.focus(
                                 &FocusEvent::new(
                                     FocusAction::Focus(FocusDirection::Backward),
