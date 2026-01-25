@@ -9,6 +9,7 @@ mod animated;
 pub mod aspect_ratio;
 mod background;
 mod background_color;
+mod bound_focus;
 mod clipped;
 mod erase_captures;
 mod fixed_frame;
@@ -27,10 +28,12 @@ mod priority;
 mod scale_effect;
 mod transition;
 
+use crate::focus::BoundaryBehavior;
 pub(crate) use animated::Animated;
 pub(crate) use aspect_ratio::AspectRatio;
 pub(crate) use background::BackgroundView;
 pub(crate) use background_color::BackgroundColor;
+pub(crate) use bound_focus::BoundFocus;
 pub(crate) use clipped::Clipped;
 pub(crate) use erase_captures::EraseCaptures;
 use fixed::traits::ToFixed;
@@ -212,6 +215,18 @@ pub trait ViewModifier: Sized + ViewMarker {
     /// ```
     fn background_color<C, S: Shape>(self, color: C, in_shape: S) -> BackgroundColor<Self, C, S> {
         BackgroundColor::new(self, color, in_shape)
+    }
+
+    /// Bounds focus navigation within this view's subtree.
+    ///
+    /// When focus tries to exit the bounded region (via Next/Previous navigation),
+    /// this modifier either wraps focus to the other end or stops at the boundary,
+    /// depending on the configured [`BoundaryBehavior`].
+    ///
+    /// If the subtree contains no focusable elements, focus may move outside the
+    /// bounded subtree.
+    fn bound_focus(self, behavior: BoundaryBehavior) -> BoundFocus<Self> {
+        BoundFocus::new(self, behavior)
     }
 
     /// Clips the modified view to its bounds.
