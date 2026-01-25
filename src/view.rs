@@ -16,6 +16,7 @@ mod image;
 pub mod match_view;
 mod modifier;
 mod option;
+pub mod paginate;
 pub mod rotary;
 pub mod scroll_view;
 pub mod shape;
@@ -38,6 +39,7 @@ pub use hstack::HStack;
 pub use image::Image;
 pub use modifier::aspect_ratio;
 pub use modifier::padding;
+pub use paginate::Paginate;
 pub use rotary::Rotary;
 pub use scroll_view::ScrollView;
 pub use spacer::Spacer;
@@ -54,8 +56,8 @@ pub mod prelude {
     #[cfg(feature = "embedded-graphics")]
     pub use super::{AsDrawable, Image};
     pub use super::{
-        Button, ButtonState, Divider, EmptyView, ForEach, GeometryReader, HStack, Lens, Rotary,
-        ScrollView, Spacer, Text, VStack, View, ViewLayout, ViewThatFits, ZStack,
+        Button, ButtonState, Divider, EmptyView, ForEach, GeometryReader, HStack, Lens, Paginate,
+        Rotary, ScrollView, Spacer, Text, VStack, View, ViewLayout, ViewThatFits, ZStack,
     };
     pub use super::{FitAxis, HorizontalTextAlignment, padding::Edges};
     pub use crate::animation::Animation;
