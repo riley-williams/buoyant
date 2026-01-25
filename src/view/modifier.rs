@@ -29,6 +29,7 @@ mod opacity;
 mod overlay;
 #[allow(missing_docs)]
 pub mod padding;
+mod popover;
 mod priority;
 mod scale_effect;
 mod transition;
@@ -58,6 +59,7 @@ pub(crate) use offset::Offset;
 pub(crate) use opacity::Opacity;
 pub(crate) use overlay::OverlayView;
 pub(crate) use padding::Padding;
+pub(crate) use popover::Popover;
 pub(crate) use priority::Priority;
 pub(crate) use scale_effect::ScaleEffect;
 pub(crate) use transition::Transition;
@@ -620,6 +622,87 @@ pub trait ViewModifier: Sized + ViewMarker {
     /// Applies padding to the specified edges
     fn padding(self, edges: padding::Edges, amount: u32) -> Padding<Self> {
         Padding::new(edges, amount, self)
+    }
+
+    /// Popover displays content on top of the modified view when the provided value
+    /// is `Some`. The unwrapped value is provided to the popover view function.
+    ///
+    /// While the popover is visible, it will take focus from the modified view,
+    /// but focus will not be automatically moved if a separate view is focused when
+    /// the popover becomes visible. Popovers should be placed at or near the root
+    /// of the view tree to guarantee focus is captured in the popover.
+    ///
+    /// The layout behavior is identical to [`ViewModifier::overlay`], with content
+    /// center aligned by default.
+    ///
+    /// # Examples
+    ///
+    /// A button that presents a dismissible popover when pressed:
+    ///
+    /// ```
+    /// use buoyant::view::prelude::*;
+    /// # use embedded_graphics::{prelude::*, pixelcolor::Rgb888};
+    /// # use embedded_graphics::mono_font::ascii::FONT_9X15_BOLD;
+    ///
+    /// struct State {
+    ///    error_message: Option<&'static str>,
+    /// }
+    ///
+    /// fn my_button() -> impl View<Rgb888, State> {
+    ///     Button::new(|state: &mut State| {
+    ///         // present the popover
+    ///         state.error_message = Some("Something went wrong!");
+    ///     }, |_|
+    ///         Text::new("Try the thing", &FONT_9X15_BOLD)
+    ///             .foreground_color(Rgb888::WHITE)
+    ///             .padding(Edges::All, 6)
+    ///             .background_color(Rgb888::BLUE, RoundedRectangle::new(10))
+    ///     )
+    /// }
+    ///
+    /// fn root_view(state: State) -> impl View<Rgb888, State> {
+    ///     my_button()
+    ///         .popover(state.error_message.as_ref(), |error_message: &&'static str| {
+    ///             VStack::new((
+    ///                 Text::new(*error_message, &FONT_9X15_BOLD),
+    ///                 Button::new(|state: &mut State| {
+    ///                     // dismiss the popover
+    ///                     state.error_message = None;
+    ///                 }, |_|
+    ///                     Text::new("OK", &FONT_9X15_BOLD)
+    ///                         .background_color(Rgb888::RED, RoundedRectangle::new(10))
+    ///                 )
+    ///             ))
+    ///             .background_color(Rgb888::BLACK, RoundedRectangle::new(10))
+    ///             .foreground_color(Rgb888::WHITE)
+    ///         })
+    /// }
+    /// ```
+    ///
+    /// The transition can be changed from the default [`Opacity`][`crate::transition::Opacity`]
+    /// by applying [`transition()`][`ViewModifier::transition`] to the popover content view:
+    ///
+    /// ```
+    /// use buoyant::view::prelude::*;
+    /// use buoyant::transition::Slide;
+    /// # use embedded_graphics::pixelcolor::Rgb888;
+    /// # use embedded_graphics::mono_font::ascii::FONT_9X15_BOLD;
+    ///
+    /// fn view(message: Option<&'static str>) -> impl View<Rgb888, ()> {
+    ///     Rectangle
+    ///         .popover(message.as_ref(), |msg: &&'static str| {
+    ///             Text::new(*msg, &FONT_9X15_BOLD)
+    ///                 .transition(Slide::bottom())
+    ///         })
+    /// }
+    /// ```
+    fn popover<U, ViewFn, T>(self, value: Option<&T>, popover: ViewFn) -> Popover<Self, U>
+    where
+        ViewFn: for<'a> FnOnce(&'a T) -> U,
+        U: ViewMarker,
+        T: Clone,
+    {
+        Popover::new(self, value, popover)
     }
 
     /// Sets the priority of the view layout.

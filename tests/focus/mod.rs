@@ -9,6 +9,7 @@ mod modifier {
     mod multiplex_focus;
     mod opacity;
     mod overlay;
+    mod popover;
     mod unfocusable;
 }
 mod view {
