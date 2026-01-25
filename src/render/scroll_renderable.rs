@@ -1,6 +1,6 @@
 use crate::{
     primitives::{Interpolate, Point, Size, geometry::Rectangle},
-    render::{Animate, AnimatedJoin, Capsule, Offset, Render},
+    render::{Animate, AnimatedJoin, Capsule, ContentShape, IntrinsicShape, Offset, Render},
     render_target::RenderTarget,
 };
 
@@ -80,5 +80,11 @@ impl<T: Render<C>, C: Interpolate + Copy> Render<C> for ScrollRenderable<T> {
                 Render::render_animated(render_target, &source.inner, &target.inner, style, domain);
             },
         );
+    }
+}
+
+impl<T: IntrinsicShape> IntrinsicShape for ScrollRenderable<T> {
+    fn content_shape(&self) -> ContentShape {
+        self.bounds().into()
     }
 }

@@ -7,17 +7,18 @@
 
 mod view;
 
+use std::process::exit;
 use std::time::{Duration, Instant};
 
 use buoyant::environment::DefaultEnvironment;
-use buoyant::event::{EventContext, EventResult, simulator::MouseTracker};
-use buoyant::primitives::Point;
-use buoyant::render::{AnimatedJoin, AnimationDomain, Render};
-use buoyant::render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _};
+use buoyant::event::{Event, EventContext, EventResult, simulator::MouseTracker};
+use buoyant::focus::{DefaultFocus, FocusAction, FocusDirection, Role};
+use buoyant::primitives::{Point, transform::LinearTransform};
+use buoyant::render::{AnimatedJoin, AnimationDomain, ContentShape, Render};
+use buoyant::render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _, SolidBrush, Stroke};
 use buoyant::{animation::Animation, if_view, match_view, view::prelude::*};
 use embedded_graphics::prelude::*;
-use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
-
+use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, SimulatorEvent, Window};
 #[allow(unused)]
 mod spacing {
     /// Spacing between sections / groups
@@ -70,6 +71,7 @@ mod color {
     pub const FOREGROUND_SECONDARY: Space = Space::CSS_LIGHT_SLATE_GRAY;
 }
 
+#[expect(clippy::too_many_lines)]
 fn main() {
     let size = Size::new(480, 320);
     let mut display: SimulatorDisplay<color::Space> = SimulatorDisplay::new(size);
@@ -105,39 +107,65 @@ fn main() {
         &mut view_state,
     );
 
+    // obtain initial focus
+    let mut focus_state = DefaultFocus::default_first();
+    println!("Focus tree size: {} bytes", size_of_val(&focus_state));
+    let result = view.handle_event(
+        &Event::Focus(FocusAction::Focus(FocusDirection::Forward)),
+        &EventContext::new(time).with_roles(Role::Button | Role::Container),
+        target_tree,
+        &mut app_data,
+        &mut view_state,
+        &mut focus_state,
+    );
+    let mut focus_rect = ContentShape::Empty;
+    match result {
+        EventResult::Handled { shape, .. } => {
+            focus_rect = shape.clone();
+        }
+        EventResult::Deferred => (),
+    }
+
     // Main event loop
     loop {
         let time = app_start.elapsed();
         let domain = AnimationDomain::top_level(time);
-        let context = EventContext::new(time);
+        let context = EventContext::new(time).with_roles(Role::Button | Role::Container);
 
-        let mut should_exit = false;
-
-        // Handle events, merging into a single result
-        let result = window
+        // Handle touch events, merging into a single result
+        window
             .events()
-            .filter_map(|event| touch_tracker.process_event(event))
-            .fold(EventResult::default(), |result, event| {
-                // Manually handle exit events and external events
-                if event == buoyant::event::Event::Exit {
-                    should_exit = true;
+            .filter_map(|event| {
+                // The simulator won't exit if we don't handle this
+                if event == SimulatorEvent::Quit {
+                    exit(0);
                 }
-                result.merging(view.handle_event(
+                touch_tracker.process_event(event)
+            })
+            .for_each(|event| {
+                // if event == Event::KeyUp(Key::Escape) {
+                //     exit(0);
+                // }
+                let result = view.handle_event(
                     &event,
                     &context,
                     target_tree,
                     &mut app_data,
                     &mut view_state,
-                ))
+                    &mut focus_state,
+                );
+                println!("{result:?}");
+                match result {
+                    EventResult::Handled { shape, .. } => {
+                        focus_rect = shape.clone();
+                    }
+                    EventResult::Deferred => (),
+                }
             });
-
-        if should_exit {
-            break;
-        }
 
         // Only recompute the view, layout, and render trees if necessary.
         // Additional handling may be needed to recompute the view in response to external events.
-        if result.recompute_view {
+        if context.view_rebuild_requested.get() {
             // Join source and target trees at current time, "freezing" animation progress
             target_tree.join_from(source_tree, &domain);
             // Swap trees so the current target becomes the next source.
@@ -154,10 +182,29 @@ fn main() {
                 &mut app_data,
                 &mut view_state,
             );
+
+            // Obtain updated focus + shape
+            let result = view.handle_event(
+                &Event::Focus(FocusAction::Focus(FocusDirection::Forward)),
+                &context,
+                target_tree,
+                &mut app_data,
+                &mut view_state,
+                &mut focus_state,
+            );
+            match result {
+                EventResult::Handled { shape, .. } => {
+                    focus_rect = shape.clone();
+                }
+                EventResult::Deferred => (),
+            }
         }
 
         // Only render if active animation was reported, the view changed, or redraw was requested
-        if target.clear_animation_status() || result.recompute_view || result.redraw {
+        if target.clear_animation_status()
+            || context.view_rebuild_requested.get()
+            || context.redraw_requested.get()
+        {
             // Render animated transition between source and target trees
             Render::render_animated(
                 &mut target,
@@ -166,6 +213,22 @@ fn main() {
                 &color::Space::WHITE,
                 &domain,
             );
+            // Draw focus overlay, if available
+            let stroke = Stroke::new(2);
+            let brush = SolidBrush::new(color::Space::CSS_YELLOW);
+            match &focus_rect {
+                ContentShape::Rectangle(rect) => {
+                    target.stroke(&stroke, LinearTransform::identity(), &brush, None, rect);
+                }
+                ContentShape::RoundedRectangle(rrect) => {
+                    target.stroke(&stroke, LinearTransform::identity(), &brush, None, rrect);
+                }
+                ContentShape::Circle(circle) => {
+                    target.stroke(&stroke, LinearTransform::identity(), &brush, None, circle);
+                }
+                ContentShape::Empty | _ => (),
+            }
+
             // Send to the display
             window.update(target.display());
             // Clear for the next frame
@@ -186,11 +249,19 @@ enum Tab {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
+struct CleanSettings {
+    pub frequency: u32,
+    pub time: u32,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 struct AppState {
     pub tab: Tab,
     pub stop_on_weight: bool,
     pub auto_off: bool,
     pub auto_brew: bool,
+    pub clean_overlay: Option<CleanSettings>,
+    pub clean_settings: CleanSettings,
 }
 
 fn root_view(state: &AppState) -> impl View<color::Space, AppState> + use<> {

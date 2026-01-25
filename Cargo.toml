@@ -70,7 +70,7 @@ required-features = ["crossterm"]
 
 [[example]]
 name = "espresso"
-required-features = ["embedded-graphics", "embedded-graphics-simulator"]
+required-features = ["embedded-graphics", "embedded-graphics-simulator", "rusttype-fonts"]
 
 [[example]]
 name = "quickstart"

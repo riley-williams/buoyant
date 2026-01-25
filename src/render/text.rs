@@ -3,7 +3,7 @@ use core::ops::Range;
 use crate::{
     font::{Font, FontMetrics, FontRender},
     primitives::{Interpolate, Point, Size, geometry::Rectangle},
-    render::{AnimatedJoin, AnimationDomain, Render},
+    render::{AnimatedJoin, AnimationDomain, ContentShape, IntrinsicShape, Render},
     render_target::{Glyph, RenderTarget, SolidBrush},
     view::{CharacterWrap, HorizontalTextAlignment, WordWrap, WrapStrategy},
 };
@@ -174,6 +174,12 @@ impl<C: Copy, T: AsRef<str> + Clone, F: FontRender<C>> Render<C> for Text<'_, T,
             wrap: target.wrap,
         }
         .render(render_target, style);
+    }
+}
+
+impl<T: AsRef<str>, F: Font> IntrinsicShape for Text<'_, T, F> {
+    fn content_shape(&self) -> ContentShape {
+        Rectangle::new(self.origin, self.size.into()).into()
     }
 }
 

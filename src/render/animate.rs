@@ -2,7 +2,7 @@ use core::time::Duration;
 
 use crate::{
     animation::Animation,
-    render::{AnimationDomain, Render},
+    render::{AnimationDomain, ContentShape, IntrinsicShape, Render},
     render_target::RenderTarget,
 };
 
@@ -129,5 +129,11 @@ impl<C, T: Render<C>, U: PartialEq + Clone> Render<C> for Animate<T, U> {
             style,
             &subdomain,
         );
+    }
+}
+
+impl<T: IntrinsicShape, U: Clone> IntrinsicShape for Animate<T, U> {
+    fn content_shape(&self) -> ContentShape {
+        self.subtree.content_shape()
     }
 }

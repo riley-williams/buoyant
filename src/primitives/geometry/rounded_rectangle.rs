@@ -22,6 +22,18 @@ impl RoundedRectangle {
             radius,
         }
     }
+
+    /// Returns a new shape offset by the given point
+    #[must_use]
+    pub fn with_offset(mut self, offset: Point) -> Self {
+        self.origin += offset;
+        self
+    }
+
+    /// Offsets the shape by the given point
+    pub fn offset(&mut self, offset: Point) {
+        self.origin += offset;
+    }
 }
 
 impl CoordinateSpaceTransform for RoundedRectangle {

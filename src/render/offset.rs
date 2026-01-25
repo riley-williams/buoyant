@@ -3,7 +3,7 @@ use crate::{
     render_target::RenderTarget,
 };
 
-use super::{AnimatedJoin, AnimationDomain, Render};
+use super::{AnimatedJoin, AnimationDomain, IntrinsicShape, Render};
 
 /// A render tree item that offsets its children by a fixed amount.
 /// The offset is animated, resulting in all children moving in unison.
@@ -57,6 +57,12 @@ impl<T: Render<C>, C: Interpolate + Copy> Render<C> for Offset<T> {
                 );
             },
         );
+    }
+}
+
+impl<T: IntrinsicShape> IntrinsicShape for Offset<T> {
+    fn content_shape(&self) -> crate::render::ContentShape {
+        self.subtree.content_shape().with_offset(self.offset)
     }
 }
 

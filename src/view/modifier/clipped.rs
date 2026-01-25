@@ -2,7 +2,7 @@ use embedded_touch::Phase;
 
 use crate::{
     environment::LayoutEnvironment,
-    event::EventResult,
+    event::{Event, EventResult},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions, geometry::Rectangle},
     render,
@@ -37,6 +37,7 @@ where
 {
     type Sublayout = ResolvedLayout<T::Sublayout>;
     type State = T::State;
+    type FocusTree = T::FocusTree;
 
     fn priority(&self) -> i8 {
         self.child.priority()
@@ -86,22 +87,28 @@ where
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
+        focus: &mut Self::FocusTree,
     ) -> EventResult {
         // only cull inner handling of start touches. Drag/end may move outside the clip rect
         // but they should sill be tracked
         let should_handle = match event {
-            crate::event::Event::Touch(touch) => {
+            Event::Touch(touch) => {
                 touch.phase != Phase::Started
                     || render_tree.clip_rect.contains(&From::from(touch.location))
             }
-            crate::event::Event::Scroll(point) => render_tree.clip_rect.contains(point),
-            crate::event::Event::External | crate::event::Event::Exit => true,
+            _ => true,
         };
         if should_handle {
-            self.child
-                .handle_event(event, context, &mut render_tree.subtree, captures, state)
+            self.child.handle_event(
+                event,
+                context,
+                &mut render_tree.subtree,
+                captures,
+                state,
+                focus,
+            )
         } else {
-            EventResult::default()
+            EventResult::Deferred
         }
     }
 }

@@ -69,8 +69,8 @@ mod embedded_graphics {
     };
 
     use crate::{
-        primitives::{Interpolate as _, Point},
-        render::Render,
+        primitives::{Interpolate as _, Point, geometry::Rectangle},
+        render::{ContentShape, IntrinsicShape, Render},
         render_target::{RenderTarget, surface::AsDrawTarget},
     };
 
@@ -113,6 +113,13 @@ mod embedded_graphics {
                         .translated(offset.into()),
                 );
             }
+        }
+    }
+
+    impl<I: ImageDrawable> IntrinsicShape for Image<'_, I> {
+        fn content_shape(&self) -> ContentShape {
+            let size = self.image.size().into();
+            Rectangle::new(self.origin, size).into()
         }
     }
 }

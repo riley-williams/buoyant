@@ -1,6 +1,6 @@
 use crate::{
     primitives::Interpolate,
-    render::{AnimationDomain, Render, RenderTarget},
+    render::{AnimationDomain, ContentShape, IntrinsicShape, Render, RenderTarget},
 };
 
 use super::AnimatedJoin;
@@ -55,5 +55,11 @@ impl<T: Render<C>, C: Interpolate + Copy> Render<C> for HintBackground<T, C> {
                 );
             },
         );
+    }
+}
+
+impl<T: IntrinsicShape, C> IntrinsicShape for HintBackground<T, C> {
+    fn content_shape(&self) -> ContentShape {
+        self.subtree.content_shape()
     }
 }

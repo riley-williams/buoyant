@@ -18,6 +18,18 @@ impl Circle {
     pub const fn new(origin: Point, diameter: u32) -> Self {
         Self { origin, diameter }
     }
+
+    /// Returns a circle offset by the given point.
+    #[must_use]
+    pub fn with_offset(mut self, offset: Point) -> Self {
+        self.origin += offset;
+        self
+    }
+
+    /// Offsets the circle by the given point
+    pub fn offset(&mut self, offset: Point) {
+        self.origin += offset;
+    }
 }
 
 impl Shape for Circle {

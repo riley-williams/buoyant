@@ -1,6 +1,6 @@
 use crate::{
     primitives::Interpolate,
-    render::{AnimationDomain, Render, RenderTarget},
+    render::{AnimationDomain, ContentShape, IntrinsicShape, Render, RenderTarget},
 };
 
 use super::AnimatedJoin;
@@ -44,6 +44,12 @@ impl<C: Interpolate + Copy, T: Render<C>> Render<C> for ShadeSubtree<C, T> {
             &style,
             domain,
         );
+    }
+}
+
+impl<C, T: IntrinsicShape> IntrinsicShape for ShadeSubtree<C, T> {
+    fn content_shape(&self) -> ContentShape {
+        self.subtree.content_shape()
     }
 }
 

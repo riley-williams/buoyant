@@ -26,7 +26,7 @@ mod zstack;
 
 #[cfg(feature = "embedded-graphics")]
 pub use as_drawable::AsDrawable;
-pub use button::Button;
+pub use button::{Button, ButtonState};
 pub use capturing::Lens;
 pub use divider::Divider;
 pub use empty_view::EmptyView;
@@ -52,8 +52,8 @@ pub mod prelude {
     #[cfg(feature = "embedded-graphics")]
     pub use super::{AsDrawable, Image};
     pub use super::{
-        Button, Divider, EmptyView, ForEach, GeometryReader, HStack, Lens, ScrollView, Spacer,
-        Text, VStack, View, ViewLayout, ViewThatFits, ZStack,
+        Button, ButtonState, Divider, EmptyView, ForEach, GeometryReader, HStack, Lens, ScrollView,
+        Spacer, Text, VStack, View, ViewLayout, ViewThatFits, ZStack,
     };
     pub use super::{FitAxis, HorizontalTextAlignment, padding::Edges};
     pub use crate::animation::Animation;
@@ -61,6 +61,7 @@ pub mod prelude {
     pub use crate::view::shape::*;
 }
 
+use crate::focus::DefaultFocus;
 use crate::transition::Transition;
 use crate::{
     environment::LayoutEnvironment,
@@ -128,6 +129,9 @@ pub trait ViewLayout<Captures: ?Sized>: ViewMarker {
     /// Size is represented here, but placement is deferred to the render tree.
     type Sublayout: Clone + PartialEq + 'static;
 
+    /// A path through this view's subtree pointing to the currently focused node
+    type FocusTree: Clone + DefaultFocus + 'static;
+
     /// The layout priority of the view. Higher priority views are more likely to
     /// be given the size they want
     fn priority(&self) -> i8 {
@@ -176,16 +180,18 @@ pub trait ViewLayout<Captures: ?Sized>: ViewMarker {
     ) -> Self::Renderables;
 
     /// Process an event
+    ///
+    /// For container views, this typically involves forwarding the event to all child views.
+    /// Leaf views may respond with [`EventResult::default()`] to defer handling of the event.
     fn handle_event(
         &self,
-        _event: &Event,
-        _context: &EventContext,
-        _render_tree: &mut Self::Renderables,
-        _captures: &mut Captures,
-        _state: &mut Self::State,
-    ) -> EventResult {
-        EventResult::default()
-    }
+        event: &Event,
+        context: &EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+        focus: &mut Self::FocusTree,
+    ) -> EventResult;
 }
 
 impl<T> ViewMarker for &T
@@ -202,6 +208,7 @@ where
 {
     type State = T::State;
     type Sublayout = T::Sublayout;
+    type FocusTree = T::FocusTree;
 
     fn transition(&self) -> Self::Transition {
         (*self).transition()
@@ -247,8 +254,9 @@ where
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
+        focus: &mut Self::FocusTree,
     ) -> EventResult {
-        (*self).handle_event(event, context, render_tree, captures, state)
+        (*self).handle_event(event, context, render_tree, captures, state, focus)
     }
 }
 

@@ -1,7 +1,7 @@
 use fixed::{traits::ToFixed, types::I18F14};
 use fixed_macro::fixed;
 
-use crate::primitives::{Frame, Interpolate, Point};
+use crate::primitives::{Interpolate, Point, geometry::Rectangle};
 
 type FixedPoint = I18F14;
 
@@ -29,7 +29,7 @@ impl UnitPoint {
 
     /// Converts `self` to a [`Point`] in the given frame's coordinate space.
     #[must_use]
-    pub fn in_view_bounds(&self, frame: &Frame) -> Point {
+    pub fn in_view_bounds(&self, frame: &Rectangle) -> Point {
         frame.origin
             + Point {
                 x: (self.x * frame.size.width.to_fixed::<FixedPoint>()).to_num(),
@@ -122,11 +122,11 @@ impl Interpolate for UnitPoint {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::primitives::{Frame, Size};
+    use crate::primitives::Size;
 
     #[test]
     fn unit_point_in_view_bounds() {
-        let frame = Frame::new(Point::new(5, 10), Size::new(12, 22));
+        let frame = Rectangle::new(Point::new(5, 10), Size::new(12, 22));
 
         let test_points = [0.0, 0.2, 0.5, 0.8, 1.0];
 
@@ -164,7 +164,7 @@ mod tests {
 
     #[test]
     fn unit_point_convenience_inits() {
-        let frame = Frame::new(Point::new(15, 25), Size::new(100, 80));
+        let frame = Rectangle::new(Point::new(15, 25), Size::new(100, 80));
         let frame_center = frame.origin + Size::new(frame.size.width / 2, frame.size.height / 2);
 
         let point = UnitPoint::top_leading().in_view_bounds(&frame);

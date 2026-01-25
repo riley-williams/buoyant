@@ -1,6 +1,6 @@
 use crate::{
     primitives::{Interpolate, Size},
-    render::{AnimatedJoin, Render},
+    render::{AnimatedJoin, ContentShape, IntrinsicShape, Render},
     render_target::RenderTarget,
     transition::{Direction, Transition},
 };
@@ -120,6 +120,15 @@ impl<Subtree: Render<Color> + Clone, T: Transition, Color: Interpolate + Copy> R
                 }
             }
             (Self::None, Self::None) => {}
+        }
+    }
+}
+
+impl<Subtree: IntrinsicShape, T> IntrinsicShape for TransitionOption<Subtree, T> {
+    fn content_shape(&self) -> ContentShape {
+        match self {
+            Self::Some { subtree, .. } => subtree.content_shape(),
+            Self::None => ContentShape::Empty,
         }
     }
 }

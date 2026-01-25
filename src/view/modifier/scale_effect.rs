@@ -3,7 +3,8 @@ use crate::{
     event::EventResult,
     layout::ResolvedLayout,
     primitives::{
-        Frame, Point, ProposedDimensions, UnitPoint,
+        Point, ProposedDimensions, UnitPoint,
+        geometry::Rectangle,
         transform::{LinearTransform, ScaleFactor},
     },
     render,
@@ -45,6 +46,7 @@ where
 {
     type Sublayout = ResolvedLayout<V::Sublayout>;
     type State = V::State;
+    type FocusTree = V::FocusTree;
 
     fn priority(&self) -> i8 {
         self.inner.priority()
@@ -85,7 +87,7 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> Self::Renderables {
-        let frame = Frame::new(Point::zero(), layout.resolved_size.into());
+        let frame = Rectangle::new(Point::zero(), layout.resolved_size.into());
         let anchor = self.anchor.in_view_bounds(&frame);
         render::Transform::new(
             self.inner
@@ -101,10 +103,17 @@ where
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
+        focus: &mut Self::FocusTree,
     ) -> EventResult {
-        // FIXME: this is wrong
+        // FIXME: this is wrong, doesn't account for scale
         let event = event.offset(-render_tree.transform.offset);
-        self.inner
-            .handle_event(&event, context, &mut render_tree.inner, captures, state)
+        self.inner.handle_event(
+            &event,
+            context,
+            &mut render_tree.inner,
+            captures,
+            state,
+            focus,
+        )
     }
 }

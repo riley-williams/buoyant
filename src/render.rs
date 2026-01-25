@@ -8,6 +8,9 @@
 
 use core::time::Duration;
 
+use crate::primitives::Point;
+use crate::primitives::geometry;
+use crate::primitives::geometry::Shape;
 use crate::render_target::RenderTarget;
 
 mod animate;
@@ -36,7 +39,7 @@ pub use hint_background::HintBackground;
 #[cfg(feature = "embedded-graphics")]
 pub use image::Image;
 pub use offset::Offset;
-pub use one_of::{OneOf2, OneOf3, OneOf4, OneOf5, OneOf6, OneOf7};
+pub use one_of::{OneOf2, OneOf3, OneOf4, OneOf5, OneOf6, OneOf7, OneOf8, OneOf9, OneOf10};
 pub use opacity::Opacity;
 pub use scroll_renderable::ScrollRenderable;
 pub use shade_subtree::ShadeSubtree;
@@ -55,7 +58,7 @@ pub trait AnimatedJoin {
 }
 
 /// A type that can be rendered to a target and animated
-pub trait Render<Color>: AnimatedJoin {
+pub trait Render<Color>: AnimatedJoin + IntrinsicShape {
     /// Render the view to the screen
     fn render(&self, render_target: &mut impl RenderTarget<ColorFormat = Color>, style: &Color);
 
@@ -99,5 +102,85 @@ impl AnimationDomain {
     #[must_use]
     pub const fn is_complete(&self) -> bool {
         self.factor == 255
+    }
+}
+
+/// A type which has an intrinsic content shape
+pub trait IntrinsicShape {
+    /// The shape of the object, in its local coordinate space
+    fn content_shape(&self) -> ContentShape;
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum ContentShape {
+    /// The focused element has no content shape
+    Empty,
+    Rectangle(geometry::Rectangle),
+    RoundedRectangle(geometry::RoundedRectangle),
+    Circle(geometry::Circle),
+}
+
+impl From<geometry::Rectangle> for ContentShape {
+    fn from(rect: geometry::Rectangle) -> Self {
+        Self::Rectangle(rect)
+    }
+}
+
+impl From<geometry::RoundedRectangle> for ContentShape {
+    fn from(rrect: geometry::RoundedRectangle) -> Self {
+        Self::RoundedRectangle(rrect)
+    }
+}
+
+impl From<geometry::Circle> for ContentShape {
+    fn from(circle: geometry::Circle) -> Self {
+        Self::Circle(circle)
+    }
+}
+
+impl ContentShape {
+    /// Returns the bounding rectangle of this content shape, if any.
+    #[must_use]
+    pub fn bounding_box(&self) -> Option<geometry::Rectangle> {
+        match self {
+            Self::Empty => None,
+            Self::Rectangle(rect) => Some(rect.clone()),
+            Self::RoundedRectangle(rrect) => Some(rrect.bounding_box()),
+            Self::Circle(circle) => Some(circle.bounding_box()),
+        }
+    }
+
+    /// Returns a new content shape with the provided offset applied
+    #[must_use]
+    pub fn with_offset(self, offset: Point) -> Self {
+        match self {
+            Self::Empty => Self::Empty,
+            Self::Rectangle(rect) => Self::Rectangle(rect.with_offset(offset)),
+            Self::RoundedRectangle(rrect) => Self::RoundedRectangle(rrect.with_offset(offset)),
+            Self::Circle(circle) => Self::Circle(circle.with_offset(offset)),
+        }
+    }
+
+    /// Offsets the shape
+    pub fn offset(&mut self, offset: Point) {
+        match self {
+            Self::Empty => (),
+            Self::Rectangle(rect) => rect.offset(offset),
+            Self::RoundedRectangle(rrect) => rrect.offset(offset),
+            Self::Circle(circle) => circle.offset(offset),
+        }
+    }
+
+    /// Returns true if the provided point is contained within this content shape
+    #[must_use]
+    pub fn contains(&self, point: Point) -> bool {
+        // FIXME: implement more precise hit testing for rounded rectangles and circles
+        match self {
+            Self::Empty => false,
+            Self::Rectangle(rect) => rect.contains(&point),
+            Self::RoundedRectangle(rrect) => rrect.bounding_box().contains(&point),
+            Self::Circle(circle) => circle.bounding_box().contains(&point),
+        }
     }
 }

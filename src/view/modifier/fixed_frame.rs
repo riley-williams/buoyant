@@ -95,6 +95,7 @@ where
 {
     type Sublayout = Layout<V::Sublayout>;
     type State = V::State;
+    type FocusTree = V::FocusTree;
 
     fn priority(&self) -> i8 {
         self.child.priority()
@@ -176,8 +177,9 @@ where
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
+        focus: &mut Self::FocusTree,
     ) -> EventResult {
         self.child
-            .handle_event(event, context, render_tree, captures, state)
+            .handle_event(event, context, render_tree, captures, state, focus)
     }
 }

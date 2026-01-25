@@ -2,7 +2,7 @@
 //! For a transition-capable version, use [`crate::render::TransitionOption`].
 
 use crate::{
-    render::{AnimatedJoin, AnimationDomain, Render},
+    render::{AnimatedJoin, AnimationDomain, ContentShape, IntrinsicShape, Render},
     render_target::RenderTarget,
 };
 
@@ -37,6 +37,13 @@ impl<T: Render<Color>, Color: Copy> Render<Color> for Option<T> {
                 target.render(render_target, style);
             }
         }
+    }
+}
+
+impl<T: IntrinsicShape> IntrinsicShape for Option<T> {
+    fn content_shape(&self) -> ContentShape {
+        self.as_ref()
+            .map_or(ContentShape::Empty, IntrinsicShape::content_shape)
     }
 }
 

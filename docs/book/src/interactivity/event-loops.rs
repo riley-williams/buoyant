@@ -59,22 +59,21 @@ fn main() {
         let mut should_exit = false;
 
         // ANCHOR: handle_events
-        // Handle events, merging into a single result
-        let result = window
+        // Handle events
+        let mut any_handled = false;
+        window
             .events()
             .filter_map(|event| mouse_tracker.process_event(event))
-            .fold(EventResult::default(), |result, event| {
+            .for_each(|event| {
                 // Manually handle exit events
                 if event == buoyant::event::Event::Exit {
                     should_exit = true;
                 }
-                result.merging(view.handle_event(
-                    &event,
-                    &context,
-                    target_tree,
-                    &mut count,
-                    &mut state,
-                ))
+                let result =
+                    view.handle_event(&event, &context, target_tree, &mut count, &mut state);
+                if result.is_handled() {
+                    any_handled = true;
+                }
             });
         // ANCHOR_END: handle_events
 
@@ -85,7 +84,7 @@ fn main() {
         // ANCHOR: recompute_view
         // Only recompute the view, layout, and render trees if necessary.
         // Additional handling may be needed to recompute the view in response to external events.
-        if result.recompute_view {
+        if context.view_rebuild_requested.get() {
             // Join source and target trees at current time, "freezing" animation progress
             target_tree.join_from(source_tree, &domain);
             // Swap trees so the current target becomes the next source.
@@ -107,7 +106,10 @@ fn main() {
 
         // ANCHOR: render_idle
         // Only render if active animation was reported, the view changed, or redraw was requested
-        if target.clear_animation_status() || result.recompute_view || result.redraw {
+        if target.clear_animation_status()
+            || context.view_rebuild_requested.get()
+            || context.redraw_requested.get()
+        {
             // Render animated transition between source and target trees
             Render::render_animated(
                 &mut target,

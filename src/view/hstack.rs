@@ -3,7 +3,8 @@ use paste::paste;
 
 use crate::{
     environment::LayoutEnvironment,
-    event::{EventContext, EventResult},
+    event::{Event, EventContext, EventResult},
+    focus::{DefaultFocus, FocusAction, FocusDirection},
     layout::{LayoutDirection, ResolvedLayout, VerticalAlignment},
     primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions},
     view::{ViewLayout, ViewMarker, modifier::FixedSize},
@@ -231,7 +232,7 @@ macro_rules! count {
 }
 
 macro_rules! impl_view_for_hstack {
-    ($(($n:tt, $type:ident)),+) => {
+    ($ct:tt, $(($n:tt, $type:ident)),+) => {
         paste! {
         impl<$($type),+> ViewMarker for HStack<($($type),+)>
         where
@@ -248,6 +249,7 @@ macro_rules! impl_view_for_hstack {
             type State = ($($type::State),+);
             // FIXME: Could just be height + sublayouts?
             type Sublayout = ResolvedLayout<($(ResolvedLayout<$type::Sublayout>),+)>;
+            type FocusTree = super::match_view::[<OneOf $ct>]<$($type::FocusTree),+>;
 
             fn transition(&self) -> Self::Transition {
                 crate::transition::Opacity
@@ -340,38 +342,120 @@ macro_rules! impl_view_for_hstack {
 
             fn handle_event(
                 &self,
-                event: &crate::view::Event,
+                event: &Event,
                 context: &EventContext,
                 render_tree: &mut Self::Renderables,
                 captures: &mut Captures,
                 state: &mut Self::State,
+                focus: &mut Self::FocusTree,
             ) -> EventResult {
-                let mut result = EventResult::default();
+                // Handle focus events specially - they need to route through the focus tree
+                if let Event::Focus { action: focus_event, group } = event {
+                    use super::match_view::[<OneOf $ct>];
+
+                    // Track which child index we're currently trying
+                    let mut current: usize = match focus {
+                        $(
+                            [<OneOf $ct>]::[<V $n>](_) => $n,
+                        )+
+                    };
+
+                    // The event to use - initially the original event, but when entering
+                    // a new child during navigation we switch to a Focus event
+                    let mut current_event = focus_event.clone();
+
+                    loop {
+                        // Try focus on the current child
+                        let result = match focus {
+                            $(
+                                [<OneOf $ct>]::[<V $n>](f) => {
+                                    self.items.$n.handle_event(
+                                        &Event::Focus { action: current_event.clone(), group: *group },
+                                        context,
+                                        &mut render_tree.$n,
+                                        captures,
+                                        &mut state.$n,
+                                        f,
+                                    )
+                                }
+                            )+
+                        };
+
+                        // If the child handled it (not deferred), return the result
+                        if !matches!(result, EventResult::Deferred) || current_event == FocusAction::Teardown {
+                            return result;
+                        }
+
+                        // Child is exhausted, try to move based on action
+                        match focus_event {
+                            FocusAction::Blur | FocusAction::Teardown => {
+                                debug_assert!(!matches!(focus_event, FocusAction::Teardown), "Teardown events should not loop");
+                                return EventResult::Deferred;
+                            }
+                            FocusAction::Focus(FocusDirection::Forward) | FocusAction::Select | FocusAction::Next => {
+                                // Advance to next child
+                                current += 1;
+                                match current {
+                                    $(
+                                        $n => {
+                                            *focus = [<OneOf $ct>]::[<V $n>](DefaultFocus::default_first());
+                                        }
+                                    )+
+                                    _ => return EventResult::Deferred,
+                                }
+                                // When entering a new child, use Focus action (forward)
+                                current_event = FocusAction::Focus(FocusDirection::Forward);
+                            }
+                            FocusAction::Focus(FocusDirection::Backward) | FocusAction::Previous => {
+                                // Go to previous child
+                                if current == 0 {
+                                    return EventResult::Deferred;
+                                }
+                                current -= 1;
+                                match current {
+                                    $(
+                                        $n => {
+                                            *focus = [<OneOf $ct>]::[<V $n>](DefaultFocus::default_last());
+                                        }
+                                    )+
+                                    _ => return EventResult::Deferred,
+                                }
+                                // When entering a new child, use Focus action (backward)
+                                current_event = FocusAction::Focus(FocusDirection::Backward);
+                            }
+                        }
+                    }
+                }
+
+                // For non-focus events (touch, scroll, etc.), use DFS approach
                 $(
-                    result.merge(self.items.$n.handle_event(
+                    let inner_focus = focus.[<v $n _or_init_with>](|| DefaultFocus::default_first());
+                    let result = self.items.$n.handle_event(
                         event,
                         context,
                         &mut render_tree.$n,
                         captures,
                         &mut state.$n,
-                    ));
-                    if result.handled {
+                        inner_focus,
+                    );
+                    if result.is_handled() {
                         return result;
                     }
                 )+
-                result
+                EventResult::Deferred
             }
         }
         }
     };
 }
 
-impl_view_for_hstack!((0, T0), (1, T1));
-impl_view_for_hstack!((0, T0), (1, T1), (2, T2));
-impl_view_for_hstack!((0, T0), (1, T1), (2, T2), (3, T3));
-impl_view_for_hstack!((0, T0), (1, T1), (2, T2), (3, T3), (4, T4));
-impl_view_for_hstack!((0, T0), (1, T1), (2, T2), (3, T3), (4, T4), (5, T5));
+impl_view_for_hstack!(2, (0, T0), (1, T1));
+impl_view_for_hstack!(3, (0, T0), (1, T1), (2, T2));
+impl_view_for_hstack!(4, (0, T0), (1, T1), (2, T2), (3, T3));
+impl_view_for_hstack!(5, (0, T0), (1, T1), (2, T2), (3, T3), (4, T4));
+impl_view_for_hstack!(6, (0, T0), (1, T1), (2, T2), (3, T3), (4, T4), (5, T5));
 impl_view_for_hstack!(
+    7,
     (0, T0),
     (1, T1),
     (2, T2),
@@ -380,7 +464,9 @@ impl_view_for_hstack!(
     (5, T5),
     (6, T6)
 );
+
 impl_view_for_hstack!(
+    8,
     (0, T0),
     (1, T1),
     (2, T2),
@@ -391,6 +477,7 @@ impl_view_for_hstack!(
     (7, T7)
 );
 impl_view_for_hstack!(
+    9,
     (0, T0),
     (1, T1),
     (2, T2),
@@ -402,6 +489,7 @@ impl_view_for_hstack!(
     (8, T8)
 );
 impl_view_for_hstack!(
+    10,
     (0, T0),
     (1, T1),
     (2, T2),
@@ -430,6 +518,7 @@ where
 {
     type Sublayout = T::Sublayout;
     type State = T::State;
+    type FocusTree = T::FocusTree;
 
     fn transition(&self) -> Self::Transition {
         crate::transition::Opacity
@@ -469,9 +558,10 @@ where
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
+        focus: &mut Self::FocusTree,
     ) -> EventResult {
         self.items
             .0
-            .handle_event(event, context, render_tree, captures, state)
+            .handle_event(event, context, render_tree, captures, state, focus)
     }
 }

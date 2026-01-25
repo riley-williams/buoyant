@@ -8,7 +8,9 @@ use crate::{
     animation::Animation,
     event::{Event, EventContext, EventResult},
     layout::ResolvedLayout,
-    primitives::{Dimensions, Point, ProposedDimension, ProposedDimensions, Size},
+    primitives::{
+        Dimensions, Point, ProposedDimension, ProposedDimensions, Size, geometry::Rectangle,
+    },
     render::{Animate, Capsule, Offset, ScrollRenderable},
     transition::Opacity,
     view::{ViewLayout, ViewMarker},
@@ -221,6 +223,7 @@ impl<Inner: ViewMarker> ViewMarker for ScrollView<Inner> {
 impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<Inner> {
     type State = ScrollViewState<Inner::State>;
     type Sublayout = Dimensions;
+    type FocusTree = Inner::FocusTree;
 
     fn transition(&self) -> Self::Transition {
         Opacity
@@ -242,7 +245,7 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
         _captures: &mut Captures,
         _state: &mut Self::State,
     ) -> ResolvedLayout<Self::Sublayout> {
-        let dimensions = offer.resolve_most_flexible(0, 1);
+        let dimensions = offer.resolve_most_flexible(Size::zero(), Size::new(1, 1));
         ResolvedLayout {
             sublayouts: dimensions,
             resolved_size: dimensions,
@@ -392,9 +395,91 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
+        focus: &mut Self::FocusTree,
     ) -> EventResult {
+        // Handle focus events separately
+        if let Event::Focus {
+            action: focus_event,
+            group,
+        } = event
+        {
+            // Route focus event to inner view
+            let mut result = self.inner.handle_event(
+                &Event::Focus {
+                    action: *focus_event,
+                    group: *group,
+                },
+                context,
+                render_tree.inner_mut(),
+                captures,
+                &mut state.inner_state,
+                focus,
+            );
+
+            if let EventResult::Handled { shape, .. } = &mut result
+                && let Some(frame) = shape.bounding_box()
+            {
+                // Only auto-scroll for Next/Previous navigation events.
+                // Focus(direction) is used to acquire focus at the current position,
+                // and should not cause scrolling (e.g., after dragging).
+                // FIXME: This also means that focusing on the first/last doesn't always scroll
+                // as intended
+                let should_auto_scroll = matches!(
+                    focus_event,
+                    crate::focus::FocusAction::Next | crate::focus::FocusAction::Previous
+                );
+
+                if should_auto_scroll {
+                    let scroll_view_frame = render_tree.bounds();
+                    let inner_offset = render_tree.offset();
+
+                    let target_frame = Rectangle::new(
+                        frame.origin + inner_offset + render_tree.inner.offset,
+                        frame.size,
+                    );
+
+                    let mut new_offset = state.scroll_offset;
+
+                    // Adjust vertical offset
+                    if target_frame.origin.y < scroll_view_frame.origin.y {
+                        // Target is above visible area
+                        new_offset.y += scroll_view_frame.origin.y - target_frame.origin.y;
+                        context.request_redraw();
+                    } else if target_frame.y_end() > scroll_view_frame.y_end() {
+                        // Target is below visible area
+                        new_offset.y -= target_frame.y_end() - scroll_view_frame.y_end();
+                        context.request_redraw();
+                    }
+
+                    // Adjust horizontal offset
+                    if target_frame.origin.x < scroll_view_frame.origin.x {
+                        // Target is left of visible area
+                        new_offset.x += scroll_view_frame.origin.x - target_frame.origin.x;
+                        context.request_redraw();
+                    } else if target_frame.x_end() > scroll_view_frame.x_end() {
+                        // Target is right of visible area
+                        new_offset.x -= target_frame.x_end() - scroll_view_frame.x_end();
+                        context.request_redraw();
+                    }
+
+                    state.scroll_offset = new_offset;
+                    *render_tree.offset_mut() = new_offset;
+                }
+
+                // Always adjust shape with offset so parent views see correct position
+                *shape = shape
+                    .clone()
+                    .with_offset(render_tree.offset() + render_tree.inner.offset);
+            }
+
+            return result;
+        }
+
         let (result, delta) = match event {
-            Event::Scroll(delta) => (EventResult::new(true, true, true), *delta),
+            Event::Scroll(delta) => {
+                context.request_view_rebuild();
+                (EventResult::Deferred, *delta)
+            }
             Event::Touch(touch) => {
                 // Only track the first touch. This could cause problems if
                 // the touch is "lost" without an ended or cancelled event.
@@ -407,6 +492,7 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
                         render_tree.inner_mut(),
                         captures,
                         &mut state.inner_state,
+                        focus,
                     );
                 }
                 let point = touch.location.into();
@@ -421,23 +507,22 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
                                 touch_id: touch.id,
                             };
 
-                            (
-                                EventResult::new(true, false, true).merging(
-                                    self.inner.handle_event(
-                                        &event.offset(
-                                            -render_tree.offset() - render_tree.inner.offset,
-                                        ),
-                                        context,
-                                        render_tree.inner_mut(),
-                                        captures,
-                                        &mut state.inner_state,
-                                    ),
-                                ),
-                                Point::zero(),
-                            )
+                            context.request_redraw();
+                            // returning the inner result here would move focus before we're committed to scrolling
+                            {
+                                let _inner_result = self.inner.handle_event(
+                                    &event.offset(-render_tree.offset() - render_tree.inner.offset),
+                                    context,
+                                    render_tree.inner_mut(),
+                                    captures,
+                                    &mut state.inner_state,
+                                    focus,
+                                );
+                                (EventResult::handled_unfocused(), Point::zero())
+                            }
                         } else {
                             // Touches cannot start outside the bounds, return early
-                            return EventResult::new(false, false, false);
+                            return EventResult::Deferred;
                         }
                     }
                     Phase::Moved => match &mut state.interaction {
@@ -452,6 +537,7 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
                             *last_point = point;
                             let total_scroll = point - *drag_start;
 
+                            context.request_redraw();
                             // 4 pixels of wiggle without cancelling inner
                             if !*is_exclusive
                                 && (total_scroll.x.abs() >= 4 || total_scroll.y.abs() >= 4)
@@ -460,23 +546,25 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
                                 *is_exclusive = true;
                                 let mut cancel_event = touch.clone();
                                 cancel_event.phase = Phase::Cancelled;
-                                (
-                                    EventResult::new(true, false, true).merging(
-                                        self.inner.handle_event(
-                                            &Event::Touch(cancel_event),
-                                            context,
-                                            render_tree.inner_mut(),
-                                            captures,
-                                            &mut state.inner_state,
-                                        ),
-                                    ),
-                                    delta,
-                                )
+                                // returning the inner result here would move focus before we're committed to scrolling
+                                {
+                                    let _inner_result = self.inner.handle_event(
+                                        &Event::Touch(cancel_event),
+                                        context,
+                                        render_tree.inner_mut(),
+                                        captures,
+                                        &mut state.inner_state,
+                                        focus,
+                                    );
+                                    (EventResult::handled_unfocused(), delta)
+                                }
                             } else {
-                                (EventResult::new(true, false, true), delta)
+                                (EventResult::handled_unfocused(), delta)
                             }
                         }
-                        ScrollInteraction::Idle => (EventResult::default(), Point::zero()),
+                        ScrollInteraction::Idle => {
+                            (EventResult::handled_unfocused(), Point::zero())
+                        }
                     },
                     Phase::Ended => match state.interaction {
                         ScrollInteraction::Dragging {
@@ -489,28 +577,28 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
 
                             let delta = point - last_point;
 
+                            context.request_view_rebuild();
                             if is_exclusive {
                                 // If we don't set this, the scroll view will not animate the
                                 // snap back
                                 render_tree.inner.subtree.value = true;
-                                (EventResult::new(true, true, true), delta)
+                                (EventResult::handled_unfocused(), delta)
                             } else {
                                 let touch_offset = render_tree.offset() + render_tree.inner.offset;
                                 let mut touch = touch.clone();
                                 touch.location -= touch_offset.into();
 
-                                (
-                                    EventResult::new(true, true, true).merging(
-                                        self.inner.handle_event(
-                                            &Event::Touch(touch),
-                                            context,
-                                            render_tree.inner_mut(),
-                                            captures,
-                                            &mut state.inner_state,
-                                        ),
-                                    ),
-                                    delta,
-                                )
+                                {
+                                    let inner_result = self.inner.handle_event(
+                                        &Event::Touch(touch),
+                                        context,
+                                        render_tree.inner_mut(),
+                                        captures,
+                                        &mut state.inner_state,
+                                        focus,
+                                    );
+                                    (inner_result, delta)
+                                }
                             }
                         }
                         ScrollInteraction::Idle => (
@@ -520,22 +608,25 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
                                 render_tree.inner_mut(),
                                 captures,
                                 &mut state.inner_state,
+                                focus,
                             ),
                             Point::zero(),
                         ),
                     },
                     Phase::Cancelled => {
                         state.interaction = ScrollInteraction::Idle;
-                        (
-                            EventResult::new(true, true, true).merging(self.inner.handle_event(
+                        context.request_view_rebuild();
+                        {
+                            let inner_result = self.inner.handle_event(
                                 event,
                                 context,
                                 render_tree.inner_mut(),
                                 captures,
                                 &mut state.inner_state,
-                            )),
-                            Point::zero(),
-                        )
+                                focus,
+                            );
+                            (inner_result, Point::zero())
+                        }
                     }
                     Phase::Hovering(_) => (
                         self.inner.handle_event(
@@ -544,6 +635,7 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
                             render_tree.inner_mut(),
                             captures,
                             &mut state.inner_state,
+                            focus,
                         ),
                         Point::zero(),
                     ),
@@ -556,6 +648,7 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
                     render_tree.inner_mut(),
                     captures,
                     &mut state.inner_state,
+                    focus,
                 ),
                 Point::zero(),
             ),
@@ -592,7 +685,7 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
         // This is used to avoid recomputing the entire view tree every time the
         // scroll position changes. If there's scroll jank it's probably related
         // to this optimization.
-        if delta != Point::zero() && !result.recompute_view {
+        if delta != Point::zero() && !context.view_rebuild_requested.get() {
             let subview_offset = {
                 let permitted_offset_x = render_tree
                     .inner_size

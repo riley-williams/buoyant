@@ -32,6 +32,7 @@ where
 {
     type Sublayout = InnerView::Sublayout;
     type State = InnerView::State;
+    type FocusTree = InnerView::FocusTree;
 
     fn priority(&self) -> i8 {
         self.inner.priority()
@@ -82,9 +83,18 @@ where
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
+        focus: &mut Self::FocusTree,
     ) -> EventResult {
         let event = event.offset(-render_tree.offset);
         self.inner
-            .handle_event(&event, context, &mut render_tree.subtree, captures, state)
+            .handle_event(
+                &event,
+                context,
+                &mut render_tree.subtree,
+                captures,
+                state,
+                focus,
+            )
+            .with_offset(render_tree.offset)
     }
 }

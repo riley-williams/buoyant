@@ -1,6 +1,6 @@
 use crate::{
     primitives::Interpolate,
-    render::{AnimatedJoin, AnimationDomain, Render},
+    render::{AnimatedJoin, AnimationDomain, ContentShape, IntrinsicShape, Render},
     render_target::RenderTarget,
 };
 
@@ -62,8 +62,23 @@ impl<T: Render<C>, C: Interpolate + Copy> Render<C> for Opacity<T> {
     }
 }
 
+impl<T: IntrinsicShape> IntrinsicShape for Opacity<T> {
+    fn content_shape(&self) -> ContentShape {
+        if self.opacity > 0 {
+            self.subtree.content_shape()
+        } else {
+            ContentShape::Empty
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    use crate::{
+        primitives::{Point, Size},
+        render::Rect,
+    };
+
     use super::*;
     use core::time::Duration;
 
@@ -106,5 +121,11 @@ mod tests {
             target.opacity,
             Interpolate::interpolate(source.opacity, original_target.opacity, 128)
         );
+    }
+
+    #[test]
+    fn empty_content_shape_when_transparent() {
+        let v = Opacity::new(Rect::new(Point::zero(), Size::new(10, 10)), 0);
+        assert_eq!(v.content_shape(), ContentShape::Empty);
     }
 }

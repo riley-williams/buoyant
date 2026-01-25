@@ -1,12 +1,16 @@
 mod circle;
 mod line;
+mod no_shape;
 mod rectangle;
 mod rounded_rectangle;
 
 pub use circle::Circle;
 pub use line::Line;
+pub use no_shape::NoShape;
 pub use rectangle::Rectangle;
 pub use rounded_rectangle::RoundedRectangle;
+
+use crate::primitives::transform::CoordinateSpaceTransform;
 
 use super::Point;
 
@@ -28,7 +32,7 @@ pub enum PathEl {
     ClosePath,
 }
 
-pub trait Shape {
+pub trait Shape: CoordinateSpaceTransform {
     type PathElementsIter<'iter>: Iterator<Item = PathEl> + 'iter
     where
         Self: 'iter;
