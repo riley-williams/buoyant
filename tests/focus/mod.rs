@@ -18,6 +18,7 @@ mod view {
     mod hstack;
     mod match_view;
     mod option;
+    mod rotary;
     mod view_that_fits;
     mod vstack;
     mod zstack;
