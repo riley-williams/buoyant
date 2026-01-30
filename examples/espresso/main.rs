@@ -10,15 +10,14 @@ mod view;
 use std::process::exit;
 use std::time::{Duration, Instant};
 
-use buoyant::environment::DefaultEnvironment;
-use buoyant::event::{Event, EventContext, EventResult, simulator::MouseTracker};
-use buoyant::focus::{DefaultFocus, FocusAction, FocusDirection, Role};
-use buoyant::primitives::{Point, transform::LinearTransform};
-use buoyant::render::{AnimatedJoin, AnimationDomain, ContentShape, Render};
-use buoyant::render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _, SolidBrush, Stroke};
-use buoyant::{animation::Animation, if_view, match_view, view::prelude::*};
+use buoyant::app::{App, Harness};
+use buoyant::event::{Event, Key, simulator::MouseTracker};
+use buoyant::focus::{BoundaryBehavior, FocusAction, Role};
+use buoyant::render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _};
+use buoyant::{animation::Animation, match_view, view::prelude::*};
 use embedded_graphics::prelude::*;
 use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, SimulatorEvent, Window};
+
 #[allow(unused)]
 mod spacing {
     /// Spacing between sections / groups
@@ -71,7 +70,6 @@ mod color {
     pub const FOREGROUND_SECONDARY: Space = Space::CSS_LIGHT_SLATE_GRAY;
 }
 
-#[expect(clippy::too_many_lines)]
 fn main() {
     let size = Size::new(480, 320);
     let mut display: SimulatorDisplay<color::Space> = SimulatorDisplay::new(size);
@@ -83,151 +81,40 @@ fn main() {
     let app_start = Instant::now();
     let mut touch_tracker = MouseTracker::new();
 
-    let mut app_data = AppState::default();
-    let mut view = root_view(&app_data);
-    let mut view_state = view.build_state(&mut app_data);
+    // Create app with view lifecycle management
+    let mut app = App::new(AppState::default(), size.into(), root_view)
+        .with_roles(Role::Button | Role::Container);
 
-    // Create initial source and target trees for animation
-    let time = app_start.elapsed();
-    let env = DefaultEnvironment::new(time);
-    let layout = view.layout(&target.size().into(), &env, &mut app_data, &mut view_state);
-
-    let mut source_tree = &mut view.render_tree(
-        &layout.sublayouts,
-        Point::default(),
-        &env,
-        &mut app_data,
-        &mut view_state,
-    );
-    let mut target_tree = &mut view.render_tree(
-        &layout.sublayouts,
-        Point::default(),
-        &env,
-        &mut app_data,
-        &mut view_state,
-    );
-
-    // obtain initial focus
-    let mut focus_state = DefaultFocus::default_first();
-    println!("Focus tree size: {} bytes", size_of_val(&focus_state));
-    let result = view.handle_event(
-        &Event::Focus(FocusAction::Focus(FocusDirection::Forward)),
-        &EventContext::new(time).with_roles(Role::Button | Role::Container),
-        target_tree,
-        &mut app_data,
-        &mut view_state,
-        &mut focus_state,
-    );
-    let mut focus_rect = ContentShape::Empty;
-    match result {
-        EventResult::Handled { shape, .. } => {
-            focus_rect = shape.clone();
-        }
-        EventResult::Deferred => (),
-    }
+    // Acquire initial focus
+    app.focus_forward();
 
     // Main event loop
     loop {
-        let time = app_start.elapsed();
-        let domain = AnimationDomain::top_level(time);
-        let context = EventContext::new(time).with_roles(Role::Button | Role::Container);
+        // Sync app time with real wall clock time
+        app.set_time(app_start.elapsed());
 
-        // Handle touch events, merging into a single result
-        window
+        // Collect and process simulator events
+        let events: Vec<_> = window
             .events()
             .filter_map(|event| {
-                // The simulator won't exit if we don't handle this
                 if event == SimulatorEvent::Quit {
                     exit(0);
                 }
                 touch_tracker.process_event(event)
             })
-            .for_each(|event| {
-                // if event == Event::KeyUp(Key::Escape) {
-                //     exit(0);
-                // }
-                let result = view.handle_event(
-                    &event,
-                    &context,
-                    target_tree,
-                    &mut app_data,
-                    &mut view_state,
-                    &mut focus_state,
-                );
-                println!("{result:?}");
-                match result {
-                    EventResult::Handled { shape, .. } => {
-                        focus_rect = shape.clone();
-                    }
-                    EventResult::Deferred => (),
-                }
-            });
+            .collect();
 
-        // Only recompute the view, layout, and render trees if necessary.
-        // Additional handling may be needed to recompute the view in response to external events.
-        if context.view_rebuild_requested.get() {
-            // Join source and target trees at current time, "freezing" animation progress
-            target_tree.join_from(source_tree, &domain);
-            // Swap trees so the current target becomes the next source.
-            // Note this swaps the references instead of the whole section of memory
-            core::mem::swap(&mut source_tree, &mut target_tree);
-            // Create new view and target tree
-            view = root_view(&app_data);
-            let env = DefaultEnvironment::new(time);
-            let layout = view.layout(&target.size().into(), &env, &mut app_data, &mut view_state);
-            *target_tree = view.render_tree(
-                &layout.sublayouts,
-                Point::default(),
-                &env,
-                &mut app_data,
-                &mut view_state,
-            );
-
-            // Obtain updated focus + shape
-            let result = view.handle_event(
-                &Event::Focus(FocusAction::Focus(FocusDirection::Forward)),
-                &context,
-                target_tree,
-                &mut app_data,
-                &mut view_state,
-                &mut focus_state,
-            );
-            match result {
-                EventResult::Handled { shape, .. } => {
-                    focus_rect = shape.clone();
-                }
-                EventResult::Deferred => (),
-            }
+        for event in events {
+            app.send(event);
         }
 
-        // Only render if active animation was reported, the view changed, or redraw was requested
-        if target.clear_animation_status()
-            || context.view_rebuild_requested.get()
-            || context.redraw_requested.get()
-        {
+        // Only render if active animation was reported or redraw needed
+        if app.should_redraw() || target.clear_animation_status() {
             // Render animated transition between source and target trees
-            Render::render_animated(
-                &mut target,
-                source_tree,
-                target_tree,
-                &color::Space::WHITE,
-                &domain,
-            );
-            // Draw focus overlay, if available
-            let stroke = Stroke::new(2);
-            let brush = SolidBrush::new(color::Space::CSS_YELLOW);
-            match &focus_rect {
-                ContentShape::Rectangle(rect) => {
-                    target.stroke(&stroke, LinearTransform::identity(), &brush, None, rect);
-                }
-                ContentShape::RoundedRectangle(rrect) => {
-                    target.stroke(&stroke, LinearTransform::identity(), &brush, None, rrect);
-                }
-                ContentShape::Circle(circle) => {
-                    target.stroke(&stroke, LinearTransform::identity(), &brush, None, circle);
-                }
-                ContentShape::Empty | _ => (),
-            }
+            app.render_animated(&mut target, &color::Space::WHITE);
+
+            // Draw focus overlay
+            app.draw_focus_overlay(&mut target, color::Space::CSS_YELLOW, 1);
 
             // Send to the display
             window.update(target.display());
@@ -279,6 +166,20 @@ fn root_view(state: &AppState) -> impl View<color::Space, AppState> + use<> {
             },
         }),
     ))
+    .popover(state.clean_overlay.as_ref(), view::clean::clean_overlay)
+    .bound_focus(BoundaryBehavior::Wrap)
+    .focus_touches()
+    .map_event::<(), _>(|event: &Event, _state| match event {
+        Event::KeyDown(key) => match key {
+            Key::UpArrow | Key::LeftArrow => Some(FocusAction::Previous.into()),
+            Key::DownArrow | Key::RightArrow => Some(FocusAction::Next.into()),
+            Key::Character(' ' | '\n') => Some(FocusAction::Select.into()),
+            Key::Backspace | Key::Delete => Some(FocusAction::Blur.into()),
+            _ => Some(event.clone()),
+        },
+        Event::KeyUp(_) => None, // Eat key up events
+        _ => Some(event.clone()),
+    })
 }
 
 fn tab_bar(tab: Tab) -> impl View<color::Space, Tab> + use<> {
@@ -302,33 +203,25 @@ fn tab_item<C, F: Fn(&mut C)>(
     is_selected: bool,
     on_tap: F,
 ) -> impl View<color::Space, C> + use<C, F> {
-    let (text_color, bar_height) = if is_selected {
-        (color::ACCENT, 4)
-    } else {
-        (color::FOREGROUND_SECONDARY, 0)
-    };
-
-    Button::new(on_tap, move |is_pressed: bool| {
-        VStack::new((
-            ZStack::new((
-                if_view!((is_selected || is_pressed) {
-                    Rectangle.foreground_color(color::BACKGROUND_SECONDARY)
-                }),
-                VStack::new((
-                    Circle.frame().with_width(15),
-                    Text::new(name, &*font::FONT).with_font_size(font::CAPTION_SIZE),
-                ))
-                .with_spacing(spacing::ELEMENT)
-                .padding(Edges::All, spacing::ELEMENT)
-                .hint_background_color(if is_selected || is_pressed {
-                    color::BACKGROUND_SECONDARY
-                } else {
-                    color::BACKGROUND
-                }),
-            )),
-            Rectangle.frame().with_height(bar_height),
+    Button::new(on_tap, move |s| {
+        let (background, foreground) = match (is_selected, s.is_pressed() || s.is_focused()) {
+            (true, true) => (color::BACKGROUND_SECONDARY, color::ACCENT),
+            (true, false) => (color::BACKGROUND_SECONDARY, color::FOREGROUND_SECONDARY),
+            (false, true) => (color::BACKGROUND, color::ACCENT),
+            _ => (color::BACKGROUND, color::FOREGROUND_SECONDARY),
+        };
+        ZStack::new((
+            Rectangle.foreground_color(background),
+            VStack::new((
+                Circle.frame().with_width(15),
+                Text::new(name, &*font::FONT).with_font_size(font::CAPTION_SIZE),
+            ))
+            .with_spacing(spacing::ELEMENT)
+            .padding(Edges::All, spacing::ELEMENT)
+            .hint_background_color(background),
         ))
-        .foreground_color(text_color)
+        .with_vertical_alignment(VerticalAlignment::Bottom)
+        .foreground_color(foreground)
         .flex_frame()
         .with_min_width(100)
     })
