@@ -19,6 +19,7 @@ mod foreground_color;
 mod geometry_group;
 mod hidden;
 mod hint_background;
+mod map_event;
 mod offset;
 mod opacity;
 mod overlay;
@@ -54,9 +55,10 @@ pub(crate) use transition::Transition;
 
 use crate::{
     animation::Animation,
+    event::Event,
     layout::{Alignment, HorizontalAlignment, VerticalAlignment},
     primitives::{Point, UnitPoint},
-    view::{ViewMarker, shape::Shape},
+    view::{ViewMarker, modifier::map_event::MapEvent, shape::Shape},
 };
 
 impl<T> ViewModifier for T where T: ViewMarker {}
@@ -464,6 +466,14 @@ pub trait ViewModifier: Sized + ViewMarker {
     /// such as with the [`ViewModifier::opacity`] modifier or during a [`ViewModifier::transition`].
     fn hint_background_color<C>(self, color: C) -> HintBackground<Self, C> {
         HintBackground::new(self, color)
+    }
+
+    /// Maps an event, delegating handling of the event to the modified view.
+    fn map_event<S: Default, F: Fn(&Event, &mut S) -> Option<Event>>(
+        self,
+        mapping: F,
+    ) -> MapEvent<Self, F, S> {
+        MapEvent::new(self, mapping)
     }
 
     /// Offsets a view by the specified values.
