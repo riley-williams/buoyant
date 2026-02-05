@@ -4,8 +4,10 @@ mod modifier {
     mod clip;
     mod frame;
     mod hidden;
+    mod multiplex_focus;
     mod opacity;
     mod overlay;
+    mod unfocusable;
 }
 mod view {
     mod foreach;

@@ -12,6 +12,7 @@ mod background_color;
 mod bound_focus;
 mod clipped;
 mod erase_captures;
+mod exclusive_focus;
 mod fixed_frame;
 mod fixed_size;
 mod flex_frame;
@@ -29,6 +30,7 @@ pub mod padding;
 mod priority;
 mod scale_effect;
 mod transition;
+mod unfocusable;
 
 use crate::focus::{BoundaryBehavior, FocusGroupSet};
 pub(crate) use animated::Animated;
@@ -38,6 +40,7 @@ pub(crate) use background_color::BackgroundColor;
 pub(crate) use bound_focus::BoundFocus;
 pub(crate) use clipped::Clipped;
 pub(crate) use erase_captures::EraseCaptures;
+pub(crate) use exclusive_focus::ExclusiveFocus;
 use fixed::traits::ToFixed;
 pub(crate) use fixed_frame::FixedFrame;
 pub(crate) use fixed_size::FixedSize;
@@ -54,10 +57,12 @@ pub(crate) use padding::Padding;
 pub(crate) use priority::Priority;
 pub(crate) use scale_effect::ScaleEffect;
 pub(crate) use transition::Transition;
+pub(crate) use unfocusable::Unfocusable;
 
 use crate::{
     animation::Animation,
     event::Event,
+    focus::FocusGroup,
     layout::{Alignment, HorizontalAlignment, VerticalAlignment},
     primitives::{Point, UnitPoint},
     view::{ViewMarker, modifier::map_event::MapEvent, shape::Shape},
@@ -406,6 +411,14 @@ pub trait ViewModifier: Sized + ViewMarker {
         FixedFrame::new(self).with_width(width).with_height(height)
     }
 
+    /// Focus events are only passed to the subtree when the incoming event's focus
+    /// group matches the specified group.
+    ///
+    /// Any non-focus events handled by the subtree will inherit the focus group.
+    fn exclusive_focus(self, group: FocusGroup) -> ExclusiveFocus<Self> {
+        ExclusiveFocus::new(self, group)
+    }
+
     /// Creates a new coordinate space under which views are positioned relative to a
     /// zero offset, allowing views within the coordinate space to animate relative
     /// to a shared origin.
@@ -643,5 +656,11 @@ pub trait ViewModifier: Sized + ViewMarker {
     /// ```
     fn transition<T: crate::transition::Transition>(self, transition: T) -> Transition<Self, T> {
         Transition::new(transition, self)
+    }
+
+    /// Focus events are only passed to the subtree when the incoming event's focus
+    /// group matches the specified group.
+    fn unfocusable(self) -> Unfocusable<Self> {
+        Unfocusable::new(self)
     }
 }
