@@ -20,6 +20,7 @@ mod geometry_group;
 mod hidden;
 mod hint_background;
 mod map_event;
+mod multiplex_focus;
 mod offset;
 mod opacity;
 mod overlay;
@@ -29,7 +30,7 @@ mod priority;
 mod scale_effect;
 mod transition;
 
-use crate::focus::BoundaryBehavior;
+use crate::focus::{BoundaryBehavior, FocusGroupSet};
 pub(crate) use animated::Animated;
 pub(crate) use aspect_ratio::AspectRatio;
 pub(crate) use background::BackgroundView;
@@ -45,6 +46,7 @@ pub(crate) use foreground_color::ForegroundStyle;
 pub(crate) use geometry_group::GeometryGroup;
 pub(crate) use hidden::Hidden;
 pub(crate) use hint_background::HintBackground;
+pub(crate) use multiplex_focus::MultiplexFocus;
 pub(crate) use offset::Offset;
 pub(crate) use opacity::Opacity;
 pub(crate) use overlay::OverlayView;
@@ -474,6 +476,16 @@ pub trait ViewModifier: Sized + ViewMarker {
         mapping: F,
     ) -> MapEvent<Self, F, S> {
         MapEvent::new(self, mapping)
+    }
+
+    /// Maintains multiple independent focus trees.
+    ///
+    /// The provided groups must be disjoint.
+    fn multiplex_focus<const N: usize>(
+        self,
+        groups: [FocusGroupSet; N],
+    ) -> MultiplexFocus<Self, N> {
+        MultiplexFocus::new(self, groups)
     }
 
     /// Offsets a view by the specified values.

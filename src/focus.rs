@@ -110,6 +110,12 @@ impl FocusGroupSet {
     pub const fn new_any() -> Self {
         Self(0b1111_1111)
     }
+
+    /// Returns true if this set contains the specified focus group
+    #[must_use]
+    pub const fn contains(self, group: FocusGroup) -> bool {
+        (self.0 & group.0) != 0
+    }
 }
 
 impl core::ops::BitOr for FocusGroup {
