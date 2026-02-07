@@ -2,6 +2,7 @@ mod modifier {
     mod background;
     mod bound_focus;
     mod clip;
+    mod focus_touches;
     mod frame;
     mod hidden;
     mod multiplex_focus;
@@ -10,6 +11,7 @@ mod modifier {
     mod unfocusable;
 }
 mod view {
+    mod button;
     mod foreach;
     mod geometry_reader;
     mod hstack;
