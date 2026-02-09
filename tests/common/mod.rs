@@ -5,6 +5,7 @@ use std::time::Duration;
 use buoyant::{
     environment::{DefaultEnvironment, LayoutEnvironment},
     event::Event,
+    focus::DefaultFocus,
     layout::{Alignment, LayoutDirection},
     primitives::{Point, ProposedDimensions, Size},
     render_target::FixedTextBuffer,
@@ -161,6 +162,7 @@ pub fn tap<V: View<char, Data>, Data: ?Sized>(
         &mut tree,
         captures,
         state,
+        &mut DefaultFocus::default_first(),
     );
 
     view.handle_event(
@@ -174,5 +176,6 @@ pub fn tap<V: View<char, Data>, Data: ?Sized>(
         &mut tree,
         captures,
         state,
+        &mut DefaultFocus::default_first(),
     );
 }

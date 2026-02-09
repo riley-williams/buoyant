@@ -6,6 +6,7 @@ use crate::common::{touch_down, touch_move, touch_up};
 use buoyant::{
     environment::DefaultEnvironment,
     event::EventContext,
+    focus::DefaultFocus,
     font::CharacterBufferFont,
     primitives::{Point, Size},
     render::Render,
@@ -94,6 +95,7 @@ fn increment_single_frame() {
         &mut tree,
         &mut app_state,
         &mut view_state,
+        &mut DefaultFocus::default_first(),
     );
     assert_eq!(app_state, AppState { a: 0, b: 0 });
     view.handle_event(
@@ -102,6 +104,7 @@ fn increment_single_frame() {
         &mut tree,
         &mut app_state,
         &mut view_state,
+        &mut DefaultFocus::default_first(),
     );
     assert_eq!(app_state, AppState { a: 1, b: 0 });
 
@@ -135,6 +138,7 @@ fn drag_cancel() {
         &mut tree,
         &mut app_state,
         &mut view_state,
+        &mut DefaultFocus::default_first(),
     );
     assert_eq!(app_state, AppState { a: 0, b: 0 });
     view.handle_event(
@@ -143,6 +147,7 @@ fn drag_cancel() {
         &mut tree,
         &mut app_state,
         &mut view_state,
+        &mut DefaultFocus::default_first(),
     );
     assert_eq!(app_state, AppState { a: 0, b: 0 });
     view.handle_event(
@@ -151,6 +156,7 @@ fn drag_cancel() {
         &mut tree,
         &mut app_state,
         &mut view_state,
+        &mut DefaultFocus::default_first(),
     );
     assert_eq!(app_state, AppState { a: 0, b: 0 });
 }
@@ -174,6 +180,7 @@ fn drag_cancel_uncancel() {
         &mut tree,
         &mut app_state,
         &mut view_state,
+        &mut DefaultFocus::default_first(),
     );
     assert_eq!(app_state, AppState { a: 0, b: 0 });
     view.handle_event(
@@ -182,6 +189,7 @@ fn drag_cancel_uncancel() {
         &mut tree,
         &mut app_state,
         &mut view_state,
+        &mut DefaultFocus::default_first(),
     );
     assert_eq!(app_state, AppState { a: 0, b: 0 });
     view.handle_event(
@@ -190,6 +198,7 @@ fn drag_cancel_uncancel() {
         &mut tree,
         &mut app_state,
         &mut view_state,
+        &mut DefaultFocus::default_first(),
     );
     assert_eq!(app_state, AppState { a: 0, b: 0 });
     view.handle_event(
@@ -198,6 +207,7 @@ fn drag_cancel_uncancel() {
         &mut tree,
         &mut app_state,
         &mut view_state,
+        &mut DefaultFocus::default_first(),
     );
     assert_eq!(app_state, AppState { a: 1, b: 0 });
 }

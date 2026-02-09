@@ -2,6 +2,7 @@ mod common;
 use crate::common::helpers::tree;
 use crate::common::{touch_down, touch_move};
 
+use buoyant::focus::DefaultFocus;
 use buoyant::{
     environment::DefaultEnvironment,
     event::EventContext,
@@ -231,6 +232,7 @@ fn preserves_inner_state() {
         &mut render_tree,
         &mut captures,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
 
     render_tree = tree(
@@ -258,6 +260,7 @@ fn preserves_inner_state() {
         &mut render_tree,
         &mut captures,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
 
     render_tree = tree(

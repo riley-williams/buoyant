@@ -184,3 +184,96 @@ impl ContentShape {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use crate::primitives::{
+        Size,
+        geometry::{Circle, Rectangle, RoundedRectangle},
+    };
+
+    use super::*;
+
+    #[test]
+    fn rectangle_bounding_box() {
+        let rect = Rectangle {
+            origin: Point { x: 10, y: 20 },
+            size: Size {
+                width: 30,
+                height: 40,
+            },
+        }
+        .with_offset(Point { x: 5, y: 5 });
+
+        let bounding_box = rect.bounding_box();
+        assert_eq!(
+            bounding_box,
+            Rectangle {
+                origin: Point { x: 15, y: 25 },
+                size: Size {
+                    width: 30,
+                    height: 40
+                }
+            }
+        );
+        let content_shape = ContentShape::Rectangle(rect);
+        assert_eq!(content_shape.bounding_box(), Some(bounding_box));
+    }
+
+    #[test]
+    fn circle_bounding_box() {
+        let circle = Circle {
+            origin: Point { x: 10, y: 20 },
+            diameter: 10,
+        }
+        .with_offset(Point { x: 5, y: 5 });
+
+        let bounding_box = circle.bounding_box();
+        assert_eq!(
+            bounding_box,
+            Rectangle {
+                origin: Point { x: 15, y: 25 },
+                size: Size {
+                    width: 10,
+                    height: 10
+                }
+            }
+        );
+        let content_shape = ContentShape::Circle(circle);
+        assert_eq!(content_shape.bounding_box(), Some(bounding_box));
+    }
+
+    #[test]
+    fn rounded_rectangle_bounding_box() {
+        let rrect = RoundedRectangle {
+            origin: Point { x: 10, y: 20 },
+            size: Size {
+                width: 30,
+                height: 40,
+            },
+            radius: 5,
+        }
+        .with_offset(Point { x: 5, y: 5 });
+
+        let bounding_box = rrect.bounding_box();
+        assert_eq!(
+            bounding_box,
+            Rectangle {
+                origin: Point { x: 15, y: 25 },
+                size: Size {
+                    width: 30,
+                    height: 40
+                }
+            }
+        );
+        let content_shape = ContentShape::RoundedRectangle(rrect);
+        assert_eq!(content_shape.bounding_box(), Some(bounding_box));
+    }
+
+    #[test]
+    fn empty_content_shape() {
+        let content_shape = ContentShape::Empty;
+        assert_eq!(content_shape.bounding_box(), None);
+        assert!(!content_shape.contains(Point { x: 0, y: 0 }));
+    }
+}

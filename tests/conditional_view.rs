@@ -1,3 +1,4 @@
+use buoyant::focus::DefaultFocus;
 use buoyant::font::CharacterBufferFont;
 use buoyant::if_view;
 use buoyant::primitives::{Point, Size};
@@ -101,4 +102,41 @@ fn if_else_event_routing() {
     let view = if_else_view(false);
     tap(&view, &mut x, &mut state, size, 1, 1);
     assert_eq!(x, 0);
+}
+
+// MARK: Focus tests
+
+use buoyant::{
+    event::EventResult,
+    focus::{FocusAction, FocusDirection, Role},
+};
+
+#[test]
+fn empty_view_returns_deferred() {
+    fn view() -> impl View<char, ()> {
+        EmptyView
+    }
+
+    let buffer = FixedTextBuffer::<5, 5>::default();
+    let env = TestEnv::default();
+
+    let view = view();
+    let mut state = view.build_state(&mut ());
+    let layout = view.layout(&buffer.size().into(), &env, &mut (), &mut state);
+    let mut tree = view.render_tree(&layout.sublayouts, Point::zero(), &env, &mut (), &mut state);
+
+    // EmptyView should return Deferred for focus events
+    let result = view.handle_event(
+        &FocusAction::Focus(FocusDirection::Forward).into(),
+        &buoyant::event::EventContext::new(core::time::Duration::ZERO).with_roles(Role::Button),
+        &mut tree,
+        &mut (),
+        &mut state,
+        &mut DefaultFocus::default_first(),
+    );
+
+    assert!(
+        matches!(result, EventResult::Deferred),
+        "EmptyView should return Deferred for focus"
+    );
 }

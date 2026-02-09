@@ -5,6 +5,7 @@ use embedded_touch::{Tool, Touch};
 use buoyant::{
     environment::DefaultEnvironment,
     event::Event,
+    focus::DefaultFocus,
     primitives::{Point, Size},
     view::prelude::*,
 };
@@ -39,6 +40,7 @@ fn nonzero_opacity_hands_off_event() {
         &mut tree,
         &mut x,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
     view.handle_event(
         &Event::Touch(Touch::new(
@@ -51,6 +53,7 @@ fn nonzero_opacity_hands_off_event() {
         &mut tree,
         &mut x,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
 
     assert_eq!(x, 1);
@@ -86,6 +89,7 @@ fn zero_opacity_skips_event_handling() {
         &mut tree,
         &mut x,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
     view.handle_event(
         &Event::Touch(Touch::new(
@@ -98,6 +102,7 @@ fn zero_opacity_skips_event_handling() {
         &mut tree,
         &mut x,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
 
     assert_eq!(x, 0);

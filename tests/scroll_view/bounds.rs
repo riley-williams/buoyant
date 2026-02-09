@@ -2,6 +2,7 @@ use std::time::Duration;
 
 use buoyant::{
     event::EventContext,
+    focus::DefaultFocus,
     render::Render,
     render_target::FixedTextBuffer,
     view::{prelude::*, scroll_view::ScrollDirection},
@@ -164,23 +165,27 @@ fn tap_button(x: i32, y: i32, should_recompute: bool) -> TestState {
         &buffer.text
     );
 
-    let result = view.handle_event(
+    let ctx_down = ctx(2);
+    view.handle_event(
         &touch_down(x, y),
-        &ctx(2),
+        &ctx_down,
         &mut tree,
         &mut captures,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
-    assert_eq!(result.recompute_view, should_recompute);
+    assert_eq!(ctx_down.view_rebuild_requested.get(), should_recompute);
 
-    let result = view.handle_event(
+    let ctx_up = ctx(3);
+    view.handle_event(
         &touch_up(x, y),
-        &ctx(3),
+        &ctx_up,
         &mut tree,
         &mut captures,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
-    assert_eq!(result.recompute_view, should_recompute);
+    assert_eq!(ctx_up.view_rebuild_requested.get(), should_recompute);
 
     buffer.clear();
 

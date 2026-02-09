@@ -2,6 +2,7 @@ use core::time::Duration;
 
 use buoyant::{
     event::EventContext,
+    focus::DefaultFocus,
     primitives::Size,
     render::{AnimationDomain, Render},
     render_target::FixedTextBuffer,
@@ -55,8 +56,9 @@ fn scroll_down_animates_back() {
         &mut render_tree,
         &mut captures,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
-    assert!(event_result.handled);
+    assert!(event_result.is_handled());
 
     // Pull down just offscreen and release
     let event_result = view.handle_event(
@@ -65,8 +67,9 @@ fn scroll_down_animates_back() {
         &mut render_tree,
         &mut captures,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
-    assert!(event_result.handled);
+    assert!(event_result.is_handled());
 
     buffer.clear();
     render_tree.render(&mut buffer, &' ');
@@ -87,8 +90,9 @@ fn scroll_down_animates_back() {
         &mut render_tree,
         &mut captures,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
-    assert!(event_result.handled);
+    assert!(event_result.is_handled());
 
     let new_tree = tree(
         &view,
