@@ -57,6 +57,10 @@ rusttype = { version = "^0.9.3", optional = true }
 
 [dev-dependencies]
 tinytga = "^0.5"
+clap = { version = "4", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rayon = "1"
 
 [profile.release]
 debug = true
@@ -85,7 +89,10 @@ name = "quickstart"
 required-features = ["embedded-graphics", "embedded-graphics-simulator"]
 
 [workspace]
-members = ["buoyant-examples/battery"]
+members = [
+  "buoyant-examples/battery",
+  "buoyant-harness",
+]
 
 [workspace.dependencies]
 embedded-graphics = "0.8.1"

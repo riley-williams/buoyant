@@ -279,6 +279,21 @@ where
         self.requires_redraw = false;
     }
 
+    /// Renders the view to the given render target.
+    ///
+    /// If a rebuild is pending, it will be performed before rendering.
+    /// Rebuilds can be eagerly triggered by calling [`rebuild()`](Self::rebuild()).
+    pub fn render_only_target<T, C>(&mut self, target: &mut T, color: &C)
+    where
+        V: View<C, S>,
+        T: RenderTarget<ColorFormat = C>,
+    {
+        self.finalize_view();
+
+        self.trees.target().render(target, color);
+        self.requires_redraw = false;
+    }
+
     /// Whether the view needs to be redrawn due to changes in state or focus.
     pub fn should_redraw(&mut self) -> bool {
         self.requires_redraw || self.requires_rebuild

@@ -1,0 +1,32 @@
+[package]
+name = "buoyant-harness"
+version = "0.1.0"
+authors = ["Riley Williams"]
+edition = "2024"
+license = "MIT OR Apache-2.0"
+description = "CLI test harness and workflow runner for buoyant UI applications"
+repository = "https://github.com/riley-williams/buoyant"
+
+[dependencies]
+buoyant = { path = "..", features = [
+  "embedded-graphics",
+  "embedded-graphics-simulator",
+] }
+clap = { version = "4", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rayon = "1"
+embedded-graphics = "0.8.1"
+embedded-graphics-simulator = { version = "0.8.0", default-features = false, features = [
+  "with-sdl",
+] }
+embedded-touch = "0.3.0"
+
+[dev-dependencies]
+embedded-graphics = "0.8.1"
+
+[lints]
+workspace = true
+
+[[example]]
+name = "runner"
