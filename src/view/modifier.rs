@@ -11,6 +11,7 @@ mod background;
 mod background_color;
 mod bound_focus;
 mod clipped;
+mod content_shape;
 mod erase_captures;
 mod exclusive_focus;
 mod fixed_frame;
@@ -40,6 +41,7 @@ pub(crate) use background::BackgroundView;
 pub(crate) use background_color::BackgroundColor;
 pub(crate) use bound_focus::BoundFocus;
 pub(crate) use clipped::Clipped;
+use content_shape::ContentShape;
 pub(crate) use erase_captures::EraseCaptures;
 pub(crate) use exclusive_focus::ExclusiveFocus;
 use fixed::traits::ToFixed;
@@ -243,6 +245,37 @@ pub trait ViewModifier: Sized + ViewMarker {
     /// Clips the modified view to its bounds.
     fn clipped(self) -> Clipped<Self> {
         Clipped::new(self)
+    }
+
+    /// Overrides the content shape of this view with that of another.
+    ///
+    /// The content shape is used for button hit testing.
+    ///
+    /// To specify the desired shape, provide a shape view:
+    ///
+    /// - [`Circle`][`crate::view::shape::Circle`],
+    /// - [`Rectangle`][`crate::view::shape::Rectangle`],
+    /// - [`RoundedRectangle`][`crate::view::shape::RoundedRectangle`]
+    /// - [`Capsule`][`crate::view::shape::Capsule`]
+    ///
+    /// # Examples
+    ///
+    /// Because this button does not have a background, the padded area will not be
+    /// tappable without overriding the content shape to include the padding:
+    ///
+    /// ```
+    /// use buoyant::view::prelude::*;
+    /// use embedded_graphics::pixelcolor::Rgb888;
+    /// use embedded_graphics::mono_font::ascii::FONT_9X15_BOLD;
+    ///
+    /// fn padded_button() -> impl View<Rgb888, ()> {
+    ///     Text::new("Button", &FONT_9X15_BOLD)
+    ///         .padding(Edges::All, 10)
+    ///         .content_shape(Rectangle)
+    /// }
+    /// ```
+    fn content_shape<S: Shape>(self, shape: S) -> ContentShape<Self, S> {
+        content_shape::ContentShape::new(self, shape)
     }
 
     /// Converts the captures of a parent view to [`()`]

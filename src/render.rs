@@ -17,6 +17,7 @@ mod animate;
 mod clipped;
 pub mod collections;
 mod container;
+mod content_shape_override;
 mod empty;
 mod hint_background;
 #[cfg(feature = "embedded-graphics")]
@@ -35,6 +36,7 @@ mod transition_option;
 pub use animate::Animate;
 pub use clipped::Clipped;
 pub use container::Container;
+pub use content_shape_override::ContentShapeOverride;
 pub use hint_background::HintBackground;
 #[cfg(feature = "embedded-graphics")]
 pub use image::Image;
