@@ -3,7 +3,7 @@ use crate::font::FontRender;
 use crate::render_target::surface::OffsetSurface;
 use crate::{
     primitives::{
-        Interpolate, Point,
+        Interpolate, Point, Size,
         geometry::{Circle, Intersection, Line, PathEl, Rectangle, RoundedRectangle},
         transform::{CoordinateSpaceTransform, LinearTransform},
     },
@@ -62,6 +62,30 @@ where
             active_layer: LayerConfig::new_clip(clip_rect).with_background_hint(background_hint),
             active_animation: true,
         }
+    }
+
+    /// Sets an initial rendering offset on the render target.
+    ///
+    /// This shifts the coordinate space so that content at `offset` in the view
+    /// is rendered at the origin of the underlying draw target. Useful for rendering
+    /// a segment of a larger view into a smaller framebuffer.
+    #[must_use]
+    pub fn with_offset(mut self, offset: Point) -> Self {
+        self.active_layer.transform.offset.x += offset.x;
+        self.active_layer.transform.offset.y += offset.y;
+        self
+    }
+
+    /// Restricts the initial clip rectangle of the render target.
+    ///
+    /// The provided rectangle is intersected with the existing clip rectangle,
+    /// so the result can only be the same size or smaller.
+    #[must_use]
+    pub fn with_clip(mut self, clip_rect: &Rectangle) -> Self {
+        self.active_layer.clip_rect = clip_rect
+            .intersection(&self.active_layer.clip_rect)
+            .unwrap_or_else(|| Rectangle::new(Point::zero(), Size::new(0, 0)));
+        self
     }
 
     #[must_use]
