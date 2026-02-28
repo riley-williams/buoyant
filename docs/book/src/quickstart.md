@@ -11,9 +11,9 @@ README to install sdl2.
 # Cargo.toml
 
 [dependencies]
-buoyant = "0.5"
+buoyant = "0.7"
 embedded-graphics = "0.8"
-embedded-graphics-simulator = "0.7.0"
+embedded-graphics-simulator = "0.8"
 ```
 
 ## Hello World
@@ -64,4 +64,7 @@ the same way built-in components like `Text` are used.
 
 Because embedded-graphics displays come in a wide variety of color spaces, component views
 must also specify a color space. Often it's useful to alias this to make migration to another
-screen easy, with e.g. `type color_space = Rgb888`.
+screen easy, with e.g. `type COLOR = Rgb888`.
+
+> While the `AsDrawable` trait is useful for quickly rendering a single view, the [`App`](./event-loops/app.md)
+> type provides more complete application lifecycle management and event handling.

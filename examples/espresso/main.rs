@@ -94,7 +94,7 @@ fn main() {
         app.set_time(app_start.elapsed());
 
         // Collect and process simulator events
-        let events: Vec<_> = window
+        window
             .events()
             .filter_map(|event| {
                 if event == SimulatorEvent::Quit {
@@ -102,11 +102,9 @@ fn main() {
                 }
                 touch_tracker.process_event(event)
             })
-            .collect();
-
-        for event in events {
-            app.send(event);
-        }
+            .for_each(|event| {
+                app.send(event);
+            });
 
         // Only render if active animation was reported or redraw needed
         if app.should_redraw() || target.clear_animation_status() {

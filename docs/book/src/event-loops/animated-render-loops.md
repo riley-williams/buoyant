@@ -1,4 +1,4 @@
-# Animated Render Loops
+# Manually Animated Render Loops
 
 ## Animating Between Render Trees
 
@@ -110,6 +110,3 @@ target_render_tree.render(&mut target, &Rgb888::BLACK);
 
 Joining trees encodes information about the partially completed animation, which allows
 multiple staggered animations to occur in a render loop.
-
-Continue to [Event Loops](../interactivity/event-loops.md) for a complete  animated render
-loop example with event handling.
