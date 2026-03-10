@@ -3,6 +3,7 @@
 //! Each view module defines a state type and view function that can be
 //! used with the workflow harness.
 
+pub mod chart;
 pub mod counter;
 pub mod demo;
 

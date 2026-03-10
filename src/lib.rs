@@ -16,5 +16,6 @@ pub mod primitives;
 pub mod render;
 pub mod render_target;
 pub mod transition;
+pub mod versioned;
 #[warn(missing_docs)]
 pub mod view;

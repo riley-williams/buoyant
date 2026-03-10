@@ -5,6 +5,8 @@
 mod as_drawable;
 pub mod button;
 mod capturing;
+/// Chart views for rendering data as lines, bars, and points.
+pub mod chart;
 mod divider;
 mod empty_view;
 mod foreach;
@@ -30,6 +32,7 @@ mod zstack;
 pub use as_drawable::AsDrawable;
 pub use button::{Button, ButtonState};
 pub use capturing::Lens;
+pub use chart::Chart;
 pub use divider::Divider;
 pub use empty_view::EmptyView;
 pub use foreach::ForEach;
@@ -56,8 +59,12 @@ pub mod prelude {
     #[cfg(feature = "embedded-graphics")]
     pub use super::{AsDrawable, Image};
     pub use super::{
-        Button, ButtonState, Divider, EmptyView, ForEach, GeometryReader, HStack, Lens, Paginate,
-        Rotary, ScrollView, Spacer, Text, VStack, View, ViewLayout, ViewThatFits, ZStack,
+        Button, ButtonState, Chart, Divider, EmptyView, ForEach, GeometryReader, HStack, Lens,
+        Paginate, Rotary, ScrollView, Spacer, Text, VStack, View, ViewLayout, ViewThatFits, ZStack,
+    };
+    pub use super::chart::{
+        BarMark, BarSeries, ChartContent, ColoredSeries, LineMark, LineSeries, PointMark,
+        PointSeries,
     };
     pub use super::{FitAxis, HorizontalTextAlignment, padding::Edges};
     pub use crate::animation::Animation;

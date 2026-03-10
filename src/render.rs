@@ -14,6 +14,7 @@ use crate::primitives::geometry::Shape;
 use crate::render_target::RenderTarget;
 
 mod animate;
+pub mod chart;
 mod clipped;
 pub mod collections;
 mod container;

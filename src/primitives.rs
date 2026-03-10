@@ -1,6 +1,7 @@
 mod dimension;
 pub mod geometry;
 mod interpolate;
+mod plottable;
 mod point;
 mod size;
 pub mod transform;
@@ -8,6 +9,7 @@ mod unit_point;
 
 pub use dimension::*;
 pub use interpolate::Interpolate;
+pub use plottable::Plottable;
 pub use point::Point;
 pub use size::Size;
 pub use unit_point::UnitPoint;

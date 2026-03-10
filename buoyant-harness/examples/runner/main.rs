@@ -62,7 +62,11 @@ fn main() {
     let runner = WorkflowRunner::new(args)
         .register(workflows::demo_workflow())
         .register(workflows::counter_workflow())
-        .register(workflows::toggle_workflow());
+        .register(workflows::toggle_workflow())
+        .register(workflows::chart_line_workflow())
+        .register(workflows::chart_bar_workflow())
+        .register(workflows::chart_scatter_workflow())
+        .register(workflows::chart_multi_workflow());
 
     // List available workflows
     println!("Available workflows: {:?}", runner.workflow_names());
