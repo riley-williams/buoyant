@@ -4,6 +4,7 @@
 //! used with the workflow harness.
 
 pub mod chart;
+pub mod chart_demos;
 pub mod counter;
 pub mod demo;
 

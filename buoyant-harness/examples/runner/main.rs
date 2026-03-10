@@ -66,7 +66,13 @@ fn main() {
         .register(workflows::chart_line_workflow())
         .register(workflows::chart_bar_workflow())
         .register(workflows::chart_scatter_workflow())
-        .register(workflows::chart_multi_workflow());
+        .register(workflows::chart_multi_workflow())
+        .register(workflows::chart_demo_temperature())
+        .register(workflows::chart_demo_sales())
+        .register(workflows::chart_demo_scatter())
+        .register(workflows::chart_demo_budget())
+        .register(workflows::chart_demo_metrics())
+        .register(workflows::chart_demo_sparklines());
 
     // List available workflows
     println!("Available workflows: {:?}", runner.workflow_names());
