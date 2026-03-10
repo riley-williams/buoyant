@@ -83,6 +83,8 @@ jobs:
           # Create build deps for mdbook to reference
           cargo build --examples --all-features
           mdbook test -L target/debug/deps docs/book
+      - name: Verify book images
+        run: cargo run -p buoyant-harness --example book_images -- --no-overlay
 
   semver-checks:
     runs-on: ubuntu-latest

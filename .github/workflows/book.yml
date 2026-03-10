@@ -23,6 +23,10 @@ jobs:
           mkdir bin
           curl -sSL $url | tar -xz --directory=bin
           echo "$(pwd)/bin" >> $GITHUB_PATH
+      - name: Install SDL2
+        run: sudo apt-get update && sudo apt-get install libsdl2-dev
+      - name: Generate book images
+        run: cargo run -p buoyant-harness --example book_images -- --no-overlay
       - name: Build Book
         run: |
           cd docs/book

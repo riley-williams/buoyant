@@ -2,3 +2,5 @@
 .DS_Store
 **/workflow_output
 workflow_output
+docs/book/src/**/images/*.png
+!docs/book/src/building-views/fonts/images/rusttype-fonts.png

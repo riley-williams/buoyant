@@ -21,6 +21,7 @@ embedded-graphics-simulator = { version = "0.8.0", default-features = false, fea
   "with-sdl",
 ] }
 embedded-touch = "0.3.0"
+u8g2-fonts = { version = "0.7.2", features = ["embedded_graphics_textstyle"] }
 
 [dev-dependencies]
 embedded-graphics = "0.8.1"
@@ -30,3 +31,7 @@ workspace = true
 
 [[example]]
 name = "runner"
+
+[[example]]
+name = "book_images"
+path = "examples/book_images/main.rs"
