@@ -1,5 +1,6 @@
 use crate::{
     environment::LayoutEnvironment,
+    event::EventResult,
     layout::ResolvedLayout,
     primitives::{Dimensions, Point, ProposedDimensions},
     transition::Opacity,
@@ -50,6 +51,7 @@ impl ViewMarker for EmptyView {
 impl<Captures: ?Sized> ViewLayout<Captures> for EmptyView {
     type State = ();
     type Sublayout = ();
+    type FocusTree = ();
 
     fn priority(&self) -> i8 {
         i8::MIN
@@ -86,5 +88,17 @@ impl<Captures: ?Sized> ViewLayout<Captures> for EmptyView {
         _captures: &mut Captures,
         _state: &mut Self::State,
     ) -> Self::Renderables {
+    }
+
+    fn handle_event(
+        &self,
+        _event: &crate::view::Event,
+        _context: &crate::event::EventContext,
+        _render_tree: &mut Self::Renderables,
+        _captures: &mut Captures,
+        _state: &mut Self::State,
+        _focus: &mut Self::FocusTree,
+    ) -> EventResult {
+        EventResult::default()
     }
 }

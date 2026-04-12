@@ -1,5 +1,4 @@
 mod dimension;
-mod frame;
 pub mod geometry;
 mod interpolate;
 mod point;
@@ -8,7 +7,6 @@ pub mod transform;
 mod unit_point;
 
 pub use dimension::*;
-pub use frame::Frame;
 pub use interpolate::Interpolate;
 pub use point::Point;
 pub use size::Size;

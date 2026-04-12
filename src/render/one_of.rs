@@ -1,4 +1,4 @@
-use crate::render::{Render, RenderTarget};
+use crate::render::{ContentShape, IntrinsicShape, Render, RenderTarget};
 
 use super::AnimatedJoin;
 
@@ -56,6 +56,18 @@ macro_rules! define_branch {
                 }
             }
         }
+
+        impl<$($variant),+> IntrinsicShape for $name<$($variant),+>
+            where $($variant: IntrinsicShape,)+
+        {
+            fn content_shape(&self) -> ContentShape {
+                match self {
+                    $(
+                        Self::$variant(v) => v.content_shape(),
+                    )+
+                }
+            }
+        }
     }
 }
 
@@ -67,3 +79,6 @@ define_branch!(OneOf4, V0, V1, V2, V3);
 define_branch!(OneOf5, V0, V1, V2, V3, V4);
 define_branch!(OneOf6, V0, V1, V2, V3, V4, V5);
 define_branch!(OneOf7, V0, V1, V2, V3, V4, V5, V6);
+define_branch!(OneOf8, V0, V1, V2, V3, V4, V5, V6, V7);
+define_branch!(OneOf9, V0, V1, V2, V3, V4, V5, V6, V7, V8);
+define_branch!(OneOf10, V0, V1, V2, V3, V4, V5, V6, V7, V8, V9);

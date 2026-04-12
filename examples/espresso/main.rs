@@ -7,16 +7,16 @@
 
 mod view;
 
+use std::process::exit;
 use std::time::{Duration, Instant};
 
-use buoyant::environment::DefaultEnvironment;
-use buoyant::event::{EventContext, EventResult, simulator::MouseTracker};
-use buoyant::primitives::Point;
-use buoyant::render::{AnimatedJoin, AnimationDomain, Render};
+use buoyant::app::{App, Harness};
+use buoyant::event::{Event, Key, simulator::MouseTracker};
+use buoyant::focus::{BoundaryBehavior, FocusAction, Role};
 use buoyant::render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _};
-use buoyant::{animation::Animation, if_view, match_view, view::prelude::*};
+use buoyant::{animation::Animation, match_view, view::prelude::*};
 use embedded_graphics::prelude::*;
-use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, Window};
+use embedded_graphics_simulator::{OutputSettings, SimulatorDisplay, SimulatorEvent, Window};
 
 #[allow(unused)]
 mod spacing {
@@ -81,91 +81,39 @@ fn main() {
     let app_start = Instant::now();
     let mut touch_tracker = MouseTracker::new();
 
-    let mut app_data = AppState::default();
-    let mut view = root_view(&app_data);
-    let mut view_state = view.build_state(&mut app_data);
+    // Create app with view lifecycle management
+    let mut app = App::new(AppState::default(), size.into(), root_view)
+        .with_roles(Role::Button | Role::Container);
 
-    // Create initial source and target trees for animation
-    let time = app_start.elapsed();
-    let env = DefaultEnvironment::new(time);
-    let layout = view.layout(&target.size().into(), &env, &mut app_data, &mut view_state);
-
-    let mut source_tree = &mut view.render_tree(
-        &layout.sublayouts,
-        Point::default(),
-        &env,
-        &mut app_data,
-        &mut view_state,
-    );
-    let mut target_tree = &mut view.render_tree(
-        &layout.sublayouts,
-        Point::default(),
-        &env,
-        &mut app_data,
-        &mut view_state,
-    );
+    // Acquire initial focus
+    app.focus_forward();
 
     // Main event loop
     loop {
-        let time = app_start.elapsed();
-        let domain = AnimationDomain::top_level(time);
-        let context = EventContext::new(time);
+        // Sync app time with real wall clock time
+        app.set_time(app_start.elapsed());
 
-        let mut should_exit = false;
-
-        // Handle events, merging into a single result
-        let result = window
+        // Collect and process simulator events
+        window
             .events()
-            .filter_map(|event| touch_tracker.process_event(event))
-            .fold(EventResult::default(), |result, event| {
-                // Manually handle exit events and external events
-                if event == buoyant::event::Event::Exit {
-                    should_exit = true;
+            .filter_map(|event| {
+                if event == SimulatorEvent::Quit {
+                    exit(0);
                 }
-                result.merging(view.handle_event(
-                    &event,
-                    &context,
-                    target_tree,
-                    &mut app_data,
-                    &mut view_state,
-                ))
+                touch_tracker.process_event(event)
+            })
+            .for_each(|event| {
+                app.send(event);
             });
 
-        if should_exit {
-            break;
-        }
-
-        // Only recompute the view, layout, and render trees if necessary.
-        // Additional handling may be needed to recompute the view in response to external events.
-        if result.recompute_view {
-            // Join source and target trees at current time, "freezing" animation progress
-            target_tree.join_from(source_tree, &domain);
-            // Swap trees so the current target becomes the next source.
-            // Note this swaps the references instead of the whole section of memory
-            core::mem::swap(&mut source_tree, &mut target_tree);
-            // Create new view and target tree
-            view = root_view(&app_data);
-            let env = DefaultEnvironment::new(time);
-            let layout = view.layout(&target.size().into(), &env, &mut app_data, &mut view_state);
-            *target_tree = view.render_tree(
-                &layout.sublayouts,
-                Point::default(),
-                &env,
-                &mut app_data,
-                &mut view_state,
-            );
-        }
-
-        // Only render if active animation was reported, the view changed, or redraw was requested
-        if target.clear_animation_status() || result.recompute_view || result.redraw {
+        // Only render if active animation was reported or redraw needed
+        if app.should_redraw() || target.clear_animation_status() {
             // Render animated transition between source and target trees
-            Render::render_animated(
-                &mut target,
-                source_tree,
-                target_tree,
-                &color::Space::WHITE,
-                &domain,
-            );
+            app.render_animated(&mut target, &color::Space::WHITE);
+
+            // Draw focus overlay
+            app.draw_focus_overlay(&mut target, color::Space::CSS_YELLOW, 1);
+
             // Send to the display
             window.update(target.display());
             // Clear for the next frame
@@ -186,11 +134,19 @@ enum Tab {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
+struct CleanSettings {
+    pub frequency: u32,
+    pub time: u32,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 struct AppState {
     pub tab: Tab,
     pub stop_on_weight: bool,
     pub auto_off: bool,
     pub auto_brew: bool,
+    pub clean_overlay: Option<CleanSettings>,
+    pub clean_settings: CleanSettings,
 }
 
 fn root_view(state: &AppState) -> impl View<color::Space, AppState> + use<> {
@@ -208,6 +164,20 @@ fn root_view(state: &AppState) -> impl View<color::Space, AppState> + use<> {
             },
         }),
     ))
+    .popover(state.clean_overlay.as_ref(), view::clean::clean_overlay)
+    .bound_focus(BoundaryBehavior::Wrap)
+    .focus_touches()
+    .map_event::<(), _>(|event: &Event, _state| match event {
+        Event::KeyDown(key) => match key {
+            Key::UpArrow | Key::LeftArrow => Some(FocusAction::Previous.into()),
+            Key::DownArrow | Key::RightArrow => Some(FocusAction::Next.into()),
+            Key::Character(' ' | '\n') => Some(FocusAction::Select.into()),
+            Key::Backspace | Key::Delete => Some(FocusAction::Blur.into()),
+            _ => Some(event.clone()),
+        },
+        Event::KeyUp(_) => None, // Eat key up events
+        _ => Some(event.clone()),
+    })
 }
 
 fn tab_bar(tab: Tab) -> impl View<color::Space, Tab> + use<> {
@@ -231,33 +201,25 @@ fn tab_item<C, F: Fn(&mut C)>(
     is_selected: bool,
     on_tap: F,
 ) -> impl View<color::Space, C> + use<C, F> {
-    let (text_color, bar_height) = if is_selected {
-        (color::ACCENT, 4)
-    } else {
-        (color::FOREGROUND_SECONDARY, 0)
-    };
-
-    Button::new(on_tap, move |is_pressed: bool| {
-        VStack::new((
-            ZStack::new((
-                if_view!((is_selected || is_pressed) {
-                    Rectangle.foreground_color(color::BACKGROUND_SECONDARY)
-                }),
-                VStack::new((
-                    Circle.frame().with_width(15),
-                    Text::new(name, &*font::FONT).with_font_size(font::CAPTION_SIZE),
-                ))
-                .with_spacing(spacing::ELEMENT)
-                .padding(Edges::All, spacing::ELEMENT)
-                .hint_background_color(if is_selected || is_pressed {
-                    color::BACKGROUND_SECONDARY
-                } else {
-                    color::BACKGROUND
-                }),
-            )),
-            Rectangle.frame().with_height(bar_height),
+    Button::new(on_tap, move |s| {
+        let (background, foreground) = match (is_selected, s.is_pressed() || s.is_focused()) {
+            (true, true) => (color::BACKGROUND_SECONDARY, color::ACCENT),
+            (true, false) => (color::BACKGROUND_SECONDARY, color::FOREGROUND_SECONDARY),
+            (false, true) => (color::BACKGROUND, color::ACCENT),
+            _ => (color::BACKGROUND, color::FOREGROUND_SECONDARY),
+        };
+        ZStack::new((
+            Rectangle.foreground_color(background),
+            VStack::new((
+                Circle.frame().with_width(15),
+                Text::new(name, &*font::FONT).with_font_size(font::CAPTION_SIZE),
+            ))
+            .with_spacing(spacing::ELEMENT)
+            .padding(Edges::All, spacing::ELEMENT)
+            .hint_background_color(background),
         ))
-        .foreground_color(text_color)
+        .with_vertical_alignment(VerticalAlignment::Bottom)
+        .foreground_color(foreground)
         .flex_frame()
         .with_min_width(100)
     })

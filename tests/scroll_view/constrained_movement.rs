@@ -2,6 +2,7 @@ use std::time::Duration;
 
 use buoyant::{
     event::EventContext,
+    focus::DefaultFocus,
     primitives::Size,
     render::Render,
     render_target::FixedTextBuffer,
@@ -22,6 +23,7 @@ fn scroll_view<T>() -> impl View<char, T> {
     .padding(Edges::All, 1)
 }
 
+#[expect(clippy::too_many_lines)]
 #[test]
 fn vertical_scroll_does_not_move_horizontally() {
     let mut buffer = FixedTextBuffer::<12, 5>::default();
@@ -58,17 +60,20 @@ fn vertical_scroll_does_not_move_horizontally() {
         &mut tree,
         &mut captures,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
 
-    let result = view.handle_event(
+    let ctx = EventContext::new(Duration::from_secs(3));
+    view.handle_event(
         &touch_move(20, 3),
-        &EventContext::new(Duration::from_secs(3)),
+        &ctx,
         &mut tree,
         &mut captures,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
 
-    assert!(!result.recompute_view);
+    assert!(!ctx.view_rebuild_requested.get());
 
     tree.render(&mut buffer, &' ');
     assert_str_grid_eq!(
@@ -82,16 +87,18 @@ fn vertical_scroll_does_not_move_horizontally() {
         &buffer.text
     );
 
-    let result = view.handle_event(
+    let ctx = EventContext::new(Duration::from_secs(4));
+    view.handle_event(
         &touch_move(-20, 2),
-        &EventContext::new(Duration::from_secs(4)),
+        &ctx,
         &mut tree,
         &mut captures,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
 
     // Tree manually updated, no view recomputation
-    assert!(!result.recompute_view);
+    assert!(!ctx.view_rebuild_requested.get());
 
     tree.render(&mut buffer, &' ');
     assert_str_grid_eq!(
@@ -105,15 +112,17 @@ fn vertical_scroll_does_not_move_horizontally() {
         &buffer.text
     );
 
-    let result = view.handle_event(
+    let ctx = EventContext::new(Duration::from_secs(5));
+    view.handle_event(
         &touch_up(1, 1),
-        &EventContext::new(Duration::from_secs(5)),
+        &ctx,
         &mut tree,
         &mut captures,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
 
-    assert!(result.recompute_view);
+    assert!(ctx.view_rebuild_requested.get());
 
     tree = helpers::tree(
         &view,

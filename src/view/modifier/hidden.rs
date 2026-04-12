@@ -1,5 +1,6 @@
 use crate::{
     environment::LayoutEnvironment,
+    event::EventResult,
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
     view::{ViewLayout, ViewMarker},
@@ -31,6 +32,7 @@ where
 {
     type Sublayout = ();
     type State = T::State;
+    type FocusTree = ();
 
     fn priority(&self) -> i8 {
         self.child.priority()
@@ -70,5 +72,17 @@ where
         _captures: &mut Captures,
         _state: &mut Self::State,
     ) -> Self::Renderables {
+    }
+
+    fn handle_event(
+        &self,
+        _event: &crate::view::Event,
+        _context: &crate::event::EventContext,
+        _render_tree: &mut Self::Renderables,
+        _captures: &mut Captures,
+        _state: &mut Self::State,
+        _focus: &mut Self::FocusTree,
+    ) -> EventResult {
+        EventResult::Deferred
     }
 }

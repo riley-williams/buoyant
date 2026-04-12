@@ -42,6 +42,7 @@ where
 impl<T: ViewLayout<()>, Captures: ?Sized> ViewLayout<Captures> for EraseCaptures<T> {
     type State = T::State;
     type Sublayout = T::Sublayout;
+    type FocusTree = T::FocusTree;
 
     fn priority(&self) -> i8 {
         self.inner.priority()
@@ -87,8 +88,9 @@ impl<T: ViewLayout<()>, Captures: ?Sized> ViewLayout<Captures> for EraseCaptures
         render_tree: &mut Self::Renderables,
         _captures: &mut Captures,
         state: &mut Self::State,
+        focus: &mut Self::FocusTree,
     ) -> EventResult {
         self.inner
-            .handle_event(event, context, render_tree, &mut (), state)
+            .handle_event(event, context, render_tree, &mut (), state, focus)
     }
 }

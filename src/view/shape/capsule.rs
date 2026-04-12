@@ -1,7 +1,8 @@
 use crate::{
     environment::LayoutEnvironment,
+    event::EventResult,
     layout::ResolvedLayout,
-    primitives::{Dimensions, Point, ProposedDimensions},
+    primitives::{Dimensions, Point, ProposedDimensions, Size},
     transition::Opacity,
     view::{ViewLayout, ViewMarker},
 };
@@ -22,6 +23,7 @@ impl ViewMarker for Capsule {
 impl<Captures: ?Sized> ViewLayout<Captures> for Capsule {
     type State = ();
     type Sublayout = Dimensions;
+    type FocusTree = ();
 
     fn transition(&self) -> Self::Transition {
         Opacity
@@ -36,10 +38,10 @@ impl<Captures: ?Sized> ViewLayout<Captures> for Capsule {
         _captures: &mut Captures,
         _state: &mut Self::State,
     ) -> ResolvedLayout<Self::Sublayout> {
-        let dimensions = offer.resolve_most_flexible(0, 1);
+        let dimensions = offer.resolve_most_flexible(Size::zero(), Size::new(1, 1));
         ResolvedLayout {
             sublayouts: dimensions,
-            resolved_size: offer.resolve_most_flexible(0, 1),
+            resolved_size: offer.resolve_most_flexible(Size::zero(), Size::new(1, 1)),
         }
     }
 
@@ -55,5 +57,17 @@ impl<Captures: ?Sized> ViewLayout<Captures> for Capsule {
             origin,
             size: (*layout).into(),
         }
+    }
+
+    fn handle_event(
+        &self,
+        _event: &crate::view::Event,
+        _context: &crate::event::EventContext,
+        _render_tree: &mut Self::Renderables,
+        _captures: &mut Captures,
+        _state: &mut Self::State,
+        _focus: &mut Self::FocusTree,
+    ) -> EventResult {
+        EventResult::Deferred
     }
 }

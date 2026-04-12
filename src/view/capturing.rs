@@ -3,7 +3,6 @@ use crate::{
     event::{EventContext, EventResult},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
-    transition::Opacity,
     view::{ViewLayout, ViewMarker},
 };
 
@@ -31,7 +30,7 @@ where
     InnerView: ViewMarker,
 {
     type Renderables = InnerView::Renderables;
-    type Transition = Opacity;
+    type Transition = InnerView::Transition;
 }
 
 impl<
@@ -43,6 +42,7 @@ impl<
 {
     type State = InnerView::State;
     type Sublayout = InnerView::Sublayout;
+    type FocusTree = InnerView::FocusTree;
 
     fn priority(&self) -> i8 {
         self.inner.priority()
@@ -53,7 +53,7 @@ impl<
     }
 
     fn transition(&self) -> Self::Transition {
-        Opacity
+        self.inner.transition()
     }
 
     fn build_state(&self, captures: &mut Captures) -> Self::State {
@@ -91,6 +91,7 @@ impl<
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
+        focus: &mut Self::FocusTree,
     ) -> EventResult {
         self.inner.handle_event(
             event,
@@ -98,6 +99,7 @@ impl<
             render_tree,
             (self.capture_fn)(captures),
             state,
+            focus,
         )
     }
 }

@@ -1,9 +1,6 @@
 # Manual View Lifecycle
 
-While the `AsDrawable` trait is useful for quickly rendering a view, you can also manually
-manage the layout and rendering stages of a view.
-
-Looking back at the simple Hello World example, we can replace the `AsDrawable` trait usage
+Taking the simple Hello World example, the `AsDrawable` trait usage can be replaced
 with a manual view lifecycle.
 
 ```rust,no_run
@@ -81,12 +78,5 @@ Relational elements like `Padding`, `Frame`s, alignment, and so on have been str
 render_tree.render(&mut display, &DEFAULT_COLOR, origin);
 ```
 
-Here, the snapshot is finally rendered to the display buffer. A default color, similar to
-SwiftUI's foreground color, is passed in. This is used for elements that don't have a color
-set.
-
-## Why?
-
-For just rendering a static view, this feels like (and is) a lot of boilerplate from Buoyant.
-However, as you'll see in the next section, having multiple snapshots allows you to create
-incredibly powerful animation between them with next to no effort.
+Here, the snapshot is finally rendered to the display buffer. A default color is passed in
+which is used for elements that aren't explicitly colored using `.foreground_color()`.

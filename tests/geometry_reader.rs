@@ -2,13 +2,14 @@ mod common;
 use crate::common::helpers::tree;
 use crate::common::{touch_down, touch_move};
 
+use buoyant::focus::DefaultFocus;
 use buoyant::{
     environment::DefaultEnvironment,
     event::EventContext,
     primitives::{Dimensions, ProposedDimensions, Size},
     render::Render,
     render_target::FixedTextBuffer,
-    view::{button::ButtonState, prelude::*},
+    view::prelude::*,
 };
 use core::time::Duration;
 
@@ -188,9 +189,9 @@ fn preserves_inner_state() {
         GeometryReader::new(|size: Size| {
             Button::new(
                 |(): &mut ()| {},
-                move |is_pressed: bool| {
+                move |state| {
                     Rectangle
-                        .foreground_color(if is_pressed { 'x' } else { '-' })
+                        .foreground_color(if state.is_pressed() { 'x' } else { '-' })
                         .frame_sized(size.width / 2, size.height / 2)
                 },
             )
@@ -215,7 +216,6 @@ fn preserves_inner_state() {
     );
     render_tree.render(&mut buffer, &' ');
 
-    assert_eq!(state, Some((ButtonState::AtRest, ())));
     assert_str_grid_eq!(
         [
             "---         ",
@@ -232,8 +232,8 @@ fn preserves_inner_state() {
         &mut render_tree,
         &mut captures,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
-    assert_eq!(state, Some((ButtonState::CaptivePressed(0), ())));
 
     render_tree = tree(
         &view,
@@ -244,7 +244,6 @@ fn preserves_inner_state() {
     );
     render_tree.render(&mut buffer, &' ');
 
-    assert_eq!(state, Some((ButtonState::CaptivePressed(0), ())));
     assert_str_grid_eq!(
         [
             "xxx         ",
@@ -261,8 +260,8 @@ fn preserves_inner_state() {
         &mut render_tree,
         &mut captures,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
-    assert_eq!(state, Some((ButtonState::Captive(0), ())));
 
     render_tree = tree(
         &view,
@@ -273,7 +272,6 @@ fn preserves_inner_state() {
     );
     render_tree.render(&mut buffer, &' ');
 
-    assert_eq!(state, Some((ButtonState::Captive(0), ())));
     assert_str_grid_eq!(
         [
             "---         ",

@@ -1,6 +1,7 @@
 use embedded_graphics::{image::ImageDrawable, prelude::OriginDimensions};
 
 use crate::{
+    event::EventResult,
     layout::ResolvedLayout,
     render::{self},
     transition::Opacity,
@@ -35,6 +36,7 @@ where
 {
     type Sublayout = ();
     type State = ();
+    type FocusTree = ();
 
     fn transition(&self) -> Self::Transition {
         Opacity
@@ -65,5 +67,17 @@ where
         _state: &mut Self::State,
     ) -> Self::Renderables {
         Self::Renderables::new(origin, self.image)
+    }
+
+    fn handle_event(
+        &self,
+        _event: &crate::view::Event,
+        _context: &crate::event::EventContext,
+        _render_tree: &mut Self::Renderables,
+        _captures: &mut Captures,
+        _state: &mut Self::State,
+        _focus: &mut Self::FocusTree,
+    ) -> EventResult {
+        EventResult::default()
     }
 }

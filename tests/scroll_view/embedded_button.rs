@@ -2,6 +2,7 @@ use std::time::Duration;
 
 use buoyant::{
     event::EventContext,
+    focus::DefaultFocus,
     primitives::Size,
     render::Render,
     render_target::FixedTextBuffer,
@@ -15,11 +16,11 @@ fn scroll_view() -> impl View<char, u8> {
     ScrollView::new(VStack::new((
         Button::new(
             |i: &mut u8| *i += 1,
-            |is_pressed| {
+            |state| {
                 Rectangle
                     .frame()
                     .with_height(4)
-                    .foreground_color(if is_pressed { 'A' } else { 'a' })
+                    .foreground_color(if state.is_pressed() { 'A' } else { 'a' })
             },
         ),
         Rectangle.frame().with_height(4).foreground_color('b'),
@@ -61,14 +62,16 @@ fn button_action_cancelled_by_scroll() {
         &buffer.text
     );
 
-    let result = view.handle_event(
+    let ctx = EventContext::new(Duration::from_secs(2));
+    view.handle_event(
         &touch_down(2, 3),
-        &EventContext::new(Duration::from_secs(2)),
+        &ctx,
         &mut tree,
         &mut captures,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
-    assert!(result.recompute_view);
+    assert!(ctx.view_rebuild_requested.get());
 
     tree = helpers::tree(
         &view,
@@ -92,15 +95,17 @@ fn button_action_cancelled_by_scroll() {
     );
 
     // cancel touch by moving touch
-    let result = view.handle_event(
+    let ctx = EventContext::new(Duration::from_secs(3));
+    view.handle_event(
         &touch_move(20, 3),
-        &EventContext::new(Duration::from_secs(3)),
+        &ctx,
         &mut tree,
         &mut captures,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
 
-    assert!(result.recompute_view);
+    assert!(ctx.view_rebuild_requested.get());
 
     tree = helpers::tree(
         &view,
@@ -122,16 +127,18 @@ fn button_action_cancelled_by_scroll() {
         &buffer.text
     );
 
-    let result = view.handle_event(
+    let ctx = EventContext::new(Duration::from_secs(4));
+    view.handle_event(
         &touch_move(2, 2),
-        &EventContext::new(Duration::from_secs(4)),
+        &ctx,
         &mut tree,
         &mut captures,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
 
     // Tree manually updated, no view recomputation
-    assert!(!result.recompute_view);
+    assert!(!ctx.view_rebuild_requested.get());
 
     tree.render(&mut buffer, &' ');
     assert_str_grid_eq!(
@@ -145,15 +152,17 @@ fn button_action_cancelled_by_scroll() {
         &buffer.text
     );
 
-    let result = view.handle_event(
+    let ctx = EventContext::new(Duration::from_secs(5));
+    view.handle_event(
         &touch_up(3, 1),
-        &EventContext::new(Duration::from_secs(5)),
+        &ctx,
         &mut tree,
         &mut captures,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
 
-    assert!(result.recompute_view);
+    assert!(ctx.view_rebuild_requested.get());
 
     tree = helpers::tree(
         &view,
@@ -208,14 +217,16 @@ fn button_can_be_pressed_with_tiny_wiggle() {
         &buffer.text
     );
 
-    let result = view.handle_event(
+    let ctx = EventContext::new(Duration::from_secs(2));
+    view.handle_event(
         &touch_down(2, 2),
-        &EventContext::new(Duration::from_secs(2)),
+        &ctx,
         &mut tree,
         &mut captures,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
-    assert!(result.recompute_view);
+    assert!(ctx.view_rebuild_requested.get());
 
     tree = helpers::tree(
         &view,
@@ -239,24 +250,28 @@ fn button_can_be_pressed_with_tiny_wiggle() {
     );
 
     // little wiggle
-    let result = view.handle_event(
+    let ctx = EventContext::new(Duration::from_secs(3));
+    view.handle_event(
         &touch_move(5, 3),
-        &EventContext::new(Duration::from_secs(3)),
+        &ctx,
         &mut tree,
         &mut captures,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
-    assert!(!result.recompute_view);
+    assert!(!ctx.view_rebuild_requested.get());
 
-    let result = view.handle_event(
+    let ctx = EventContext::new(Duration::from_secs(3));
+    view.handle_event(
         &touch_up(5, 3),
-        &EventContext::new(Duration::from_secs(3)),
+        &ctx,
         &mut tree,
         &mut captures,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
 
-    assert!(result.recompute_view);
+    assert!(ctx.view_rebuild_requested.get());
 
     tree = helpers::tree(
         &view,

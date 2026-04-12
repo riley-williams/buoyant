@@ -1,6 +1,6 @@
 use crate::render_target::RenderTarget;
 
-use super::{AnimatedJoin, AnimationDomain, Render};
+use super::{AnimatedJoin, AnimationDomain, ContentShape, IntrinsicShape, Render};
 
 impl AnimatedJoin for () {
     fn join_from(&mut self, _source: &Self, _domain: &AnimationDomain) {}
@@ -16,5 +16,11 @@ impl<C> Render<C> for () {
         _style: &C,
         _domain: &AnimationDomain,
     ) {
+    }
+}
+
+impl IntrinsicShape for () {
+    fn content_shape(&self) -> ContentShape {
+        ContentShape::Empty
     }
 }

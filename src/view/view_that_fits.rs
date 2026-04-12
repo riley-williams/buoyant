@@ -1,11 +1,12 @@
 use crate::{
     environment::LayoutEnvironment,
     event::EventResult,
+    focus::{DefaultFocus, FocusAction, FocusDirection},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimension, ProposedDimensions},
     render,
     transition::Opacity,
-    view::{ViewLayout, ViewMarker},
+    view::{Event, ViewLayout, ViewMarker},
 };
 
 use super::match_view::{OneOf2, OneOf3, OneOf4};
@@ -138,6 +139,7 @@ where
 {
     type Sublayout = T::Sublayout;
     type State = T::State;
+    type FocusTree = T::FocusTree;
 
     fn transition(&self) -> Self::Transition {
         Opacity
@@ -177,10 +179,11 @@ where
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
+        focus: &mut Self::FocusTree,
     ) -> EventResult {
         self.choices
             .0
-            .handle_event(event, context, render_tree, captures, state)
+            .handle_event(event, context, render_tree, captures, state, focus)
     }
 }
 
@@ -217,6 +220,7 @@ where
 {
     type Sublayout = OneOf2<ResolvedLayout<T0::Sublayout>, ResolvedLayout<T1::Sublayout>>;
     type State = OneOf2<T0::State, T1::State>;
+    type FocusTree = OneOf2<T0::FocusTree, T1::FocusTree>;
 
     fn transition(&self) -> Self::Transition {
         Opacity
@@ -309,21 +313,60 @@ where
 
     fn handle_event(
         &self,
-        event: &crate::view::Event,
+        event: &Event,
         context: &crate::event::EventContext,
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
+        focus: &mut Self::FocusTree,
     ) -> EventResult {
         match (state, render_tree) {
-            (OneOf2::V0(s0), render::OneOf2::V0(t0)) => self
-                .choices
-                .0
-                .handle_event(event, context, t0, captures, s0),
-            (OneOf2::V1(s1), render::OneOf2::V1(t1)) => self
-                .choices
-                .1
-                .handle_event(event, context, t1, captures, s1),
+            (OneOf2::V0(s0), render::OneOf2::V0(t0)) => {
+                if let Event::Focus {
+                    action: focus_event,
+                    ..
+                } = event
+                {
+                    let inner_focus = match focus_event {
+                        FocusAction::Focus(FocusDirection::Backward) | FocusAction::Previous => {
+                            focus.v0_or_init(DefaultFocus::default_last())
+                        }
+                        _ => focus.v0_or_init(DefaultFocus::default_first()),
+                    };
+
+                    self.choices
+                        .0
+                        .handle_event(event, context, t0, captures, s0, inner_focus)
+                } else {
+                    let inner_focus = focus.v0_or_init(DefaultFocus::default_first());
+                    self.choices
+                        .0
+                        .handle_event(event, context, t0, captures, s0, inner_focus)
+                }
+            }
+            (OneOf2::V1(s1), render::OneOf2::V1(t1)) => {
+                if let Event::Focus {
+                    action: focus_event,
+                    ..
+                } = event
+                {
+                    let inner_focus = match focus_event {
+                        FocusAction::Focus(FocusDirection::Backward) | FocusAction::Previous => {
+                            focus.v1_or_init(DefaultFocus::default_last())
+                        }
+                        _ => focus.v1_or_init(DefaultFocus::default_first()),
+                    };
+
+                    self.choices
+                        .1
+                        .handle_event(event, context, t1, captures, s1, inner_focus)
+                } else {
+                    let inner_focus = focus.v1_or_init(DefaultFocus::default_first());
+                    self.choices
+                        .1
+                        .handle_event(event, context, t1, captures, s1, inner_focus)
+                }
+            }
             _ => {
                 // FIXME: I think it's better here to build new state, leaving to see what
                 // breaks...
@@ -355,6 +398,7 @@ where
         ResolvedLayout<T2::Sublayout>,
     >;
     type State = OneOf3<T0::State, T1::State, T2::State>;
+    type FocusTree = OneOf3<T0::FocusTree, T1::FocusTree, T2::FocusTree>;
 
     fn transition(&self) -> Self::Transition {
         Opacity
@@ -479,27 +523,84 @@ where
 
     fn handle_event(
         &self,
-        event: &crate::view::Event,
+        event: &Event,
         context: &crate::event::EventContext,
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
+        focus: &mut Self::FocusTree,
     ) -> EventResult {
         match (state, render_tree) {
-            (OneOf3::V0(s0), render::OneOf3::V0(t0)) => self
-                .choices
-                .0
-                .handle_event(event, context, t0, captures, s0),
-            (OneOf3::V1(s1), render::OneOf3::V1(t1)) => self
-                .choices
-                .1
-                .handle_event(event, context, t1, captures, s1),
-            (OneOf3::V2(s2), render::OneOf3::V2(t2)) => self
-                .choices
-                .2
-                .handle_event(event, context, t2, captures, s2),
+            (OneOf3::V0(s0), render::OneOf3::V0(t0)) => {
+                if let Event::Focus {
+                    action: focus_event,
+                    ..
+                } = event
+                {
+                    let inner_focus = match focus_event {
+                        FocusAction::Focus(FocusDirection::Backward) | FocusAction::Previous => {
+                            focus.v0_or_init(DefaultFocus::default_last())
+                        }
+                        _ => focus.v0_or_init(DefaultFocus::default_first()),
+                    };
+
+                    self.choices
+                        .0
+                        .handle_event(event, context, t0, captures, s0, inner_focus)
+                } else {
+                    let inner_focus = focus.v0_or_init(DefaultFocus::default_first());
+                    self.choices
+                        .0
+                        .handle_event(event, context, t0, captures, s0, inner_focus)
+                }
+            }
+            (OneOf3::V1(s1), render::OneOf3::V1(t1)) => {
+                if let Event::Focus {
+                    action: focus_event,
+                    ..
+                } = event
+                {
+                    let inner_focus = match focus_event {
+                        FocusAction::Focus(FocusDirection::Backward) | FocusAction::Previous => {
+                            focus.v1_or_init(DefaultFocus::default_last())
+                        }
+                        _ => focus.v1_or_init(DefaultFocus::default_first()),
+                    };
+
+                    self.choices
+                        .1
+                        .handle_event(event, context, t1, captures, s1, inner_focus)
+                } else {
+                    let inner_focus = focus.v1_or_init(DefaultFocus::default_first());
+                    self.choices
+                        .1
+                        .handle_event(event, context, t1, captures, s1, inner_focus)
+                }
+            }
+            (OneOf3::V2(s2), render::OneOf3::V2(t2)) => {
+                if let Event::Focus {
+                    action: focus_event,
+                    ..
+                } = event
+                {
+                    let inner_focus = match focus_event {
+                        FocusAction::Focus(FocusDirection::Backward) | FocusAction::Previous => {
+                            focus.v2_or_init(DefaultFocus::default_last())
+                        }
+                        _ => focus.v2_or_init(DefaultFocus::default_first()),
+                    };
+
+                    self.choices
+                        .2
+                        .handle_event(event, context, t2, captures, s2, inner_focus)
+                } else {
+                    let inner_focus = focus.v2_or_init(DefaultFocus::default_first());
+                    self.choices
+                        .2
+                        .handle_event(event, context, t2, captures, s2, inner_focus)
+                }
+            }
             _ => {
-                // FIXME: I think it's better here to build new state
                 panic!("Layout/state branch mismatch");
             }
         }
@@ -532,6 +633,7 @@ where
         ResolvedLayout<T3::Sublayout>,
     >;
     type State = OneOf4<T0::State, T1::State, T2::State, T3::State>;
+    type FocusTree = OneOf4<T0::FocusTree, T1::FocusTree, T2::FocusTree, T3::FocusTree>;
 
     fn transition(&self) -> Self::Transition {
         Opacity
@@ -689,31 +791,103 @@ where
 
     fn handle_event(
         &self,
-        event: &crate::view::Event,
+        event: &Event,
         context: &crate::event::EventContext,
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
+        focus: &mut Self::FocusTree,
     ) -> EventResult {
         match (state, render_tree) {
-            (OneOf4::V0(s0), render::OneOf4::V0(t0)) => self
-                .choices
-                .0
-                .handle_event(event, context, t0, captures, s0),
-            (OneOf4::V1(s1), render::OneOf4::V1(t1)) => self
-                .choices
-                .1
-                .handle_event(event, context, t1, captures, s1),
-            (OneOf4::V2(s2), render::OneOf4::V2(t2)) => self
-                .choices
-                .2
-                .handle_event(event, context, t2, captures, s2),
-            (OneOf4::V3(s3), render::OneOf4::V3(t3)) => self
-                .choices
-                .3
-                .handle_event(event, context, t3, captures, s3),
+            (OneOf4::V0(s0), render::OneOf4::V0(t0)) => {
+                if let Event::Focus {
+                    action: focus_event,
+                    ..
+                } = event
+                {
+                    let inner_focus = match focus_event {
+                        FocusAction::Focus(FocusDirection::Backward) | FocusAction::Previous => {
+                            focus.v0_or_init(DefaultFocus::default_last())
+                        }
+                        _ => focus.v0_or_init(DefaultFocus::default_first()),
+                    };
+                    self.choices
+                        .0
+                        .handle_event(event, context, t0, captures, s0, inner_focus)
+                } else {
+                    let inner_focus = focus.v0_or_init(DefaultFocus::default_first());
+                    self.choices
+                        .0
+                        .handle_event(event, context, t0, captures, s0, inner_focus)
+                }
+            }
+            (OneOf4::V1(s1), render::OneOf4::V1(t1)) => {
+                if let Event::Focus {
+                    action: focus_event,
+                    ..
+                } = event
+                {
+                    let inner_focus = match focus_event {
+                        FocusAction::Focus(FocusDirection::Backward) | FocusAction::Previous => {
+                            focus.v1_or_init(DefaultFocus::default_last())
+                        }
+                        _ => focus.v1_or_init(DefaultFocus::default_first()),
+                    };
+                    self.choices
+                        .1
+                        .handle_event(event, context, t1, captures, s1, inner_focus)
+                } else {
+                    let inner_focus = focus.v1_or_init(DefaultFocus::default_first());
+                    self.choices
+                        .1
+                        .handle_event(event, context, t1, captures, s1, inner_focus)
+                }
+            }
+            (OneOf4::V2(s2), render::OneOf4::V2(t2)) => {
+                if let Event::Focus {
+                    action: focus_event,
+                    ..
+                } = event
+                {
+                    let inner_focus = match focus_event {
+                        FocusAction::Focus(FocusDirection::Backward) | FocusAction::Previous => {
+                            focus.v2_or_init(DefaultFocus::default_last())
+                        }
+                        _ => focus.v2_or_init(DefaultFocus::default_first()),
+                    };
+                    self.choices
+                        .2
+                        .handle_event(event, context, t2, captures, s2, inner_focus)
+                } else {
+                    let inner_focus = focus.v2_or_init(DefaultFocus::default_first());
+                    self.choices
+                        .2
+                        .handle_event(event, context, t2, captures, s2, inner_focus)
+                }
+            }
+            (OneOf4::V3(s3), render::OneOf4::V3(t3)) => {
+                if let Event::Focus {
+                    action: focus_event,
+                    ..
+                } = event
+                {
+                    let inner_focus = match focus_event {
+                        FocusAction::Focus(FocusDirection::Backward) | FocusAction::Previous => {
+                            focus.v3_or_init(DefaultFocus::default_last())
+                        }
+                        _ => focus.v3_or_init(DefaultFocus::default_first()),
+                    };
+                    self.choices
+                        .3
+                        .handle_event(event, context, t3, captures, s3, inner_focus)
+                } else {
+                    let inner_focus = focus.v3_or_init(DefaultFocus::default_first());
+                    self.choices
+                        .3
+                        .handle_event(event, context, t3, captures, s3, inner_focus)
+                }
+            }
             _ => {
-                // FIXME: I think it's better here to build new state
                 panic!("Layout/state branch mismatch");
             }
         }

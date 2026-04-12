@@ -1,6 +1,6 @@
 use crate::{
     primitives::{Interpolate, transform::LinearTransform},
-    render::{AnimatedJoin, AnimationDomain, Render},
+    render::{AnimatedJoin, AnimationDomain, ContentShape, IntrinsicShape, Render},
 };
 
 /// Applies the provided linear transform to the inner render tree
@@ -60,5 +60,13 @@ impl<T: Render<C>, C: Interpolate + Copy> Render<C> for Transform<T> {
                 Render::render_animated(render_target, &source.inner, &target.inner, style, domain);
             },
         );
+    }
+}
+
+impl<T: IntrinsicShape> IntrinsicShape for Transform<T> {
+    fn content_shape(&self) -> ContentShape {
+        self.inner
+            .content_shape()
+            .with_offset(self.transform.offset)
     }
 }

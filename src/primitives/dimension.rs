@@ -35,11 +35,16 @@ impl ProposedDimensions {
         }
     }
 
+    /// Returns the most flexible dimension within the proposal.
+    ///
+    /// The ideal size is used when a compact size is proposed.
     #[must_use]
-    pub fn resolve_most_flexible(self, minimum: u32, ideal: u32) -> Dimensions {
+    pub fn resolve_most_flexible(self, minimum: Size, ideal: Size) -> Dimensions {
         Dimensions {
-            width: self.width.resolve_most_flexible(minimum, ideal),
-            height: self.height.resolve_most_flexible(minimum, ideal),
+            width: self.width.resolve_most_flexible(minimum.width, ideal.width),
+            height: self
+                .height
+                .resolve_most_flexible(minimum.height, ideal.height),
         }
     }
 
@@ -103,7 +108,6 @@ impl From<embedded_graphics_core::geometry::Size> for ProposedDimensions {
 
 impl ProposedDimension {
     /// Returns the most flexible dimension within the proposal
-    /// Magic size of 10 points is applied to views that have no implicit size
     #[must_use]
     pub fn resolve_most_flexible(self, minimum: u32, ideal: u32) -> Dimension {
         match self {

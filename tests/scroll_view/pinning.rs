@@ -2,6 +2,7 @@ use core::time::Duration;
 
 use buoyant::{
     event::EventContext,
+    focus::DefaultFocus,
     font::CharacterBufferFont,
     primitives::Size,
     render::Render,
@@ -54,32 +55,38 @@ fn scrolled_to_bottom_stays_at_bottom_with_longer_content() {
     );
 
     // Scroll down to show Line4 at bottom (activate pinning by reaching bottom)
-    let result = view.handle_event(
+    let ctx = EventContext::new(Duration::from_secs(2));
+    view.handle_event(
         &touch_down(6, 3),
-        &EventContext::new(Duration::from_secs(2)),
+        &ctx,
         &mut tree,
         &mut captures,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
-    assert!(!result.recompute_view);
+    assert!(!ctx.view_rebuild_requested.get());
 
-    let result = view.handle_event(
+    let ctx = EventContext::new(Duration::from_secs(3));
+    view.handle_event(
         &touch_move(6, 2),
-        &EventContext::new(Duration::from_secs(3)),
+        &ctx,
         &mut tree,
         &mut captures,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
-    assert!(!result.recompute_view);
+    assert!(!ctx.view_rebuild_requested.get());
 
-    let result = view.handle_event(
+    let ctx = EventContext::new(Duration::from_secs(4));
+    view.handle_event(
         &touch_up(6, 2),
-        &EventContext::new(Duration::from_secs(4)),
+        &ctx,
         &mut tree,
         &mut captures,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
-    assert!(result.recompute_view);
+    assert!(ctx.view_rebuild_requested.get());
 
     tree = helpers::tree(
         &view,
@@ -180,6 +187,7 @@ fn can_scroll_to_bottom_of_content() {
         &mut tree,
         &mut captures,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
 
     view.handle_event(
@@ -188,6 +196,7 @@ fn can_scroll_to_bottom_of_content() {
         &mut tree,
         &mut captures,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
 
     view.handle_event(
@@ -196,6 +205,7 @@ fn can_scroll_to_bottom_of_content() {
         &mut tree,
         &mut captures,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
 
     tree = helpers::tree(
@@ -246,6 +256,7 @@ fn multiple_scrolls_work_correctly() {
         &mut tree,
         &mut captures,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
 
     view.handle_event(
@@ -254,6 +265,7 @@ fn multiple_scrolls_work_correctly() {
         &mut tree,
         &mut captures,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
 
     view.handle_event(
@@ -262,6 +274,7 @@ fn multiple_scrolls_work_correctly() {
         &mut tree,
         &mut captures,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
 
     tree = helpers::tree(
@@ -293,6 +306,7 @@ fn multiple_scrolls_work_correctly() {
         &mut tree,
         &mut captures,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
 
     view.handle_event(
@@ -301,6 +315,7 @@ fn multiple_scrolls_work_correctly() {
         &mut tree,
         &mut captures,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
 
     view.handle_event(
@@ -309,6 +324,7 @@ fn multiple_scrolls_work_correctly() {
         &mut tree,
         &mut captures,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
 
     tree = helpers::tree(
@@ -373,6 +389,7 @@ fn no_pinning_when_content_fits_in_view() {
         &mut tree,
         &mut captures,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
 
     view.handle_event(
@@ -381,16 +398,19 @@ fn no_pinning_when_content_fits_in_view() {
         &mut tree,
         &mut captures,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
 
-    let result = view.handle_event(
+    let ctx = EventContext::new(Duration::from_secs(4));
+    view.handle_event(
         &touch_up(6, 1),
-        &EventContext::new(Duration::from_secs(4)),
+        &ctx,
         &mut tree,
         &mut captures,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
-    assert!(result.recompute_view);
+    assert!(ctx.view_rebuild_requested.get());
 
     tree = helpers::tree(
         &view,
@@ -454,16 +474,19 @@ fn pinning_not_active_at_top_of_scrollable_content() {
         &mut tree,
         &mut captures,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
 
-    let result = view.handle_event(
+    let ctx = EventContext::new(Duration::from_secs(3));
+    view.handle_event(
         &touch_up(6, 2),
-        &EventContext::new(Duration::from_secs(3)),
+        &ctx,
         &mut tree,
         &mut captures,
         &mut state,
+        &mut DefaultFocus::default_first(),
     );
-    assert!(result.recompute_view);
+    assert!(ctx.view_rebuild_requested.get());
 
     tree = helpers::tree(
         &view,

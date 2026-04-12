@@ -4,9 +4,11 @@
 extern crate std;
 
 pub mod animation;
+pub mod app;
 pub mod color;
 pub mod environment;
 pub mod event;
+pub mod focus;
 pub mod font;
 pub mod image;
 pub mod layout;

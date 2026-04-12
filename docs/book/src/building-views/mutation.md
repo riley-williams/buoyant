@@ -1,4 +1,4 @@
-# Interactivity
+# Mutation & State
 
 Take a look at this simple view with buttons to increment and decrement a counter:
 
@@ -44,7 +44,7 @@ handlers in this view are promised an `&mut XYZ`. This type can of course be
 different from the view function parameters, and is not available when constructing
 the view.
 
-This can also be written in a way that's hopefully more clear:
+The example could also be written in a way that's hopefully more clear:
 
 ```rust
 # extern crate buoyant;

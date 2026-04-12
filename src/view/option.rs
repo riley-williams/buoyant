@@ -1,11 +1,22 @@
 use crate::{
     event::{EventContext, EventResult},
+    focus::DefaultFocus,
     layout::ResolvedLayout,
     primitives::{Dimensions, Point, ProposedDimensions},
     render::TransitionOption,
     transition::Opacity,
-    view::{ViewLayout, ViewMarker},
+    view::{Event, ViewLayout, ViewMarker},
 };
+
+impl<T: DefaultFocus> DefaultFocus for Option<T> {
+    fn default_first() -> Self {
+        Some(T::default_first())
+    }
+
+    fn default_last() -> Self {
+        Some(T::default_last())
+    }
+}
 
 impl<V> ViewMarker for Option<V>
 where
@@ -22,6 +33,7 @@ where
 {
     type Sublayout = Option<ResolvedLayout<V::Sublayout>>;
     type State = Option<V::State>;
+    type FocusTree = Option<V::FocusTree>;
 
     fn priority(&self) -> i8 {
         self.as_ref().map_or(i8::MIN, ViewLayout::priority)
@@ -98,23 +110,26 @@ where
     #[expect(clippy::assertions_on_constants)]
     fn handle_event(
         &self,
-        event: &crate::view::Event,
+        event: &Event,
         context: &EventContext,
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
+        focus: &mut Self::FocusTree,
     ) -> EventResult {
         match (self, render_tree, state) {
             (Some(v), TransitionOption::Some { subtree, .. }, Some(s)) => {
-                v.handle_event(event, context, subtree, captures, s)
+                // TODO: Correct to always init first??
+                let inner_focus = focus.get_or_insert(DefaultFocus::default_first());
+                v.handle_event(event, context, subtree, captures, s, inner_focus)
             }
-            (None, _, _) => EventResult::default(),
+            (None, _, _) => EventResult::Deferred,
             _ => {
                 assert!(
                     !cfg!(debug_assertions),
                     "State branch does not match view branch, likely due to improper reuse of layout."
                 );
-                EventResult::default()
+                EventResult::Deferred
             }
         }
     }

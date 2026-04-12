@@ -9,51 +9,69 @@ mod animated;
 pub mod aspect_ratio;
 mod background;
 mod background_color;
+mod bound_focus;
 mod clipped;
+mod content_shape;
 mod erase_captures;
+mod exclusive_focus;
 mod fixed_frame;
 mod fixed_size;
 mod flex_frame;
+mod focus_touches;
 mod foreground_color;
 mod geometry_group;
 mod hidden;
 mod hint_background;
+mod map_event;
+mod multiplex_focus;
 mod offset;
 mod opacity;
 mod overlay;
 #[allow(missing_docs)]
 pub mod padding;
+mod popover;
 mod priority;
 mod scale_effect;
 mod transition;
+mod unfocusable;
 
+use crate::focus::{BoundaryBehavior, FocusGroupSet};
 pub(crate) use animated::Animated;
 pub(crate) use aspect_ratio::AspectRatio;
 pub(crate) use background::BackgroundView;
 pub(crate) use background_color::BackgroundColor;
+pub(crate) use bound_focus::BoundFocus;
 pub(crate) use clipped::Clipped;
+use content_shape::ContentShape;
 pub(crate) use erase_captures::EraseCaptures;
+pub(crate) use exclusive_focus::ExclusiveFocus;
 use fixed::traits::ToFixed;
 pub(crate) use fixed_frame::FixedFrame;
 pub(crate) use fixed_size::FixedSize;
 pub(crate) use flex_frame::FlexFrame;
+pub(crate) use focus_touches::FocusTouches;
 pub(crate) use foreground_color::ForegroundStyle;
 pub(crate) use geometry_group::GeometryGroup;
 pub(crate) use hidden::Hidden;
 pub(crate) use hint_background::HintBackground;
+pub(crate) use multiplex_focus::MultiplexFocus;
 pub(crate) use offset::Offset;
 pub(crate) use opacity::Opacity;
 pub(crate) use overlay::OverlayView;
 pub(crate) use padding::Padding;
+pub(crate) use popover::Popover;
 pub(crate) use priority::Priority;
 pub(crate) use scale_effect::ScaleEffect;
 pub(crate) use transition::Transition;
+pub(crate) use unfocusable::Unfocusable;
 
 use crate::{
     animation::Animation,
+    event::Event,
+    focus::FocusGroup,
     layout::{Alignment, HorizontalAlignment, VerticalAlignment},
     primitives::{Point, UnitPoint},
-    view::{ViewMarker, shape::Shape},
+    view::{ViewMarker, modifier::map_event::MapEvent, shape::Shape},
 };
 
 impl<T> ViewModifier for T where T: ViewMarker {}
@@ -214,9 +232,52 @@ pub trait ViewModifier: Sized + ViewMarker {
         BackgroundColor::new(self, color, in_shape)
     }
 
+    /// Bounds focus navigation within this view's subtree.
+    ///
+    /// When focus tries to exit the bounded region (via Next/Previous navigation),
+    /// this modifier either wraps focus to the other end or stops at the boundary,
+    /// depending on the configured [`BoundaryBehavior`].
+    ///
+    /// If the subtree contains no focusable elements, focus may move outside the
+    /// bounded subtree.
+    fn bound_focus(self, behavior: BoundaryBehavior) -> BoundFocus<Self> {
+        BoundFocus::new(self, behavior)
+    }
+
     /// Clips the modified view to its bounds.
     fn clipped(self) -> Clipped<Self> {
         Clipped::new(self)
+    }
+
+    /// Overrides the content shape of this view with that of another.
+    ///
+    /// The content shape is used for button hit testing.
+    ///
+    /// To specify the desired shape, provide a shape view:
+    ///
+    /// - [`Circle`][`crate::view::shape::Circle`],
+    /// - [`Rectangle`][`crate::view::shape::Rectangle`],
+    /// - [`RoundedRectangle`][`crate::view::shape::RoundedRectangle`]
+    /// - [`Capsule`][`crate::view::shape::Capsule`]
+    ///
+    /// # Examples
+    ///
+    /// Because this button does not have a background, the padded area will not be
+    /// tappable without overriding the content shape to include the padding:
+    ///
+    /// ```
+    /// use buoyant::view::prelude::*;
+    /// use embedded_graphics::pixelcolor::Rgb888;
+    /// use embedded_graphics::mono_font::ascii::FONT_9X15_BOLD;
+    ///
+    /// fn padded_button() -> impl View<Rgb888, ()> {
+    ///     Text::new("Button", &FONT_9X15_BOLD)
+    ///         .padding(Edges::All, 10)
+    ///         .content_shape(Rectangle)
+    /// }
+    /// ```
+    fn content_shape<S: Shape>(self, shape: S) -> ContentShape<Self, S> {
+        content_shape::ContentShape::new(self, shape)
     }
 
     /// Converts the captures of a parent view to [`()`]
@@ -346,6 +407,12 @@ pub trait ViewModifier: Sized + ViewMarker {
             .with_horizontal_alignment(alignment)
     }
 
+    /// Allows touch events to focus tapped elements. Generally, this should be applied
+    /// once near the root of the view hierarchy.
+    fn focus_touches(self) -> FocusTouches<Self> {
+        FocusTouches::new(self)
+    }
+
     /// Sets the foreground color of the modified view and its children.
     fn foreground_color<C>(self, color: C) -> ForegroundStyle<Self, C> {
         ForegroundStyle::new(color, self)
@@ -385,6 +452,14 @@ pub trait ViewModifier: Sized + ViewMarker {
     /// ```
     fn frame_sized(self, width: u32, height: u32) -> FixedFrame<Self> {
         FixedFrame::new(self).with_width(width).with_height(height)
+    }
+
+    /// Focus events are only passed to the subtree when the incoming event's focus
+    /// group matches the specified group.
+    ///
+    /// Any non-focus events handled by the subtree will inherit the focus group.
+    fn exclusive_focus(self, group: FocusGroup) -> ExclusiveFocus<Self> {
+        ExclusiveFocus::new(self, group)
     }
 
     /// Creates a new coordinate space under which views are positioned relative to a
@@ -449,6 +524,24 @@ pub trait ViewModifier: Sized + ViewMarker {
     /// such as with the [`ViewModifier::opacity`] modifier or during a [`ViewModifier::transition`].
     fn hint_background_color<C>(self, color: C) -> HintBackground<Self, C> {
         HintBackground::new(self, color)
+    }
+
+    /// Maps an event, delegating handling of the event to the modified view.
+    fn map_event<S: Default, F: Fn(&Event, &mut S) -> Option<Event>>(
+        self,
+        mapping: F,
+    ) -> MapEvent<Self, F, S> {
+        MapEvent::new(self, mapping)
+    }
+
+    /// Maintains multiple independent focus trees.
+    ///
+    /// The provided groups must be disjoint.
+    fn multiplex_focus<const N: usize>(
+        self,
+        groups: [FocusGroupSet; N],
+    ) -> MultiplexFocus<Self, N> {
+        MultiplexFocus::new(self, groups)
     }
 
     /// Offsets a view by the specified values.
@@ -531,6 +624,87 @@ pub trait ViewModifier: Sized + ViewMarker {
         Padding::new(edges, amount, self)
     }
 
+    /// Popover displays content on top of the modified view when the provided value
+    /// is `Some`. The unwrapped value is provided to the popover view function.
+    ///
+    /// While the popover is visible, it will take focus from the modified view,
+    /// but focus will not be automatically moved if a separate view is focused when
+    /// the popover becomes visible. Popovers should be placed at or near the root
+    /// of the view tree to guarantee focus is captured in the popover.
+    ///
+    /// The layout behavior is identical to [`ViewModifier::overlay`], with content
+    /// center aligned by default.
+    ///
+    /// # Examples
+    ///
+    /// A button that presents a dismissible popover when pressed:
+    ///
+    /// ```
+    /// use buoyant::view::prelude::*;
+    /// # use embedded_graphics::{prelude::*, pixelcolor::Rgb888};
+    /// # use embedded_graphics::mono_font::ascii::FONT_9X15_BOLD;
+    ///
+    /// struct State {
+    ///    error_message: Option<&'static str>,
+    /// }
+    ///
+    /// fn my_button() -> impl View<Rgb888, State> {
+    ///     Button::new(|state: &mut State| {
+    ///         // present the popover
+    ///         state.error_message = Some("Something went wrong!");
+    ///     }, |_|
+    ///         Text::new("Try the thing", &FONT_9X15_BOLD)
+    ///             .foreground_color(Rgb888::WHITE)
+    ///             .padding(Edges::All, 6)
+    ///             .background_color(Rgb888::BLUE, RoundedRectangle::new(10))
+    ///     )
+    /// }
+    ///
+    /// fn root_view(state: State) -> impl View<Rgb888, State> {
+    ///     my_button()
+    ///         .popover(state.error_message.as_ref(), |error_message: &&'static str| {
+    ///             VStack::new((
+    ///                 Text::new(*error_message, &FONT_9X15_BOLD),
+    ///                 Button::new(|state: &mut State| {
+    ///                     // dismiss the popover
+    ///                     state.error_message = None;
+    ///                 }, |_|
+    ///                     Text::new("OK", &FONT_9X15_BOLD)
+    ///                         .background_color(Rgb888::RED, RoundedRectangle::new(10))
+    ///                 )
+    ///             ))
+    ///             .background_color(Rgb888::BLACK, RoundedRectangle::new(10))
+    ///             .foreground_color(Rgb888::WHITE)
+    ///         })
+    /// }
+    /// ```
+    ///
+    /// The transition can be changed from the default [`Opacity`][`crate::transition::Opacity`]
+    /// by applying [`transition()`][`ViewModifier::transition`] to the popover content view:
+    ///
+    /// ```
+    /// use buoyant::view::prelude::*;
+    /// use buoyant::transition::Slide;
+    /// # use embedded_graphics::pixelcolor::Rgb888;
+    /// # use embedded_graphics::mono_font::ascii::FONT_9X15_BOLD;
+    ///
+    /// fn view(message: Option<&'static str>) -> impl View<Rgb888, ()> {
+    ///     Rectangle
+    ///         .popover(message.as_ref(), |msg: &&'static str| {
+    ///             Text::new(*msg, &FONT_9X15_BOLD)
+    ///                 .transition(Slide::bottom())
+    ///         })
+    /// }
+    /// ```
+    fn popover<U, ViewFn, T>(self, value: Option<&T>, popover: ViewFn) -> Popover<Self, U>
+    where
+        ViewFn: for<'a> FnOnce(&'a T) -> U,
+        U: ViewMarker,
+        T: Clone,
+    {
+        Popover::new(self, value, popover)
+    }
+
     /// Sets the priority of the view layout.
     ///
     /// Stacks lay out views in groups of priority, with higher priority views being laid out
@@ -560,10 +734,10 @@ pub trait ViewModifier: Sized + ViewMarker {
     /// fn expanding_button() -> impl View<Rgb888, i32> {
     ///     Button::new(|_: &mut i32| {
     ///         // do something when pressed
-    ///     }, |is_pressed| {
+    ///     }, |state| {
     ///         Rectangle
-    ///             .scale_effect(if is_pressed { 1.2 } else { 1.0 }, UnitPoint::center())
-    ///             .animated(Animation::linear(Duration::from_millis(150)), is_pressed)
+    ///             .scale_effect(if state.is_pressed() { 1.2 } else { 1.0 }, UnitPoint::center())
+    ///             .animated(Animation::linear(Duration::from_millis(150)), state.is_pressed())
     ///     })
     /// }
     /// ```
@@ -606,5 +780,11 @@ pub trait ViewModifier: Sized + ViewMarker {
     /// ```
     fn transition<T: crate::transition::Transition>(self, transition: T) -> Transition<Self, T> {
         Transition::new(transition, self)
+    }
+
+    /// Focus events are only passed to the subtree when the incoming event's focus
+    /// group matches the specified group.
+    fn unfocusable(self) -> Unfocusable<Self> {
+        Unfocusable::new(self)
     }
 }

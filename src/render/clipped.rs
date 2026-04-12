@@ -3,7 +3,7 @@ use crate::{
     render_target::RenderTarget,
 };
 
-use super::{AnimatedJoin, AnimationDomain, Render};
+use super::{AnimatedJoin, AnimationDomain, ContentShape, IntrinsicShape, Render};
 
 /// A render tree node that clips its children
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -63,5 +63,12 @@ impl<T: Render<C>, C: Interpolate + Copy> Render<C> for Clipped<T> {
                 );
             },
         );
+    }
+}
+
+impl<T: IntrinsicShape> IntrinsicShape for Clipped<T> {
+    fn content_shape(&self) -> ContentShape {
+        // FIXME: Clip content shape?
+        self.subtree.content_shape()
     }
 }

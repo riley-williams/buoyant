@@ -10,7 +10,7 @@ pub use rounded_rect::RoundedRect;
 
 use crate::{
     primitives::{Interpolate, geometry::Shape, transform::LinearTransform},
-    render::{AnimatedJoin, AnimationDomain, Render},
+    render::{AnimatedJoin, AnimationDomain, ContentShape, IntrinsicShape, Render},
     render_target::{RenderTarget, SolidBrush, Stroke},
 };
 
@@ -21,12 +21,18 @@ pub trait Inset {
 }
 
 pub trait AsShapePrimitive {
-    type Primitive: Shape;
+    type Primitive: Shape + Into<ContentShape>;
     fn as_shape(&self) -> Self::Primitive;
 }
 
+impl<T: AsShapePrimitive> IntrinsicShape for T {
+    fn content_shape(&self) -> ContentShape {
+        self.as_shape().into()
+    }
+}
+
 // Implements fill for all shape primitive types
-impl<T: AnimatedJoin + Clone + AsShapePrimitive, C: Copy> Render<C> for T {
+impl<T: AnimatedJoin + Clone + AsShapePrimitive + IntrinsicShape, C: Copy> Render<C> for T {
     fn render(&self, render_target: &mut impl RenderTarget<ColorFormat = C>, style: &C) {
         render_target.fill(
             LinearTransform::default(),
@@ -68,6 +74,12 @@ impl<T: AnimatedJoin> AnimatedJoin for StrokedShape<T> {
     fn join_from(&mut self, source: &Self, domain: &AnimationDomain) {
         self.shape.join_from(&source.shape, domain);
         self.line_width = u32::interpolate(source.line_width, self.line_width, domain.factor);
+    }
+}
+
+impl<T: AsShapePrimitive> IntrinsicShape for StrokedShape<T> {
+    fn content_shape(&self) -> ContentShape {
+        self.shape.content_shape()
     }
 }
 

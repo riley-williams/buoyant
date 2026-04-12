@@ -1,6 +1,7 @@
 use crate::{
     environment::LayoutEnvironment,
-    event::EventResult,
+    event::{Event, EventResult},
+    focus::{DefaultFocus, FocusAction, FocusDirection},
     layout::{Alignment, ResolvedLayout},
     primitives::{Point, ProposedDimension, ProposedDimensions},
     view::{ViewLayout, ViewMarker},
@@ -25,6 +26,25 @@ impl<T: ViewMarker, U: ViewMarker> OverlayView<T, U> {
     }
 }
 
+/// Focus tree for overlay view - tracks which child has focus
+#[derive(Debug, Clone)]
+pub enum OverlayFocus<T, U> {
+    /// Focus is on the foreground
+    Foreground(T),
+    /// Focus is on the overlay
+    Overlay(U),
+}
+
+impl<T: DefaultFocus, U: DefaultFocus> DefaultFocus for OverlayFocus<T, U> {
+    fn default_first() -> Self {
+        Self::Overlay(U::default_first())
+    }
+
+    fn default_last() -> Self {
+        Self::Foreground(T::default_last())
+    }
+}
+
 impl<T, U> ViewMarker for OverlayView<T, U>
 where
     T: ViewMarker,
@@ -42,6 +62,7 @@ where
     type Sublayout = ResolvedLayout<T::Sublayout>;
     // Tuples are rendered first to last
     type State = (T::State, U::State);
+    type FocusTree = OverlayFocus<T::FocusTree, U::FocusTree>;
 
     fn priority(&self) -> i8 {
         self.foreground.priority()
@@ -68,12 +89,9 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> ResolvedLayout<Self::Sublayout> {
-        let foreground_layout = self.foreground.layout(offer, env, captures, &mut state.0);
-        let foreground_size = foreground_layout.resolved_size;
-        ResolvedLayout {
-            sublayouts: foreground_layout,
-            resolved_size: foreground_size,
-        }
+        self.foreground
+            .layout(offer, env, captures, &mut state.0)
+            .nested()
     }
 
     fn render_tree(
@@ -120,6 +138,7 @@ where
         )
     }
 
+    #[expect(clippy::too_many_lines)]
     fn handle_event(
         &self,
         event: &crate::view::Event,
@@ -127,16 +146,160 @@ where
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
+        focus: &mut Self::FocusTree,
     ) -> EventResult {
-        // Overlay handles events first (it's on top)
-        let overlay_result =
-            self.overlay
-                .handle_event(event, context, &mut render_tree.1, captures, &mut state.1);
-        if overlay_result.handled {
-            return overlay_result;
+        // Handle focus events specially - they need to route through the focus tree
+        if let Event::Focus {
+            action: focus_event,
+            group,
+        } = event
+        {
+            match focus {
+                OverlayFocus::Overlay(overlay_focus) => {
+                    let result = self.overlay.handle_event(
+                        event,
+                        context,
+                        &mut render_tree.1,
+                        captures,
+                        &mut state.1,
+                        overlay_focus,
+                    );
+
+                    if result.is_handled() || *focus_event == FocusAction::Teardown {
+                        return result;
+                    }
+
+                    // Overlay exhausted - only move to foreground on forward navigation
+                    match focus_event {
+                        FocusAction::Focus(FocusDirection::Forward) | FocusAction::Next => {
+                            // Move to foreground
+                            let mut foreground_focus = DefaultFocus::default_first();
+                            let result = self.foreground.handle_event(
+                                &Event::Focus {
+                                    action: FocusAction::Focus(FocusDirection::Forward),
+                                    group: *group,
+                                },
+                                context,
+                                &mut render_tree.0,
+                                captures,
+                                &mut state.0,
+                                &mut foreground_focus,
+                            );
+                            *focus = OverlayFocus::Foreground(foreground_focus);
+                            result
+                        }
+                        FocusAction::Focus(FocusDirection::Backward)
+                        | FocusAction::Previous
+                        | FocusAction::Blur
+                        | FocusAction::Select
+                        | FocusAction::Teardown => EventResult::Deferred,
+                    }
+                }
+                OverlayFocus::Foreground(foreground_focus) => {
+                    let result = self.foreground.handle_event(
+                        event,
+                        context,
+                        &mut render_tree.0,
+                        captures,
+                        &mut state.0,
+                        foreground_focus,
+                    );
+
+                    if result.is_handled() || *focus_event == FocusAction::Teardown {
+                        return result;
+                    }
+
+                    // Foreground exhausted - only move to overlay on backward navigation
+                    match focus_event {
+                        FocusAction::Focus(FocusDirection::Backward) | FocusAction::Previous => {
+                            let mut overlay_focus = DefaultFocus::default_last();
+                            let result = self.overlay.handle_event(
+                                &Event::Focus {
+                                    action: FocusAction::Focus(FocusDirection::Backward),
+                                    group: *group,
+                                },
+                                context,
+                                &mut render_tree.1,
+                                captures,
+                                &mut state.1,
+                                &mut overlay_focus,
+                            );
+                            *focus = OverlayFocus::Overlay(overlay_focus);
+                            result
+                        }
+                        FocusAction::Focus(FocusDirection::Forward)
+                        | FocusAction::Next
+                        | FocusAction::Select
+                        | FocusAction::Blur
+                        | FocusAction::Teardown => EventResult::Deferred,
+                    }
+                }
+            }
+        } else {
+            // For non-focus events (touch, scroll, etc.), perform DFS
+            match focus {
+                OverlayFocus::Overlay(_) => {
+                    // Start with overlay
+                    let overlay_result = self.overlay.handle_event(
+                        event,
+                        context,
+                        &mut render_tree.1,
+                        captures,
+                        &mut state.1,
+                        match focus {
+                            OverlayFocus::Overlay(focus) => focus,
+                            OverlayFocus::Foreground(_) => unreachable!(),
+                        },
+                    );
+                    if overlay_result.is_handled() {
+                        return overlay_result;
+                    }
+                    // Then foreground
+                    *focus = OverlayFocus::Foreground(DefaultFocus::default_first());
+                    self.foreground.handle_event(
+                        event,
+                        context,
+                        &mut render_tree.0,
+                        captures,
+                        &mut state.0,
+                        match focus {
+                            OverlayFocus::Foreground(focus) => focus,
+                            OverlayFocus::Overlay(_) => unreachable!(),
+                        },
+                    )
+                }
+                OverlayFocus::Foreground(_) => {
+                    // Start with overlay
+                    *focus = OverlayFocus::Overlay(DefaultFocus::default_first());
+                    let overlay_result = self.overlay.handle_event(
+                        event,
+                        context,
+                        &mut render_tree.1,
+                        captures,
+                        &mut state.1,
+                        match focus {
+                            OverlayFocus::Overlay(focus) => focus,
+                            OverlayFocus::Foreground(_) => unreachable!(),
+                        },
+                    );
+                    if overlay_result.is_handled() {
+                        return overlay_result;
+                    }
+                    // Then foreground
+                    *focus = OverlayFocus::Foreground(DefaultFocus::default_first());
+                    self.foreground.handle_event(
+                        event,
+                        context,
+                        &mut render_tree.0,
+                        captures,
+                        &mut state.0,
+                        match focus {
+                            OverlayFocus::Foreground(focus) => focus,
+                            OverlayFocus::Overlay(_) => unreachable!(),
+                        },
+                    )
+                }
+            }
         }
-        self.foreground
-            .handle_event(event, context, &mut render_tree.0, captures, &mut state.0)
-            .merging(overlay_result)
     }
 }

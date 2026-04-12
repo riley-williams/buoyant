@@ -12,6 +12,7 @@ pub use rounded_rectangle::RoundedRectangle;
 
 use crate::{
     environment::LayoutEnvironment,
+    event::EventResult,
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
     render::{
@@ -91,6 +92,7 @@ where
 {
     type Sublayout = T::Sublayout;
     type State = T::State;
+    type FocusTree = ();
 
     fn transition(&self) -> Self::Transition {
         Opacity
@@ -129,5 +131,17 @@ where
                 .inset(inset),
             self.line_width,
         )
+    }
+
+    fn handle_event(
+        &self,
+        _event: &crate::view::Event,
+        _context: &crate::event::EventContext,
+        _render_tree: &mut Self::Renderables,
+        _captures: &mut Captures,
+        _state: &mut Self::State,
+        _focus: &mut Self::FocusTree,
+    ) -> EventResult {
+        EventResult::Deferred
     }
 }

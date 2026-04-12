@@ -99,7 +99,9 @@ pub struct ResolvedLayout<C: Clone + PartialEq> {
 }
 
 impl<C: Clone + PartialEq> ResolvedLayout<C> {
-    pub fn nested(self) -> ResolvedLayout<Self> {
+    /// Nests a [`ResolvedLayout`] inside another [`ResolvedLayout`], using the size
+    /// of `self` as the size of the outer layout.
+    pub(crate) fn nested(self) -> ResolvedLayout<Self> {
         ResolvedLayout {
             sublayouts: Self {
                 sublayouts: self.sublayouts,

@@ -4,7 +4,7 @@ use crate::{
     environment::LayoutEnvironment,
     event::{EventContext, EventResult},
     layout::ResolvedLayout,
-    primitives::{Dimensions, Frame, ProposedDimensions, Size},
+    primitives::{Dimensions, ProposedDimensions, Size, geometry::Rectangle},
     render::Container,
     transition::Opacity,
     view::{Event, ViewLayout, ViewMarker},
@@ -99,6 +99,7 @@ where
 {
     type State = Option<Inner::State>;
     type Sublayout = Dimensions;
+    type FocusTree = Inner::FocusTree;
 
     fn transition(&self) -> Self::Transition {
         Opacity
@@ -117,7 +118,7 @@ where
     ) -> ResolvedLayout<Self::Sublayout> {
         // Defer actual layout to the render_tree call when we have the final size to avoid
         // doing wasted work.
-        let size = offer.resolve_most_flexible(0, 1);
+        let size = offer.resolve_most_flexible(Size::zero(), Size::new(1, 1));
         ResolvedLayout {
             resolved_size: size,
             sublayouts: size,
@@ -135,7 +136,7 @@ where
         let size = (*layout).into();
         let view = (self.inner)(size);
         let proposal = (*layout).into();
-        let frame = Frame::new(origin, size);
+        let frame = Rectangle::new(origin, size);
         if let Some(inner_state) = state {
             let layout = view.layout(&proposal, env, captures, inner_state);
             Container::new(
@@ -159,6 +160,7 @@ where
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
+        focus: &mut Self::FocusTree,
     ) -> EventResult {
         // TODO: Rebuilding the view here seems inefficient, maybe cache the view in the state?
         let view = (self.inner)(render_tree.frame.size);
@@ -169,6 +171,7 @@ where
                 &mut render_tree.child,
                 captures,
                 inner_state,
+                focus,
             )
         } else {
             let mut inner_state = view.build_state(captures);
@@ -178,6 +181,7 @@ where
                 &mut render_tree.child,
                 captures,
                 &mut inner_state,
+                focus,
             );
             *state = Some(inner_state);
             result

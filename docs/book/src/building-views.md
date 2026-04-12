@@ -13,9 +13,9 @@ requirements and have added the following dependencies to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-buoyant = "0.5"
+buoyant = "0.7"
 embedded-graphics = "0.8"
-embedded-graphics-simulator = "0.7.0"
+embedded-graphics-simulator = "0.8.0"
 ```
 
 The boilerplate from the [quickstart](./quickstart.md) is used to drive all

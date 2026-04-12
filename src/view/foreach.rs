@@ -4,10 +4,12 @@ use core::cmp::max;
 
 use crate::{
     environment::LayoutEnvironment,
-    event::EventResult,
+    event::{EventContext, EventResult},
+    focus::DefaultFocus,
     layout::{HorizontalAlignment, LayoutDirection, ResolvedLayout, VerticalAlignment},
     primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions},
     transition::Opacity,
+    view::Event,
     view::{ViewLayout, ViewMarker},
 };
 
@@ -235,14 +237,46 @@ where
     type Transition = Opacity;
 }
 
+#[derive(Debug, Clone)]
+pub struct Focus<T: DefaultFocus> {
+    index: usize,
+    tree: T,
+}
+
+impl<T: DefaultFocus> DefaultFocus for Focus<T> {
+    fn default_first() -> Self {
+        Self {
+            index: 0,
+            tree: T::default_first(),
+        }
+    }
+
+    fn default_last() -> Self {
+        // For ForEach, we don't know the count at compile time,
+        // so we use usize::MAX as a sentinel to indicate "last"
+        Self {
+            index: usize::MAX,
+            tree: T::default_last(),
+        }
+    }
+}
+
+impl<T: DefaultFocus> Default for Focus<T> {
+    fn default() -> Self {
+        Self::default_first()
+    }
+}
+
 impl<'a, const N: usize, I, V, F, Captures: ?Sized, D: ForEachDirection> ViewLayout<Captures>
     for ForEachView<'a, N, I, V, F, D>
 where
     V: ViewLayout<Captures>,
+    V::FocusTree: DefaultFocus,
     F: Fn(&'a I) -> V,
 {
     type Sublayout = ResolvedLayout<heapless::Vec<ResolvedLayout<V::Sublayout>, N>>;
     type State = heapless::Vec<V::State, N>;
+    type FocusTree = Focus<V::FocusTree>;
 
     fn transition(&self) -> Self::Transition {
         Opacity
@@ -360,24 +394,123 @@ where
 
     fn handle_event(
         &self,
-        event: &crate::event::Event,
-        context: &crate::event::EventContext,
+        event: &Event,
+        context: &EventContext,
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
+        focus: &mut Self::FocusTree,
     ) -> crate::event::EventResult {
-        let mut result = EventResult::default();
-        // Delegate event handling to child views
+        use crate::event::Event;
+        use crate::focus::{FocusAction, FocusDirection};
+
+        // Handle focus events specially - they need to route through the focus tree
+        if let Event::Focus {
+            action: focus_event,
+            group,
+        } = event
+        {
+            // Get the current focused index, resolving the usize::MAX sentinel to the actual last index
+            let mut current = if focus.index == usize::MAX {
+                // Sentinel for "last" - resolve to actual last index
+                if self.items.is_empty() {
+                    return EventResult::Deferred;
+                }
+                let last_index = self.items.len() - 1;
+                focus.index = last_index;
+                last_index
+            } else {
+                focus.index
+            };
+
+            // The event to use - initially the original event, but when entering
+            // a new child during navigation we switch to a Focus event
+            let mut current_event = *focus_event;
+
+            loop {
+                // Ensure current index is valid
+                if current >= self.items.len() {
+                    return EventResult::Deferred;
+                }
+
+                // Try focus on the current child
+                let item = &self.items[current];
+                let view = (self.build_view)(item);
+                let item_state = &mut state[current];
+                let item_render_tree = &mut render_tree[current];
+
+                let child_result = view.handle_event(
+                    &Event::Focus {
+                        action: current_event,
+                        group: *group,
+                    },
+                    context,
+                    item_render_tree,
+                    captures,
+                    item_state,
+                    &mut focus.tree,
+                );
+
+                // If the child handled it (not deferred), return the result
+                if !matches!(child_result, EventResult::Deferred)
+                    || *focus_event == FocusAction::Teardown
+                {
+                    return child_result;
+                }
+
+                // Child is exhausted, try to move based on action
+                match focus_event {
+                    FocusAction::Blur | FocusAction::Teardown => {
+                        return EventResult::Deferred;
+                    }
+                    FocusAction::Focus(FocusDirection::Forward)
+                    | FocusAction::Select
+                    | FocusAction::Next => {
+                        // Advance to next child
+                        current += 1;
+                        if current >= self.items.len() {
+                            return EventResult::Deferred;
+                        }
+                        focus.index = current;
+                        focus.tree = <V::FocusTree as DefaultFocus>::default_first();
+                        // When entering a new child, use Focus action (forward)
+                        current_event = FocusAction::Focus(FocusDirection::Forward);
+                    }
+                    FocusAction::Focus(FocusDirection::Backward) | FocusAction::Previous => {
+                        // Go to previous child
+                        if current == 0 {
+                            return EventResult::Deferred;
+                        }
+                        current -= 1;
+                        focus.index = current;
+                        focus.tree = <V::FocusTree as DefaultFocus>::default_last();
+                        // When entering a new child, use Focus action (backward)
+                        current_event = FocusAction::Focus(FocusDirection::Backward);
+                    }
+                }
+            }
+        }
+
+        // For non-focus events (touch, scroll, etc.), use DFS approach
         for (i, item) in self.items.iter().enumerate() {
             let view = (self.build_view)(item);
             let item_state = &mut state[i];
             let item_render_tree = &mut render_tree[i];
-            result.merge(view.handle_event(event, context, item_render_tree, captures, item_state));
-            if result.handled {
-                return result;
+            focus.tree = DefaultFocus::default_first();
+            focus.index = i;
+            let child_result = view.handle_event(
+                event,
+                context,
+                item_render_tree,
+                captures,
+                item_state,
+                &mut focus.tree,
+            );
+            if child_result.is_handled() {
+                return child_result;
             }
         }
-        result
+        EventResult::Deferred
     }
 }
 

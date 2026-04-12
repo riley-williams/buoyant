@@ -33,6 +33,7 @@ impl<Color: Interpolate + Clone, Captures: ?Sized, Inner: ViewLayout<Captures>> 
 {
     type Sublayout = Inner::Sublayout;
     type State = Inner::State;
+    type FocusTree = Inner::FocusTree;
 
     fn priority(&self) -> i8 {
         self.inner.priority()
@@ -81,8 +82,15 @@ impl<Color: Interpolate + Clone, Captures: ?Sized, Inner: ViewLayout<Captures>> 
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
+        focus: &mut Self::FocusTree,
     ) -> EventResult {
-        self.inner
-            .handle_event(event, context, &mut render_tree.subtree, captures, state)
+        self.inner.handle_event(
+            event,
+            context,
+            &mut render_tree.subtree,
+            captures,
+            state,
+            focus,
+        )
     }
 }

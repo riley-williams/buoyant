@@ -47,6 +47,7 @@ where
 {
     type Sublayout = ResolvedLayout<T::Sublayout>;
     type State = T::State;
+    type FocusTree = T::FocusTree;
 
     fn priority(&self) -> i8 {
         self.foreground.priority()
@@ -125,8 +126,15 @@ where
         render_tree: &mut Self::Renderables,
         captures: &mut Captures,
         state: &mut Self::State,
+        focus: &mut Self::FocusTree,
     ) -> EventResult {
-        self.foreground
-            .handle_event(event, context, &mut render_tree.1.subtree, captures, state)
+        self.foreground.handle_event(
+            event,
+            context,
+            &mut render_tree.1.subtree,
+            captures,
+            state,
+            focus,
+        )
     }
 }
