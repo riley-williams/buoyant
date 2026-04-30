@@ -333,7 +333,7 @@ fn partial_animation_join() {
         &source_tree,
         &target_tree,
         &' ',
-        &AnimationDomain::new(255, Duration::from_millis(2000)),
+        &AnimationDomain::new(255, Duration::from_secs(2)),
     );
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "X          ");
@@ -346,7 +346,7 @@ fn partial_animation_join() {
         &source_tree,
         &target_tree,
         &' ',
-        &AnimationDomain::new(255, Duration::from_millis(3000)),
+        &AnimationDomain::new(255, Duration::from_secs(3)),
     );
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "X          ");
@@ -491,7 +491,7 @@ fn jump_toggle_animation() {
         &source_tree,
         &target_tree,
         &' ',
-        &AnimationDomain::top_level(Duration::from_millis(1000)),
+        &AnimationDomain::top_level(Duration::from_secs(1)),
     );
 
     // The toggle completes its animation, catching up to the subtext
@@ -507,7 +507,7 @@ fn toggle_stack(is_on: bool) -> impl View<char, ()> {
     ))
     .with_alignment(HorizontalAlignment::Trailing)
     // this animation should do nothing, because the text is transitioned, not moved
-    .animated(Animation::linear(Duration::from_millis(2000)), is_on)
+    .animated(Animation::linear(Duration::from_secs(2)), is_on)
     .flex_frame()
     .with_infinite_max_width()
     .with_infinite_max_height()
@@ -623,7 +623,7 @@ fn nested_toggle_animation() {
         &source_tree,
         &target_tree,
         &' ',
-        &AnimationDomain::top_level(Duration::from_millis(1000)),
+        &AnimationDomain::top_level(Duration::from_secs(1)),
     );
 
     assert_eq!(buffer.text[0].iter().collect::<String>(), "      ____#");
