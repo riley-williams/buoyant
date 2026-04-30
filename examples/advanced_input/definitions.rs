@@ -211,7 +211,7 @@ impl TryFrom<TemporaryIp> for Ipv4Addr {
     type Error = &'static str;
     fn try_from(octets: TemporaryIp) -> Result<Self, Self::Error> {
         let mut arr = [0u8; 4];
-        for (dst, src) in arr.iter_mut().zip(octets.0.into_iter()) {
+        for (dst, src) in arr.iter_mut().zip(octets.0) {
             *dst = src.try_into()?;
         }
         Ok(Self::from(arr))

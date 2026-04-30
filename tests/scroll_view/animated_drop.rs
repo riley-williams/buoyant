@@ -63,7 +63,7 @@ fn scroll_down_animates_back() {
     // Pull down just offscreen and release
     let event_result = view.handle_event(
         &touch_move(2, 8),
-        &EventContext::new(Duration::from_millis(1000)),
+        &EventContext::new(Duration::from_secs(1)),
         &mut render_tree,
         &mut captures,
         &mut state,
@@ -127,7 +127,7 @@ fn scroll_down_animates_back() {
         &render_tree,
         &new_tree,
         &' ',
-        &AnimationDomain::top_level(Duration::from_millis(5000)),
+        &AnimationDomain::top_level(Duration::from_secs(5)),
     );
     assert_str_grid_eq!(
         [
