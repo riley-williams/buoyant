@@ -111,8 +111,8 @@ fn main() {
             // Render animated transition between source and target trees
             app.render_animated(&mut target, &color::Space::WHITE);
 
-            // Draw focus overlay
-            app.draw_focus_overlay(&mut target, color::Space::CSS_YELLOW, 1);
+            // Draws a focus overlay
+            // app.draw_focus_overlay(&mut target, color::Space::CSS_YELLOW, 1);
 
             // Send to the display
             window.update(target.display());

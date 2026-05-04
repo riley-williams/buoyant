@@ -195,9 +195,23 @@ enum ScrollInteraction {
     Dragging {
         drag_start: Point,
         last_point: Point,
-        is_exclusive: bool,
+        target: InteractionTarget,
         touch_id: u8,
     },
+}
+
+/// Tracks the intended target.
+///
+/// This allows inner elements like nested scroll views or sliders
+/// to capture focus
+#[derive(Debug, Copy, Clone, Default, PartialEq, Eq)]
+enum InteractionTarget {
+    /// The user is interacting with the scroll view itself
+    Scroll,
+    /// Some element inside the scroll view is being interacted with
+    Inner,
+    #[default]
+    Unknown,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -503,7 +517,7 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
                             state.interaction = ScrollInteraction::Dragging {
                                 drag_start: point,
                                 last_point: point,
-                                is_exclusive: false,
+                                target: InteractionTarget::Unknown,
                                 touch_id: touch.id,
                             };
 
@@ -529,7 +543,7 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
                         ScrollInteraction::Dragging {
                             drag_start,
                             last_point,
-                            is_exclusive,
+                            target,
                             ..
                         } => {
                             let delta = point - *last_point;
@@ -539,27 +553,74 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
 
                             context.request_redraw();
                             // 4 pixels of wiggle without cancelling inner
-                            if !*is_exclusive
-                                && (total_scroll.x.abs() >= 4 || total_scroll.y.abs() >= 4)
-                            {
-                                // cancel inner interaction once we're sure the user intended to scroll
-                                *is_exclusive = true;
-                                let mut cancel_event = touch.clone();
-                                cancel_event.phase = Phase::Cancelled;
-                                // returning the inner result here would move focus before we're committed to scrolling
-                                {
-                                    let _inner_result = self.inner.handle_event(
-                                        &Event::Touch(cancel_event),
+                            match target {
+                                InteractionTarget::Scroll => {
+                                    (EventResult::handled_unfocused(), delta)
+                                }
+                                InteractionTarget::Inner => {
+                                    let inner_result = self.inner.handle_event(
+                                        &event.offset(
+                                            -render_tree.offset() - render_tree.inner.offset,
+                                        ),
                                         context,
                                         render_tree.inner_mut(),
                                         captures,
                                         &mut state.inner_state,
                                         focus,
                                     );
-                                    (EventResult::handled_unfocused(), delta)
+                                    (inner_result, Point::zero())
                                 }
-                            } else {
-                                (EventResult::handled_unfocused(), delta)
+                                InteractionTarget::Unknown => {
+                                    let horizontal_intent = total_scroll.x.abs() >= 4
+                                        && self.direction != ScrollDirection::Vertical;
+                                    let vertical_intent = total_scroll.y.abs() >= 4
+                                        && self.direction != ScrollDirection::Horizontal;
+
+                                    if horizontal_intent || vertical_intent {
+                                        // cancel inner interaction once we're sure the user intended to scroll
+                                        *target = InteractionTarget::Scroll;
+                                        let mut cancel_event = touch.clone();
+                                        cancel_event.phase = Phase::Cancelled;
+                                        // returning the inner result here would move focus before we're committed to scrolling
+                                        {
+                                            let _inner_result = self.inner.handle_event(
+                                                &Event::Touch(cancel_event),
+                                                context,
+                                                render_tree.inner_mut(),
+                                                captures,
+                                                &mut state.inner_state,
+                                                focus,
+                                            );
+                                            (EventResult::handled_unfocused(), delta)
+                                        }
+                                    } else {
+                                        let horizontal_intent = total_scroll.x.abs() >= 8
+                                            && self.direction == ScrollDirection::Vertical;
+                                        let vertical_intent = total_scroll.y.abs() >= 8
+                                            && self.direction == ScrollDirection::Horizontal;
+
+                                        // notify inner of result, don't commit
+                                        let inner_result = self.inner.handle_event(
+                                            &event.offset(
+                                                -render_tree.offset() - render_tree.inner.offset,
+                                            ),
+                                            context,
+                                            render_tree.inner_mut(),
+                                            captures,
+                                            &mut state.inner_state,
+                                            focus,
+                                        );
+                                        let result = if (horizontal_intent || vertical_intent)
+                                            && inner_result.is_handled()
+                                        {
+                                            *target = InteractionTarget::Inner;
+                                            inner_result
+                                        } else {
+                                            EventResult::handled_unfocused()
+                                        };
+                                        (result, delta)
+                                    }
+                                }
                             }
                         }
                         ScrollInteraction::Idle => {
@@ -570,7 +631,7 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
                         ScrollInteraction::Dragging {
                             drag_start: _,
                             last_point,
-                            is_exclusive,
+                            target,
                             ..
                         } => {
                             state.interaction = ScrollInteraction::Idle;
@@ -578,7 +639,7 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
                             let delta = point - last_point;
 
                             context.request_view_rebuild();
-                            if is_exclusive {
+                            if target == InteractionTarget::Scroll {
                                 // If we don't set this, the scroll view will not animate the
                                 // snap back
                                 render_tree.inner.subtree.value = true;
