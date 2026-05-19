@@ -6,13 +6,13 @@ use crate::{
 };
 
 #[derive(Debug)]
-pub struct MapEvent<V, F, S> {
+pub struct MapEvent<V, F, C: ?Sized> {
     inner: V,
     mapping: F,
-    _state: PhantomData<S>,
+    _state: PhantomData<C>,
 }
 
-impl<V: ViewMarker, F: Fn(&Event, &mut S) -> Option<Event>, S: Default> MapEvent<V, F, S> {
+impl<V: ViewMarker, F: Fn(Event, &mut C) -> Option<Event>, C: ?Sized> MapEvent<V, F, C> {
     #[must_use]
     pub const fn new(inner: V, mapping: F) -> Self {
         Self {
@@ -23,15 +23,17 @@ impl<V: ViewMarker, F: Fn(&Event, &mut S) -> Option<Event>, S: Default> MapEvent
     }
 }
 
-impl<V: ViewMarker, F: Fn(&Event, &mut S) -> Option<Event>, S> ViewMarker for MapEvent<V, F, S> {
+impl<V: ViewMarker, F: Fn(Event, &mut C) -> Option<Event>, C: ?Sized> ViewMarker
+    for MapEvent<V, F, C>
+{
     type Renderables = V::Renderables;
     type Transition = V::Transition;
 }
 
-impl<C: ?Sized, V: ViewLayout<C>, F: Fn(&Event, &mut S) -> Option<Event>, S: 'static + Default>
-    ViewLayout<C> for MapEvent<V, F, S>
+impl<C: ?Sized, V: ViewLayout<C>, F: Fn(Event, &mut C) -> Option<Event>> ViewLayout<C>
+    for MapEvent<V, F, C>
 {
-    type State = (S, V::State);
+    type State = V::State;
 
     type Sublayout = V::Sublayout;
 
@@ -50,7 +52,7 @@ impl<C: ?Sized, V: ViewLayout<C>, F: Fn(&Event, &mut S) -> Option<Event>, S: 'st
     }
 
     fn build_state(&self, captures: &mut C) -> Self::State {
-        (S::default(), self.inner.build_state(captures))
+        self.inner.build_state(captures)
     }
 
     fn layout(
@@ -60,7 +62,7 @@ impl<C: ?Sized, V: ViewLayout<C>, F: Fn(&Event, &mut S) -> Option<Event>, S: 'st
         captures: &mut C,
         state: &mut Self::State,
     ) -> crate::layout::ResolvedLayout<Self::Sublayout> {
-        self.inner.layout(offer, env, captures, &mut state.1)
+        self.inner.layout(offer, env, captures, state)
     }
 
     fn render_tree(
@@ -71,8 +73,7 @@ impl<C: ?Sized, V: ViewLayout<C>, F: Fn(&Event, &mut S) -> Option<Event>, S: 'st
         captures: &mut C,
         state: &mut Self::State,
     ) -> Self::Renderables {
-        self.inner
-            .render_tree(layout, origin, env, captures, &mut state.1)
+        self.inner.render_tree(layout, origin, env, captures, state)
     }
 
     fn handle_event(
@@ -84,16 +85,10 @@ impl<C: ?Sized, V: ViewLayout<C>, F: Fn(&Event, &mut S) -> Option<Event>, S: 'st
         state: &mut Self::State,
         focus: &mut Self::FocusTree,
     ) -> crate::event::EventResult {
-        let mapped_event = (self.mapping)(event, &mut state.0);
+        let mapped_event = (self.mapping)(event.clone(), captures);
         if let Some(mapped_event) = mapped_event {
-            self.inner.handle_event(
-                &mapped_event,
-                context,
-                render_tree,
-                captures,
-                &mut state.1,
-                focus,
-            )
+            self.inner
+                .handle_event(&mapped_event, context, render_tree, captures, state, focus)
         } else {
             EventResult::Deferred
         }

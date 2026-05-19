@@ -527,10 +527,10 @@ pub trait ViewModifier: Sized + ViewMarker {
     }
 
     /// Maps an event, delegating handling of the event to the modified view.
-    fn map_event<S: Default, F: Fn(&Event, &mut S) -> Option<Event>>(
+    fn map_event<C, F: Fn(Event, &mut C) -> Option<Event>>(
         self,
         mapping: F,
-    ) -> MapEvent<Self, F, S> {
+    ) -> MapEvent<Self, F, C> {
         MapEvent::new(self, mapping)
     }
 

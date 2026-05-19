@@ -167,16 +167,16 @@ fn root_view(state: &AppState) -> impl View<color::Space, AppState> + use<> {
     .popover(state.clean_overlay.as_ref(), view::clean::clean_overlay)
     .bound_focus(BoundaryBehavior::Wrap)
     .focus_touches()
-    .map_event::<(), _>(|event: &Event, _state| match event {
+    .map_event(|event: Event, _state| match event {
         Event::KeyDown(key) => match key {
             Key::UpArrow | Key::LeftArrow => Some(FocusAction::Previous.into()),
             Key::DownArrow | Key::RightArrow => Some(FocusAction::Next.into()),
             Key::Character(' ' | '\n') => Some(FocusAction::Select.into()),
             Key::Backspace | Key::Delete => Some(FocusAction::Blur.into()),
-            _ => Some(event.clone()),
+            _ => Some(event),
         },
         Event::KeyUp(_) => None, // Eat key up events
-        _ => Some(event.clone()),
+        _ => Some(event),
     })
 }
 
