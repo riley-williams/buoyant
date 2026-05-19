@@ -1,5 +1,7 @@
 mod role;
 
+use core::fmt;
+
 pub use role::{Role, RoleSet};
 
 use crate::event::Event;
@@ -64,11 +66,11 @@ impl DefaultFocus for () {
 }
 
 /// A group identifying a set of related elements.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct FocusGroup(u8);
 
 /// A set of focus groups.
-#[derive(Clone, Copy, Debug, Eq)]
+#[derive(Clone, Copy, Eq)]
 pub struct FocusGroupSet(u8);
 
 impl FocusGroup {
@@ -179,6 +181,27 @@ pub enum BoundaryBehavior {
     Wrap,
     /// Stop movement at the boundaries (focus stays on the current element)
     Stop,
+}
+
+impl fmt::Display for FocusGroup {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "FocusGroup({})", self.index())
+    }
+}
+impl fmt::Debug for FocusGroup {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{self}")
+    }
+}
+impl fmt::Display for FocusGroupSet {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "FocusGroupSet({:08b})", self.0)
+    }
+}
+impl fmt::Debug for FocusGroupSet {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{self}")
+    }
 }
 
 #[cfg(test)]
