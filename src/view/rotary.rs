@@ -5,7 +5,7 @@ use core::marker::PhantomData;
 
 use crate::{
     environment::LayoutEnvironment,
-    event::{Event, EventContext, EventResult},
+    event::{Event, EventContext, EventResult, Key},
     focus::{DefaultFocus, FocusAction, Role},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
@@ -65,6 +65,17 @@ pub struct Rotary<V, ViewFn, Action> {
     _view: PhantomData<V>,
     view_fn: ViewFn,
     action: Action,
+    // If Some, the rotaty will handle up/down events in that direction, and
+    // allow focus events to just walk through it without making it captive.
+    axis: Option<RotaryAxis>,
+}
+
+/// The axis that a [`Rotary`] will respond to when configured as transparent.
+#[derive(Clone, Copy, Debug)]
+#[expect(missing_docs)]
+pub enum RotaryAxis {
+    Vertical,
+    Horizontal,
 }
 
 /// An event emitted by a [`Rotary`] when it captive.
@@ -124,6 +135,21 @@ impl<V: ViewMarker, ViewFn: Fn(RotaryState) -> V, Action> Rotary<V, ViewFn, Acti
             _view: PhantomData,
             view_fn,
             action,
+            axis: None,
+        }
+    }
+
+    #[expect(missing_docs)]
+    pub fn new_transparent<C>(axis: RotaryAxis, action: Action, view_fn: ViewFn) -> Self
+    where
+        V: ViewLayout<C>,
+        Action: Fn(&mut C, RotaryEvent),
+    {
+        Self {
+            _view: PhantomData,
+            view_fn,
+            action,
+            axis: Some(axis),
         }
     }
 }
@@ -200,7 +226,7 @@ where
             }
             let focused_shape = render_tree.content_shape();
 
-            return if focus.is_captive() {
+            if focus.is_captive() {
                 match focus_event {
                     FocusAction::Next => {
                         (self.action)(captures, RotaryEvent::Next);
@@ -265,7 +291,28 @@ where
                         EventResult::handled_focused(focused_shape)
                     }
                 }
-            };
+            }
+        } else if let Event::KeyDown(key) = event
+            && let Some(axis) = self.axis
+            && (state.0 == RotaryState::Focused || state.0 == RotaryState::Captive)
+            && context.roles.contains(Role::Button)
+        {
+            use RotaryAxis::{Horizontal, Vertical};
+
+            let focused_shape = render_tree.content_shape();
+            match (key, axis) {
+                (Key::UpArrow, Vertical) | (Key::LeftArrow, Horizontal) => {
+                    (self.action)(captures, RotaryEvent::Previous);
+                    context.request_view_rebuild();
+                    EventResult::handled_focused(focused_shape)
+                }
+                (Key::DownArrow, Vertical) | (Key::RightArrow, Horizontal) => {
+                    (self.action)(captures, RotaryEvent::Next);
+                    context.request_view_rebuild();
+                    EventResult::handled_focused(focused_shape)
+                }
+                _ => EventResult::Deferred,
+            }
         } else if let Event::Touch(touch) = event
             && render_tree.content_shape().contains(touch.location.into())
         {
@@ -275,16 +322,16 @@ where
                 RotaryState::UnFocused => {
                     context.request_view_rebuild();
                     state.0 = RotaryState::Focused;
-                    return EventResult::handled_focused(render_tree.content_shape());
+                    EventResult::handled_focused(render_tree.content_shape())
                 }
                 RotaryState::Captive | RotaryState::Focused => {
                     // This prevents focus_touches from sending a `Terminate` event and
                     // swapping to the new touch focus tree.
-                    return EventResult::handled_unfocused();
+                    EventResult::handled_unfocused()
                 }
             }
+        } else {
+            EventResult::Deferred
         }
-
-        EventResult::Deferred
     }
 }
