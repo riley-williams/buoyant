@@ -16,7 +16,7 @@ use crate::{
 };
 
 /// The touch interaction state.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
 enum ButtonTouchState {
     /// The button is pressed and the touch is still within the button area.
@@ -24,11 +24,12 @@ enum ButtonTouchState {
     /// The button was pressed but the touch has moved outside the button area.
     Captive(u8),
     /// The button is not pressed, or the touch has been released.
+    #[default]
     AtRest,
 }
 
 /// The current interaction state of the button
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Default,Debug, Clone, PartialEq, Eq)]
 pub struct ButtonState {
     /// The current state of a touch interaction with the button.
     touch: ButtonTouchState,

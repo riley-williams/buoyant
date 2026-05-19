@@ -25,7 +25,7 @@ pub struct FocusTree<T, U> {
     pub overlay: Option<U>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct PopoverState<T, U> {
     pub inner_state: T,
     pub overlay_state: Option<U>,

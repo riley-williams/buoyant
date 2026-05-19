@@ -34,6 +34,7 @@ impl<Captures: ?Sized, InnerView, U: PartialEq + Clone + 'static> ViewLayout<Cap
     for Animated<InnerView, U>
 where
     InnerView: ViewLayout<Captures, Renderables: Clone>,
+    U: Default,
 {
     type State = (U, InnerView::State);
     type Sublayout = InnerView::Sublayout;

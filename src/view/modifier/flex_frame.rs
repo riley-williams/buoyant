@@ -151,7 +151,7 @@ fn clamp_optional<T: Ord + Copy>(mut value: T, min: Option<T>, max: Option<T>) -
     value.max(min.unwrap_or(value))
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct Layout<T> {
     inner: T,
     frame_size: Dimensions,

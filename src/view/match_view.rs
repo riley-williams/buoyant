@@ -246,6 +246,14 @@ macro_rules! define_branch {
                 $variant($variant),
             )+
         }
+        impl <$($variant),+> Default for $name<$($variant),+>
+        where
+            V0: Default,
+        {
+            fn default() -> Self {
+                $name::V0(V0::default())
+            }
+        }
 
         impl <$($variant),+> $name<$($variant),+> {
             $(

@@ -85,8 +85,9 @@ pub enum RotaryEvent {
 }
 
 #[expect(missing_docs)]
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Default, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum RotaryState {
+    #[default]
     UnFocused,
     Focused,
     Captive,
