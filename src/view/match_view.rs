@@ -283,6 +283,15 @@ macro_rules! define_branch {
                             }
                         }
                     }
+
+                    pub fn [<$variant:lower _mut>](&mut self) -> Option<&mut $variant> {
+                        #[allow(irrefutable_let_patterns)]
+                        if let $name::$variant(inner) = self {
+                            Some(inner)
+                        } else {
+                            None
+                        }
+                    }
                 }
             )+
         }

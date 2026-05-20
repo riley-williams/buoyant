@@ -496,15 +496,21 @@ where
             let view = (self.build_view)(item);
             let item_state = &mut state[i];
             let item_render_tree = &mut render_tree[i];
-            focus.tree = DefaultFocus::default_first();
-            focus.index = i;
+            let mut default_focus = Focus {
+                tree: DefaultFocus::default_first(),
+                index: i,
+            };
             let child_result = view.handle_event(
                 event,
                 context,
                 item_render_tree,
                 captures,
                 item_state,
-                &mut focus.tree,
+                if focus.index == i {
+                    &mut focus.tree
+                } else {
+                    &mut default_focus.tree
+                },
             );
             if child_result.is_handled() {
                 return child_result;

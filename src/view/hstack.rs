@@ -349,10 +349,10 @@ macro_rules! impl_view_for_hstack {
                 state: &mut Self::State,
                 focus: &mut Self::FocusTree,
             ) -> EventResult {
+                use super::match_view::[<OneOf $ct>];
+
                 // Handle focus events specially - they need to route through the focus tree
                 if let Event::Focus { action: focus_event, group } = event {
-                    use super::match_view::[<OneOf $ct>];
-
                     // Track which child index we're currently trying
                     let mut current: usize = match focus {
                         $(
@@ -429,7 +429,8 @@ macro_rules! impl_view_for_hstack {
 
                 // For non-focus events (touch, scroll, etc.), use DFS approach
                 $(
-                    let inner_focus = focus.[<v $n _or_init_with>](|| DefaultFocus::default_first());
+                    let mut default_focus = DefaultFocus::default_first();
+                    let inner_focus = focus.[<v $n _mut>]().unwrap_or(&mut default_focus);
                     let result = self.items.$n.handle_event(
                         event,
                         context,
