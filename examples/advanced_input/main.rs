@@ -38,6 +38,9 @@ use crate::{
 const FONT: u8g2_fonts::FontRenderer =
     u8g2_fonts::FontRenderer::new::<u8g2_fonts::fonts::u8g2_font_t0_13_tf>();
 
+const PAGE_FGROUP: focus::FocusGroup = focus::GROUP_0;
+const PAGINATE_FGROUP: focus::FocusGroup = focus::GROUP_1;
+
 fn root_view(state: &State) -> impl View<Rgb888, State> + use<> {
     let page = state.page;
     let render_data = RenderData {
@@ -63,20 +66,19 @@ pub fn view<'a, 'b, C: GoodPixelColor, F: Fn(&State) + 'a + Copy>(
     save_settings: F,
 ) -> impl View<C, State> + use<'a, C, F> {
     let paginate = move |s: &mut State, a: buoyant::view::paginate::PageEvent| {
+        if s.opened_input.is_some() || s.opened_cell_input.is_some() {
+            return;
+        }
         s.page_action = Some(match a {
             buoyant::view::paginate::PageEvent::Next => definitions::PageAction::Next,
             buoyant::view::paginate::PageEvent::Previous => definitions::PageAction::Prev,
         });
-        // Close any open inputs when changing pages
-        s.opened_input = None;
-        s.opened_cell_input = None;
-        s.focused_table = false;
     };
 
     let state = state.clone();
-    let is_settings = matches!(data.page, Page::Settings { header, footer });
+    let is_settings = matches!(data.page, Page::Settings { .. });
 
-    buoyant::view::Paginate::new(focus::GROUP_1, is_settings, paginate, {
+    buoyant::view::Paginate::new(PAGINATE_FGROUP, is_settings, paginate, {
         buoyant::match_view!(data.page, {
             Page::IeTable {
                 header,
@@ -99,31 +101,79 @@ pub fn view<'a, 'b, C: GoodPixelColor, F: Fn(&State) + 'a + Copy>(
         .background_color(data.palette.dark_blue(), Rectangle)
     })
     .focus_touches()
-    .map_event::<(), _>(|event: &Event, _state| match event {
+    .map_event(|event: Event, state: &mut State| {
+        match event {
+            Event::KeyDown(key) if state.popup_open() => match key {
+                Key::LeftArrow => Some(FocusAction::Previous.into_event(PAGE_FGROUP)),
+                Key::RightArrow => Some(FocusAction::Next.into_event(PAGE_FGROUP)),
+                Key::UpArrow | Key::DownArrow => Some(event),
+                Key::Character(' ' | '\n') => Some(FocusAction::Select.into_event(PAGE_FGROUP)),
+                Key::Character('e') | Key::Backspace => {
+                    Some(FocusAction::Blur.into_event(PAGE_FGROUP))
+                }
+                // Ignore all other key down events, don't allow children to handle
+                _ => None,
+            },
+            Event::KeyDown(key) if state.is_table() => match key {
+                Key::LeftArrow => Some(FocusAction::Previous.into_event(PAGINATE_FGROUP)),
+                Key::RightArrow => Some(FocusAction::Next.into_event(PAGINATE_FGROUP)),
+                Key::UpArrow | Key::DownArrow => Some(event),
+                Key::Character(' ' | '\n') => Some(FocusAction::Select.into_event(PAGE_FGROUP)),
+                Key::Character('e') | Key::Backspace => {
+                    Some(FocusAction::Blur.into_event(PAGE_FGROUP))
+                }
+                // Ignore all other key down events, don't allow children to handle
+                _ => None,
+            },
+            Event::KeyDown(key) => match key {
+                Key::LeftArrow => Some(FocusAction::Previous.into_event(PAGINATE_FGROUP)),
+                Key::RightArrow => Some(FocusAction::Next.into_event(PAGINATE_FGROUP)),
+                Key::UpArrow => Some(FocusAction::Previous.into_event(PAGE_FGROUP)),
+                Key::DownArrow => Some(FocusAction::Next.into_event(PAGE_FGROUP)),
+                Key::Character(' ' | '\n') => Some(FocusAction::Select.into_event(PAGE_FGROUP)),
+                Key::Character('e') | Key::Backspace => {
+                    Some(FocusAction::Blur.into_event(PAGE_FGROUP))
+                }
+                // Ignore all other key down events, don't allow children to handle
+                _ => None,
+            },
+            Event::KeyUp(_) => None,
+            _ => Some(event),
+        }
+    })
+    .map_event(|event: Event, _state| match event {
         Event::KeyDown(key) => match key {
-            Key::Character('h') | Key::LeftArrow => {
-                Some(FocusAction::Previous.into_event(focus::GROUP_1))
-            }
-            Key::Character('l') | Key::RightArrow => {
-                Some(FocusAction::Next.into_event(focus::GROUP_1))
-            }
-            Key::Character('k') | Key::UpArrow => {
-                Some(FocusAction::Previous.into_event(focus::GROUP_0))
-            }
-            Key::Character('j') | Key::DownArrow => {
-                Some(FocusAction::Next.into_event(focus::GROUP_0))
-            }
-            Key::Character(' ' | '\n') => Some(FocusAction::Select.into_event(focus::GROUP_0)),
-            Key::Character('e') | Key::Backspace => {
-                Some(FocusAction::Blur.into_event(focus::GROUP_0))
-            }
-            // Ignore all other key down events, don't allow children to handle
-            _ => None,
+            Key::Character('h') => Some(Event::KeyDown(Key::LeftArrow)),
+            Key::Character('l') => Some(Event::KeyDown(Key::RightArrow)),
+            Key::Character('k') => Some(Event::KeyDown(Key::UpArrow)),
+            Key::Character('j') => Some(Event::KeyDown(Key::DownArrow)),
+            _ => Some(event),
         },
-        Event::KeyUp(_) => None,
-        _ => Some(event.clone()),
+        Event::Touch(_) => None,
+        _ => Some(event),
     })
 }
+
+/*
+
+Pagination
+
+In case of settings:
+- Up/Down will navigate inside settings page
+- Left/Right will paginate away
+- Select will focus the first element
+
+In case of table:
+ - In case no cell is focused
+   - Up/Down will havigate inside the table
+   - Left/Right will paginate away
+   - Select will focus the first element
+ - In case cell is focused
+   - Up/Down/Left/Right will havigate inside the table
+   - Blur will blur the focused cell
+
+
+*/
 
 const PALETTE: definitions::Palette<Rgb888> = definitions::Palette::from_array([
     Rgb888::new(0x00, 0x00, 0x00),
@@ -166,7 +216,7 @@ fn main() {
         App::new(initial_state, size.into(), root_view).with_roles(Role::Button | Role::Container);
 
     // Acquire initial focus
-    app.focus_forward();
+    // app.focus_forward();
 
     // Main event loop
     loop {
@@ -174,15 +224,12 @@ fn main() {
         app.set_time(app_start.elapsed());
 
         // Collect and process simulator events
-        let events: Vec<_> = window
-            .events()
-            .filter_map(|event| {
-                if event == SimulatorEvent::Quit {
-                    exit(0);
-                }
-                touch_tracker.process_event(event)
-            })
-            .collect();
+        let events = window.events().filter_map(|event| {
+            if event == SimulatorEvent::Quit {
+                exit(0);
+            }
+            touch_tracker.process_event(event)
+        });
 
         for event in events {
             app.send(event);
