@@ -25,6 +25,7 @@ mod text;
 mod view_that_fits;
 mod vstack;
 mod zstack;
+pub mod table;
 
 #[cfg(feature = "embedded-graphics")]
 pub use as_drawable::AsDrawable;
