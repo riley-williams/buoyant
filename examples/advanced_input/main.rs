@@ -74,8 +74,9 @@ pub fn view<'a, 'b, C: GoodPixelColor, F: Fn(&State) + 'a + Copy>(
     };
 
     let state = state.clone();
+    let is_settings = matches!(data.page, Page::Settings { header, footer });
 
-    buoyant::view::Paginate::new(focus::GROUP_1, paginate, {
+    buoyant::view::Paginate::new(focus::GROUP_1, is_settings, paginate, {
         buoyant::match_view!(data.page, {
             Page::IeTable {
                 header,
