@@ -87,15 +87,15 @@ where
                     .handle_event(event, context, render_tree, captures, state, focus);
             // Prevent `focus_touches` from giving this view focus when handling touch events
             if let EventResult::Handled {
-                request_focus: has_focus,
+                request_focus: focus_change @ true,
                 ..
             } = &mut result
             {
-                *has_focus = false;
+                *focus_change = false;
             }
             return result;
         };
 
-        EventResult::Deferred
+        EventResult::deferred()
     }
 }

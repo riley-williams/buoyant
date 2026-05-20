@@ -125,7 +125,7 @@ where
             .handle_event(event, context, render_tree, captures, state, focus);
 
         // If handled, we're done
-        if !matches!(result, EventResult::Deferred) {
+        if !matches!(result, EventResult::Deferred { .. }) {
             return result;
         }
 

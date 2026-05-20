@@ -90,7 +90,7 @@ impl<C: ?Sized, V: ViewLayout<C>, F: Fn(Event, &mut C) -> Option<Event>> ViewLay
             self.inner
                 .handle_event(&mapped_event, context, render_tree, captures, state, focus)
         } else {
-            EventResult::Deferred
+            EventResult::deferred()
         }
     }
 }

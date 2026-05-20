@@ -212,7 +212,7 @@ where
                 | ButtonTouchState::CaptivePressed(touch_id) = state.0.touch
                     && touch.id != touch_id
                 {
-                    return EventResult::Deferred;
+                    return EventResult::deferred();
                 }
 
                 let point = touch.location.into();
@@ -268,20 +268,20 @@ where
                         if was_pressed {
                             // TODO: Same here...
                             context.request_view_rebuild();
-                            return EventResult::handled_unfocused();
+                            return EventResult::deferred_lost_focus();
                         }
-                        return EventResult::Deferred;
+                        return EventResult::deferred();
                     }
                     Phase::Hovering(_) => {}
                 }
-                EventResult::Deferred
+                EventResult::deferred()
             }
             Event::Focus {
                 action: focus_event,
                 ..
             } => {
                 if !context.roles.contains(Role::Button) {
-                    return EventResult::Deferred;
+                    return EventResult::deferred();
                 }
                 context.request_redraw();
                 // FIXME: Every time we encounter a button, view is forced to be rebuilt...
@@ -290,12 +290,12 @@ where
                     FocusAction::Teardown => {
                         state.0.is_focused = false;
                         context.request_view_rebuild();
-                        EventResult::handled_unfocused()
+                        EventResult::deferred_lost_focus()
                     }
                     FocusAction::Blur | FocusAction::Next | FocusAction::Previous => {
                         state.0.is_focused = false;
                         context.request_view_rebuild();
-                        EventResult::Deferred
+                        EventResult::deferred_lost_focus()
                     }
                     FocusAction::Focus(_) => {
                         if !state.0.is_focused {
@@ -312,7 +312,7 @@ where
                     }
                 }
             }
-            _ => EventResult::Deferred,
+            _ => EventResult::deferred(),
         }
     }
 }

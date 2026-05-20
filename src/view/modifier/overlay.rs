@@ -192,7 +192,7 @@ where
                         | FocusAction::Previous
                         | FocusAction::Blur
                         | FocusAction::Select
-                        | FocusAction::Teardown => EventResult::Deferred,
+                        | FocusAction::Teardown => EventResult::deferred(),
                     }
                 }
                 OverlayFocus::Foreground(foreground_focus) => {
@@ -231,7 +231,7 @@ where
                         | FocusAction::Next
                         | FocusAction::Select
                         | FocusAction::Blur
-                        | FocusAction::Teardown => EventResult::Deferred,
+                        | FocusAction::Teardown => EventResult::deferred(),
                     }
                 }
             }

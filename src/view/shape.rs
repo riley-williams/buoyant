@@ -142,6 +142,6 @@ where
         _state: &mut Self::State,
         _focus: &mut Self::FocusTree,
     ) -> EventResult {
-        EventResult::Deferred
+        EventResult::deferred()
     }
 }

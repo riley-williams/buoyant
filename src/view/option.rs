@@ -123,13 +123,13 @@ where
                 let inner_focus = focus.get_or_insert(DefaultFocus::default_first());
                 v.handle_event(event, context, subtree, captures, s, inner_focus)
             }
-            (None, _, _) => EventResult::Deferred,
+            (None, _, _) => EventResult::deferred(),
             _ => {
                 assert!(
                     !cfg!(debug_assertions),
                     "State branch does not match view branch, likely due to improper reuse of layout."
                 );
-                EventResult::Deferred
+                EventResult::deferred()
             }
         }
     }

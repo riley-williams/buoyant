@@ -89,7 +89,7 @@ impl Event {
 }
 
 /// The result of handling an event.
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum EventResult {
     /// Focus successfully moved to a new element
     Handled {
@@ -101,8 +101,13 @@ pub enum EventResult {
         group: FocusGroup,
     },
     /// The event was not handled, or focus not obtained
-    #[default]
-    Deferred,
+    Deferred { focus_lost: bool },
+}
+
+impl Default for EventResult {
+    fn default() -> Self {
+        Self::Deferred { focus_lost: false }
+    }
 }
 
 impl EventResult {
@@ -126,6 +131,18 @@ impl EventResult {
         }
     }
 
+    /// Creates a new `EventResult` indicating the event was deferred.
+    #[must_use]
+    pub const fn deferred() -> Self {
+        Self::Deferred { focus_lost: false }
+    }
+
+    /// Creates a new `EventResult` indicating the event was deferred and focus was lost.
+    #[must_use]
+    pub const fn deferred_lost_focus() -> Self {
+        Self::Deferred { focus_lost: true }
+    }
+
     /// Returns a new [`EventResult`] with the specified focus group.
     #[must_use]
     pub const fn with_group(mut self, group: FocusGroup) -> Self {
@@ -133,7 +150,7 @@ impl EventResult {
             group: event_group, ..
         } = &mut self
         else {
-            return Self::Deferred;
+            return Self::deferred();
         };
         *event_group = group;
         self
@@ -157,12 +174,24 @@ impl EventResult {
         )
     }
 
+    /// Returns true if this result is from an element requesting focus.
+    #[must_use]
+    pub const fn lost_focus(&self) -> bool {
+        matches!(
+            self,
+            Self::Deferred {
+                focus_lost: true,
+                ..
+            }
+        )
+    }
+
     /// Returns the content shape if this result has one.
     #[must_use]
     pub fn shape(&self) -> Option<&ContentShape> {
         match self {
             Self::Handled { shape, .. } => Some(shape),
-            Self::Deferred => None,
+            Self::Deferred { .. } => None,
         }
     }
 
@@ -173,7 +202,7 @@ impl EventResult {
             Self::Handled { shape, .. } => {
                 shape.offset(offset);
             }
-            Self::Deferred => (),
+            Self::Deferred { .. } => (),
         }
         self
     }

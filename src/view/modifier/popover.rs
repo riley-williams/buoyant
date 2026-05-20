@@ -223,7 +223,7 @@ where
                         subfocus,
                     );
 
-                    if result == EventResult::Deferred {
+                    if matches!(result, EventResult::Deferred { .. }) {
                         // Determine if we were moving forward or backward
                         let is_forward = matches!(
                             focus_event,
@@ -260,7 +260,7 @@ where
                 }
                 // TODO: Popover is visible, but we don't have a render tree for it yet
                 // Just dump all these events?
-                return EventResult::Deferred;
+                return EventResult::deferred();
             }
             // Overlay is not active - clear overlay focus and use inner focus
             focus.overlay = None;
@@ -295,7 +295,7 @@ where
             }
             (Some(_), TransitionOption::None) => {
                 // Overlay is present but not rendered yet - defer events until it actually appears
-                EventResult::Deferred
+                EventResult::deferred()
             }
             _ => self.inner.handle_event(
                 event,

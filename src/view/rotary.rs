@@ -222,7 +222,7 @@ where
         } = event
         {
             if !context.roles.contains(Role::Button) {
-                return EventResult::Deferred;
+                return EventResult::deferred();
             }
             let focused_shape = render_tree.content_shape();
 
@@ -273,9 +273,13 @@ where
                     | FocusAction::Previous
                     | FocusAction::Blur
                     | FocusAction::Teardown => {
-                        state.0 = RotaryState::UnFocused;
-                        context.request_view_rebuild();
-                        EventResult::Deferred
+                        if state.0 == RotaryState::UnFocused {
+                            EventResult::deferred()
+                        } else {
+                            state.0 = RotaryState::UnFocused;
+                            context.request_view_rebuild();
+                            EventResult::deferred_lost_focus()
+                        }
                     }
                     FocusAction::Focus(_) => {
                         if state.0 != RotaryState::Focused {
@@ -311,7 +315,7 @@ where
                     context.request_view_rebuild();
                     EventResult::handled_focused(focused_shape)
                 }
-                _ => EventResult::Deferred,
+                _ => EventResult::deferred(),
             }
         } else if let Event::Touch(touch) = event
             && render_tree.content_shape().contains(touch.location.into())
@@ -331,7 +335,7 @@ where
                 }
             }
         } else {
-            EventResult::Deferred
+            EventResult::deferred()
         }
     }
 }

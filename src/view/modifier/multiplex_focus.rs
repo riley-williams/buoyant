@@ -120,7 +120,7 @@ where
         if let Event::Focus { group, .. } = event {
             // Obtain the index of the first matching set
             let Some(index) = self.groups.iter().position(|set| set.contains(*group)) else {
-                return EventResult::Deferred;
+                return EventResult::deferred();
             };
             let index = index as u8;
 
@@ -146,7 +146,7 @@ where
                 | Event::KeyDown(_) => {
                     // Don't auto-initialize for these actions
                     let Some(tree) = focus.0[index as usize].as_mut() else {
-                        return EventResult::Deferred;
+                        return EventResult::deferred();
                     };
                     tree
                 }
