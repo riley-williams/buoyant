@@ -21,11 +21,11 @@ pub mod rotary;
 pub mod scroll_view;
 pub mod shape;
 mod spacer;
+pub mod table;
 mod text;
 mod view_that_fits;
 mod vstack;
 mod zstack;
-pub mod table;
 
 #[cfg(feature = "embedded-graphics")]
 pub use as_drawable::AsDrawable;

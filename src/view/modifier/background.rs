@@ -161,7 +161,46 @@ where
             group,
         } = event
         {
-            if !focus.active_foreground {
+            if focus.active_foreground {
+                let result = self.foreground.handle_event(
+                    event,
+                    context,
+                    &mut render_tree.1,
+                    captures,
+                    &mut state.0,
+                    &mut focus.foreground,
+                );
+
+                if result.is_handled() || *focus_event == FocusAction::Teardown {
+                    return result;
+                }
+
+                // Foreground exhausted - only move to background on backward navigation
+                match focus_event {
+                    FocusAction::Focus(FocusDirection::Backward) | FocusAction::Previous => {
+                        let mut background_focus = DefaultFocus::default_last();
+                        let result = self.background.handle_event(
+                            &Event::Focus {
+                                action: FocusAction::Focus(FocusDirection::Backward),
+                                group: *group,
+                            },
+                            context,
+                            &mut render_tree.0,
+                            captures,
+                            &mut state.1,
+                            &mut background_focus,
+                        );
+                        focus.active_foreground = false;
+                        focus.background = background_focus;
+                        result
+                    }
+                    FocusAction::Focus(FocusDirection::Forward)
+                    | FocusAction::Next
+                    | FocusAction::Select
+                    | FocusAction::Blur
+                    | FocusAction::Teardown => result,
+                }
+            } else {
                 let result = self.background.handle_event(
                     event,
                     context,
@@ -214,49 +253,12 @@ where
                     | FocusAction::Blur
                     | FocusAction::Teardown => EventResult::deferred(),
                 }
-            } else {
-                let result = self.foreground.handle_event(
-                    event,
-                    context,
-                    &mut render_tree.1,
-                    captures,
-                    &mut state.0,
-                    &mut focus.foreground,
-                );
-
-                if result.is_handled() || *focus_event == FocusAction::Teardown {
-                    return result;
-                }
-
-                // Foreground exhausted - only move to background on backward navigation
-                match focus_event {
-                    FocusAction::Focus(FocusDirection::Backward) | FocusAction::Previous => {
-                        let mut background_focus = DefaultFocus::default_last();
-                        let result = self.background.handle_event(
-                            &Event::Focus {
-                                action: FocusAction::Focus(FocusDirection::Backward),
-                                group: *group,
-                            },
-                            context,
-                            &mut render_tree.0,
-                            captures,
-                            &mut state.1,
-                            &mut background_focus,
-                        );
-                        focus.active_foreground = false;
-                        focus.background = background_focus;
-                        result
-                    }
-                    FocusAction::Focus(FocusDirection::Forward)
-                    | FocusAction::Next
-                    | FocusAction::Select
-                    | FocusAction::Blur
-                    | FocusAction::Teardown => result,
-                }
             }
         } else {
             // For non-focus events (touch, scroll, etc.), perform DFS back to front
-            if !focus.active_foreground {
+            // The same in main, probably clippy doesn't have a lint for this for `match`.
+            #[expect(clippy::if_same_then_else)]
+            if focus.active_foreground {
                 // Start with background (back)
                 let background_result = self.background.handle_event(
                     event,

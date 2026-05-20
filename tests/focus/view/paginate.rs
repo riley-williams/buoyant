@@ -33,6 +33,7 @@ impl State {
 fn view(state: &State) -> impl View<(), State> + use<> {
     Paginate::new(
         focus::GROUP_1,
+        true,
         State::switch_page,
         match_view!(state.page, {
             Page::One => Button::new(|s: &mut State| s.one_count += 1, |_| Circle),

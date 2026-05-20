@@ -29,7 +29,7 @@ enum ButtonTouchState {
 }
 
 /// The current interaction state of the button
-#[derive(Default,Debug, Clone, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct ButtonState {
     /// The current state of a touch interaction with the button.
     touch: ButtonTouchState,
@@ -287,12 +287,10 @@ where
                 // FIXME: Every time we encounter a button, view is forced to be rebuilt...
                 // Maybe save both states in the render tree instead
                 match focus_event {
-                    FocusAction::Teardown => {
-                        state.0.is_focused = false;
-                        context.request_view_rebuild();
-                        EventResult::deferred_lost_focus()
-                    }
-                    FocusAction::Blur | FocusAction::Next | FocusAction::Previous => {
+                    FocusAction::Teardown
+                    | FocusAction::Blur
+                    | FocusAction::Next
+                    | FocusAction::Previous => {
                         state.0.is_focused = false;
                         context.request_view_rebuild();
                         EventResult::deferred_lost_focus()

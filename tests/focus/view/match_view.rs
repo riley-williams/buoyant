@@ -141,7 +141,7 @@ fn unfocusable_variant_returns_deferred() {
 
     let result = harness.focus_forward();
     assert!(
-        matches!(result, EventResult::Deferred),
+        matches!(result, EventResult::Deferred { .. }),
         "Unfocusable variant should return Deferred"
     );
 }
@@ -161,7 +161,7 @@ fn next_from_match_view_returns_deferred() {
     harness.focus_forward();
     let result = harness.next();
     assert!(
-        matches!(result, EventResult::Deferred),
+        matches!(result, EventResult::Deferred { .. }),
         "Next from single-element match view should return Deferred"
     );
 }
@@ -181,7 +181,7 @@ fn previous_from_match_view_returns_deferred() {
     harness.focus_forward();
     let result = harness.previous();
     assert!(
-        matches!(result, EventResult::Deferred),
+        matches!(result, EventResult::Deferred { .. }),
         "Previous from single-element match view should return Deferred"
     );
 }
@@ -378,7 +378,7 @@ fn variant_change_to_unfocusable_branch() {
     // Focus should return Deferred since Rectangle is not a button
     let result = harness.focus_forward();
     assert!(
-        matches!(result, EventResult::Deferred),
+        matches!(result, EventResult::Deferred { .. }),
         "Unfocusable variant should return Deferred"
     );
 }
@@ -396,7 +396,7 @@ fn variant_change_from_unfocusable_to_focusable() {
 
     // No focus available initially
     let result = harness.focus_forward();
-    assert!(matches!(result, EventResult::Deferred));
+    assert!(matches!(result, EventResult::Deferred { .. }));
 
     // Change to focusable variant
     harness.state_mut().variant = Variant::First;

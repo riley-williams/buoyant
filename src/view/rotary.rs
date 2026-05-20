@@ -207,6 +207,7 @@ where
         view.render_tree(layout, origin, env, captures, &mut state.1)
     }
 
+    #[allow(clippy::too_many_lines)]
     fn handle_event(
         &self,
         event: &Event,

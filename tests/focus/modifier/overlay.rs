@@ -58,7 +58,7 @@ fn navigate_forward_through_overlay() {
     assert!(harness.state().foreground_tapped);
 
     // Past foreground returns deferred
-    assert!(matches!(harness.next(), EventResult::Deferred));
+    assert!(matches!(harness.next(), EventResult::Deferred { .. }));
 }
 
 #[test]
@@ -82,7 +82,7 @@ fn navigate_backward_through_overlay() {
     assert!(!harness.state().foreground_tapped);
 
     // Past overlay returns deferred
-    assert!(matches!(harness.previous(), EventResult::Deferred));
+    assert!(matches!(harness.previous(), EventResult::Deferred { .. }));
 }
 
 #[test]

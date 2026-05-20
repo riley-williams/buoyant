@@ -58,7 +58,7 @@ fn navigate_forward_through_background() {
     assert!(harness.state().foreground_tapped);
 
     // Past foreground returns deferred
-    assert!(matches!(harness.next(), EventResult::Deferred));
+    assert!(matches!(harness.next(), EventResult::Deferred { .. }));
 }
 
 #[test]
@@ -85,7 +85,7 @@ fn navigate_backward_through_background() {
     assert!(!harness.state().foreground_tapped);
 
     // Past background returns deferred
-    assert!(matches!(harness.previous(), EventResult::Deferred));
+    assert!(matches!(harness.previous(), EventResult::Deferred { .. }));
 }
 
 #[test]

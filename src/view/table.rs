@@ -116,7 +116,7 @@ fn table_with_borders<'a>(items: Items<'a>) -> impl View<Rgb565, ()> + 'a {
 #[derive(Debug, Clone, Copy)]
 pub struct Table<const R: usize, const C: usize>;
 
-#[derive(Default, Debug, Clone, PartialEq)]
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct TableLayout<L: Clone + PartialEq, const R: usize, const C: usize> {
     sublayouts: Array<C, Array<R, ResolvedLayout<L>>>,
     resolved_size_cache: Dimensions,
@@ -173,7 +173,8 @@ impl<L: Clone + PartialEq + Default, const R: usize, const C: usize> TableLayout
             },
         }
     }
-    pub fn default() -> Array<C, Array<R, ResolvedLayout<L>>> {
+    #[must_use]
+    pub fn empty() -> Array<C, Array<R, ResolvedLayout<L>>> {
         Array(array::from_fn(|_| {
             Array(array::from_fn(|_| ResolvedLayout {
                 sublayouts: L::default(),
@@ -398,7 +399,7 @@ where
         state: &mut Self::State,
     ) -> ResolvedLayout<Self::Sublayout> {
         // hopefully will not construct on stack
-        let mut sublayouts = TableLayout::<V::Sublayout, R, C>::default();
+        let mut sublayouts = TableLayout::<V::Sublayout, R, C>::empty();
 
         let mut layout_fn = |c: usize, r: usize, offer: ProposedDimensions| {
             debug_assert!(c < self.width && r < self.height);
@@ -526,18 +527,14 @@ where
                 */
 
                 let mut widths = state.col_widths.iter().copied();
-                let total_width = widths
-                    .try_fold(0u32, |a, b| a.checked_add(b))
-                    .and_then(|w| {
-                        w.checked_add(self.col_stroke * self.width.saturating_sub(1) as u32)
-                    });
+                let total_width = widths.try_fold(0u32, u32::checked_add).and_then(|w| {
+                    w.checked_add(self.col_stroke * self.width.saturating_sub(1) as u32)
+                });
 
                 let mut heights = state.row_heights.iter().copied();
-                let total_height = heights
-                    .try_fold(0u32, |a, b| a.checked_add(b))
-                    .and_then(|w| {
-                        w.checked_add(self.row_stroke * self.height.saturating_sub(1) as u32)
-                    });
+                let total_height = heights.try_fold(0u32, u32::checked_add).and_then(|w| {
+                    w.checked_add(self.row_stroke * self.height.saturating_sub(1) as u32)
+                });
 
                 TableLayout::new(
                     sublayouts,
@@ -555,7 +552,7 @@ where
             the [w3c spec] talks about determining maximing minimums and maximums for each column,
             but it doesn't seem to highlight how to distribute the space between columns.
 
-            So this is like a "single covergence step". `layout_n` is used to get plausible
+            So this is like a "single convergence step". `layout_n` is used to get plausible
             heights by giving columns equal (±1) width. Then those height are used in the
             second `layout_n` which computes widths based on those heights. Finally,
             it uses computed width and height to actually do the layout of each cell. It
@@ -692,15 +689,15 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> Self::Renderables {
-        let mut x = origin.x;
-        let mut render = TableRenderable::<V::Renderables, R, C>::default();
-        let renderables = &mut render.renderables;
-        let sublayouts = &layout.sublayouts;
-
         #[inline(never)]
         fn push_empty<T: Default>(vec: &mut heapless::VecView<T>) {
             _ = vec.push(T::default());
         }
+
+        let mut x = origin.x;
+        let mut render = TableRenderable::<V::Renderables, R, C>::default();
+        let renderables = &mut render.renderables;
+        let sublayouts = &layout.sublayouts;
 
         for c in 0..self.width {
             push_empty(&mut *renderables);
@@ -746,6 +743,7 @@ where
         render
     }
 
+    #[allow(clippy::too_many_lines, clippy::similar_names)]
     fn handle_event(
         &self,
         event: &Event,
@@ -796,15 +794,15 @@ where
         if let Some(mov) = mov
             && let Some(group) = captive
         {
-            let [dx, dy, odx, ody]: [isize; 4] = match mov {
+            let [dx, dy, overflow_dx, overflow_dy]: [isize; 4] = match mov {
                 Move::Up => [0, -1, -1, 0],
                 Move::Down => [0, 1, 1, 0],
                 Move::Left => [-1, 0, 0, -1],
                 Move::Right => [1, 0, 0, 1],
             };
 
-            assert_eq!(dx, ody);
-            assert_eq!(dy, odx);
+            assert_eq!(dx, overflow_dy);
+            assert_eq!(dy, overflow_dx);
 
             let mut step_count = (self.width * self.height).saturating_sub(1);
             let dir = dx + dy;
@@ -848,10 +846,10 @@ where
                     focus.y = m(focus.y, dy);
 
                     match (focus.x, focus.y) {
-                        _ if focus.x == self.width => (0, m(focus.y, ody)),
-                        _ if focus.y == self.height => (m(focus.x, odx), 0),
-                        _ if focus.x == usize::MAX => (self.width - 1, m(focus.y, ody)),
-                        _ if focus.y == usize::MAX => (m(focus.x, odx), self.height - 1),
+                        _ if focus.x == self.width => (0, m(focus.y, overflow_dy)),
+                        _ if focus.y == self.height => (m(focus.x, overflow_dx), 0),
+                        _ if focus.x == usize::MAX => (self.width - 1, m(focus.y, overflow_dy)),
+                        _ if focus.y == usize::MAX => (m(focus.x, overflow_dx), self.height - 1),
                         _ => (focus.x, focus.y),
                     }
                 };
@@ -912,7 +910,7 @@ where
             }
         }
 
-        return last_result;
+        last_result
     }
 }
 
@@ -935,15 +933,6 @@ mod kinda_array {
     impl<const N: usize, T> core::ops::IndexMut<usize> for Array<N, T> {
         fn index_mut(&mut self, index: usize) -> &mut Self::Output {
             &mut self.0[index]
-        }
-    }
-    impl<const N: usize, const M: usize, T: Default> Array<N, Array<M, T>> {
-        pub fn to_default(&mut self) {
-            for n in 0..N {
-                for m in 0..M {
-                    self.0[n].0[m] = T::default();
-                }
-            }
         }
     }
 }

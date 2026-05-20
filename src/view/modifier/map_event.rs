@@ -86,11 +86,9 @@ impl<C: ?Sized, V: ViewLayout<C>, F: Fn(Event, &mut C) -> Option<Event>> ViewLay
         focus: &mut Self::FocusTree,
     ) -> crate::event::EventResult {
         let mapped_event = (self.mapping)(event.clone(), captures);
-        if let Some(mapped_event) = mapped_event {
+        mapped_event.map_or_else(EventResult::deferred, |mapped_event| {
             self.inner
                 .handle_event(&mapped_event, context, render_tree, captures, state, focus)
-        } else {
-            EventResult::deferred()
-        }
+        })
     }
 }

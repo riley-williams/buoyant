@@ -78,7 +78,7 @@ fn two_choice_first_selected_next_returns_deferred() {
 
     harness.focus_forward();
     let result = harness.next();
-    assert_eq!(result, EventResult::Deferred);
+    assert_eq!(result, EventResult::deferred_lost_focus());
 }
 
 #[test]
@@ -114,7 +114,7 @@ fn two_choice_second_selected_previous_returns_deferred() {
 
     harness.focus_backward();
     let result = harness.previous();
-    assert_eq!(result, EventResult::Deferred);
+    assert_eq!(result, EventResult::deferred_lost_focus());
 }
 
 #[test]
