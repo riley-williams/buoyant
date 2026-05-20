@@ -25,8 +25,6 @@ pub use tracked::Tracked;
 mod trees;
 pub use trees::Trees;
 
-pub const MAXIMUM_REBUILD_ITERATIONS: usize = 3;
-
 /// Manages the view/render tree lifecycle, focus state, and event handling.
 ///
 /// [`App`] owns the view function, application state, and the source/target render
@@ -213,52 +211,33 @@ where
     ///
     /// See also: [`finalize_view`](Self::finalize_view).
     pub fn force_rebuild(&mut self) {
-        let mut i = 0;
-        // Instead of the loop we may just offset it to the next frame.
-        // But 3 rebuilds in worst case doesn't seem bad to me.
-        while self.requires_rebuild {
-            if i == MAXIMUM_REBUILD_ITERATIONS {
-                #[cfg(feature = "std")]
-                std::eprintln!(
-                    "Maximum rebuild iterations ({}) exceeded. Possible infinite loop detected.",
-                    MAXIMUM_REBUILD_ITERATIONS
-                );
-                break;
-            }
-            i += 1;
+        self.requires_rebuild = false;
 
-            self.requires_rebuild = false;
+        let domain = AnimationDomain::top_level(self.elapsed);
+        self.trees.swap();
+        let (source_tree, target_tree) = self.trees.both_mut();
+        source_tree.join_from(target_tree, &domain);
 
-            let domain = AnimationDomain::top_level(self.elapsed);
-            self.trees.swap();
-            let (source_tree, target_tree) = self.trees.both_mut();
-            source_tree.join_from(target_tree, &domain);
+        // Create new view and target tree
+        self.view = (self.view_fn)(&self.state);
+        self.env = DefaultEnvironment::new(self.elapsed);
 
-            // Create new view and target tree
-            self.view = (self.view_fn)(&self.state);
-            self.env = DefaultEnvironment::new(self.elapsed);
+        let layout = self.view.layout(
+            &self.size.into(),
+            &self.env,
+            &mut self.state,
+            &mut self.view_state,
+        );
 
-            let layout = self.view.layout(
-                &self.size.into(),
-                &self.env,
-                &mut self.state,
-                &mut self.view_state,
-            );
+        *target_tree = self.view.render_tree(
+            &layout.sublayouts,
+            Point::zero(),
+            &self.env,
+            &mut self.state,
+            &mut self.view_state,
+        );
 
-            *target_tree = self.view.render_tree(
-                &layout.sublayouts,
-                Point::zero(),
-                &self.env,
-                &mut self.state,
-                &mut self.view_state,
-            );
-
-            // reobtain focus after rebuild
-            let result = self.focus_forward(); // `Popover`, for example, might request redraw again, so we loop.
-            self.update_focus_shape(&result);
-
-            self.requires_redraw = true;
-        }
+        self.requires_redraw = true;
     }
 
     /// Updates the display size.
