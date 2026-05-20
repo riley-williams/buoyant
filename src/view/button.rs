@@ -305,10 +305,13 @@ where
                         EventResult::handled_focused(render_tree.content_shape())
                     }
                     FocusAction::Select => {
-                        (self.action)(captures);
-                        state.0.is_focused = true;
-                        context.request_view_rebuild();
-                        EventResult::handled_focused(render_tree.content_shape())
+                        if state.0.is_focused() {
+                            (self.action)(captures);
+                            context.request_view_rebuild();
+                            EventResult::handled_focused(render_tree.content_shape())
+                        } else {
+                            EventResult::deferred()
+                        }
                     }
                 }
             }
