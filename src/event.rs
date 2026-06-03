@@ -23,9 +23,9 @@ pub enum Event {
         group: FocusGroup,
     },
     /// A key was pressed.
-    KeyDown(Key),
+    KeyDown(Key, FocusGroup),
     /// A key was released.
-    KeyUp(Key),
+    KeyUp(Key, FocusGroup),
 }
 
 /// A key press event.
@@ -68,7 +68,7 @@ impl Event {
             Self::Touch(touch) => {
                 touch.location += offset.into();
             }
-            Self::Scroll(_) | Self::Focus { .. } | Self::KeyDown(_) | Self::KeyUp(_) => {}
+            Self::Scroll(_) | Self::Focus { .. } | Self::KeyDown(..) | Self::KeyUp(..) => {}
         }
         event
     }

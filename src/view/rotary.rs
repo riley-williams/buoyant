@@ -297,7 +297,7 @@ where
                     }
                 }
             }
-        } else if let Event::KeyDown(key) = event
+        } else if let Event::KeyDown(key, _group) = event
             && let Some(axis) = self.axis
             && (state.0 == RotaryState::Focused || state.0 == RotaryState::Captive)
             && context.roles.contains(Role::Button)

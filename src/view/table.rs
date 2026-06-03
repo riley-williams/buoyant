@@ -1230,7 +1230,7 @@ mod render {
 impl Move {
     const fn from_event(event: &Event) -> Option<Self> {
         match event {
-            Event::KeyDown(key) => Self::from_key(*key),
+            Event::KeyDown(key, _) => Self::from_key(*key),
             Event::Focus { action, group: _ } => match action {
                 FocusAction::Next => Some(Self::Right),
                 FocusAction::Previous => Some(Self::Left),
