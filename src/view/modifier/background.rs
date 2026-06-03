@@ -234,20 +234,7 @@ where
                         focus.foreground = foreground_focus;
                         result
                     }
-                    FocusAction::Select => {
-                        let mut foreground_focus = DefaultFocus::default_first();
-                        let result = self.foreground.handle_event(
-                            event,
-                            context,
-                            &mut render_tree.1,
-                            captures,
-                            &mut state.0,
-                            &mut foreground_focus,
-                        );
-                        focus.active_foreground = true;
-                        focus.foreground = foreground_focus;
-                        result
-                    }
+                    FocusAction::Select |
                     FocusAction::Focus(FocusDirection::Backward)
                     | FocusAction::Previous
                     | FocusAction::Blur
