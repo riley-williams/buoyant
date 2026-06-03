@@ -500,17 +500,22 @@ where
                 tree: DefaultFocus::default_first(),
                 index: i,
             };
+            let focus = if let Event::Touch { .. } = event {
+                focus.tree = DefaultFocus::default_first();
+                focus.index = i;
+                &mut focus.tree
+            } else if focus.index == i {
+                &mut focus.tree
+            } else {
+                &mut default_focus.tree
+            };
             let child_result = view.handle_event(
                 event,
                 context,
                 item_render_tree,
                 captures,
                 item_state,
-                if focus.index == i {
-                    &mut focus.tree
-                } else {
-                    &mut default_focus.tree
-                },
+                focus,
             );
             if child_result.is_handled() {
                 return child_result;

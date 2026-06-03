@@ -21,6 +21,7 @@ use crate::{
 /// Focus events that should pass through:
 /// - `Blur` - always deferred to parent
 /// - `Select` - always deferred to parent if not handled
+/// - `Teardown` - cleanup signal; must never trigger boundary re-acquisition
 ///
 /// If the subtree contains no focusable elements, all focus events are deferred.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -113,7 +114,10 @@ where
         };
 
         // Blur and Select always pass through (defer to parent)
-        if matches!(focus_event, FocusAction::Blur | FocusAction::Select) {
+        if matches!(
+            focus_event,
+            FocusAction::Blur | FocusAction::Select | FocusAction::Teardown
+        ) {
             return self
                 .child
                 .handle_event(event, context, render_tree, captures, state, focus);

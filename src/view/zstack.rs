@@ -272,7 +272,11 @@ macro_rules! impl_view_for_zstack {
                 // For non-focus events (touch, scroll, etc.), use DFS approach
                 $(
                     let mut default_focus = DefaultFocus::default_first();
-                    let inner_focus = focus.[<v $n _mut>]().unwrap_or(&mut default_focus);
+                    let inner_focus = if let Event::Touch(..) = event {
+                        focus.[<v $n _or_init_with>](|| DefaultFocus::default_first())
+                    } else {
+                        focus.[<v $n _mut>]().unwrap_or(&mut default_focus)
+                    };
                     let result = self.items.$n.handle_event(
                         event,
                         context,
