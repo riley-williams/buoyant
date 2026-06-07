@@ -94,10 +94,18 @@ fn button_action_cancelled_by_scroll() {
         &buffer.text
     );
 
-    // cancel touch by moving touch
+    // cancel touch by moving touch up and back
     let ctx = EventContext::new(Duration::from_secs(3));
     view.handle_event(
-        &touch_move(20, 3),
+        &touch_move(2, -4),
+        &ctx,
+        &mut tree,
+        &mut captures,
+        &mut state,
+        &mut DefaultFocus::default_first(),
+    );
+    view.handle_event(
+        &touch_move(2, 3),
         &ctx,
         &mut tree,
         &mut captures,
@@ -129,7 +137,7 @@ fn button_action_cancelled_by_scroll() {
 
     let ctx = EventContext::new(Duration::from_secs(4));
     view.handle_event(
-        &touch_move(2, 2),
+        &touch_move(2, 3),
         &ctx,
         &mut tree,
         &mut captures,
