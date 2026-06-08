@@ -137,16 +137,16 @@ pub fn view<'a, 'b, C: GoodPixelColor, F: Fn(&State) + 'a + Copy>(
                 // Ignore all other key down events, don't allow children to handle
                 _ => None,
             },
-            Event::KeyUp(_) => None,
+            Event::KeyUp(_, _) => None,
             _ => Some(event),
         }
     })
     .map_event(|event: Event, _state| match event {
-        Event::KeyDown(key) => match key {
-            Key::Character('h') => Some(Event::KeyDown(Key::LeftArrow)),
-            Key::Character('l') => Some(Event::KeyDown(Key::RightArrow)),
-            Key::Character('k') => Some(Event::KeyDown(Key::UpArrow)),
-            Key::Character('j') => Some(Event::KeyDown(Key::DownArrow)),
+        Event::KeyDown(key, g) => match key {
+            Key::Character('h') => Some(Event::KeyDown(Key::LeftArrow, g)),
+            Key::Character('l') => Some(Event::KeyDown(Key::RightArrow, g)),
+            Key::Character('k') => Some(Event::KeyDown(Key::UpArrow, g)),
+            Key::Character('j') => Some(Event::KeyDown(Key::DownArrow, g)),
             _ => Some(event),
         },
         Event::Touch(_) => None,
