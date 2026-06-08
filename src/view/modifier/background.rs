@@ -234,8 +234,8 @@ where
                         focus.foreground = foreground_focus;
                         result
                     }
-                    FocusAction::Select |
-                    FocusAction::Focus(FocusDirection::Backward)
+                    FocusAction::Select
+                    | FocusAction::Focus(FocusDirection::Backward)
                     | FocusAction::Previous
                     | FocusAction::Blur
                     | FocusAction::Teardown => EventResult::deferred(),
