@@ -344,12 +344,12 @@ pub mod simulator {
                     keycode,
                     keymod: _,
                     repeat: _,
-                } => keycode.try_into().ok().map(Event::KeyDown),
+                } => keycode.try_into().ok().map(|k| Event::KeyDown(k, crate::focus::GROUP_0)),
                 SimulatorEvent::KeyUp {
                     keycode,
                     keymod: _,
                     repeat: _,
-                } => keycode.try_into().ok().map(Event::KeyUp),
+                } => keycode.try_into().ok().map(|k| Event::KeyUp(k, crate::focus::GROUP_0)),
             }
         }
     }
