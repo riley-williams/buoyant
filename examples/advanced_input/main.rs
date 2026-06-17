@@ -103,7 +103,7 @@ pub fn view<'a, 'b, C: GoodPixelColor, F: Fn(&State) + 'a + Copy>(
     .focus_touches()
     .map_event(|event: Event, state: &mut State| {
         match event {
-            Event::KeyDown(key, _) if state.popup_open() => match key {
+            Event::KeyDown { key, .. } if state.popup_open() => match key {
                 Key::LeftArrow => Some(FocusAction::Previous.into_event(PAGE_FGROUP)),
                 Key::RightArrow => Some(FocusAction::Next.into_event(PAGE_FGROUP)),
                 Key::UpArrow | Key::DownArrow => Some(event),
@@ -114,7 +114,7 @@ pub fn view<'a, 'b, C: GoodPixelColor, F: Fn(&State) + 'a + Copy>(
                 // Ignore all other key down events, don't allow children to handle
                 _ => None,
             },
-            Event::KeyDown(key, _) if state.is_table() => match key {
+            Event::KeyDown { key, .. } if state.is_table() => match key {
                 Key::LeftArrow => Some(FocusAction::Previous.into_event(PAGINATE_FGROUP)),
                 Key::RightArrow => Some(FocusAction::Next.into_event(PAGINATE_FGROUP)),
                 Key::UpArrow | Key::DownArrow => Some(event),
@@ -125,7 +125,7 @@ pub fn view<'a, 'b, C: GoodPixelColor, F: Fn(&State) + 'a + Copy>(
                 // Ignore all other key down events, don't allow children to handle
                 _ => None,
             },
-            Event::KeyDown(key, _) => match key {
+            Event::KeyDown { key, .. } => match key {
                 Key::LeftArrow => Some(FocusAction::Previous.into_event(PAGINATE_FGROUP)),
                 Key::RightArrow => Some(FocusAction::Next.into_event(PAGINATE_FGROUP)),
                 Key::UpArrow => Some(FocusAction::Previous.into_event(PAGE_FGROUP)),
@@ -137,16 +137,28 @@ pub fn view<'a, 'b, C: GoodPixelColor, F: Fn(&State) + 'a + Copy>(
                 // Ignore all other key down events, don't allow children to handle
                 _ => None,
             },
-            Event::KeyUp(_, _) => None,
+            Event::KeyUp { .. } => None,
             _ => Some(event),
         }
     })
     .map_event(|event: Event, _state| match event {
-        Event::KeyDown(key, g) => match key {
-            Key::Character('h') => Some(Event::KeyDown(Key::LeftArrow, g)),
-            Key::Character('l') => Some(Event::KeyDown(Key::RightArrow, g)),
-            Key::Character('k') => Some(Event::KeyDown(Key::UpArrow, g)),
-            Key::Character('j') => Some(Event::KeyDown(Key::DownArrow, g)),
+        Event::KeyDown { key, group } => match key {
+            Key::Character('h') => Some(Event::KeyDown {
+                key: Key::LeftArrow,
+                group,
+            }),
+            Key::Character('l') => Some(Event::KeyDown {
+                key: Key::RightArrow,
+                group,
+            }),
+            Key::Character('k') => Some(Event::KeyDown {
+                key: Key::UpArrow,
+                group,
+            }),
+            Key::Character('j') => Some(Event::KeyDown {
+                key: Key::DownArrow,
+                group,
+            }),
             _ => Some(event),
         },
         Event::Touch(_) => None,

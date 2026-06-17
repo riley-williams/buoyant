@@ -142,8 +142,8 @@ where
                     ..
                 }
                 | Event::Scroll(_)
-                | Event::KeyUp(_, _)
-                | Event::KeyDown(_, _) => {
+                | Event::KeyUp { .. }
+                | Event::KeyDown { .. } => {
                     // Don't auto-initialize for these actions
                     let Some(tree) = focus.0[index as usize].as_mut() else {
                         return EventResult::deferred();

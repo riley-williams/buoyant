@@ -23,9 +23,19 @@ pub enum Event {
         group: FocusGroup,
     },
     /// A key was pressed.
-    KeyDown(Key, FocusGroup),
+    KeyDown {
+        /// The key that was pressed.
+        key: Key,
+        /// The focus group this event targets.
+        group: FocusGroup,
+    },
     /// A key was released.
-    KeyUp(Key, FocusGroup),
+    KeyUp {
+        /// The key that was released.
+        key: Key,
+        /// The focus group this event targets.
+        group: FocusGroup,
+    },
 }
 
 /// A key press event.
@@ -68,7 +78,7 @@ impl Event {
             Self::Touch(touch) => {
                 touch.location += offset.into();
             }
-            Self::Scroll(_) | Self::Focus { .. } | Self::KeyDown(..) | Self::KeyUp(..) => {}
+            Self::Scroll(_) | Self::Focus { .. } | Self::KeyDown { .. } | Self::KeyUp { .. } => {}
         }
         event
     }
@@ -344,18 +354,18 @@ pub mod simulator {
                     keycode,
                     keymod: _,
                     repeat: _,
-                } => keycode
-                    .try_into()
-                    .ok()
-                    .map(|k| Event::KeyDown(k, crate::focus::GROUP_0)),
+                } => keycode.try_into().ok().map(|k| Event::KeyDown {
+                    key: k,
+                    group: crate::focus::GROUP_0,
+                }),
                 SimulatorEvent::KeyUp {
                     keycode,
                     keymod: _,
                     repeat: _,
-                } => keycode
-                    .try_into()
-                    .ok()
-                    .map(|k| Event::KeyUp(k, crate::focus::GROUP_0)),
+                } => keycode.try_into().ok().map(|k| Event::KeyUp {
+                    key: k,
+                    group: crate::focus::GROUP_0,
+                }),
             }
         }
     }
