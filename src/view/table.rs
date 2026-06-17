@@ -822,6 +822,10 @@ where
                 return last_result;
             }
 
+            // The currently-focused cell may have given up focus above; remember that
+            // so we can report it if no other cell ends up taking focus.
+            let mut focus_lost = last_result.lost_focus();
+
             while step_count != 0 {
                 step_count -= 1;
 
@@ -864,12 +868,14 @@ where
                     &mut focus.tree,
                 );
 
+                focus_lost |= last_result.lost_focus();
+
                 if !matches!(last_result, EventResult::Deferred { .. }) {
                     return last_result;
                 }
             }
 
-            return last_result;
+            return EventResult::Deferred { focus_lost };
         }
 
         if captive.is_some() {

@@ -162,8 +162,10 @@ fn skips_unfocusable_front_layer() {
     assert!(result.requested_focus());
     assert!(matches!(result.shape(), Some(ContentShape::Rectangle(_))));
 
+    // The focused button gives up focus and the front layer is unfocusable, so
+    // focus leaves the stack entirely - the loss must be reported.
     let result = harness.next();
-    assert_eq!(result, EventResult::Deferred { focus_lost: false });
+    assert_eq!(result, EventResult::deferred_lost_focus());
 }
 
 #[test]

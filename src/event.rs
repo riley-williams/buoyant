@@ -156,13 +156,12 @@ impl EventResult {
     /// Returns a new [`EventResult`] with the specified focus group.
     #[must_use]
     pub const fn with_group(mut self, group: FocusGroup) -> Self {
-        let Self::Handled {
+        if let Self::Handled {
             group: event_group, ..
         } = &mut self
-        else {
-            return Self::deferred();
-        };
-        *event_group = group;
+        {
+            *event_group = group;
+        }
         self
     }
 

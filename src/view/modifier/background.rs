@@ -179,7 +179,7 @@ where
                 match focus_event {
                     FocusAction::Focus(FocusDirection::Backward) | FocusAction::Previous => {
                         let mut background_focus = DefaultFocus::default_last();
-                        let result = self.background.handle_event(
+                        let background_result = self.background.handle_event(
                             &Event::Focus {
                                 action: FocusAction::Focus(FocusDirection::Backward),
                                 group: *group,
@@ -192,7 +192,15 @@ where
                         );
                         focus.active_foreground = false;
                         focus.background = background_focus;
-                        result
+                        // If the background didn't take focus, the view as a whole lost
+                        // focus iff the foreground gave it up.
+                        if background_result.is_handled() {
+                            background_result
+                        } else {
+                            EventResult::Deferred {
+                                focus_lost: result.lost_focus() || background_result.lost_focus(),
+                            }
+                        }
                     }
                     FocusAction::Focus(FocusDirection::Forward)
                     | FocusAction::Next
@@ -219,7 +227,7 @@ where
                     FocusAction::Focus(FocusDirection::Forward) | FocusAction::Next => {
                         // Move to foreground
                         let mut foreground_focus = DefaultFocus::default_first();
-                        let result = self.foreground.handle_event(
+                        let foreground_result = self.foreground.handle_event(
                             &Event::Focus {
                                 action: FocusAction::Focus(FocusDirection::Forward),
                                 group: *group,
@@ -232,13 +240,21 @@ where
                         );
                         focus.active_foreground = true;
                         focus.foreground = foreground_focus;
-                        result
+                        if foreground_result.is_handled() {
+                            foreground_result
+                        } else {
+                            EventResult::Deferred {
+                                focus_lost: result.lost_focus() || foreground_result.lost_focus(),
+                            }
+                        }
                     }
                     FocusAction::Select
                     | FocusAction::Focus(FocusDirection::Backward)
                     | FocusAction::Previous
                     | FocusAction::Blur
-                    | FocusAction::Teardown => EventResult::deferred(),
+                    | FocusAction::Teardown => EventResult::Deferred {
+                        focus_lost: result.lost_focus(),
+                    },
                 }
             }
         } else {

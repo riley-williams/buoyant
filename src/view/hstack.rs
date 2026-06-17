@@ -364,6 +364,10 @@ macro_rules! impl_view_for_hstack {
                     // a new child during navigation we switch to a Focus event
                     let mut current_event = focus_event.clone();
 
+                    // Track whether any child in this traversal gave up focus, so the
+                    // signal isn't lost when a later child defers without losing focus.
+                    let mut focus_lost = false;
+
                     loop {
                         // Try focus on the current child
                         let result = match focus {
@@ -381,6 +385,8 @@ macro_rules! impl_view_for_hstack {
                             )+
                         };
 
+                        focus_lost |= result.lost_focus();
+
                         // If the child handled it (not deferred), return the result
                         if !matches!(result, EventResult::Deferred {..}) || current_event == FocusAction::Teardown {
                             return result;
@@ -390,7 +396,7 @@ macro_rules! impl_view_for_hstack {
                         match focus_event {
                             FocusAction::Blur | FocusAction::Teardown => {
                                 debug_assert!(!matches!(focus_event, FocusAction::Teardown), "Teardown events should not loop");
-                                return result;
+                                return EventResult::Deferred { focus_lost };
                             }
                             FocusAction::Focus(FocusDirection::Forward) | FocusAction::Select | FocusAction::Next => {
                                 // Advance to next child
@@ -401,7 +407,7 @@ macro_rules! impl_view_for_hstack {
                                             *focus = [<OneOf $ct>]::[<V $n>](DefaultFocus::default_first());
                                         }
                                     )+
-                                    _ => return result,
+                                    _ => return EventResult::Deferred { focus_lost },
                                 }
                                 // When entering a new child, use Focus action (forward)
                                 current_event = FocusAction::Focus(FocusDirection::Forward);
@@ -409,7 +415,7 @@ macro_rules! impl_view_for_hstack {
                             FocusAction::Focus(FocusDirection::Backward) | FocusAction::Previous => {
                                 // Go to previous child
                                 if current == 0 {
-                                    return result;
+                                    return EventResult::Deferred { focus_lost };
                                 }
                                 current -= 1;
                                 match current {
@@ -418,7 +424,7 @@ macro_rules! impl_view_for_hstack {
                                             *focus = [<OneOf $ct>]::[<V $n>](DefaultFocus::default_last());
                                         }
                                     )+
-                                    _ => return result,
+                                    _ => return EventResult::Deferred { focus_lost },
                                 }
                                 // When entering a new child, use Focus action (backward)
                                 current_event = FocusAction::Focus(FocusDirection::Backward);
