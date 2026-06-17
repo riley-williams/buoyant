@@ -118,6 +118,33 @@ impl FocusGroupSet {
     pub const fn contains(self, group: FocusGroup) -> bool {
         (self.0 & group.0) != 0
     }
+
+    /// Returns true if this set contains no focus groups.
+    #[must_use]
+    pub const fn is_empty(self) -> bool {
+        self.0 == 0
+    }
+
+    /// Returns a copy of this set with the specified focus group removed.
+    #[must_use]
+    pub const fn without(self, group: FocusGroup) -> Self {
+        Self(self.0 & !group.0)
+    }
+
+    /// Returns true if both sets contain exactly the same focus groups.
+    ///
+    /// Note this differs from [`PartialEq`], which treats two sets as equal when
+    /// they merely *overlap*.
+    #[must_use]
+    pub const fn eq_exact(self, other: Self) -> bool {
+        self.0 == other.0
+    }
+}
+
+impl Default for FocusGroupSet {
+    fn default() -> Self {
+        Self::new_none()
+    }
 }
 
 impl core::ops::BitOr for FocusGroup {

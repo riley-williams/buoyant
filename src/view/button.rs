@@ -7,7 +7,7 @@ use embedded_touch::Phase;
 use crate::{
     environment::LayoutEnvironment,
     event::{Event, EventContext, EventResult},
-    focus::{FocusAction, Role},
+    focus::{FocusAction, FocusGroupSet, Role},
     layout::ResolvedLayout,
     primitives::ProposedDimensions,
     render::IntrinsicShape,
@@ -29,19 +29,31 @@ enum ButtonTouchState {
 }
 
 /// The current interaction state of the button
-#[derive(Default, Debug, Clone, PartialEq, Eq)]
+#[derive(Default, Debug, Clone)]
 pub struct ButtonState {
     /// The current state of a touch interaction with the button.
     touch: ButtonTouchState,
-    /// Whether the button is focused.
-    is_focused: bool,
+    /// The set of focus groups currently focusing the button.
+    ///
+    /// A single button can be focused by multiple independent focus groups at
+    /// once (e.g. when shared between groups via `MultiplexFocus`), so focus is
+    /// tracked per group rather than as a single flag.
+    focused_groups: FocusGroupSet,
 }
 
+impl PartialEq for ButtonState {
+    fn eq(&self, other: &Self) -> bool {
+        self.touch == other.touch && self.focused_groups.eq_exact(other.focused_groups)
+    }
+}
+
+impl Eq for ButtonState {}
+
 impl ButtonState {
-    /// Whether the button is currently focused.
+    /// Whether the button is currently focused by any focus group.
     #[must_use]
     pub fn is_focused(&self) -> bool {
-        self.is_focused
+        !self.focused_groups.is_empty()
     }
 
     /// Whether the button is currently pressed.
@@ -159,7 +171,7 @@ where
     fn build_state(&self, captures: &mut Captures) -> Self::State {
         let initial_state = ButtonState {
             touch: ButtonTouchState::AtRest,
-            is_focused: false,
+            focused_groups: FocusGroupSet::new_none(),
         };
         let inner_state = (self.view)(initial_state.clone()).build_state(captures);
         (initial_state, inner_state)
@@ -196,6 +208,7 @@ where
         )
     }
 
+    #[allow(clippy::too_many_lines)]
     fn handle_event(
         &self,
         event: &Event,
@@ -264,7 +277,7 @@ where
                         let was_pressed =
                             matches!(state.0.touch, ButtonTouchState::CaptivePressed(_));
                         state.0.touch = ButtonTouchState::AtRest;
-                        state.0.is_focused = false;
+                        state.0.focused_groups = FocusGroupSet::new_none();
                         if was_pressed {
                             // TODO: Same here...
                             context.request_view_rebuild();
@@ -278,7 +291,7 @@ where
             }
             Event::Focus {
                 action: focus_event,
-                ..
+                group,
             } => {
                 if !context.roles.contains(Role::Button) {
                     return EventResult::deferred();
@@ -291,19 +304,26 @@ where
                     | FocusAction::Blur
                     | FocusAction::Next
                     | FocusAction::Previous => {
-                        state.0.is_focused = false;
-                        context.request_view_rebuild();
-                        EventResult::deferred_lost_focus()
+                        // Only report a focus loss for groups that actually held
+                        // focus here; an unfocused button being blurred/skipped lost
+                        // nothing for that group.
+                        if state.0.focused_groups.contains(*group) {
+                            state.0.focused_groups = state.0.focused_groups.without(*group);
+                            context.request_view_rebuild();
+                            EventResult::deferred_lost_focus()
+                        } else {
+                            EventResult::deferred()
+                        }
                     }
                     FocusAction::Focus(_) => {
-                        if !state.0.is_focused {
+                        if !state.0.focused_groups.contains(*group) {
                             context.request_view_rebuild();
                         }
-                        state.0.is_focused = true;
+                        state.0.focused_groups = state.0.focused_groups | *group;
                         EventResult::handled_focused(render_tree.content_shape())
                     }
                     FocusAction::Select => {
-                        if state.0.is_focused() {
+                        if state.0.focused_groups.contains(*group) {
                             (self.action)(captures);
                             context.request_view_rebuild();
                             EventResult::handled_focused(render_tree.content_shape())
