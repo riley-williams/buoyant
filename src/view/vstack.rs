@@ -421,6 +421,20 @@ macro_rules! impl_view_for_vstack {
                             }
                         }
                     }
+                } else if matches!(event, Event::KeyDown(_) | Event::KeyUp(_)) {
+                    use super::match_view::[<OneOf $ct>];
+                    return match focus {
+                        $(
+                            [<OneOf $ct>]::[<V $n>](f) => self.items.$n.handle_event(
+                                event,
+                                context,
+                                &mut render_tree.$n,
+                                captures,
+                                &mut state.$n,
+                                f,
+                            ),
+                        )+
+                    };
                 }
 
                 // For non-focus events (touch, scroll, etc.), use DFS approach
