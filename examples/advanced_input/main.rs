@@ -18,6 +18,7 @@ mod table;
 use std::process::exit;
 use std::time::{Duration, Instant};
 
+use buoyant::view::map_event::Mapping;
 use buoyant::{
     app::{App, Harness},
     event::{Event, Key, simulator::MouseTracker},
@@ -98,29 +99,29 @@ pub fn view<'a, 'b, C: GoodPixelColor, F: Fn(&State) + 'a + Copy>(
         .background_color(data.palette.dark_blue(), Rectangle)
     })
     .focus_touches()
-    .map_event::<(), _>(|event: &Event, _state| match event {
+    .map_event(|event: &Event, _state| match event {
         Event::KeyDown(key) => match key {
             Key::Character('h') | Key::LeftArrow => {
-                Some(FocusAction::Previous.into_event(focus::GROUP_1))
+                Mapping::Fallback(FocusAction::Previous.into_event(focus::GROUP_1))
             }
             Key::Character('l') | Key::RightArrow => {
-                Some(FocusAction::Next.into_event(focus::GROUP_1))
+                Mapping::Fallback(FocusAction::Next.into_event(focus::GROUP_1))
             }
             Key::Character('k') | Key::UpArrow => {
-                Some(FocusAction::Previous.into_event(focus::GROUP_0))
+                Mapping::Fallback(FocusAction::Previous.into_event(focus::GROUP_0))
             }
             Key::Character('j') | Key::DownArrow => {
-                Some(FocusAction::Next.into_event(focus::GROUP_0))
+                Mapping::Fallback(FocusAction::Next.into_event(focus::GROUP_0))
             }
-            Key::Character(' ' | '\n') => Some(FocusAction::Select.into_event(focus::GROUP_0)),
+            Key::Character(' ' | '\n') => {
+                Mapping::Fallback(FocusAction::Select.into_event(focus::GROUP_0))
+            }
             Key::Character('e') | Key::Backspace => {
-                Some(FocusAction::Blur.into_event(focus::GROUP_0))
+                Mapping::Fallback(FocusAction::Blur.into_event(focus::GROUP_0))
             }
-            // Ignore all other key down events, don't allow children to handle
-            _ => None,
+            _ => Mapping::Passthrough,
         },
-        Event::KeyUp(_) => None,
-        _ => Some(event.clone()),
+        _ => Mapping::Passthrough,
     })
 }
 

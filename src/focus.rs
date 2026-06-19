@@ -98,6 +98,12 @@ impl FocusGroup {
     }
 }
 
+impl Default for FocusGroup {
+    fn default() -> Self {
+        Self::new_unchecked(0)
+    }
+}
+
 impl FocusGroupSet {
     /// Creates a focus group set matching no focus groups.
     #[must_use]
