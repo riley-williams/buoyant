@@ -1,7 +1,7 @@
 use buoyant::{
     app::{App, Harness as _},
-    event::EventResult,
-    focus::Role,
+    event::{Event, EventResult, Key},
+    focus::{FocusAction, Role},
     primitives::Size,
     render::ContentShape,
     view::prelude::*,
@@ -146,4 +146,51 @@ fn no_focusable_elements_returns_deferred() {
         matches!(harness.focus_forward(), EventResult::Deferred),
         "No focusable elements should return Deferred"
     );
+}
+
+fn key_activatable_button<S>(
+    action: impl Fn(&mut State) + 'static,
+    shape: impl Fn() -> S + 'static,
+) -> impl View<(), State> + 'static
+where
+    S: View<(), State> + 'static,
+{
+    Button::new(action, move |_| shape()).map_event::<(), _>(move |event, ()| match event {
+        Event::KeyDown(Key::Character('\n')) => Some(Event::from(FocusAction::Select)),
+        Event::KeyUp(_) => None,
+        _ => Some(event.clone()),
+    })
+}
+
+fn key_aware_stack(_: &State) -> impl View<(), State> + use<> {
+    VStack::new((
+        key_activatable_button(|s: &mut State| s.a += 1, || Circle),
+        key_activatable_button(|s: &mut State| s.b += 1, || Rectangle),
+        key_activatable_button(|s: &mut State| s.c += 1, || RoundedRectangle::new(10)),
+    ))
+}
+
+#[test]
+fn key_down_routes_only_to_focused_child() {
+    let state = State { a: 0, b: 0, c: 0 };
+    let mut harness =
+        App::new(state, Size::new(100, 300), key_aware_stack).with_roles(Role::Button);
+
+    assert!(matches!(
+        harness.focus_forward().shape(),
+        Some(ContentShape::Circle(_))
+    ));
+    harness.key_down(Key::Character('\n'));
+    assert_eq!(harness.state().a, 1);
+    assert_eq!(harness.state().b, 0);
+    assert_eq!(harness.state().c, 0);
+
+    assert!(matches!(
+        harness.next().shape(),
+        Some(ContentShape::Rectangle(_))
+    ));
+    harness.key_down(Key::Character('\n'));
+    assert_eq!(harness.state().a, 1);
+    assert_eq!(harness.state().b, 1);
+    assert_eq!(harness.state().c, 0);
 }

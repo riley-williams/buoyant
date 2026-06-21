@@ -1,7 +1,7 @@
 use buoyant::{
     app::{App, Harness as _},
-    event::EventResult,
-    focus::Role,
+    event::{Event, EventResult, Key},
+    focus::{FocusAction, Role},
     layout::Alignment,
     primitives::Size,
     render::ContentShape,
@@ -101,4 +101,54 @@ fn empty_background_skips_to_foreground() {
         harness.focus_forward().shape(),
         Some(ContentShape::Circle(_))
     ));
+}
+
+/// A button which can be selected with the newline key down
+fn key_activatable_button<S, F: Fn() -> S, A: Fn(&mut State)>(
+    action: A,
+    shape: F,
+) -> impl View<(), State> + use<S, F, A>
+where
+    S: View<(), State>,
+{
+    Button::new(action, move |_| shape()).map_event::<(), _>(move |event, ()| match event {
+        Event::KeyDown(Key::Character('\n')) => Some(Event::from(FocusAction::Select)),
+        Event::KeyUp(_) => None,
+        _ => Some(event.clone()),
+    })
+}
+
+fn key_aware_background_view(_: &State) -> impl View<(), State> + use<> {
+    key_activatable_button(|s: &mut State| s.foreground_tapped = true, || Circle).background(
+        Alignment::Center,
+        key_activatable_button(|s: &mut State| s.background_tapped = true, || Rectangle),
+    )
+}
+
+#[test]
+fn key_down_routes_to_focused_background_child() {
+    let state = State {
+        foreground_tapped: false,
+        background_tapped: false,
+    };
+    let mut harness =
+        App::new(state, Size::new(100, 100), key_aware_background_view).with_roles(Role::Button);
+
+    // Background receives focus first.
+    assert!(matches!(
+        harness.focus_forward().shape(),
+        Some(ContentShape::Rectangle(_))
+    ));
+    // A key event reaches the focused background button and not the foreground.
+    harness.key_down(Key::Character('\n'));
+    assert!(harness.state().background_tapped);
+    assert!(!harness.state().foreground_tapped);
+
+    // Move to foreground; key now activates foreground only.
+    assert!(matches!(
+        harness.next().shape(),
+        Some(ContentShape::Circle(_))
+    ));
+    harness.key_down(Key::Character('\n'));
+    assert!(harness.state().foreground_tapped);
 }
