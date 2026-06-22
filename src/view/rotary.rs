@@ -3,6 +3,8 @@
 
 use core::marker::PhantomData;
 
+use embedded_touch::Phase;
+
 use crate::{
     environment::LayoutEnvironment,
     event::{Event, EventContext, EventResult, Key},
@@ -320,7 +322,10 @@ where
             }
         } else if let Event::Touch(touch) = event
             && render_tree.content_shape().contains(touch.location.into())
+            && touch.phase == Phase::Ended
         {
+            // FIXME: should track intermediate state so touch is only valid if
+            // it started in the view
             // Just move focus to this element on touch for now, but we could maybe
             // also support dragging or scroll events.
             match state.0 {

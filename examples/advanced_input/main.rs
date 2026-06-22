@@ -103,35 +103,14 @@ pub fn view<'a, 'b, C: GoodPixelColor, F: Fn(&State) + 'a + Copy>(
     })
     .focus_touches()
     .map_event(|event: &Event, state: &mut State| match *event {
-        Event::KeyDown { key, .. } if state.popup_open() => match key {
-            Key::LeftArrow => Mapping::Fallback(FocusAction::Previous.into_event(PAGE_FGROUP)),
-            Key::RightArrow => Mapping::Fallback(FocusAction::Next.into_event(PAGE_FGROUP)),
-            Key::UpArrow | Key::DownArrow => Mapping::Passthrough,
-            Key::Character(' ' | '\n') => {
-                Mapping::Fallback(FocusAction::Select.into_event(PAGE_FGROUP))
-            }
-            Key::Character('e') | Key::Backspace => {
-                Mapping::Fallback(FocusAction::Blur.into_event(PAGE_FGROUP))
-            }
-            _ => Mapping::Passthrough,
-        },
-        Event::KeyDown { key, .. } if state.is_table() => match key {
-            Key::LeftArrow => Mapping::Fallback(FocusAction::Previous.into_event(PAGINATE_FGROUP)),
-            Key::RightArrow => Mapping::Fallback(FocusAction::Next.into_event(PAGINATE_FGROUP)),
-            Key::UpArrow | Key::DownArrow => Mapping::Passthrough,
-            Key::Character(' ' | '\n') => {
-                Mapping::Fallback(FocusAction::Select.into_event(PAGE_FGROUP))
-            }
-            Key::Character('e') | Key::Backspace => {
-                Mapping::Fallback(FocusAction::Blur.into_event(PAGE_FGROUP))
-            }
-            _ => Mapping::Passthrough,
-        },
+        // Will try e.g. h, <-, Previous until one is handled
         Event::KeyDown { key, .. } => match key {
-            Key::LeftArrow => Mapping::Fallback(FocusAction::Previous.into_event(PAGINATE_FGROUP)),
-            Key::RightArrow => Mapping::Fallback(FocusAction::Next.into_event(PAGINATE_FGROUP)),
-            Key::UpArrow => Mapping::Fallback(FocusAction::Previous.into_event(PAGE_FGROUP)),
-            Key::DownArrow => Mapping::Fallback(FocusAction::Next.into_event(PAGE_FGROUP)),
+            Key::LeftArrow | Key::UpArrow => {
+                Mapping::Fallback(FocusAction::Previous.into_event(PAGE_FGROUP))
+            }
+            Key::RightArrow | Key::DownArrow => {
+                Mapping::Fallback(FocusAction::Next.into_event(PAGE_FGROUP))
+            }
             Key::Character(' ' | '\n') => {
                 Mapping::Fallback(FocusAction::Select.into_event(PAGE_FGROUP))
             }
@@ -140,7 +119,6 @@ pub fn view<'a, 'b, C: GoodPixelColor, F: Fn(&State) + 'a + Copy>(
             }
             _ => Mapping::Passthrough,
         },
-        Event::KeyUp { .. } => Mapping::Passthrough,
         _ => Mapping::Passthrough,
     })
     .map_event(|event: &Event, _state| match *event {
@@ -161,6 +139,10 @@ pub fn view<'a, 'b, C: GoodPixelColor, F: Fn(&State) + 'a + Copy>(
                 key: Key::DownArrow,
                 group,
             }),
+            Key::Character(']') => Mapping::Fallback(FocusAction::Next.into_event(PAGINATE_FGROUP)),
+            Key::Character('[') => {
+                Mapping::Fallback(FocusAction::Previous.into_event(PAGINATE_FGROUP))
+            }
             _ => Mapping::Passthrough,
         },
         _ => Mapping::Passthrough,
@@ -184,7 +166,6 @@ In case of table:
  - In case cell is focused
    - Up/Down/Left/Right will havigate inside the table
    - Blur will blur the focused cell
-
 
 */
 
