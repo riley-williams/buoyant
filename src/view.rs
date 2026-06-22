@@ -127,7 +127,7 @@ pub trait ViewLayout<Captures: ?Sized>: ViewMarker {
     ///
     /// This state is created once when the view is first initialized and is intended
     /// to persist across multiple layout/render cycles.
-    type State: Default + 'static;
+    type State: 'static;
 
     /// The computed layout of the view and its subviews.
     ///

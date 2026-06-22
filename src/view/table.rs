@@ -373,12 +373,9 @@ where
     fn build_state(&self, captures: &mut Captures) -> Self::State {
         let cell_states = array::from_fn(|c| {
             array::from_fn(|r| {
-                if c >= self.width || r >= self.height {
-                    V::State::default()
-                } else {
-                    let view = (self.build_view)(self.items.index(c, r));
-                    view.build_state(captures)
-                }
+                let (c, r) = (c.min(self.width - 1), r.min(self.height - 1));
+                let view = (self.build_view)(self.items.index(c, r));
+                view.build_state(captures)
             })
         });
         TableState {
