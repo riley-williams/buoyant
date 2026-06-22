@@ -1,7 +1,7 @@
 use crate::FONT;
 use crate::definitions::{GoodPixelColor, IpType, Octet, Palette, RenderData, State, TemporaryIp};
-use buoyant::event::Event;
-use buoyant::focus::{BoundaryBehavior, FocusAction};
+use buoyant::focus::BoundaryBehavior;
+use buoyant::view::popover::Dismissal;
 use buoyant::view::prelude::*;
 use buoyant::view::rotary::{Rotary, RotaryAxis, RotaryEvent, RotaryState};
 use core::{fmt::Write, net::Ipv4Addr};
@@ -108,17 +108,11 @@ pub fn settings<'a, 'b, C: GoodPixelColor, F: Fn(&State) + 'a>(
         .background_color(p.dark_blue(), RoundedRectangle::new(5))
         .padding(Edges::All, 10)
         .bound_focus(BoundaryBehavior::Wrap)
-        .map_event(|event, state: &mut State| match event {
-            Event::Focus { action, .. } if action == FocusAction::Blur => {
-                state.opened_input = None;
-                None
-            }
-            _ => Some(event),
-        })
     })
-    // // TODO: handle escape alongside submit
-    // ZStack::new((main, state.opened_input.as_ref().map(|_| overlay)))
-    //     .with_alignment(Alignment::Center)
+    .on_blur(|state: &mut State| {
+        state.opened_input = None;
+        Dismissal::Dismiss
+    })
 }
 
 fn ip_view<C: GoodPixelColor>(ip: Ipv4Addr) -> impl View<C, State> {

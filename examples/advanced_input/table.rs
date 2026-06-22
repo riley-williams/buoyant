@@ -1,7 +1,6 @@
 use crate::FONT;
 use crate::definitions::{GoodPixelColor, IeName, MAX_COLS, MAX_ROWS, Palette, RenderData, State};
-use buoyant::event::Event;
-use buoyant::focus::FocusAction;
+use buoyant::view::popover::Dismissal;
 use buoyant::view::prelude::*;
 use buoyant::view::table::{Table, TableIndex};
 use heapless::String;
@@ -98,15 +97,11 @@ pub fn table<'a, C: GoodPixelColor>(
         Rectangle.foreground_color(data.palette.dark_gray()),
     )
     .popover(overlay.as_ref(), |&(i, ie)| {
-        ie_editor::ie_editor(ie, set_ie(i), data.palette).map_event(|event, state: &mut State| {
-            match event {
-                Event::Focus { action, .. } if action == FocusAction::Blur => {
-                    state.opened_cell_input = None;
-                    None
-                }
-                _ => Some(event),
-            }
-        })
+        ie_editor::ie_editor(ie, set_ie(i), data.palette)
+    })
+    .on_blur(|state: &mut State| {
+        state.opened_cell_input = None;
+        Dismissal::Dismiss
     })
 }
 
