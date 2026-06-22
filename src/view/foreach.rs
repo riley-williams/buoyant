@@ -392,6 +392,7 @@ where
         renderables
     }
 
+    #[allow(clippy::too_many_lines)]
     fn handle_event(
         &self,
         event: &Event,
@@ -489,6 +490,27 @@ where
                     }
                 }
             }
+        }
+
+        // Key events route only to the currently focused child, not via DFS
+        if matches!(event, Event::KeyDown(_) | Event::KeyUp(_)) {
+            // Unresolved "last" sentinel - no focused child yet
+            if focus.index == usize::MAX {
+                return EventResult::Deferred;
+            }
+            if focus.index >= self.items.len() {
+                return EventResult::Deferred;
+            }
+            let item = &self.items[focus.index];
+            let view = (self.build_view)(item);
+            return view.handle_event(
+                event,
+                context,
+                &mut render_tree[focus.index],
+                captures,
+                &mut state[focus.index],
+                &mut focus.tree,
+            );
         }
 
         // For non-focus events (touch, scroll, etc.), use DFS approach

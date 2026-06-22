@@ -23,3 +23,5 @@
   - [App](./event-loops/app.md)
   - [Manual View Lifecycle](./event-loops/manual-view-lifecycle.md)
   - [Manually Animated Render Loops](./event-loops/animated-render-loops.md)
+- [Custom Views](./custom-views.md)
+  - [Event Handling](./custom-views/event-handling.md)

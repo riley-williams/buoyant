@@ -148,13 +148,12 @@ where
         state: &mut Self::State,
         focus: &mut Self::FocusTree,
     ) -> EventResult {
-        // Handle focus events specially - they need to route through the focus tree
-        if let Event::Focus {
-            action: focus_event,
-            group,
-        } = event
-        {
-            match focus {
+        match event {
+            // Focus events are routed through the focus tree.
+            Event::Focus {
+                action: focus_event,
+                group,
+            } => match focus {
                 BackgroundFocus::Background(background_focus) => {
                     let result = self.background.handle_event(
                         event,
@@ -234,10 +233,28 @@ where
                         | FocusAction::Teardown => EventResult::Deferred,
                     }
                 }
-            }
-        } else {
-            // For non-focus events (touch, scroll, etc.), perform DFS back to front
-            match focus {
+            },
+            // Key events are focus-routed: deliver only to the currently focused layer.
+            Event::KeyDown(_) | Event::KeyUp(_) => match focus {
+                BackgroundFocus::Background(background_focus) => self.background.handle_event(
+                    event,
+                    context,
+                    &mut render_tree.0,
+                    captures,
+                    &mut state.1,
+                    background_focus,
+                ),
+                BackgroundFocus::Foreground(foreground_focus) => self.foreground.handle_event(
+                    event,
+                    context,
+                    &mut render_tree.1,
+                    captures,
+                    &mut state.0,
+                    foreground_focus,
+                ),
+            },
+            // For hit-test events (touch, scroll), perform DFS back to front
+            Event::Touch(_) | Event::Scroll(_) => match focus {
                 BackgroundFocus::Background(_) => {
                     // Start with background (back)
                     let background_result = self.background.handle_event(
@@ -299,7 +316,7 @@ where
                         },
                     )
                 }
-            }
+            },
         }
     }
 }
