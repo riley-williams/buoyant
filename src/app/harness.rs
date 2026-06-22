@@ -1,7 +1,7 @@
 use embedded_touch::{Tool, Touch};
 
 use crate::{
-    event::{Event, EventResult},
+    event::{Event, EventResult, Key},
     focus::{FocusAction, FocusDirection, FocusGroup},
     primitives::Point,
 };
@@ -81,6 +81,34 @@ pub trait Harness {
     /// Blurs (exits) the current focus in the specified group.
     fn blur_group(&mut self, group: FocusGroup) -> EventResult {
         self.send(FocusAction::Blur.into_event(group))
+    }
+
+    /// Sends a key down event to the currently focused element.
+    fn key_down(&mut self, key: Key) -> EventResult {
+        self.send(Event::KeyDown {
+            key,
+            group: crate::focus::GROUP_0,
+        })
+    }
+
+    /// Sends a key up event to the currently focused element.
+    fn key_up(&mut self, key: Key) -> EventResult {
+        self.send(Event::KeyUp {
+            key,
+            group: crate::focus::GROUP_0,
+        })
+    }
+
+    /// Sends a key press (down followed by up) to the currently focused element.
+    fn key_press(&mut self, key: Key) -> EventResult {
+        self.send(Event::KeyDown {
+            key,
+            group: crate::focus::GROUP_0,
+        });
+        self.send(Event::KeyUp {
+            key,
+            group: crate::focus::GROUP_0,
+        })
     }
 
     /// Sends a tap (touch down + touch up) at the given point.

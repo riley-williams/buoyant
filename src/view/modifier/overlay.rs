@@ -148,13 +148,12 @@ where
         state: &mut Self::State,
         focus: &mut Self::FocusTree,
     ) -> EventResult {
-        // Handle focus events specially - they need to route through the focus tree
-        if let Event::Focus {
-            action: focus_event,
-            group,
-        } = event
-        {
-            match focus {
+        match event {
+            // Focus events are routed through the focus tree.
+            Event::Focus {
+                action: focus_event,
+                group,
+            } => match focus {
                 OverlayFocus::Overlay(overlay_focus) => {
                     let result = self.overlay.handle_event(
                         event,
@@ -253,10 +252,28 @@ where
                         },
                     }
                 }
-            }
-        } else {
-            // For non-focus events (touch, scroll, etc.), perform DFS
-            match focus {
+            },
+            // Key events are focus-routed: deliver only to the currently focused child.
+            Event::KeyDown { .. } | Event::KeyUp { .. } => match focus {
+                OverlayFocus::Overlay(overlay_focus) => self.overlay.handle_event(
+                    event,
+                    context,
+                    &mut render_tree.1,
+                    captures,
+                    &mut state.1,
+                    overlay_focus,
+                ),
+                OverlayFocus::Foreground(foreground_focus) => self.foreground.handle_event(
+                    event,
+                    context,
+                    &mut render_tree.0,
+                    captures,
+                    &mut state.0,
+                    foreground_focus,
+                ),
+            },
+            // For hit-test events (touch, scroll), perform DFS
+            Event::Touch(_) | Event::Scroll(_) => match focus {
                 OverlayFocus::Overlay(_) => {
                     // Start with overlay
                     let overlay_result = self.overlay.handle_event(
@@ -318,7 +335,7 @@ where
                         },
                     )
                 }
-            }
+            },
         }
     }
 }

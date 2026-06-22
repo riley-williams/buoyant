@@ -155,135 +155,134 @@ where
         state: &mut Self::State,
         focus: &mut Self::FocusTree,
     ) -> EventResult {
-        // Handle focus events specially - they need to route through the focus tree
-        if let Event::Focus {
-            action: focus_event,
-            group,
-        } = event
-        {
-            if focus.active_foreground {
-                let result = self.foreground.handle_event(
-                    event,
-                    context,
-                    &mut render_tree.1,
-                    captures,
-                    &mut state.0,
-                    &mut focus.foreground,
-                );
+        match event {
+            // Focus events are routed through the focus tree.
+            Event::Focus {
+                action: focus_event,
+                group,
+            } => {
+                if focus.active_foreground {
+                    let result = self.foreground.handle_event(
+                        event,
+                        context,
+                        &mut render_tree.1,
+                        captures,
+                        &mut state.0,
+                        &mut focus.foreground,
+                    );
 
-                if result.is_handled() || *focus_event == FocusAction::Teardown {
-                    return result;
-                }
+                    if result.is_handled() || *focus_event == FocusAction::Teardown {
+                        return result;
+                    }
 
-                // Foreground exhausted - only move to background on backward navigation
-                match focus_event {
-                    FocusAction::Focus(FocusDirection::Backward) | FocusAction::Previous => {
-                        let mut background_focus = DefaultFocus::default_last();
-                        let background_result = self.background.handle_event(
-                            &Event::Focus {
-                                action: FocusAction::Focus(FocusDirection::Backward),
-                                group: *group,
-                            },
-                            context,
-                            &mut render_tree.0,
-                            captures,
-                            &mut state.1,
-                            &mut background_focus,
-                        );
-                        focus.active_foreground = false;
-                        focus.background = background_focus;
-                        // If the background didn't take focus, the view as a whole lost
-                        // focus iff the foreground gave it up.
-                        if background_result.is_handled() {
-                            background_result
-                        } else {
-                            EventResult::Deferred {
-                                focus_lost: result.lost_focus() || background_result.lost_focus(),
+                    // Foreground exhausted - only move to background on backward navigation
+                    match focus_event {
+                        FocusAction::Focus(FocusDirection::Backward) | FocusAction::Previous => {
+                            let mut background_focus = DefaultFocus::default_last();
+                            let background_result = self.background.handle_event(
+                                &Event::Focus {
+                                    action: FocusAction::Focus(FocusDirection::Backward),
+                                    group: *group,
+                                },
+                                context,
+                                &mut render_tree.0,
+                                captures,
+                                &mut state.1,
+                                &mut background_focus,
+                            );
+                            focus.active_foreground = false;
+                            focus.background = background_focus;
+                            // If the background didn't take focus, the view as a whole lost
+                            // focus iff the foreground gave it up.
+                            if background_result.is_handled() {
+                                background_result
+                            } else {
+                                EventResult::Deferred {
+                                    focus_lost: result.lost_focus()
+                                        || background_result.lost_focus(),
+                                }
                             }
                         }
+                        FocusAction::Focus(FocusDirection::Forward)
+                        | FocusAction::Next
+                        | FocusAction::Select
+                        | FocusAction::Blur
+                        | FocusAction::Teardown => result,
                     }
-                    FocusAction::Focus(FocusDirection::Forward)
-                    | FocusAction::Next
-                    | FocusAction::Select
-                    | FocusAction::Blur
-                    | FocusAction::Teardown => result,
-                }
-            } else {
-                let result = self.background.handle_event(
-                    event,
-                    context,
-                    &mut render_tree.0,
-                    captures,
-                    &mut state.1,
-                    &mut focus.background,
-                );
+                } else {
+                    let result = self.background.handle_event(
+                        event,
+                        context,
+                        &mut render_tree.0,
+                        captures,
+                        &mut state.1,
+                        &mut focus.background,
+                    );
 
-                if result.is_handled() || *focus_event == FocusAction::Teardown {
-                    return result;
-                }
+                    if result.is_handled() || *focus_event == FocusAction::Teardown {
+                        return result;
+                    }
 
-                // Background exhausted - only move to foreground on forward navigation
-                match focus_event {
-                    FocusAction::Focus(FocusDirection::Forward) | FocusAction::Next => {
-                        // Move to foreground
-                        let mut foreground_focus = DefaultFocus::default_first();
-                        let foreground_result = self.foreground.handle_event(
-                            &Event::Focus {
-                                action: FocusAction::Focus(FocusDirection::Forward),
-                                group: *group,
-                            },
-                            context,
-                            &mut render_tree.1,
-                            captures,
-                            &mut state.0,
-                            &mut foreground_focus,
-                        );
-                        focus.active_foreground = true;
-                        focus.foreground = foreground_focus;
-                        if foreground_result.is_handled() {
-                            foreground_result
-                        } else {
-                            EventResult::Deferred {
-                                focus_lost: result.lost_focus() || foreground_result.lost_focus(),
+                    // Background exhausted - only move to foreground on forward navigation
+                    match focus_event {
+                        FocusAction::Focus(FocusDirection::Forward) | FocusAction::Next => {
+                            let mut foreground_focus = DefaultFocus::default_first();
+                            let foreground_result = self.foreground.handle_event(
+                                &Event::Focus {
+                                    action: FocusAction::Focus(FocusDirection::Forward),
+                                    group: *group,
+                                },
+                                context,
+                                &mut render_tree.1,
+                                captures,
+                                &mut state.0,
+                                &mut foreground_focus,
+                            );
+                            focus.active_foreground = true;
+                            focus.foreground = foreground_focus;
+                            if foreground_result.is_handled() {
+                                foreground_result
+                            } else {
+                                EventResult::Deferred {
+                                    focus_lost: result.lost_focus()
+                                        || foreground_result.lost_focus(),
+                                }
                             }
                         }
+                        FocusAction::Select
+                        | FocusAction::Focus(FocusDirection::Backward)
+                        | FocusAction::Previous
+                        | FocusAction::Blur
+                        | FocusAction::Teardown => EventResult::Deferred {
+                            focus_lost: result.lost_focus(),
+                        },
                     }
-                    FocusAction::Select
-                    | FocusAction::Focus(FocusDirection::Backward)
-                    | FocusAction::Previous
-                    | FocusAction::Blur
-                    | FocusAction::Teardown => EventResult::Deferred {
-                        focus_lost: result.lost_focus(),
-                    },
                 }
             }
-        } else {
-            // For non-focus events (touch, scroll, etc.), perform DFS back to front
-            // The same in main, probably clippy doesn't have a lint for this for `match`.
-            #[expect(clippy::if_same_then_else)]
-            if focus.active_foreground {
-                // Start with background (back)
-                let background_result = self.background.handle_event(
-                    event,
-                    context,
-                    &mut render_tree.0,
-                    captures,
-                    &mut state.1,
-                    &mut focus.background,
-                );
-                if background_result.is_handled() {
-                    return background_result;
+            // Key events are focus-routed: deliver only to the currently focused layer.
+            Event::KeyDown { .. } | Event::KeyUp { .. } => {
+                if focus.active_foreground {
+                    self.foreground.handle_event(
+                        event,
+                        context,
+                        &mut render_tree.1,
+                        captures,
+                        &mut state.0,
+                        &mut focus.foreground,
+                    )
+                } else {
+                    self.background.handle_event(
+                        event,
+                        context,
+                        &mut render_tree.0,
+                        captures,
+                        &mut state.1,
+                        &mut focus.background,
+                    )
                 }
-                // Then foreground (front)
-                self.foreground.handle_event(
-                    event,
-                    context,
-                    &mut render_tree.1,
-                    captures,
-                    &mut state.0,
-                    &mut focus.foreground,
-                )
-            } else {
+            }
+            // For hit-test events (touch, scroll), perform DFS back to front
+            Event::Touch(_) | Event::Scroll(_) => {
                 // Start with background (back)
                 let background_result = self.background.handle_event(
                     event,

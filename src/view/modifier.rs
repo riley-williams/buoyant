@@ -29,7 +29,8 @@ mod opacity;
 mod overlay;
 #[allow(missing_docs)]
 pub mod padding;
-mod popover;
+#[allow(missing_docs)]
+pub mod popover;
 mod priority;
 mod scale_effect;
 mod transition;

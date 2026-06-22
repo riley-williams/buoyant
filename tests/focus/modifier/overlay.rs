@@ -1,7 +1,7 @@
 use buoyant::{
     app::{App, Harness as _},
-    event::EventResult,
-    focus::Role,
+    event::{Event, EventResult, Key},
+    focus::{FocusAction, Role},
     layout::Alignment,
     primitives::Size,
     render::ContentShape,
@@ -131,4 +131,57 @@ fn empty_overlay_skips_to_foreground() {
         harness.focus_forward().shape(),
         Some(ContentShape::Circle(_))
     ));
+}
+
+fn key_activatable_button<S>(
+    action: impl Fn(&mut State) + 'static,
+    shape: impl Fn() -> S + 'static,
+) -> impl View<(), State> + 'static
+where
+    S: View<(), State> + 'static,
+{
+    Button::new(action, move |_| shape()).map_event::<State, _>(
+        move |event: Event, _| match event {
+            Event::KeyDown {
+                key: Key::Character('\n'),
+                ..
+            } => Some(Event::from(FocusAction::Select)),
+            Event::KeyUp { .. } => None,
+            _ => Some(event.clone()),
+        },
+    )
+}
+
+fn key_aware_overlay_view(_: &State) -> impl View<(), State> + use<> {
+    key_activatable_button(|s: &mut State| s.foreground_tapped = true, || Circle).overlay(
+        Alignment::Center,
+        key_activatable_button(|s: &mut State| s.overlay_tapped = true, || Rectangle),
+    )
+}
+
+#[test]
+fn key_down_routes_to_focused_overlay_child() {
+    let state = State {
+        foreground_tapped: false,
+        overlay_tapped: false,
+    };
+    let mut harness =
+        App::new(state, Size::new(100, 100), key_aware_overlay_view).with_roles(Role::Button);
+
+    // Overlay receives focus first.
+    assert!(matches!(
+        harness.focus_forward().shape(),
+        Some(ContentShape::Rectangle(_))
+    ));
+    harness.key_down(Key::Character('\n'));
+    assert!(harness.state().overlay_tapped);
+    assert!(!harness.state().foreground_tapped);
+
+    // Move to foreground, key now activates foreground only.
+    assert!(matches!(
+        harness.next().shape(),
+        Some(ContentShape::Circle(_))
+    ));
+    harness.key_down(Key::Character('\n'));
+    assert!(harness.state().foreground_tapped);
 }

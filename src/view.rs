@@ -40,6 +40,7 @@ pub use hstack::HStack;
 pub use image::Image;
 pub use modifier::aspect_ratio;
 pub use modifier::padding;
+pub use modifier::popover;
 pub use paginate::Paginate;
 pub use rotary::Rotary;
 pub use scroll_view::ScrollView;

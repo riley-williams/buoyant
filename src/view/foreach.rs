@@ -498,6 +498,27 @@ where
             }
         }
 
+        // Key events route only to the currently focused child, not via DFS
+        if matches!(event, Event::KeyDown { .. } | Event::KeyUp { .. }) {
+            // Unresolved "last" sentinel - no focused child yet
+            if focus.index == usize::MAX {
+                return EventResult::deferred();
+            }
+            if focus.index >= self.items.len() {
+                return EventResult::deferred();
+            }
+            let item = &self.items[focus.index];
+            let view = (self.build_view)(item);
+            return view.handle_event(
+                event,
+                context,
+                &mut render_tree[focus.index],
+                captures,
+                &mut state[focus.index],
+                &mut focus.tree,
+            );
+        }
+
         // For non-focus events (touch, scroll, etc.), use DFS approach
         for (i, item) in self.items.iter().enumerate() {
             let view = (self.build_view)(item);
