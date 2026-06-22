@@ -246,6 +246,14 @@ macro_rules! define_branch {
                 $variant($variant),
             )+
         }
+        impl <$($variant),+> Default for $name<$($variant),+>
+        where
+            V0: Default,
+        {
+            fn default() -> Self {
+                $name::V0(V0::default())
+            }
+        }
 
         impl <$($variant),+> $name<$($variant),+> {
             $(
@@ -273,6 +281,15 @@ macro_rules! define_branch {
                             } else {
                                 unreachable!("Just set it to this variant")
                             }
+                        }
+                    }
+
+                    pub fn [<$variant:lower _mut>](&mut self) -> Option<&mut $variant> {
+                        #[allow(irrefutable_let_patterns)]
+                        if let $name::$variant(inner) = self {
+                            Some(inner)
+                        } else {
+                            None
                         }
                     }
                 }

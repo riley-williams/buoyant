@@ -191,7 +191,7 @@ where
                         | FocusAction::Previous
                         | FocusAction::Blur
                         | FocusAction::Select
-                        | FocusAction::Teardown => EventResult::Deferred,
+                        | FocusAction::Teardown => EventResult::deferred(),
                     }
                 }
                 BackgroundFocus::Foreground(foreground_focus) => {
@@ -230,12 +230,12 @@ where
                         | FocusAction::Next
                         | FocusAction::Select
                         | FocusAction::Blur
-                        | FocusAction::Teardown => EventResult::Deferred,
+                        | FocusAction::Teardown => EventResult::deferred(),
                     }
                 }
             },
             // Key events are focus-routed: deliver only to the currently focused layer.
-            Event::KeyDown(_) | Event::KeyUp(_) => match focus {
+            Event::KeyDown { .. } | Event::KeyUp { .. } => match focus {
                 BackgroundFocus::Background(background_focus) => self.background.handle_event(
                     event,
                     context,

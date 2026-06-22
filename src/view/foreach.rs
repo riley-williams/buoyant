@@ -415,7 +415,7 @@ where
             let mut current = if focus.index == usize::MAX {
                 // Sentinel for "last" - resolve to actual last index
                 if self.items.is_empty() {
-                    return EventResult::Deferred;
+                    return EventResult::deferred();
                 }
                 let last_index = self.items.len() - 1;
                 focus.index = last_index;
@@ -428,10 +428,14 @@ where
             // a new child during navigation we switch to a Focus event
             let mut current_event = *focus_event;
 
+            // Track whether any child in this traversal gave up focus, so the
+            // signal isn't lost when a later child defers without losing focus.
+            let mut focus_lost = false;
+
             loop {
                 // Ensure current index is valid
                 if current >= self.items.len() {
-                    return EventResult::Deferred;
+                    return EventResult::Deferred { focus_lost };
                 }
 
                 // Try focus on the current child
@@ -452,8 +456,10 @@ where
                     &mut focus.tree,
                 );
 
+                focus_lost |= child_result.lost_focus();
+
                 // If the child handled it (not deferred), return the result
-                if !matches!(child_result, EventResult::Deferred)
+                if !matches!(child_result, EventResult::Deferred { .. })
                     || *focus_event == FocusAction::Teardown
                 {
                     return child_result;
@@ -462,7 +468,7 @@ where
                 // Child is exhausted, try to move based on action
                 match focus_event {
                     FocusAction::Blur | FocusAction::Teardown => {
-                        return EventResult::Deferred;
+                        return EventResult::Deferred { focus_lost };
                     }
                     FocusAction::Focus(FocusDirection::Forward)
                     | FocusAction::Select
@@ -470,7 +476,7 @@ where
                         // Advance to next child
                         current += 1;
                         if current >= self.items.len() {
-                            return EventResult::Deferred;
+                            return EventResult::Deferred { focus_lost };
                         }
                         focus.index = current;
                         focus.tree = <V::FocusTree as DefaultFocus>::default_first();
@@ -480,7 +486,7 @@ where
                     FocusAction::Focus(FocusDirection::Backward) | FocusAction::Previous => {
                         // Go to previous child
                         if current == 0 {
-                            return EventResult::Deferred;
+                            return EventResult::Deferred { focus_lost };
                         }
                         current -= 1;
                         focus.index = current;
@@ -493,13 +499,13 @@ where
         }
 
         // Key events route only to the currently focused child, not via DFS
-        if matches!(event, Event::KeyDown(_) | Event::KeyUp(_)) {
+        if matches!(event, Event::KeyDown { .. } | Event::KeyUp { .. }) {
             // Unresolved "last" sentinel - no focused child yet
             if focus.index == usize::MAX {
-                return EventResult::Deferred;
+                return EventResult::deferred();
             }
             if focus.index >= self.items.len() {
-                return EventResult::Deferred;
+                return EventResult::deferred();
             }
             let item = &self.items[focus.index];
             let view = (self.build_view)(item);
@@ -518,21 +524,32 @@ where
             let view = (self.build_view)(item);
             let item_state = &mut state[i];
             let item_render_tree = &mut render_tree[i];
-            focus.tree = DefaultFocus::default_first();
-            focus.index = i;
+            let mut default_focus = Focus {
+                tree: DefaultFocus::default_first(),
+                index: i,
+            };
+            let focus = if let Event::Touch { .. } = event {
+                focus.tree = DefaultFocus::default_first();
+                focus.index = i;
+                &mut focus.tree
+            } else if focus.index == i {
+                &mut focus.tree
+            } else {
+                &mut default_focus.tree
+            };
             let child_result = view.handle_event(
                 event,
                 context,
                 item_render_tree,
                 captures,
                 item_state,
-                &mut focus.tree,
+                focus,
             );
             if child_result.is_handled() {
                 return child_result;
             }
         }
-        EventResult::Deferred
+        EventResult::deferred()
     }
 }
 

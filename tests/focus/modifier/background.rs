@@ -29,6 +29,12 @@ fn view_with_empty_background(_: &State) -> impl View<(), State> + use<> {
     .background(Alignment::Center, EmptyView)
 }
 
+/// Focusable foreground over an unfocusable (empty) background.
+fn focusable_foreground_empty_background(_: &State) -> impl View<(), State> + use<> {
+    Button::new(|s: &mut State| s.foreground_tapped = true, |_| Circle)
+        .background(Alignment::Center, EmptyView)
+}
+
 #[test]
 fn navigate_forward_through_background() {
     let state = State {
@@ -58,7 +64,7 @@ fn navigate_forward_through_background() {
     assert!(harness.state().foreground_tapped);
 
     // Past foreground returns deferred
-    assert!(matches!(harness.next(), EventResult::Deferred));
+    assert!(matches!(harness.next(), EventResult::Deferred { .. }));
 }
 
 #[test]
@@ -85,7 +91,34 @@ fn navigate_backward_through_background() {
     assert!(!harness.state().foreground_tapped);
 
     // Past background returns deferred
-    assert!(matches!(harness.previous(), EventResult::Deferred));
+    assert!(matches!(harness.previous(), EventResult::Deferred { .. }));
+}
+
+/// When focus leaves the foreground backward and the background can't take it,
+/// the foreground's lost-focus signal must not be swallowed by the background's
+/// plain deferral.
+#[test]
+fn lost_focus_propagates_when_leaving_foreground_backward() {
+    let state = State {
+        foreground_tapped: false,
+        background_tapped: false,
+    };
+    let mut harness = App::new(
+        state,
+        Size::new(100, 100),
+        focusable_foreground_empty_background,
+    )
+    .with_roles(Role::Button);
+
+    // Focus lands on the foreground button (background is empty).
+    assert!(matches!(
+        harness.focus_forward().shape(),
+        Some(ContentShape::Circle(_))
+    ));
+
+    // Navigating backward leaves the foreground; the empty background can't take
+    // focus, so the view as a whole loses focus.
+    assert_eq!(harness.previous(), EventResult::deferred_lost_focus());
 }
 
 #[test]

@@ -65,7 +65,7 @@ pub struct FocusTree<T, U> {
     pub overlay: Option<U>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct PopoverState<T, U> {
     pub inner_state: T,
     pub overlay_state: Option<U>,
@@ -173,7 +173,7 @@ where
 
         let TransitionOption::Some { subtree, .. } = &mut render_tree.1.subtree else {
             // TODO: Popover is visible, but we don't have a render tree for it yet
-            return EventResult::Deferred;
+            return EventResult::deferred();
         };
 
         let result = overlay_view.handle_event(
@@ -188,7 +188,7 @@ where
             subfocus,
         );
 
-        if result != EventResult::Deferred {
+        if result != EventResult::deferred() {
             return result;
         }
 
@@ -206,7 +206,7 @@ where
                     Dismissal::Retain => EventResult::handled_unfocused(),
                 }
             }
-            FocusAction::Teardown => EventResult::Deferred,
+            FocusAction::Teardown => EventResult::deferred(),
             _ => {
                 let is_forward = matches!(
                     focus_event,
@@ -411,7 +411,7 @@ where
             }
             (Some(_), TransitionOption::None) => {
                 // Overlay is present but not rendered yet - defer events until it actually appears
-                EventResult::Deferred
+                EventResult::deferred()
             }
             _ => self.inner.handle_event(
                 event,

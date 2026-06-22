@@ -173,7 +173,7 @@ where
                         FocusAction::Focus(FocusDirection::Forward) | FocusAction::Next => {
                             // Move to foreground
                             let mut foreground_focus = DefaultFocus::default_first();
-                            let result = self.foreground.handle_event(
+                            let foreground_result = self.foreground.handle_event(
                                 &Event::Focus {
                                     action: FocusAction::Focus(FocusDirection::Forward),
                                     group: *group,
@@ -185,13 +185,24 @@ where
                                 &mut foreground_focus,
                             );
                             *focus = OverlayFocus::Foreground(foreground_focus);
-                            result
+                            // If the foreground didn't take focus, the view as a whole
+                            // lost focus iff the overlay gave it up.
+                            if foreground_result.is_handled() {
+                                foreground_result
+                            } else {
+                                EventResult::Deferred {
+                                    focus_lost: result.lost_focus()
+                                        || foreground_result.lost_focus(),
+                                }
+                            }
                         }
                         FocusAction::Focus(FocusDirection::Backward)
                         | FocusAction::Previous
                         | FocusAction::Blur
                         | FocusAction::Select
-                        | FocusAction::Teardown => EventResult::Deferred,
+                        | FocusAction::Teardown => EventResult::Deferred {
+                            focus_lost: result.lost_focus(),
+                        },
                     }
                 }
                 OverlayFocus::Foreground(foreground_focus) => {
@@ -212,7 +223,7 @@ where
                     match focus_event {
                         FocusAction::Focus(FocusDirection::Backward) | FocusAction::Previous => {
                             let mut overlay_focus = DefaultFocus::default_last();
-                            let result = self.overlay.handle_event(
+                            let overlay_result = self.overlay.handle_event(
                                 &Event::Focus {
                                     action: FocusAction::Focus(FocusDirection::Backward),
                                     group: *group,
@@ -224,18 +235,26 @@ where
                                 &mut overlay_focus,
                             );
                             *focus = OverlayFocus::Overlay(overlay_focus);
-                            result
+                            if overlay_result.is_handled() {
+                                overlay_result
+                            } else {
+                                EventResult::Deferred {
+                                    focus_lost: result.lost_focus() || overlay_result.lost_focus(),
+                                }
+                            }
                         }
                         FocusAction::Focus(FocusDirection::Forward)
                         | FocusAction::Next
                         | FocusAction::Select
                         | FocusAction::Blur
-                        | FocusAction::Teardown => EventResult::Deferred,
+                        | FocusAction::Teardown => EventResult::Deferred {
+                            focus_lost: result.lost_focus(),
+                        },
                     }
                 }
             },
             // Key events are focus-routed: deliver only to the currently focused child.
-            Event::KeyDown(_) | Event::KeyUp(_) => match focus {
+            Event::KeyDown { .. } | Event::KeyUp { .. } => match focus {
                 OverlayFocus::Overlay(overlay_focus) => self.overlay.handle_event(
                     event,
                     context,

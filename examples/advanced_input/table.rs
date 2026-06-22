@@ -1,11 +1,38 @@
 use crate::FONT;
 use crate::definitions::{GoodPixelColor, IeName, MAX_COLS, MAX_ROWS, Palette, RenderData, State};
+use buoyant::event::Event;
+use buoyant::view::popover::Dismissal;
 use buoyant::view::prelude::*;
+use buoyant::view::table::{Table, TableIndex};
 use heapless::String;
 
 use std::fmt::Write;
 
 mod ie_editor;
+
+struct Items<'a> {
+    names: &'a [Option<IeName<'a>>],
+    ie: &'a [Option<f32>],
+    eu: &'a [Option<&'static str>],
+    table_dimensions: (usize, usize),
+}
+
+impl<'a> TableIndex<'a> for Items<'a> {
+    type Output = (usize, Option<IeName<'a>>, Option<f32>, Option<&'static str>);
+
+    fn cols(&self) -> usize {
+        self.table_dimensions.0
+    }
+
+    fn rows(&self) -> usize {
+        self.table_dimensions.1
+    }
+
+    fn index(&self, x: usize, y: usize) -> Self::Output {
+        let i = x + y * self.table_dimensions.0;
+        (i, self.names[i], self.ie[i], self.eu[i])
+    }
+}
 
 fn funnel<F: Fn(&mut State)>(f: F) -> F {
     f
@@ -19,21 +46,6 @@ pub fn table<'a, C: GoodPixelColor>(
     ie: &'a [Option<f32>],
     eu: &'a [Option<&'static str>],
 ) -> impl View<C, State> + use<'a, C> {
-    const fn index_array<const N: usize>() -> [usize; N] {
-        let mut arr = [0; N];
-        let mut i = 0;
-        while i < N {
-            arr[i] = i;
-            i += 1;
-        }
-        arr
-    }
-
-    const WIDTH: [usize; MAX_COLS] = index_array();
-    const HEIGHT: [usize; MAX_ROWS] = index_array();
-
-    let (c, r) = table_dimensions;
-
     let enter_ie = move |index: u8| {
         let ie = ie[index as usize];
         funnel(move |s: &mut State| {
@@ -49,36 +61,48 @@ pub fn table<'a, C: GoodPixelColor>(
             s.opened_cell_input = None;
         })
     };
-    let cancel_ie = funnel(|s: &mut State| s.opened_cell_input = None);
-
     let overlay = state.opened_cell_input.map(|i| (i, state.temporary_ie));
+    let items = Items {
+        names,
+        ie,
+        eu,
+        table_dimensions,
+    };
 
-    // Not a table in this example
-    ForEach::<MAX_COLS>::new_horizontal(&WIDTH[..c], move |i| {
-        ForEach::<MAX_ROWS>::new_vertical(&HEIGHT[..r], move |j| {
-            let index = j * c + i;
-            Button::new(enter_ie(index as u8), move |s| {
-                let (name, ie, eu) = (names[index], ie[index], eu[index]);
-                let white = data.palette.white();
-                let background = if s.is_focused() | s.is_pressed() {
-                    Rectangle.stroked(4).foreground_color(white)
-                } else {
-                    Rectangle.stroked(0).foreground_color(white)
-                };
-                buoyant::match_view!((name, ie), {
-                    (Some(name), Some(ie)) => ie_cell(name, ie, eu, data.palette),
-                    (None, Some(ie)) => ie_cell(IeName::Known(""), ie, eu, data.palette),
-                    (_, None) => EmptyView,
-                })
-                .background(Alignment::Center, Rectangle.stroked(1))
-                .frame_sized(321 / c as u32, 204 / r as u32)
-                .background(Alignment::Center, background)
+    Table::<MAX_COLS, MAX_ROWS>::new(items, move |(index, name, ie, eu)| {
+        Button::new(enter_ie(index as u8), move |s| {
+            let white = data.palette.white();
+            let background = if s.is_focused() | s.is_pressed() {
+                Rectangle.stroked(4).foreground_color(white)
+            } else {
+                Rectangle.stroked(0).foreground_color(white)
+            };
+            buoyant::match_view!((name, ie), {
+                (Some(name), Some(ie)) => ie_cell(name, ie, eu, data.palette),
+                (None, Some(ie)) => ie_cell(IeName::Known(""), ie, eu, data.palette),
+                (_, None) => EmptyView,
             })
+            .flex_infinite_height(Default::default())
+            .flex_infinite_width(Default::default())
+            .background(Alignment::Center, background)
         })
     })
-    .background(Alignment::Center, Rectangle.stroked(2))
-    .popover(overlay.as_ref(), |(i, ie)| {
-        ie_editor::ie_editor(*ie, set_ie(*i), cancel_ie, data.palette)
+    .with_stroke(1)
+    .padding(Edges::All, 1)
+    .background(
+        Alignment::Center,
+        Rectangle.stroked(1).foreground_color(data.palette.white()),
+    )
+    .background(
+        Alignment::Center,
+        Rectangle.foreground_color(data.palette.dark_gray()),
+    )
+    .popover(overlay.as_ref(), |&(i, ie)| {
+        ie_editor::ie_editor(ie, set_ie(i), data.palette)
+    })
+    .on_blur(|state: &mut State| {
+        state.opened_cell_input = None;
+        Dismissal::Dismiss
     })
 }
 

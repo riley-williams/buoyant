@@ -214,14 +214,15 @@ enum InteractionTarget {
     Unknown,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 enum ContentPinning {
+    #[default]
     Floating,
     Pinned(bool, bool),
 }
 
 /// Persisted state for the scroll view and its inner view.
-#[derive(Debug, Clone)]
+#[derive(Default, Debug, Clone)]
 pub struct ScrollViewState<InnerState> {
     scroll_offset: Point,
     interaction: ScrollInteraction,
@@ -492,7 +493,7 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
         let (result, delta) = match event {
             Event::Scroll(delta) => {
                 context.request_view_rebuild();
-                (EventResult::Deferred, *delta)
+                (EventResult::deferred(), *delta)
             }
             Event::Touch(touch) => {
                 // Only track the first touch. This could cause problems if
@@ -536,7 +537,7 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
                             }
                         } else {
                             // Touches cannot start outside the bounds, return early
-                            return EventResult::Deferred;
+                            return EventResult::deferred();
                         }
                     }
                     Phase::Moved => match &mut state.interaction {

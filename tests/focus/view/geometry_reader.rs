@@ -120,7 +120,7 @@ fn no_focusable_returns_deferred() {
         App::new(state, Size::new(100, 100), geometry_reader_no_focusable).with_roles(Role::Button);
 
     let result = harness.focus_forward();
-    assert_eq!(result, EventResult::Deferred);
+    assert_eq!(result, EventResult::Deferred { focus_lost: false });
 }
 
 #[test]

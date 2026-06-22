@@ -23,9 +23,19 @@ pub enum Event {
         group: FocusGroup,
     },
     /// A key was pressed.
-    KeyDown(Key),
+    KeyDown {
+        /// The key that was pressed.
+        key: Key,
+        /// The focus group this event targets.
+        group: FocusGroup,
+    },
     /// A key was released.
-    KeyUp(Key),
+    KeyUp {
+        /// The key that was released.
+        key: Key,
+        /// The focus group this event targets.
+        group: FocusGroup,
+    },
 }
 
 /// A key press event.
@@ -68,7 +78,7 @@ impl Event {
             Self::Touch(touch) => {
                 touch.location += offset.into();
             }
-            Self::Scroll(_) | Self::Focus { .. } | Self::KeyDown(_) | Self::KeyUp(_) => {}
+            Self::Scroll(_) | Self::Focus { .. } | Self::KeyDown { .. } | Self::KeyUp { .. } => {}
         }
         event
     }
@@ -89,7 +99,7 @@ impl Event {
 }
 
 /// The result of handling an event.
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum EventResult {
     /// Focus successfully moved to a new element
     Handled {
@@ -101,8 +111,13 @@ pub enum EventResult {
         group: FocusGroup,
     },
     /// The event was not handled, or focus not obtained
-    #[default]
-    Deferred,
+    Deferred { focus_lost: bool },
+}
+
+impl Default for EventResult {
+    fn default() -> Self {
+        Self::Deferred { focus_lost: false }
+    }
 }
 
 impl EventResult {
@@ -126,16 +141,27 @@ impl EventResult {
         }
     }
 
+    /// Creates a new `EventResult` indicating the event was deferred.
+    #[must_use]
+    pub const fn deferred() -> Self {
+        Self::Deferred { focus_lost: false }
+    }
+
+    /// Creates a new `EventResult` indicating the event was deferred and focus was lost.
+    #[must_use]
+    pub const fn deferred_lost_focus() -> Self {
+        Self::Deferred { focus_lost: true }
+    }
+
     /// Returns a new [`EventResult`] with the specified focus group.
     #[must_use]
     pub const fn with_group(mut self, group: FocusGroup) -> Self {
-        let Self::Handled {
+        if let Self::Handled {
             group: event_group, ..
         } = &mut self
-        else {
-            return Self::Deferred;
-        };
-        *event_group = group;
+        {
+            *event_group = group;
+        }
         self
     }
 
@@ -157,12 +183,24 @@ impl EventResult {
         )
     }
 
+    /// Returns true if this result is from an element requesting focus.
+    #[must_use]
+    pub const fn lost_focus(&self) -> bool {
+        matches!(
+            self,
+            Self::Deferred {
+                focus_lost: true,
+                ..
+            }
+        )
+    }
+
     /// Returns the content shape if this result has one.
     #[must_use]
     pub fn shape(&self) -> Option<&ContentShape> {
         match self {
             Self::Handled { shape, .. } => Some(shape),
-            Self::Deferred => None,
+            Self::Deferred { .. } => None,
         }
     }
 
@@ -173,7 +211,7 @@ impl EventResult {
             Self::Handled { shape, .. } => {
                 shape.offset(offset);
             }
-            Self::Deferred => (),
+            Self::Deferred { .. } => (),
         }
         self
     }
@@ -315,12 +353,18 @@ pub mod simulator {
                     keycode,
                     keymod: _,
                     repeat: _,
-                } => keycode.try_into().ok().map(Event::KeyDown),
+                } => keycode.try_into().ok().map(|k| Event::KeyDown {
+                    key: k,
+                    group: crate::focus::GROUP_0,
+                }),
                 SimulatorEvent::KeyUp {
                     keycode,
                     keymod: _,
                     repeat: _,
-                } => keycode.try_into().ok().map(Event::KeyUp),
+                } => keycode.try_into().ok().map(|k| Event::KeyUp {
+                    key: k,
+                    group: crate::focus::GROUP_0,
+                }),
             }
         }
     }

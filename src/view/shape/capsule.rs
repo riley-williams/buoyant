@@ -68,6 +68,6 @@ impl<Captures: ?Sized> ViewLayout<Captures> for Capsule {
         _state: &mut Self::State,
         _focus: &mut Self::FocusTree,
     ) -> EventResult {
-        EventResult::Deferred
+        EventResult::deferred()
     }
 }

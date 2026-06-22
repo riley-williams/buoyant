@@ -211,6 +211,8 @@ where
     ///
     /// See also: [`finalize_view`](Self::finalize_view).
     pub fn force_rebuild(&mut self) {
+        self.requires_rebuild = false;
+
         let domain = AnimationDomain::top_level(self.elapsed);
         self.trees.swap();
         let (source_tree, target_tree) = self.trees.both_mut();
@@ -219,12 +221,14 @@ where
         // Create new view and target tree
         self.view = (self.view_fn)(&self.state);
         self.env = DefaultEnvironment::new(self.elapsed);
+
         let layout = self.view.layout(
             &self.size.into(),
             &self.env,
             &mut self.state,
             &mut self.view_state,
         );
+
         *target_tree = self.view.render_tree(
             &layout.sublayouts,
             Point::zero(),
@@ -233,11 +237,6 @@ where
             &mut self.view_state,
         );
 
-        // reobtain focus after rebuild
-        let result = self.focus_forward();
-        self.update_focus_shape(&result);
-
-        self.requires_rebuild = false;
         self.requires_redraw = true;
     }
 

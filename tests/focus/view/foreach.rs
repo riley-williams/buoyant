@@ -82,7 +82,7 @@ fn navigate_forward_through_list() {
         Some(ContentShape::Circle(_))
     ));
 
-    assert!(matches!(harness.next(), EventResult::Deferred));
+    assert!(matches!(harness.next(), EventResult::Deferred { .. }));
 }
 
 #[test]
@@ -104,7 +104,7 @@ fn navigate_backward_through_list() {
         Some(ContentShape::Circle(_))
     ));
 
-    assert!(matches!(harness.previous(), EventResult::Deferred));
+    assert!(matches!(harness.previous(), EventResult::Deferred { .. }));
 }
 
 #[test]
@@ -128,7 +128,10 @@ fn empty_list_returns_deferred() {
     let mut harness =
         App::new(State::default(), Size::new(100, 100), foreach_empty).with_roles(Role::Button);
 
-    assert!(matches!(harness.focus_forward(), EventResult::Deferred));
+    assert!(matches!(
+        harness.focus_forward(),
+        EventResult::Deferred { .. }
+    ));
 }
 
 #[test]
@@ -167,9 +170,9 @@ fn single_item_list_navigation() {
         Some(ContentShape::Circle(_))
     ));
 
-    assert!(matches!(harness.next(), EventResult::Deferred));
+    assert!(matches!(harness.next(), EventResult::Deferred { .. }));
 
-    assert!(matches!(harness.previous(), EventResult::Deferred));
+    assert!(matches!(harness.previous(), EventResult::Deferred { .. }));
 }
 
 #[test]
@@ -204,9 +207,12 @@ fn empty_list_end_focus_returns_deferred() {
         .with_roles(Role::Button)
         .with_focus_at_end();
 
-    assert!(matches!(harness.focus_backward(), EventResult::Deferred));
+    assert!(matches!(
+        harness.focus_backward(),
+        EventResult::Deferred { .. }
+    ));
     // closure shouldn't somehow magically be called, idk
-    assert!(matches!(harness.select(), EventResult::Deferred));
+    assert!(matches!(harness.select(), EventResult::Deferred { .. }));
 }
 
 fn key_aware_foreach(_: &State) -> impl View<(), State> + use<> {

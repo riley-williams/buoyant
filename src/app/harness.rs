@@ -2,7 +2,7 @@ use embedded_touch::{Tool, Touch};
 
 use crate::{
     event::{Event, EventResult, Key},
-    focus::{FocusAction, FocusDirection, FocusGroup},
+    focus::{self, FocusAction, FocusDirection, FocusGroup},
     primitives::Point,
 };
 
@@ -85,18 +85,30 @@ pub trait Harness {
 
     /// Sends a key down event to the currently focused element.
     fn key_down(&mut self, key: Key) -> EventResult {
-        self.send(Event::KeyDown(key))
+        self.send(Event::KeyDown {
+            key,
+            group: focus::GROUP_0,
+        })
     }
 
     /// Sends a key up event to the currently focused element.
     fn key_up(&mut self, key: Key) -> EventResult {
-        self.send(Event::KeyUp(key))
+        self.send(Event::KeyUp {
+            key,
+            group: focus::GROUP_0,
+        })
     }
 
     /// Sends a key press (down followed by up) to the currently focused element.
     fn key_press(&mut self, key: Key) -> EventResult {
-        self.send(Event::KeyDown(key));
-        self.send(Event::KeyUp(key))
+        self.send(Event::KeyDown {
+            key,
+            group: focus::GROUP_0,
+        });
+        self.send(Event::KeyUp {
+            key,
+            group: focus::GROUP_0,
+        })
     }
 
     /// Sends a tap (touch down + touch up) at the given point.

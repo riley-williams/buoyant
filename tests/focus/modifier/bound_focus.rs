@@ -163,7 +163,10 @@ fn no_focusable_elements_returns_deferred() {
     let mut harness =
         App::new(State, Size::new(100, 200), no_focusable_elements).with_roles(Role::Button);
 
-    assert!(matches!(harness.focus_forward(), EventResult::Deferred));
+    assert!(matches!(
+        harness.focus_forward(),
+        EventResult::Deferred { .. }
+    ));
 }
 
 #[test]
@@ -195,7 +198,7 @@ fn blur_passes_through() {
         App::new(State, Size::new(100, 200), three_buttons_wrap).with_roles(Role::Button);
 
     harness.focus_forward();
-    assert!(matches!(harness.blur(), EventResult::Deferred));
+    assert!(matches!(harness.blur(), EventResult::Deferred { .. }));
 }
 
 #[test]
@@ -203,5 +206,5 @@ fn select_passes_through_when_not_handled() {
     let mut harness =
         App::new(State, Size::new(100, 200), no_focusable_elements).with_roles(Role::Button);
 
-    assert!(matches!(harness.select(), EventResult::Deferred));
+    assert!(matches!(harness.select(), EventResult::Deferred { .. }));
 }

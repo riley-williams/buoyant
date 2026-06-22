@@ -162,8 +162,10 @@ fn skips_unfocusable_front_layer() {
     assert!(result.requested_focus());
     assert!(matches!(result.shape(), Some(ContentShape::Rectangle(_))));
 
+    // The focused button gives up focus and the front layer is unfocusable, so
+    // focus leaves the stack entirely - the loss must be reported.
     let result = harness.next();
-    assert_eq!(result, EventResult::Deferred);
+    assert_eq!(result, EventResult::deferred_lost_focus());
 }
 
 #[test]
@@ -184,7 +186,10 @@ fn no_focusable_elements_returns_deferred() {
     let mut harness =
         App::new(state, Size::new(100, 100), stack_no_focusable).with_roles(Role::Button);
 
-    assert_eq!(harness.focus_forward(), EventResult::Deferred);
+    assert_eq!(
+        harness.focus_forward(),
+        EventResult::Deferred { focus_lost: false }
+    );
 }
 
 #[test]
@@ -230,7 +235,7 @@ fn previous_from_first_returns_deferred() {
     harness.focus_forward();
 
     let result = harness.previous();
-    assert_eq!(result, EventResult::Deferred);
+    assert_eq!(result, EventResult::deferred_lost_focus());
 }
 
 #[test]
@@ -244,7 +249,7 @@ fn next_from_last_returns_deferred() {
     harness.next();
 
     let result = harness.next();
-    assert_eq!(result, EventResult::Deferred);
+    assert_eq!(result, EventResult::deferred_lost_focus());
 }
 
 fn single_item_stack(_: &State) -> impl View<(), State> + use<> {
@@ -267,7 +272,7 @@ fn single_item_focus() {
 
     // Next from only item should return Deferred
     let result = harness.next();
-    assert_eq!(result, EventResult::Deferred);
+    assert_eq!(result, EventResult::deferred_lost_focus());
 }
 
 fn key_activatable_button<S>(

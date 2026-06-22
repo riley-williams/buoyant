@@ -7,7 +7,7 @@ use embedded_touch::Phase;
 use crate::{
     environment::LayoutEnvironment,
     event::{Event, EventContext, EventResult},
-    focus::{FocusAction, Role},
+    focus::{FocusAction, FocusGroupSet, Role},
     layout::ResolvedLayout,
     primitives::ProposedDimensions,
     render::IntrinsicShape,
@@ -16,7 +16,7 @@ use crate::{
 };
 
 /// The touch interaction state.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
 enum ButtonTouchState {
     /// The button is pressed and the touch is still within the button area.
@@ -24,23 +24,36 @@ enum ButtonTouchState {
     /// The button was pressed but the touch has moved outside the button area.
     Captive(u8),
     /// The button is not pressed, or the touch has been released.
+    #[default]
     AtRest,
 }
 
 /// The current interaction state of the button
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Default, Debug, Clone)]
 pub struct ButtonState {
     /// The current state of a touch interaction with the button.
     touch: ButtonTouchState,
-    /// Whether the button is focused.
-    is_focused: bool,
+    /// The set of focus groups currently focusing the button.
+    ///
+    /// A single button can be focused by multiple independent focus groups at
+    /// once (e.g. when shared between groups via `MultiplexFocus`), so focus is
+    /// tracked per group rather than as a single flag.
+    focused_groups: FocusGroupSet,
 }
 
+impl PartialEq for ButtonState {
+    fn eq(&self, other: &Self) -> bool {
+        self.touch == other.touch && self.focused_groups.eq_exact(other.focused_groups)
+    }
+}
+
+impl Eq for ButtonState {}
+
 impl ButtonState {
-    /// Whether the button is currently focused.
+    /// Whether the button is currently focused by any focus group.
     #[must_use]
     pub fn is_focused(&self) -> bool {
-        self.is_focused
+        !self.focused_groups.is_empty()
     }
 
     /// Whether the button is currently pressed.
@@ -158,7 +171,7 @@ where
     fn build_state(&self, captures: &mut Captures) -> Self::State {
         let initial_state = ButtonState {
             touch: ButtonTouchState::AtRest,
-            is_focused: false,
+            focused_groups: FocusGroupSet::new_none(),
         };
         let inner_state = (self.view)(initial_state.clone()).build_state(captures);
         (initial_state, inner_state)
@@ -195,6 +208,7 @@ where
         )
     }
 
+    #[allow(clippy::too_many_lines)]
     fn handle_event(
         &self,
         event: &Event,
@@ -211,7 +225,7 @@ where
                 | ButtonTouchState::CaptivePressed(touch_id) = state.0.touch
                     && touch.id != touch_id
                 {
-                    return EventResult::Deferred;
+                    return EventResult::deferred();
                 }
 
                 let point = touch.location.into();
@@ -263,55 +277,63 @@ where
                         let was_pressed =
                             matches!(state.0.touch, ButtonTouchState::CaptivePressed(_));
                         state.0.touch = ButtonTouchState::AtRest;
-                        state.0.is_focused = false;
+                        state.0.focused_groups = FocusGroupSet::new_none();
                         if was_pressed {
                             // TODO: Same here...
                             context.request_view_rebuild();
-                            return EventResult::handled_unfocused();
+                            return EventResult::deferred_lost_focus();
                         }
-                        return EventResult::Deferred;
+                        return EventResult::deferred();
                     }
                     Phase::Hovering(_) => {}
                 }
-                EventResult::Deferred
+                EventResult::deferred()
             }
             Event::Focus {
                 action: focus_event,
-                ..
+                group,
             } => {
                 if !context.roles.contains(Role::Button) {
-                    return EventResult::Deferred;
+                    return EventResult::deferred();
                 }
                 context.request_redraw();
                 // FIXME: Every time we encounter a button, view is forced to be rebuilt...
                 // Maybe save both states in the render tree instead
                 match focus_event {
-                    FocusAction::Teardown => {
-                        state.0.is_focused = false;
-                        context.request_view_rebuild();
-                        EventResult::handled_unfocused()
-                    }
-                    FocusAction::Blur | FocusAction::Next | FocusAction::Previous => {
-                        state.0.is_focused = false;
-                        context.request_view_rebuild();
-                        EventResult::Deferred
+                    FocusAction::Teardown
+                    | FocusAction::Blur
+                    | FocusAction::Next
+                    | FocusAction::Previous => {
+                        // Only report a focus loss for groups that actually held
+                        // focus here; an unfocused button being blurred/skipped lost
+                        // nothing for that group.
+                        if state.0.focused_groups.contains(*group) {
+                            state.0.focused_groups = state.0.focused_groups.without(*group);
+                            context.request_view_rebuild();
+                            EventResult::deferred_lost_focus()
+                        } else {
+                            EventResult::deferred()
+                        }
                     }
                     FocusAction::Focus(_) => {
-                        if !state.0.is_focused {
+                        if !state.0.focused_groups.contains(*group) {
                             context.request_view_rebuild();
                         }
-                        state.0.is_focused = true;
+                        state.0.focused_groups = state.0.focused_groups | *group;
                         EventResult::handled_focused(render_tree.content_shape())
                     }
                     FocusAction::Select => {
-                        (self.action)(captures);
-                        state.0.is_focused = true;
-                        context.request_view_rebuild();
-                        EventResult::handled_focused(render_tree.content_shape())
+                        if state.0.focused_groups.contains(*group) {
+                            (self.action)(captures);
+                            context.request_view_rebuild();
+                            EventResult::handled_focused(render_tree.content_shape())
+                        } else {
+                            EventResult::deferred()
+                        }
                     }
                 }
             }
-            _ => EventResult::Deferred,
+            _ => EventResult::deferred(),
         }
     }
 }

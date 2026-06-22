@@ -21,6 +21,7 @@ pub mod rotary;
 pub mod scroll_view;
 pub mod shape;
 mod spacer;
+pub mod table;
 mod text;
 mod view_that_fits;
 mod vstack;
@@ -128,12 +129,12 @@ pub trait ViewLayout<Captures: ?Sized>: ViewMarker {
     ///
     /// This state is created once when the view is first initialized and is intended
     /// to persist across multiple layout/render cycles.
-    type State: 'static;
+    type State: Default + 'static;
 
     /// The computed layout of the view and its subviews.
     ///
     /// Size is represented here, but placement is deferred to the render tree.
-    type Sublayout: Clone + PartialEq + 'static;
+    type Sublayout: Default + Clone + PartialEq + 'static;
 
     /// A path through this view's subtree pointing to the currently focused node
     type FocusTree: Clone + DefaultFocus + 'static;
