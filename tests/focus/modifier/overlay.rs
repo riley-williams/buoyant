@@ -5,7 +5,7 @@ use buoyant::{
     layout::Alignment,
     primitives::Size,
     render::ContentShape,
-    view::prelude::*,
+    view::{map_event::Mapping, prelude::*},
 };
 
 struct State {
@@ -107,10 +107,10 @@ fn key_activatable_button<S>(
 where
     S: View<(), State> + 'static,
 {
-    Button::new(action, move |_| shape()).map_event::<(), _>(move |event, ()| match event {
-        Event::KeyDown(Key::Character('\n')) => Some(Event::from(FocusAction::Select)),
-        Event::KeyUp(_) => None,
-        _ => Some(event.clone()),
+    Button::new(action, move |_| shape()).map_event(move |event, _: &mut State| match event {
+        Event::KeyDown(Key::Character('\n')) => Mapping::Replace(Event::from(FocusAction::Select)),
+        Event::KeyUp(_) => Mapping::Defer,
+        _ => Mapping::Passthrough,
     })
 }
 

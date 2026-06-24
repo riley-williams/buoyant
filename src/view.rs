@@ -38,6 +38,7 @@ pub use hstack::HStack;
 #[cfg(feature = "embedded-graphics")]
 pub use image::Image;
 pub use modifier::aspect_ratio;
+pub use modifier::map_event;
 pub use modifier::padding;
 pub use modifier::popover;
 pub use paginate::Paginate;
