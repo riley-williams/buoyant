@@ -4,7 +4,7 @@ use buoyant::{
     focus::{FocusAction, Role},
     primitives::Size,
     render::ContentShape,
-    view::prelude::*,
+    view::{map_event::Mapping, prelude::*},
 };
 
 #[derive(Default)]
@@ -218,15 +218,16 @@ fn empty_list_end_focus_returns_deferred() {
 fn key_aware_foreach(_: &State) -> impl View<(), State> + use<> {
     ForEach::<3>::new_vertical(&THREE_ITEMS, |&item| {
         let index = item as usize;
-        Button::new(move |s: &mut State| s.selected = Some(index), |_| Circle)
-            .map_event::<State, _>(move |event: Event, _| match event {
+        Button::new(move |s: &mut State| s.selected = Some(index), |_| Circle).map_event(
+            move |event, _: &mut State| match event {
                 Event::KeyDown {
                     key: Key::Character('\n'),
                     ..
-                } => Some(Event::from(FocusAction::Select)),
-                Event::KeyUp { .. } => None,
-                _ => Some(event.clone()),
-            })
+                } => Mapping::Replace(Event::from(FocusAction::Select)),
+                Event::KeyUp { .. } => Mapping::Defer,
+                _ => Mapping::Passthrough,
+            },
+        )
     })
 }
 

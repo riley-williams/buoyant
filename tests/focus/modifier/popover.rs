@@ -4,7 +4,7 @@ use buoyant::{
     focus::{FocusAction, Role},
     primitives::Size,
     render::ContentShape,
-    view::{popover::Dismissal, prelude::*},
+    view::{map_event::Mapping, popover::Dismissal, prelude::*},
 };
 
 fn test_view(state: &State) -> impl View<(), State> + use<> {
@@ -123,16 +123,14 @@ fn key_activatable_button<S>(
 where
     S: View<(), State> + 'static,
 {
-    Button::new(action, move |_| shape()).map_event::<State, _>(
-        move |event: Event, _| match event {
-            Event::KeyDown {
-                key: Key::Character('\n'),
-                ..
-            } => Some(Event::from(FocusAction::Select)),
-            Event::KeyUp { .. } => None,
-            _ => Some(event.clone()),
-        },
-    )
+    Button::new(action, move |_| shape()).map_event(move |event, _: &mut State| match event {
+        Event::KeyDown {
+            key: Key::Character('\n'),
+            ..
+        } => Mapping::Replace(Event::from(FocusAction::Select)),
+        Event::KeyUp { .. } => Mapping::Defer,
+        _ => Mapping::Passthrough,
+    })
 }
 
 fn key_aware_popover_view(state: &State) -> impl View<(), State> + use<> {

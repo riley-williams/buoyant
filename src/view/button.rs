@@ -43,7 +43,7 @@ pub struct ButtonState {
 
 impl PartialEq for ButtonState {
     fn eq(&self, other: &Self) -> bool {
-        self.touch == other.touch && self.focused_groups.eq_exact(other.focused_groups)
+        self.touch == other.touch && self.focused_groups == other.focused_groups
     }
 }
 

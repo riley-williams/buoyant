@@ -22,7 +22,8 @@ mod foreground_color;
 mod geometry_group;
 mod hidden;
 mod hint_background;
-mod map_event;
+#[allow(missing_docs)]
+pub mod map_event;
 mod multiplex_focus;
 mod offset;
 mod opacity;
@@ -36,7 +37,10 @@ mod scale_effect;
 mod transition;
 mod unfocusable;
 
-use crate::focus::{BoundaryBehavior, FocusGroupSet};
+use crate::{
+    focus::{BoundaryBehavior, FocusGroupSet},
+    view::ViewLayout,
+};
 pub(crate) use animated::Animated;
 pub(crate) use aspect_ratio::AspectRatio;
 pub(crate) use background::BackgroundView;
@@ -528,10 +532,35 @@ pub trait ViewModifier: Sized + ViewMarker {
     }
 
     /// Maps an event, delegating handling of the event to the modified view.
-    fn map_event<C, F: Fn(Event, &mut C) -> Option<Event>>(
+    fn map_event<C: ?Sized, F: Fn(&Event, &mut C) -> map_event::Mapping>(
         self,
         mapping: F,
-    ) -> MapEvent<Self, F, C> {
+    ) -> MapEvent<Self, impl Fn(&Event, &mut C, &mut ()) -> map_event::Mapping, C, ()>
+    where
+        Self: ViewLayout<C>,
+    {
+        MapEvent::new(self, move |e: &Event, state: &mut C, _sm: &mut ()| {
+            (mapping)(e, state)
+        })
+    }
+
+    /// Maps an event, delegating handling of the event to the modified view.
+    ///
+    /// The mapping closure accepts three arguments:
+    /// - The event
+    /// - The captures
+    /// - A private persisted state, which is persisted for the lifetime of the view.
+    fn map_stateful_event<
+        C: ?Sized,
+        F: Fn(&Event, &mut C, &mut I) -> map_event::Mapping,
+        I: Default,
+    >(
+        self,
+        mapping: F,
+    ) -> MapEvent<Self, F, C, I>
+    where
+        Self: ViewLayout<C>,
+    {
         MapEvent::new(self, mapping)
     }
 

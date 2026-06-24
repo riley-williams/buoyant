@@ -34,6 +34,10 @@ pub struct State {
 
     pub(crate) temporary_ip: TemporaryIp,
     pub(crate) temporary_ie: TemporaryIe,
+
+    /// Whether a table cell currently holds focus. Set by the `is_focused`
+    /// modifier wrapping the table and read by the key mapping in `root_view`.
+    pub(crate) is_table_focused: bool,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -187,6 +191,8 @@ impl Default for State {
 
             temporary_ip: Ipv4Addr::UNSPECIFIED.into(),
             temporary_ie: TemporaryIe::zero(),
+
+            is_table_focused: false,
         }
     }
 }

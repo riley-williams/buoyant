@@ -18,6 +18,7 @@ mod table;
 use std::process::exit;
 use std::time::{Duration, Instant};
 
+use buoyant::view::map_event::Mapping;
 use buoyant::{
     app::{App, Harness},
     event::{Event, Key, simulator::MouseTracker},
@@ -89,9 +90,10 @@ pub fn view<'a, 'b, C: GoodPixelColor, F: Fn(&State) + 'a + Copy>(
                 table_dimensions: (r, c),
             } => VStack::new((
                 hardware_input_input_line::hw_line(header, data.palette, false),
-                table::table(data, &state, (r, c), names, ie, eu),
+                table::table(data, &state, (r, c), names, ie, eu)
+                    .is_focused(|focused, state: &mut State| state.is_table_focused = focused),
                 hardware_input_input_line::hw_line(footer, data.palette, true),
-            )).bound_focus(BoundaryBehavior::Stop),
+            )).bound_focus(BoundaryBehavior::Wrap),
             Page::Settings { header, footer } => VStack::new((
                 hardware_input_input_line::hw_line(header, data.palette, false),
                 settings::settings(data, &state, save_settings),
@@ -101,68 +103,89 @@ pub fn view<'a, 'b, C: GoodPixelColor, F: Fn(&State) + 'a + Copy>(
         .background_color(data.palette.dark_blue(), Rectangle)
     })
     .focus_touches()
-    .map_event(|event: Event, state: &mut State| {
+    .map_event(|event: &Event, state: &mut State| {
         match event {
             Event::KeyDown { key, .. } if state.popup_open() => match key {
-                Key::LeftArrow => Some(FocusAction::Previous.into_event(PAGE_FGROUP)),
-                Key::RightArrow => Some(FocusAction::Next.into_event(PAGE_FGROUP)),
-                Key::UpArrow | Key::DownArrow => Some(event),
-                Key::Character(' ' | '\n') => Some(FocusAction::Select.into_event(PAGE_FGROUP)),
+                Key::LeftArrow => Mapping::Fallback(FocusAction::Previous.into_event(PAGE_FGROUP)),
+                Key::RightArrow => Mapping::Fallback(FocusAction::Next.into_event(PAGE_FGROUP)),
+                Key::UpArrow | Key::DownArrow => Mapping::Passthrough,
+                Key::Character(' ' | '\n') => {
+                    Mapping::Fallback(FocusAction::Select.into_event(PAGE_FGROUP))
+                }
                 Key::Character('e') | Key::Backspace => {
-                    Some(FocusAction::Blur.into_event(PAGE_FGROUP))
+                    Mapping::Fallback(FocusAction::Blur.into_event(PAGE_FGROUP))
                 }
                 // Ignore all other key down events, don't allow children to handle
-                _ => None,
+                _ => Mapping::Defer,
             },
-            Event::KeyDown { key, .. } if state.is_table() => match key {
-                Key::LeftArrow => Some(FocusAction::Previous.into_event(PAGINATE_FGROUP)),
-                Key::RightArrow => Some(FocusAction::Next.into_event(PAGINATE_FGROUP)),
-                Key::UpArrow | Key::DownArrow => Some(event),
-                Key::Character(' ' | '\n') => Some(FocusAction::Select.into_event(PAGE_FGROUP)),
-                Key::Character('e') | Key::Backspace => {
-                    Some(FocusAction::Blur.into_event(PAGE_FGROUP))
+            Event::KeyDown { key, .. } if state.is_table() => match (key, state.is_table_focused) {
+                (Key::LeftArrow, _) => {
+                    Mapping::Fallback(FocusAction::Previous.into_event(PAGINATE_FGROUP))
+                }
+                (Key::RightArrow, _) => {
+                    Mapping::Fallback(FocusAction::Next.into_event(PAGINATE_FGROUP))
+                }
+                // A focused cell handles vertical movement itself.
+                (Key::UpArrow | Key::DownArrow, true) => Mapping::Passthrough,
+                // With nothing focused, Up/Down enter the table; `bound_focus(Wrap)`
+                // makes Up wrap to the last cell and Down land on the first.
+                (Key::UpArrow, false) => {
+                    Mapping::Fallback(FocusAction::Previous.into_event(PAGE_FGROUP))
+                }
+                (Key::DownArrow, false) => {
+                    Mapping::Fallback(FocusAction::Next.into_event(PAGE_FGROUP))
+                }
+                (Key::Character(' ' | '\n'), _) => {
+                    Mapping::Fallback(FocusAction::Select.into_event(PAGE_FGROUP))
+                }
+                (Key::Character('e') | Key::Backspace, _) => {
+                    Mapping::Fallback(FocusAction::Blur.into_event(PAGE_FGROUP))
                 }
                 // Ignore all other key down events, don't allow children to handle
-                _ => None,
+                _ => Mapping::Defer,
             },
             Event::KeyDown { key, .. } => match key {
-                Key::LeftArrow => Some(FocusAction::Previous.into_event(PAGINATE_FGROUP)),
-                Key::RightArrow => Some(FocusAction::Next.into_event(PAGINATE_FGROUP)),
-                Key::UpArrow => Some(FocusAction::Previous.into_event(PAGE_FGROUP)),
-                Key::DownArrow => Some(FocusAction::Next.into_event(PAGE_FGROUP)),
-                Key::Character(' ' | '\n') => Some(FocusAction::Select.into_event(PAGE_FGROUP)),
+                Key::LeftArrow => {
+                    Mapping::Fallback(FocusAction::Previous.into_event(PAGINATE_FGROUP))
+                }
+                Key::RightArrow => Mapping::Fallback(FocusAction::Next.into_event(PAGINATE_FGROUP)),
+                Key::UpArrow => Mapping::Fallback(FocusAction::Previous.into_event(PAGE_FGROUP)),
+                Key::DownArrow => Mapping::Fallback(FocusAction::Next.into_event(PAGE_FGROUP)),
+                Key::Character(' ' | '\n') => {
+                    Mapping::Fallback(FocusAction::Select.into_event(PAGE_FGROUP))
+                }
                 Key::Character('e') | Key::Backspace => {
-                    Some(FocusAction::Blur.into_event(PAGE_FGROUP))
+                    Mapping::Fallback(FocusAction::Blur.into_event(PAGE_FGROUP))
                 }
                 // Ignore all other key down events, don't allow children to handle
-                _ => None,
+                _ => Mapping::Defer,
             },
-            Event::KeyUp { .. } => None,
-            _ => Some(event),
+            Event::KeyUp { .. } => Mapping::Defer,
+            _ => Mapping::Passthrough,
         }
     })
-    .map_event(|event: Event, _state| match event {
+    .map_event(|event: &Event, _state| match event {
         Event::KeyDown { key, group } => match key {
-            Key::Character('h') => Some(Event::KeyDown {
+            Key::Character('h') => Mapping::Replace(Event::KeyDown {
                 key: Key::LeftArrow,
-                group,
+                group: *group,
             }),
-            Key::Character('l') => Some(Event::KeyDown {
+            Key::Character('l') => Mapping::Replace(Event::KeyDown {
                 key: Key::RightArrow,
-                group,
+                group: *group,
             }),
-            Key::Character('k') => Some(Event::KeyDown {
+            Key::Character('k') => Mapping::Replace(Event::KeyDown {
                 key: Key::UpArrow,
-                group,
+                group: *group,
             }),
-            Key::Character('j') => Some(Event::KeyDown {
+            Key::Character('j') => Mapping::Replace(Event::KeyDown {
                 key: Key::DownArrow,
-                group,
+                group: *group,
             }),
-            _ => Some(event),
+            _ => Mapping::Passthrough,
         },
-        Event::Touch(_) => None,
-        _ => Some(event),
+        Event::Touch(_) => Mapping::Defer,
+        _ => Mapping::Passthrough,
     })
 }
 
@@ -287,6 +310,99 @@ fn main() {
         } else {
             // limit polling for updates to ~30 fps when idle
             std::thread::sleep(Duration::from_millis(33));
+        }
+    }
+}
+
+use is_focused::IsFocused;
+/// A small modifier that reports whether its child currently holds focus.
+///
+/// It wraps a view and invokes the callback with `true` when the child acquires
+/// focus and `false` when it loses focus, letting parent logic (here, the key
+/// mapping) branch on whether the table is focused.
+mod is_focused {
+    use core::marker::PhantomData;
+
+    use buoyant::view::ViewMarker;
+
+    use super::*;
+
+    pub struct IsFocusedView<V, F, C: ?Sized>(V, F, PhantomData<C>);
+
+    pub trait IsFocused: Sized {
+        fn is_focused<C: ?Sized, F: Fn(bool, &mut C)>(self, f: F) -> IsFocusedView<Self, F, C> {
+            IsFocusedView(self, f, PhantomData)
+        }
+    }
+    impl<V: ViewMarker> IsFocused for V {}
+
+    impl<V: ViewMarker, F: Fn(bool, &mut C), C: ?Sized> ViewMarker for IsFocusedView<V, F, C> {
+        type Renderables = V::Renderables;
+        type Transition = V::Transition;
+    }
+
+    impl<C: ?Sized, V: ViewLayout<C>, F: Fn(bool, &mut C)> ViewLayout<C> for IsFocusedView<V, F, C> {
+        type State = V::State;
+        type Sublayout = V::Sublayout;
+        type FocusTree = V::FocusTree;
+
+        fn priority(&self) -> i8 {
+            ViewLayout::priority(&self.0)
+        }
+
+        fn is_empty(&self) -> bool {
+            ViewLayout::is_empty(&self.0)
+        }
+
+        fn transition(&self) -> Self::Transition {
+            ViewLayout::transition(&self.0)
+        }
+
+        fn build_state(&self, captures: &mut C) -> Self::State {
+            ViewLayout::build_state(&self.0, captures)
+        }
+
+        fn layout(
+            &self,
+            offer: &buoyant::primitives::ProposedDimensions,
+            env: &impl buoyant::environment::LayoutEnvironment,
+            captures: &mut C,
+            state: &mut Self::State,
+        ) -> buoyant::layout::ResolvedLayout<Self::Sublayout> {
+            self.0.layout(offer, env, captures, state)
+        }
+
+        fn render_tree(
+            &self,
+            layout: &Self::Sublayout,
+            origin: buoyant::primitives::Point,
+            env: &impl buoyant::environment::LayoutEnvironment,
+            captures: &mut C,
+            state: &mut Self::State,
+        ) -> Self::Renderables {
+            self.0.render_tree(layout, origin, env, captures, state)
+        }
+
+        fn handle_event(
+            &self,
+            event: &Event,
+            context: &buoyant::event::EventContext,
+            render_tree: &mut Self::Renderables,
+            captures: &mut C,
+            state: &mut Self::State,
+            focus: &mut Self::FocusTree,
+        ) -> buoyant::event::EventResult {
+            let res = self
+                .0
+                .handle_event(event, context, render_tree, captures, state, focus);
+
+            if res.lost_focus() {
+                (self.1)(false, captures);
+            } else if res.requested_focus() {
+                (self.1)(true, captures);
+            }
+
+            res
         }
     }
 }
