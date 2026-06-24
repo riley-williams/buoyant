@@ -36,7 +36,6 @@ pub enum PageEvent {
 #[expect(missing_docs)]
 #[derive(Default, Clone, Copy, Debug, PartialEq, Eq)]
 pub struct PaginateState<T> {
-    child_holds_focus: bool,
     child: T,
 }
 
@@ -77,6 +76,10 @@ impl<T: DefaultFocus> DefaultFocus for PaginateFocusTree<T> {
             child: T::default_last(),
         }
     }
+
+    fn is_focused(&self) -> bool {
+        self.child.is_focused()
+    }
 }
 
 impl<V: ViewMarker, Action> ViewMarker for Paginate<V, Action> {
@@ -101,7 +104,6 @@ where
 
     fn build_state(&self, captures: &mut C) -> Self::State {
         PaginateState {
-            child_holds_focus: false,
             child: self.view.build_state(captures),
         }
     }
@@ -139,7 +141,7 @@ where
     ) -> EventResult {
         if let Event::Focus { action, group } = event
             && *group == self.group
-            && (!state.child_holds_focus || self.forceful)
+            && (!focus.child.is_focused() || self.forceful)
         {
             let mut blur = || {
                 self.view.handle_event(
@@ -168,26 +170,18 @@ where
                 }
                 _ => {}
             }
-            state.child_holds_focus = false;
             return EventResult::handled_focused(render_tree.content_shape());
         }
 
-        // For non-focus events, delegate to inner view.
-        let result = self.view.handle_event(
+        // For non-focus events, delegate to inner view. The child's focus tree is
+        // the source of truth for whether it holds focus.
+        self.view.handle_event(
             event,
             context,
             render_tree,
             captures,
             &mut state.child,
             &mut focus.child,
-        );
-
-        if result.requested_focus() {
-            state.child_holds_focus = true;
-        } else if result.lost_focus() {
-            state.child_holds_focus = false;
-        }
-
-        result
+        )
     }
 }

@@ -64,7 +64,7 @@ fn single_button_next_returns_deferred() {
 
     // Next on single element should return Deferred
     let result = harness.next();
-    assert_eq!(result, EventResult::deferred_lost_focus());
+    assert_eq!(result, EventResult::Deferred);
 }
 
 #[test]

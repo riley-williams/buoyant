@@ -256,13 +256,16 @@ fn teardown_does_not_dismiss() {
         Some(ContentShape::Circle(_))
     ));
 
-    // Send a Teardown event. The focused Button defers it while signalling that
-    // it lost focus; the popover proxies that result without wrapping or
-    // invoking on_blur.
+    // Send a Teardown event. The focused Button defers it and gives up focus;
+    // the popover proxies that result without wrapping or invoking on_blur.
     let result = harness.send(FocusAction::Teardown);
     assert!(
-        !result.is_handled() && result.lost_focus(),
-        "Teardown proxied to the focused child should defer and report lost focus"
+        !result.is_handled(),
+        "Teardown proxied to the focused child should defer"
+    );
+    assert!(
+        !harness.is_focused(),
+        "Teardown should leave the child without focus"
     );
     assert!(
         harness.state().popover_visible.is_some(),

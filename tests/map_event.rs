@@ -138,7 +138,7 @@ fn defer_withholds_event_from_view() {
     app.focus_forward();
     // Select is deferred: it never reaches the button and the result is Deferred.
     let result = app.select();
-    assert_eq!(result, EventResult::deferred());
+    assert_eq!(result, EventResult::Deferred);
     assert_eq!(app.state().taps, 0);
 }
 

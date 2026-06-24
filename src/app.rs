@@ -180,6 +180,12 @@ where
         &self.focus_shape
     }
 
+    /// Returns true if any element in the view currently holds focus.
+    #[must_use]
+    pub fn is_focused(&self) -> bool {
+        self.focus_tree.is_focused()
+    }
+
     /// Returns mutable references to both source and target render trees.
     #[must_use]
     pub fn render_trees(&self) -> &Trees<V::Renderables> {

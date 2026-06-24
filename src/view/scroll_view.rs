@@ -493,7 +493,7 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
         let (result, delta) = match event {
             Event::Scroll(delta) => {
                 context.request_view_rebuild();
-                (EventResult::deferred(), *delta)
+                (EventResult::Deferred, *delta)
             }
             Event::Touch(touch) => {
                 // Only track the first touch. This could cause problems if
@@ -537,7 +537,7 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
                             }
                         } else {
                             // Touches cannot start outside the bounds, return early
-                            return EventResult::deferred();
+                            return EventResult::Deferred;
                         }
                     }
                     Phase::Moved => match &mut state.interaction {

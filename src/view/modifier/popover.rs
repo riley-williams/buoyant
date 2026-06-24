@@ -85,6 +85,10 @@ impl<T: DefaultFocus, U: DefaultFocus> DefaultFocus for FocusTree<T, U> {
             overlay: None,
         }
     }
+
+    fn is_focused(&self) -> bool {
+        self.inner.is_focused() || self.overlay.as_ref().is_some_and(DefaultFocus::is_focused)
+    }
 }
 
 impl<Inner, Overlay> Popover<Inner, Overlay, NoDismiss>
@@ -173,7 +177,7 @@ where
 
         let TransitionOption::Some { subtree, .. } = &mut render_tree.1.subtree else {
             // TODO: Popover is visible, but we don't have a render tree for it yet
-            return EventResult::deferred();
+            return EventResult::Deferred;
         };
 
         let result = overlay_view.handle_event(
@@ -188,7 +192,7 @@ where
             subfocus,
         );
 
-        if !matches!(result, EventResult::Deferred { .. }) {
+        if !matches!(result, EventResult::Deferred) {
             return result;
         }
 
@@ -414,7 +418,7 @@ where
             }
             (Some(_), TransitionOption::None) => {
                 // Overlay is present but not rendered yet - defer events until it actually appears
-                EventResult::deferred()
+                EventResult::Deferred
             }
             _ => self.inner.handle_event(
                 event,

@@ -259,6 +259,10 @@ impl<T: DefaultFocus> DefaultFocus for Focus<T> {
             tree: T::default_last(),
         }
     }
+
+    fn is_focused(&self) -> bool {
+        self.tree.is_focused()
+    }
 }
 
 impl<T: DefaultFocus> Default for Focus<T> {
@@ -415,7 +419,7 @@ where
             let mut current = if focus.index == usize::MAX {
                 // Sentinel for "last" - resolve to actual last index
                 if self.items.is_empty() {
-                    return EventResult::deferred();
+                    return EventResult::Deferred;
                 }
                 let last_index = self.items.len() - 1;
                 focus.index = last_index;
@@ -428,14 +432,10 @@ where
             // a new child during navigation we switch to a Focus event
             let mut current_event = *focus_event;
 
-            // Track whether any child in this traversal gave up focus, so the
-            // signal isn't lost when a later child defers without losing focus.
-            let mut focus_lost = false;
-
             loop {
                 // Ensure current index is valid
                 if current >= self.items.len() {
-                    return EventResult::Deferred { focus_lost };
+                    return EventResult::Deferred;
                 }
 
                 // Try focus on the current child
@@ -456,10 +456,8 @@ where
                     &mut focus.tree,
                 );
 
-                focus_lost |= child_result.lost_focus();
-
                 // If the child handled it (not deferred), return the result
-                if !matches!(child_result, EventResult::Deferred { .. })
+                if !matches!(child_result, EventResult::Deferred)
                     || *focus_event == FocusAction::Teardown
                 {
                     return child_result;
@@ -468,7 +466,7 @@ where
                 // Child is exhausted, try to move based on action
                 match focus_event {
                     FocusAction::Blur | FocusAction::Teardown => {
-                        return EventResult::Deferred { focus_lost };
+                        return EventResult::Deferred;
                     }
                     FocusAction::Focus(FocusDirection::Forward)
                     | FocusAction::Select
@@ -476,7 +474,7 @@ where
                         // Advance to next child
                         current += 1;
                         if current >= self.items.len() {
-                            return EventResult::Deferred { focus_lost };
+                            return EventResult::Deferred;
                         }
                         focus.index = current;
                         focus.tree = <V::FocusTree as DefaultFocus>::default_first();
@@ -486,7 +484,7 @@ where
                     FocusAction::Focus(FocusDirection::Backward) | FocusAction::Previous => {
                         // Go to previous child
                         if current == 0 {
-                            return EventResult::Deferred { focus_lost };
+                            return EventResult::Deferred;
                         }
                         current -= 1;
                         focus.index = current;
@@ -502,10 +500,10 @@ where
         if matches!(event, Event::KeyDown { .. } | Event::KeyUp { .. }) {
             // Unresolved "last" sentinel - no focused child yet
             if focus.index == usize::MAX {
-                return EventResult::deferred();
+                return EventResult::Deferred;
             }
             if focus.index >= self.items.len() {
-                return EventResult::deferred();
+                return EventResult::Deferred;
             }
             let item = &self.items[focus.index];
             let view = (self.build_view)(item);
@@ -549,7 +547,7 @@ where
                 return child_result;
             }
         }
-        EventResult::deferred()
+        EventResult::Deferred
     }
 }
 

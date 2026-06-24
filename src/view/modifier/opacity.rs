@@ -89,7 +89,7 @@ where
         // FIXME: Handle focus moves when the old focus was inside the
         // now invisible element?
         if self.opacity == 0 {
-            return EventResult::deferred();
+            return EventResult::Deferred;
         }
         self.inner.handle_event(
             event,

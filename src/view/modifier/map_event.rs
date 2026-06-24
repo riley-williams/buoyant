@@ -144,7 +144,7 @@ impl<C: ?Sized, V: ViewLayout<C>, F: Fn(&Event, &mut C, &mut I) -> Mapping, I: '
                     )
                 }
             }
-            Mapping::Defer => EventResult::deferred(),
+            Mapping::Defer => EventResult::Deferred,
             Mapping::Handled => EventResult::handled_unfocused(),
         }
     }

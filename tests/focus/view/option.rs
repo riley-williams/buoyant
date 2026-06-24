@@ -69,7 +69,7 @@ fn none_returns_deferred() {
     assert!(
         matches!(
             harness.focus_forward(),
-            buoyant::event::EventResult::Deferred { .. }
+            buoyant::event::EventResult::Deferred
         ),
         "None should return Deferred"
     );

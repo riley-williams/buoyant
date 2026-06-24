@@ -106,21 +106,34 @@ pub enum RotaryState {
 
 #[expect(missing_docs)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct RotaryFocus(bool);
+pub struct RotaryFocus {
+    focused: bool,
+    captive: bool,
+}
 
 impl RotaryFocus {
     fn is_captive(self) -> bool {
-        self.0
+        self.captive
     }
 }
 
 impl DefaultFocus for RotaryFocus {
     fn default_first() -> Self {
-        Self(false)
+        Self {
+            focused: false,
+            captive: false,
+        }
     }
 
     fn default_last() -> Self {
-        Self(false)
+        Self {
+            focused: false,
+            captive: false,
+        }
+    }
+
+    fn is_focused(&self) -> bool {
+        self.focused
     }
 }
 
@@ -223,7 +236,7 @@ where
         } = event
         {
             if !context.roles.contains(Role::Button) {
-                return EventResult::deferred();
+                return EventResult::Deferred;
             }
             let focused_shape = render_tree.content_shape();
 
@@ -243,26 +256,29 @@ where
                         EventResult::handled_focused(focused_shape)
                     }
                     FocusAction::Focus(_) => {
+                        focus.focused = true;
+                        focus.captive = true;
                         state.0 = RotaryState::Captive;
                         EventResult::handled_focused(focused_shape)
                     }
                     FocusAction::Teardown => {
                         (self.action)(captures, RotaryEvent::Exit);
-                        focus.0 = false;
+                        focus.focused = false;
+                        focus.captive = false;
                         state.0 = RotaryState::UnFocused;
                         context.request_view_rebuild();
                         EventResult::handled_focused(focused_shape)
                     }
                     FocusAction::Select => {
                         (self.action)(captures, RotaryEvent::Select);
-                        focus.0 = false;
+                        focus.captive = false;
                         state.0 = RotaryState::Focused;
                         context.request_view_rebuild();
                         EventResult::handled_focused(focused_shape)
                     }
                     FocusAction::Blur => {
                         (self.action)(captures, RotaryEvent::Exit);
-                        focus.0 = false;
+                        focus.captive = false;
                         state.0 = RotaryState::Focused;
                         context.request_view_rebuild();
                         EventResult::handled_focused(focused_shape)
@@ -275,11 +291,12 @@ where
                     | FocusAction::Blur
                     | FocusAction::Teardown => {
                         if state.0 == RotaryState::UnFocused {
-                            EventResult::deferred()
+                            EventResult::Deferred
                         } else {
+                            focus.focused = false;
                             state.0 = RotaryState::UnFocused;
                             context.request_view_rebuild();
-                            EventResult::deferred_lost_focus()
+                            EventResult::Deferred
                         }
                     }
                     FocusAction::Focus(_) => {
@@ -287,10 +304,12 @@ where
                             state.0 = RotaryState::Focused;
                             context.request_view_rebuild();
                         }
+                        focus.focused = true;
                         EventResult::handled_focused(focused_shape)
                     }
                     FocusAction::Select => {
-                        focus.0 = true;
+                        focus.focused = true;
+                        focus.captive = true;
                         state.0 = RotaryState::Captive;
                         context.request_view_rebuild();
                         EventResult::handled_focused(focused_shape)
@@ -316,7 +335,7 @@ where
                     context.request_view_rebuild();
                     EventResult::handled_focused(focused_shape)
                 }
-                _ => EventResult::deferred(),
+                _ => EventResult::Deferred,
             }
         } else if let Event::Touch(touch) = event
             && render_tree.content_shape().contains(touch.location.into())
@@ -326,6 +345,7 @@ where
             match state.0 {
                 RotaryState::UnFocused => {
                     context.request_view_rebuild();
+                    focus.focused = true;
                     state.0 = RotaryState::Focused;
                     EventResult::handled_focused(render_tree.content_shape())
                 }
@@ -336,7 +356,7 @@ where
                 }
             }
         } else {
-            EventResult::deferred()
+            EventResult::Deferred
         }
     }
 }

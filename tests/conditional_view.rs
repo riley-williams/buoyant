@@ -136,7 +136,7 @@ fn empty_view_returns_deferred() {
     );
 
     assert!(
-        matches!(result, EventResult::Deferred { .. }),
+        matches!(result, EventResult::Deferred),
         "EmptyView should return Deferred for focus"
     );
 }

@@ -108,7 +108,7 @@ where
                 focus,
             )
         } else {
-            EventResult::deferred()
+            EventResult::Deferred
         }
     }
 }

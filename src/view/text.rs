@@ -435,7 +435,7 @@ where
         _focus: &mut Self::FocusTree,
     ) -> EventResult {
         // FIXME: check for text mask
-        EventResult::deferred()
+        EventResult::Deferred
     }
 }
 

@@ -80,6 +80,6 @@ impl<Captures: ?Sized> ViewLayout<Captures> for Spacer {
         _state: &mut Self::State,
         _focus: &mut Self::FocusTree,
     ) -> EventResult {
-        EventResult::deferred()
+        EventResult::Deferred
     }
 }

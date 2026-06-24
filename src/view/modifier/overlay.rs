@@ -43,6 +43,13 @@ impl<T: DefaultFocus, U: DefaultFocus> DefaultFocus for OverlayFocus<T, U> {
     fn default_last() -> Self {
         Self::Foreground(T::default_last())
     }
+
+    fn is_focused(&self) -> bool {
+        match self {
+            Self::Foreground(t) => t.is_focused(),
+            Self::Overlay(u) => u.is_focused(),
+        }
+    }
 }
 
 impl<T, U> ViewMarker for OverlayView<T, U>
@@ -185,24 +192,17 @@ where
                                 &mut foreground_focus,
                             );
                             *focus = OverlayFocus::Foreground(foreground_focus);
-                            // If the foreground didn't take focus, the view as a whole
-                            // lost focus iff the overlay gave it up.
                             if foreground_result.is_handled() {
                                 foreground_result
                             } else {
-                                EventResult::Deferred {
-                                    focus_lost: result.lost_focus()
-                                        || foreground_result.lost_focus(),
-                                }
+                                EventResult::Deferred
                             }
                         }
                         FocusAction::Focus(FocusDirection::Backward)
                         | FocusAction::Previous
                         | FocusAction::Blur
                         | FocusAction::Select
-                        | FocusAction::Teardown => EventResult::Deferred {
-                            focus_lost: result.lost_focus(),
-                        },
+                        | FocusAction::Teardown => EventResult::Deferred,
                     }
                 }
                 OverlayFocus::Foreground(foreground_focus) => {
@@ -238,18 +238,14 @@ where
                             if overlay_result.is_handled() {
                                 overlay_result
                             } else {
-                                EventResult::Deferred {
-                                    focus_lost: result.lost_focus() || overlay_result.lost_focus(),
-                                }
+                                EventResult::Deferred
                             }
                         }
                         FocusAction::Focus(FocusDirection::Forward)
                         | FocusAction::Next
                         | FocusAction::Select
                         | FocusAction::Blur
-                        | FocusAction::Teardown => EventResult::Deferred {
-                            focus_lost: result.lost_focus(),
-                        },
+                        | FocusAction::Teardown => EventResult::Deferred,
                     }
                 }
             },

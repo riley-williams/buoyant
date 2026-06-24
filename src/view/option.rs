@@ -16,6 +16,10 @@ impl<T: DefaultFocus> DefaultFocus for Option<T> {
     fn default_last() -> Self {
         Some(T::default_last())
     }
+
+    fn is_focused(&self) -> bool {
+        self.as_ref().is_some_and(DefaultFocus::is_focused)
+    }
 }
 
 impl<V> ViewMarker for Option<V>
@@ -123,13 +127,13 @@ where
                 let inner_focus = focus.get_or_insert(DefaultFocus::default_first());
                 v.handle_event(event, context, subtree, captures, s, inner_focus)
             }
-            (None, _, _) => EventResult::deferred(),
+            (None, _, _) => EventResult::Deferred,
             _ => {
                 assert!(
                     !cfg!(debug_assertions),
                     "State branch does not match view branch, likely due to improper reuse of layout."
                 );
-                EventResult::deferred()
+                EventResult::Deferred
             }
         }
     }

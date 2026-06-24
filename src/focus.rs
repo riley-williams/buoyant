@@ -58,11 +58,20 @@ pub trait DefaultFocus {
 
     /// Returns a focus tree initialized to the last element.
     fn default_last() -> Self;
+
+    /// Returns true if this subtree currently holds focus.
+    ///
+    /// Focusable leaves are the source of truth for their own focus state;
+    /// containers report whether any element within them is focused.
+    fn is_focused(&self) -> bool;
 }
 
 impl DefaultFocus for () {
     fn default_first() -> Self {}
     fn default_last() -> Self {}
+    fn is_focused(&self) -> bool {
+        false
+    }
 }
 
 /// A group identifying a set of related elements.

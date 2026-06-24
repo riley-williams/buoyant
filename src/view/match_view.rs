@@ -308,6 +308,12 @@ macro_rules! define_branch {
                 // Use a helper to get the last variant
                 last_variant_focus!($name, $($variant),+)
             }
+
+            fn is_focused(&self) -> bool {
+                match self {
+                    $( Self::$variant(v) => v.is_focused(),)+
+                }
+            }
         }
 
         impl<$($variant),+> ViewMarker for $name<$($variant),+>

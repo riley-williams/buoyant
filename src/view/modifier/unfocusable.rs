@@ -96,6 +96,6 @@ where
             return result;
         };
 
-        EventResult::deferred()
+        EventResult::Deferred
     }
 }

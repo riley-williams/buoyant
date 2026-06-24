@@ -35,6 +35,10 @@ impl<T: DefaultFocus, const N: usize> DefaultFocus for MultiplexFocusTree<T, N> 
     fn default_last() -> Self {
         Self::new()
     }
+
+    fn is_focused(&self) -> bool {
+        self.0.iter().flatten().any(DefaultFocus::is_focused)
+    }
 }
 
 /// A modifier that multiplexes focus into multiple independent focus trees.
@@ -120,7 +124,7 @@ where
         if let Event::Focus { group, .. } = event {
             // Obtain the index of the first matching set
             let Some(index) = self.groups.iter().position(|set| set.contains(*group)) else {
-                return EventResult::deferred();
+                return EventResult::Deferred;
             };
             let index = index as u8;
 
@@ -146,7 +150,7 @@ where
                 | Event::KeyDown { .. } => {
                     // Don't auto-initialize for these actions
                     let Some(tree) = focus.0[index as usize].as_mut() else {
-                        return EventResult::deferred();
+                        return EventResult::Deferred;
                     };
                     tree
                 }

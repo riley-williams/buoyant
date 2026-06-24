@@ -78,20 +78,14 @@ fn focusable_and_unfocusable_sibling(_: &State) -> impl View<(), State> + use<> 
 }
 
 /// Tapping a sibling that handles the touch without taking focus should blur the
-/// currently focused button, and that loss must reach the caller (so wrappers
-/// like `Paginate` can stop tracking the child as focused).
+/// currently focused button, leaving the focus tree reporting no focus.
 ///
-/// Today this is unrepresentable: the tap returns `Handled { request_focus:
-/// false }` and `focus_lost` lives only on `EventResult::Deferred`, so the blur
-/// is invisible to the parent. Reaching green needs two coupled changes:
-///   1. carry `focus_lost` on `EventResult::Handled` (so `lost_focus()` can be
-///      true for a handled-but-unfocused result), and
-///   2. have the tap path actually blur the previously focused element when a
-///      touch is handled without acquiring focus (today `focus_touches` only
-///      tears down old focus on `request_focus: true`, and
-///      `focus_touches::touch_moves_focus` asserts the focus is *retained*).
+/// Reaching green needs the tap path to actually blur the previously focused
+/// element when a touch is handled without acquiring focus (today
+/// `focus_touches` only tears down old focus on `request_focus: true`, and
+/// `focus_touches::touch_moves_focus` asserts the focus is *retained*).
 #[test]
-#[ignore = "needs focus_lost on EventResult::Handled + tap-away blur behavior"]
+#[ignore = "needs tap-away blur behavior"]
 fn tap_unfocusable_sibling_blurs_focused_button() {
     let mut harness = App::new(
         State::default(),
@@ -113,10 +107,10 @@ fn tap_unfocusable_sibling_blurs_focused_button() {
     assert!(result.is_handled());
     assert!(!result.requested_focus());
 
-    // The focused button should have been blurred, and the caller must be told.
+    // The focused button should have been blurred.
     assert!(
-        result.lost_focus(),
-        "tapping a handled, unfocusable sibling should report the focus loss"
+        !harness.is_focused(),
+        "tapping a handled, unfocusable sibling should blur the focused button"
     );
 }
 

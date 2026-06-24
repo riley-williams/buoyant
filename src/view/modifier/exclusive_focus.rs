@@ -102,6 +102,6 @@ where
                 .with_group(self.group);
         }
 
-        EventResult::deferred()
+        EventResult::Deferred
     }
 }

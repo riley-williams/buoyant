@@ -199,6 +199,10 @@ impl<T: DefaultFocus> DefaultFocus for Focus<T> {
             tree: T::default_last(),
         }
     }
+
+    fn is_focused(&self) -> bool {
+        self.tree.is_focused()
+    }
 }
 
 impl<T: DefaultFocus> Focus<T> {
@@ -752,7 +756,7 @@ where
     ) -> EventResult {
         focus.normalize_sentinels(self.width, self.height);
 
-        let mut last_result = EventResult::deferred();
+        let mut last_result = EventResult::Deferred;
 
         let (x, y) = (focus.x, focus.y);
 
@@ -761,35 +765,45 @@ where
         let render_tree = &mut render_tree.renderables;
 
         let mut mov = Move::from_event(&event);
-        let mut captive = state.captive;
 
-        let is_blur = matches!(event, Event::Focus { action: Blur, .. });
-        if is_blur && state.captive.is_some() {
+        // The table's capture state as this event arrived. A Blur releases capture,
+        // but the event is still delivered to the focused cell below so it can clear
+        // its own focus, so `active_capture` keeps routing this event as captive.
+        let mut active_capture = state.captive;
+        if matches!(event, Event::Focus { action: Blur, .. }) {
             state.captive = None;
         }
 
-        match (state.captive, mov, &mut event) {
-            (Some(_), _, _) => (),
-            (_, Some(mov), _) => {
+        // Focus only enters the table through the focus system. A raw key press never
+        // captures an unfocused table; it falls through to the parent below (e.g. to
+        // drive pagination).
+        let entry = if active_capture.is_none() {
+            match &event {
+                // Select enters and lands on the first cell.
+                Event::Focus {
+                    action: Select,
+                    group,
+                } => Some((*group, Move::Right)),
                 // FIXME: all events shall carry group
-                let group = const { FocusGroup::new(0).expect("const") };
-                state.captive = Some(group);
-                captive = state.captive;
-                event = mov.focus_event(group);
+                Event::Focus { .. } => {
+                    mov.map(|m| (const { FocusGroup::new(0).expect("const") }, m))
+                }
+                _ => None,
             }
-            (_, _, Event::Focus { action, group }) if *action == Select => {
-                state.captive = Some(*group);
-                captive = state.captive;
-                *action = FocusAction::Focus(FocusDirection::Forward);
-                mov = Some(Move::Right);
-            }
-            _ => (),
+        } else {
+            None
+        };
+        if let Some((group, direction)) = entry {
+            state.captive = Some(group);
+            active_capture = Some(group);
+            mov = Some(direction);
+            event = direction.focus_event(group);
         }
 
         let state = &mut state.cell_states;
 
         if let Some(mov) = mov
-            && let Some(group) = captive
+            && let Some(group) = active_capture
         {
             let [dx, dy, overflow_dx, overflow_dy]: [isize; 4] = match mov {
                 Move::Up => [0, -1, -1, 0],
@@ -815,13 +829,12 @@ where
                 &mut focus.tree,
             );
 
-            if !matches!(last_result, EventResult::Deferred { .. }) {
+            if !matches!(last_result, EventResult::Deferred) {
                 return last_result;
             }
 
             // The currently-focused cell may have given up focus above; remember that
             // so we can report it if no other cell ends up taking focus.
-            let mut focus_lost = last_result.lost_focus();
 
             while step_count != 0 {
                 step_count -= 1;
@@ -865,17 +878,15 @@ where
                     &mut focus.tree,
                 );
 
-                focus_lost |= last_result.lost_focus();
-
-                if !matches!(last_result, EventResult::Deferred { .. }) {
+                if !matches!(last_result, EventResult::Deferred) {
                     return last_result;
                 }
             }
 
-            return EventResult::Deferred { focus_lost };
+            return EventResult::Deferred;
         }
 
-        if captive.is_some() {
+        if active_capture.is_some() {
             let view = (self.build_view)(self.items.index(x, y));
             return view.handle_event(
                 &event,
@@ -887,8 +898,9 @@ where
             );
         }
 
-        if captive.is_none() && mov.is_some() {
-            return EventResult::deferred();
+        // Not captured and a movement key: defer so a parent can act on it.
+        if mov.is_some() {
+            return EventResult::Deferred;
         }
 
         for r in 0..self.height {

@@ -143,7 +143,7 @@ fn no_focusable_elements_returns_deferred() {
         App::new(state, Size::new(100, 100), stack_no_focusable).with_roles(Role::Button);
 
     assert!(
-        matches!(harness.focus_forward(), EventResult::Deferred { .. }),
+        matches!(harness.focus_forward(), EventResult::Deferred),
         "No focusable elements should return Deferred"
     );
 }

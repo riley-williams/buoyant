@@ -90,8 +90,7 @@ pub fn view<'a, 'b, C: GoodPixelColor, F: Fn(&State) + 'a + Copy>(
                 table_dimensions: (r, c),
             } => VStack::new((
                 hardware_input_input_line::hw_line(header, data.palette, false),
-                table::table(data, &state, (r, c), names, ie, eu)
-                    .is_focused(|focused, state: &mut State| state.is_table_focused = focused),
+                table::table(data, &state, (r, c), names, ie, eu),
                 hardware_input_input_line::hw_line(footer, data.palette, true),
             )).bound_focus(BoundaryBehavior::Wrap),
             Page::Settings { header, footer } => VStack::new((
@@ -118,7 +117,7 @@ pub fn view<'a, 'b, C: GoodPixelColor, F: Fn(&State) + 'a + Copy>(
                 // Ignore all other key down events, don't allow children to handle
                 _ => Mapping::Defer,
             },
-            Event::KeyDown { key, .. } if state.is_table() => match (key, state.is_table_focused) {
+            Event::KeyDown { key, .. } if state.is_table() => match (key, state.is_focused) {
                 (Key::LeftArrow, _) => {
                     Mapping::Fallback(FocusAction::Previous.into_event(PAGINATE_FGROUP))
                 }
@@ -247,8 +246,8 @@ fn main() {
     };
 
     // Create app with view lifecycle management
-    let mut app =
-        App::new(initial_state, size.into(), root_view).with_roles(Role::Button | Role::Container);
+    let mut app = App::new(initial_state, size.into(), |state: &State| root_view(state))
+        .with_roles(Role::Button | Role::Container);
 
     // Acquire initial focus
     // app.focus_forward();
@@ -267,6 +266,7 @@ fn main() {
         });
 
         for event in events {
+            app.state_mut().is_focused = app.is_focused();
             app.send(event);
         }
 
@@ -310,99 +310,6 @@ fn main() {
         } else {
             // limit polling for updates to ~30 fps when idle
             std::thread::sleep(Duration::from_millis(33));
-        }
-    }
-}
-
-use is_focused::IsFocused;
-/// A small modifier that reports whether its child currently holds focus.
-///
-/// It wraps a view and invokes the callback with `true` when the child acquires
-/// focus and `false` when it loses focus, letting parent logic (here, the key
-/// mapping) branch on whether the table is focused.
-mod is_focused {
-    use core::marker::PhantomData;
-
-    use buoyant::view::ViewMarker;
-
-    use super::*;
-
-    pub struct IsFocusedView<V, F, C: ?Sized>(V, F, PhantomData<C>);
-
-    pub trait IsFocused: Sized {
-        fn is_focused<C: ?Sized, F: Fn(bool, &mut C)>(self, f: F) -> IsFocusedView<Self, F, C> {
-            IsFocusedView(self, f, PhantomData)
-        }
-    }
-    impl<V: ViewMarker> IsFocused for V {}
-
-    impl<V: ViewMarker, F: Fn(bool, &mut C), C: ?Sized> ViewMarker for IsFocusedView<V, F, C> {
-        type Renderables = V::Renderables;
-        type Transition = V::Transition;
-    }
-
-    impl<C: ?Sized, V: ViewLayout<C>, F: Fn(bool, &mut C)> ViewLayout<C> for IsFocusedView<V, F, C> {
-        type State = V::State;
-        type Sublayout = V::Sublayout;
-        type FocusTree = V::FocusTree;
-
-        fn priority(&self) -> i8 {
-            ViewLayout::priority(&self.0)
-        }
-
-        fn is_empty(&self) -> bool {
-            ViewLayout::is_empty(&self.0)
-        }
-
-        fn transition(&self) -> Self::Transition {
-            ViewLayout::transition(&self.0)
-        }
-
-        fn build_state(&self, captures: &mut C) -> Self::State {
-            ViewLayout::build_state(&self.0, captures)
-        }
-
-        fn layout(
-            &self,
-            offer: &buoyant::primitives::ProposedDimensions,
-            env: &impl buoyant::environment::LayoutEnvironment,
-            captures: &mut C,
-            state: &mut Self::State,
-        ) -> buoyant::layout::ResolvedLayout<Self::Sublayout> {
-            self.0.layout(offer, env, captures, state)
-        }
-
-        fn render_tree(
-            &self,
-            layout: &Self::Sublayout,
-            origin: buoyant::primitives::Point,
-            env: &impl buoyant::environment::LayoutEnvironment,
-            captures: &mut C,
-            state: &mut Self::State,
-        ) -> Self::Renderables {
-            self.0.render_tree(layout, origin, env, captures, state)
-        }
-
-        fn handle_event(
-            &self,
-            event: &Event,
-            context: &buoyant::event::EventContext,
-            render_tree: &mut Self::Renderables,
-            captures: &mut C,
-            state: &mut Self::State,
-            focus: &mut Self::FocusTree,
-        ) -> buoyant::event::EventResult {
-            let res = self
-                .0
-                .handle_event(event, context, render_tree, captures, state, focus);
-
-            if res.lost_focus() {
-                (self.1)(false, captures);
-            } else if res.requested_focus() {
-                (self.1)(true, captures);
-            }
-
-            res
         }
     }
 }

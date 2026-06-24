@@ -50,6 +50,14 @@ impl<T: DefaultFocus, U: DefaultFocus> DefaultFocus for BackgroundFocus<T, U> {
             background: U::default_last(),
         }
     }
+
+    fn is_focused(&self) -> bool {
+        if self.active_foreground {
+            self.foreground.is_focused()
+        } else {
+            self.background.is_focused()
+        }
+    }
 }
 
 impl<T, U> ViewMarker for BackgroundView<T, U>
@@ -192,15 +200,10 @@ where
                             );
                             focus.active_foreground = false;
                             focus.background = background_focus;
-                            // If the background didn't take focus, the view as a whole lost
-                            // focus iff the foreground gave it up.
                             if background_result.is_handled() {
                                 background_result
                             } else {
-                                EventResult::Deferred {
-                                    focus_lost: result.lost_focus()
-                                        || background_result.lost_focus(),
-                                }
+                                EventResult::Deferred
                             }
                         }
                         FocusAction::Focus(FocusDirection::Forward)
@@ -243,19 +246,14 @@ where
                             if foreground_result.is_handled() {
                                 foreground_result
                             } else {
-                                EventResult::Deferred {
-                                    focus_lost: result.lost_focus()
-                                        || foreground_result.lost_focus(),
-                                }
+                                EventResult::Deferred
                             }
                         }
                         FocusAction::Select
                         | FocusAction::Focus(FocusDirection::Backward)
                         | FocusAction::Previous
                         | FocusAction::Blur
-                        | FocusAction::Teardown => EventResult::Deferred {
-                            focus_lost: result.lost_focus(),
-                        },
+                        | FocusAction::Teardown => EventResult::Deferred,
                     }
                 }
             }

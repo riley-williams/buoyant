@@ -183,13 +183,13 @@ fn key_up_is_eaten_by_map_event() {
     harness.focus_forward();
 
     let result = harness.key_up(Key::Character('\n'));
-    assert_eq!(result, EventResult::deferred());
+    assert_eq!(result, EventResult::Deferred);
     assert_eq!(harness.state().a, 0);
 
     // A full key_press sends down then up; the down activates the button and
     // the up is eaten, so the final result is Deferred but the side effect
     // occurred.
     let result = harness.key_press(Key::Character('\n'));
-    assert_eq!(result, EventResult::deferred());
+    assert_eq!(result, EventResult::Deferred);
     assert_eq!(harness.state().a, 1);
 }

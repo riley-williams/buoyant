@@ -79,6 +79,6 @@ impl<Captures: ?Sized> ViewLayout<Captures> for Rectangle {
         _state: &mut Self::State,
         _focus: &mut Self::FocusTree,
     ) -> EventResult {
-        EventResult::deferred()
+        EventResult::Deferred
     }
 }

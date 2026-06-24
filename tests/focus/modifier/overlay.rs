@@ -64,7 +64,7 @@ fn navigate_forward_through_overlay() {
     assert!(harness.state().foreground_tapped);
 
     // Past foreground returns deferred
-    assert!(matches!(harness.next(), EventResult::Deferred { .. }));
+    assert!(matches!(harness.next(), EventResult::Deferred));
 }
 
 #[test]
@@ -88,7 +88,7 @@ fn navigate_backward_through_overlay() {
     assert!(!harness.state().foreground_tapped);
 
     // Past overlay returns deferred
-    assert!(matches!(harness.previous(), EventResult::Deferred { .. }));
+    assert!(matches!(harness.previous(), EventResult::Deferred));
 }
 
 /// When focus leaves the foreground backward and the overlay can't take it, the
@@ -115,7 +115,7 @@ fn lost_focus_propagates_when_leaving_foreground_backward() {
 
     // Navigating backward leaves the foreground; the empty overlay can't take
     // focus, so the view as a whole loses focus.
-    assert_eq!(harness.previous(), EventResult::deferred_lost_focus());
+    assert_eq!(harness.previous(), EventResult::Deferred);
 }
 
 #[test]

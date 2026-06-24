@@ -46,14 +46,8 @@ fn groups_are_independent() {
         Some(ContentShape::RoundedRectangle(_))
     ),);
 
-    assert_eq!(
-        harness.next_group(focus::GROUP_0),
-        EventResult::deferred_lost_focus()
-    );
-    assert_eq!(
-        harness.next_group(focus::GROUP_1),
-        EventResult::deferred_lost_focus()
-    );
+    assert_eq!(harness.next_group(focus::GROUP_0), EventResult::Deferred);
+    assert_eq!(harness.next_group(focus::GROUP_1), EventResult::Deferred);
 }
 
 #[test]
@@ -70,14 +64,8 @@ fn unfocused_behavior() {
     assert!(harness.select_group(focus::GROUP_0).requested_focus());
 
     // Programmer error to blur/select when no focus was obtained
-    assert_eq!(
-        harness.blur_group(focus::GROUP_1),
-        EventResult::Deferred { focus_lost: false }
-    );
-    assert_eq!(
-        harness.select_group(focus::GROUP_1),
-        EventResult::Deferred { focus_lost: false }
-    );
+    assert_eq!(harness.blur_group(focus::GROUP_1), EventResult::Deferred);
+    assert_eq!(harness.select_group(focus::GROUP_1), EventResult::Deferred);
 }
 
 #[test]
@@ -123,12 +111,9 @@ fn focus_from_opposite_ends() {
         harness.previous_group(focus::GROUP_1).shape(),
         Some(ContentShape::Rectangle(_))
     ),);
-    assert_eq!(
-        harness.next_group(focus::GROUP_0),
-        EventResult::deferred_lost_focus()
-    );
+    assert_eq!(harness.next_group(focus::GROUP_0), EventResult::Deferred);
     assert_eq!(
         harness.previous_group(focus::GROUP_1),
-        EventResult::deferred_lost_focus()
+        EventResult::Deferred
     );
 }
