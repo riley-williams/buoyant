@@ -68,7 +68,7 @@ impl DefaultFocus for () {
 pub struct FocusGroup(u8);
 
 /// A set of focus groups.
-#[derive(Clone, Copy, Debug, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct FocusGroupSet(u8);
 
 impl FocusGroup {
@@ -138,12 +138,6 @@ impl From<FocusGroup> for FocusGroupSet {
     }
 }
 
-impl PartialEq for FocusGroupSet {
-    fn eq(&self, other: &Self) -> bool {
-        (self.0 & other.0) != 0
-    }
-}
-
 impl core::ops::BitOr<FocusGroup> for FocusGroupSet {
     type Output = Self;
 
@@ -202,12 +196,12 @@ mod tests {
     }
 
     #[test]
-    fn group_equals_all_groups() {
+    fn group_contains_all_groups() {
         assert_eq!(FocusGroupSet::new_any(), FocusGroupSet::new_any());
 
         for i in 0..8 {
             let group = FocusGroup::new(i).unwrap();
-            assert_eq!(group.set(), FocusGroupSet::new_any());
+            assert!(FocusGroupSet::new_any().contains(group));
         }
     }
 }
