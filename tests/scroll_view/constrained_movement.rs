@@ -2,7 +2,6 @@ use std::time::Duration;
 
 use buoyant::{
     event::EventContext,
-    focus::DefaultFocus,
     primitives::Size,
     render::Render,
     render_target::FixedTextBuffer,
@@ -23,7 +22,6 @@ fn scroll_view<T>() -> impl View<char, T> {
     .padding(Edges::All, 1)
 }
 
-#[expect(clippy::too_many_lines)]
 #[test]
 fn vertical_scroll_does_not_move_horizontally() {
     let mut buffer = FixedTextBuffer::<12, 5>::default();
@@ -54,23 +52,21 @@ fn vertical_scroll_does_not_move_horizontally() {
         &buffer.text
     );
 
-    view.handle_event(
+    view.handle_touch(
         &touch_down(2, 3),
         &EventContext::new(Duration::from_secs(2)),
         &mut tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
     );
 
     let ctx = EventContext::new(Duration::from_secs(3));
-    view.handle_event(
+    view.handle_touch(
         &touch_move(20, 3),
         &ctx,
         &mut tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
     );
 
     assert!(!ctx.view_rebuild_requested.get());
@@ -88,13 +84,12 @@ fn vertical_scroll_does_not_move_horizontally() {
     );
 
     let ctx = EventContext::new(Duration::from_secs(4));
-    view.handle_event(
+    view.handle_touch(
         &touch_move(-20, 2),
         &ctx,
         &mut tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
     );
 
     // Tree manually updated, no view recomputation
@@ -113,14 +108,7 @@ fn vertical_scroll_does_not_move_horizontally() {
     );
 
     let ctx = EventContext::new(Duration::from_secs(5));
-    view.handle_event(
-        &touch_up(1, 1),
-        &ctx,
-        &mut tree,
-        &mut captures,
-        &mut state,
-        &mut DefaultFocus::default_first(),
-    );
+    view.handle_touch(&touch_up(1, 1), &ctx, &mut tree, &mut captures, &mut state);
 
     assert!(ctx.view_rebuild_requested.get());
 

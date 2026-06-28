@@ -39,7 +39,6 @@ fn rotary_view(count: &u32) -> impl View<char, u32> + use<> {
         Button::new(|_: &mut u32| {}, |_| Rectangle).foreground_color('.'),
     ))
     .bound_focus(BoundaryBehavior::Wrap)
-    .focus_touches()
 }
 
 #[test]

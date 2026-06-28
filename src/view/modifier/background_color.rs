@@ -1,11 +1,13 @@
 use crate::{
     environment::LayoutEnvironment,
-    event::EventResult,
+    event::{EventResult, TouchResult},
     layout::{HorizontalAlignment, ResolvedLayout, VerticalAlignment},
     primitives::{Point, ProposedDimensions},
     render::{HintBackground, ShadeSubtree},
     view::{ViewLayout, ViewMarker, shape::Shape},
 };
+
+use embedded_touch::Touch;
 
 /// A view that uses the layout of the foreground view, rendering a background shape
 /// in the specified color.
@@ -136,5 +138,17 @@ where
             state,
             focus,
         )
+    }
+
+    fn handle_touch(
+        &self,
+        touch: &Touch,
+        context: &crate::event::EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> TouchResult<Self::FocusTree> {
+        self.foreground
+            .handle_touch(touch, context, &mut render_tree.1.subtree, captures, state)
     }
 }

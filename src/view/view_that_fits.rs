@@ -1,6 +1,8 @@
+use embedded_touch::Touch;
+
 use crate::{
     environment::LayoutEnvironment,
-    event::EventResult,
+    event::{EventContext, EventResult, TouchResult},
     focus::{DefaultFocus, FocusAction, FocusDirection},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimension, ProposedDimensions},
@@ -184,6 +186,19 @@ where
         self.choices
             .0
             .handle_event(event, context, render_tree, captures, state, focus)
+    }
+
+    fn handle_touch(
+        &self,
+        touch: &Touch,
+        context: &EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> TouchResult<Self::FocusTree> {
+        self.choices
+            .0
+            .handle_touch(touch, context, render_tree, captures, state)
     }
 }
 
@@ -370,6 +385,43 @@ where
             _ => {
                 // FIXME: I think it's better here to build new state, leaving to see what
                 // breaks...
+                panic!("Layout/state branch mismatch");
+            }
+        }
+    }
+
+    fn handle_touch(
+        &self,
+        touch: &Touch,
+        context: &EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> TouchResult<Self::FocusTree> {
+        match (state, render_tree) {
+            (OneOf2::V0(s0), render::OneOf2::V0(t0)) => {
+                match self
+                    .choices
+                    .0
+                    .handle_touch(touch, context, t0, captures, s0)
+                {
+                    TouchResult::Focused(f) => TouchResult::Focused(OneOf2::V0(f)),
+                    TouchResult::Handled => TouchResult::Handled,
+                    TouchResult::Deferred => TouchResult::Deferred,
+                }
+            }
+            (OneOf2::V1(s1), render::OneOf2::V1(t1)) => {
+                match self
+                    .choices
+                    .1
+                    .handle_touch(touch, context, t1, captures, s1)
+                {
+                    TouchResult::Focused(f) => TouchResult::Focused(OneOf2::V1(f)),
+                    TouchResult::Handled => TouchResult::Handled,
+                    TouchResult::Deferred => TouchResult::Deferred,
+                }
+            }
+            _ => {
                 panic!("Layout/state branch mismatch");
             }
         }
@@ -598,6 +650,54 @@ where
                     self.choices
                         .2
                         .handle_event(event, context, t2, captures, s2, inner_focus)
+                }
+            }
+            _ => {
+                panic!("Layout/state branch mismatch");
+            }
+        }
+    }
+
+    fn handle_touch(
+        &self,
+        touch: &Touch,
+        context: &EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> TouchResult<Self::FocusTree> {
+        match (state, render_tree) {
+            (OneOf3::V0(s0), render::OneOf3::V0(t0)) => {
+                match self
+                    .choices
+                    .0
+                    .handle_touch(touch, context, t0, captures, s0)
+                {
+                    TouchResult::Focused(f) => TouchResult::Focused(OneOf3::V0(f)),
+                    TouchResult::Handled => TouchResult::Handled,
+                    TouchResult::Deferred => TouchResult::Deferred,
+                }
+            }
+            (OneOf3::V1(s1), render::OneOf3::V1(t1)) => {
+                match self
+                    .choices
+                    .1
+                    .handle_touch(touch, context, t1, captures, s1)
+                {
+                    TouchResult::Focused(f) => TouchResult::Focused(OneOf3::V1(f)),
+                    TouchResult::Handled => TouchResult::Handled,
+                    TouchResult::Deferred => TouchResult::Deferred,
+                }
+            }
+            (OneOf3::V2(s2), render::OneOf3::V2(t2)) => {
+                match self
+                    .choices
+                    .2
+                    .handle_touch(touch, context, t2, captures, s2)
+                {
+                    TouchResult::Focused(f) => TouchResult::Focused(OneOf3::V2(f)),
+                    TouchResult::Handled => TouchResult::Handled,
+                    TouchResult::Deferred => TouchResult::Deferred,
                 }
             }
             _ => {
@@ -885,6 +985,65 @@ where
                     self.choices
                         .3
                         .handle_event(event, context, t3, captures, s3, inner_focus)
+                }
+            }
+            _ => {
+                panic!("Layout/state branch mismatch");
+            }
+        }
+    }
+
+    fn handle_touch(
+        &self,
+        touch: &Touch,
+        context: &EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> TouchResult<Self::FocusTree> {
+        match (state, render_tree) {
+            (OneOf4::V0(s0), render::OneOf4::V0(t0)) => {
+                match self
+                    .choices
+                    .0
+                    .handle_touch(touch, context, t0, captures, s0)
+                {
+                    TouchResult::Focused(f) => TouchResult::Focused(OneOf4::V0(f)),
+                    TouchResult::Handled => TouchResult::Handled,
+                    TouchResult::Deferred => TouchResult::Deferred,
+                }
+            }
+            (OneOf4::V1(s1), render::OneOf4::V1(t1)) => {
+                match self
+                    .choices
+                    .1
+                    .handle_touch(touch, context, t1, captures, s1)
+                {
+                    TouchResult::Focused(f) => TouchResult::Focused(OneOf4::V1(f)),
+                    TouchResult::Handled => TouchResult::Handled,
+                    TouchResult::Deferred => TouchResult::Deferred,
+                }
+            }
+            (OneOf4::V2(s2), render::OneOf4::V2(t2)) => {
+                match self
+                    .choices
+                    .2
+                    .handle_touch(touch, context, t2, captures, s2)
+                {
+                    TouchResult::Focused(f) => TouchResult::Focused(OneOf4::V2(f)),
+                    TouchResult::Handled => TouchResult::Handled,
+                    TouchResult::Deferred => TouchResult::Deferred,
+                }
+            }
+            (OneOf4::V3(s3), render::OneOf4::V3(t3)) => {
+                match self
+                    .choices
+                    .3
+                    .handle_touch(touch, context, t3, captures, s3)
+                {
+                    TouchResult::Focused(f) => TouchResult::Focused(OneOf4::V3(f)),
+                    TouchResult::Handled => TouchResult::Handled,
+                    TouchResult::Deferred => TouchResult::Deferred,
                 }
             }
             _ => {

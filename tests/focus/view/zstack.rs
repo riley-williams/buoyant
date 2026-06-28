@@ -63,21 +63,21 @@ fn navigate_forward_through_entire_stack() {
         App::new(state, Size::new(100, 100), three_button_stack).with_roles(Role::Button);
 
     let result = harness.focus_forward();
-    assert!(result.requested_focus());
+    assert!(result.is_handled());
     assert!(matches!(result.shape(), Some(ContentShape::Circle(_))));
 
     harness.select();
     assert_eq!(harness.state().a, 1);
 
     let result = harness.next();
-    assert!(result.requested_focus());
+    assert!(result.is_handled());
     assert!(matches!(result.shape(), Some(ContentShape::Rectangle(_))));
 
     harness.select();
     assert_eq!(harness.state().b, 1);
 
     let result = harness.next();
-    assert!(result.requested_focus());
+    assert!(result.is_handled());
     assert!(matches!(
         result.shape(),
         Some(ContentShape::RoundedRectangle(_))
@@ -95,7 +95,7 @@ fn navigate_backward_through_entire_stack() {
         .with_focus_at_end();
 
     let result = harness.focus_backward();
-    assert!(result.requested_focus());
+    assert!(result.is_handled());
     assert!(matches!(
         result.shape(),
         Some(ContentShape::RoundedRectangle(_))
@@ -105,14 +105,14 @@ fn navigate_backward_through_entire_stack() {
     assert_eq!(harness.state().c, 1);
 
     let result = harness.previous();
-    assert!(result.requested_focus());
+    assert!(result.is_handled());
     assert!(matches!(result.shape(), Some(ContentShape::Rectangle(_))));
 
     harness.select();
     assert_eq!(harness.state().b, 1);
 
     let result = harness.previous();
-    assert!(result.requested_focus());
+    assert!(result.is_handled());
     assert!(matches!(result.shape(), Some(ContentShape::Circle(_))));
 
     harness.select();
@@ -127,7 +127,7 @@ fn skips_unfocusable_back_layer() {
 
     // Should skip unfocusable Rectangle and focus first button (Circle)
     let result = harness.focus_forward();
-    assert!(result.requested_focus());
+    assert!(result.is_handled());
     assert!(matches!(result.shape(), Some(ContentShape::Circle(_))));
 }
 
@@ -138,12 +138,12 @@ fn skips_unfocusable_middle_layer() {
         .with_roles(Role::Button);
 
     let result = harness.focus_forward();
-    assert!(result.requested_focus());
+    assert!(result.is_handled());
     assert!(matches!(result.shape(), Some(ContentShape::Circle(_))));
 
     // Next should skip Rectangle and focus RoundedRectangle
     let result = harness.next();
-    assert!(result.requested_focus());
+    assert!(result.is_handled());
     assert!(matches!(
         result.shape(),
         Some(ContentShape::RoundedRectangle(_))
@@ -159,7 +159,7 @@ fn skips_unfocusable_front_layer() {
     harness.focus_forward();
 
     let result = harness.next();
-    assert!(result.requested_focus());
+    assert!(result.is_handled());
     assert!(matches!(result.shape(), Some(ContentShape::Rectangle(_))));
 
     let result = harness.next();
@@ -174,7 +174,7 @@ fn backward_skips_unfocusable_front_layer() {
         .with_focus_at_end();
 
     let result = harness.focus_backward();
-    assert!(result.requested_focus());
+    assert!(result.is_handled());
     assert!(matches!(result.shape(), Some(ContentShape::Rectangle(_))));
 }
 
@@ -193,11 +193,11 @@ fn nested_zstack_forward_navigation() {
     let mut harness = App::new(state, Size::new(100, 100), nested_zstack).with_roles(Role::Button);
 
     let result = harness.focus_forward();
-    assert!(result.requested_focus());
+    assert!(result.is_handled());
     assert!(matches!(result.shape(), Some(ContentShape::Circle(_))));
 
     let result = harness.next();
-    assert!(result.requested_focus());
+    assert!(result.is_handled());
     assert!(matches!(
         result.shape(),
         Some(ContentShape::RoundedRectangle(_))
@@ -217,7 +217,7 @@ fn nested_zstack_backward_navigation() {
 
     // Since inner ZStack has unfocusable at end, should focus Circle
     let result = harness.previous();
-    assert!(result.requested_focus());
+    assert!(result.is_handled());
     assert!(matches!(result.shape(), Some(ContentShape::Circle(_))));
 }
 
@@ -259,7 +259,7 @@ fn single_item_focus() {
         App::new(state, Size::new(100, 100), single_item_stack).with_roles(Role::Button);
 
     let result = harness.focus_forward();
-    assert!(result.requested_focus());
+    assert!(result.is_handled());
     assert!(matches!(result.shape(), Some(ContentShape::Circle(_))));
 
     harness.select();

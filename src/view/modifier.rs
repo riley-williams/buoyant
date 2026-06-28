@@ -17,7 +17,6 @@ mod exclusive_focus;
 mod fixed_frame;
 mod fixed_size;
 mod flex_frame;
-mod focus_touches;
 mod foreground_color;
 mod geometry_group;
 mod hidden;
@@ -54,7 +53,6 @@ use fixed::traits::ToFixed;
 pub(crate) use fixed_frame::FixedFrame;
 pub(crate) use fixed_size::FixedSize;
 pub(crate) use flex_frame::FlexFrame;
-pub(crate) use focus_touches::FocusTouches;
 pub(crate) use foreground_color::ForegroundStyle;
 pub(crate) use geometry_group::GeometryGroup;
 pub(crate) use hidden::Hidden;
@@ -410,12 +408,6 @@ pub trait ViewModifier: Sized + ViewMarker {
         FlexFrame::new(self)
             .with_infinite_max_width()
             .with_horizontal_alignment(alignment)
-    }
-
-    /// Allows touch events to focus tapped elements. Generally, this should be applied
-    /// once near the root of the view hierarchy.
-    fn focus_touches(self) -> FocusTouches<Self> {
-        FocusTouches::new(self)
     }
 
     /// Sets the foreground color of the modified view and its children.

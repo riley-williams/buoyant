@@ -10,8 +10,6 @@ use crate::{
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
 pub enum Event {
-    /// A touch event.
-    Touch(embedded_touch::Touch),
     /// A scroll event with the given offset.
     Scroll(Point),
     /// A request to move focus, often driven by navigational buttons
@@ -60,19 +58,6 @@ impl From<FocusAction> for Event {
 }
 
 impl Event {
-    /// Returns a new event with the specified offset applied to any point-based data.
-    #[must_use]
-    pub fn offset(&self, offset: Point) -> Self {
-        let mut event = self.clone();
-        match &mut event {
-            Self::Touch(touch) => {
-                touch.location += offset.into();
-            }
-            Self::Scroll(_) | Self::Focus { .. } | Self::KeyDown(_) | Self::KeyUp(_) => {}
-        }
-        event
-    }
-
     /// Returns a new event with the specified focus group set on Focus events.
     ///
     /// Non-focus events are returned unchanged.
@@ -88,6 +73,18 @@ impl Event {
     }
 }
 
+/// The result of handling a touch event.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub enum TouchResult<T> {
+    /// The subtree handled the touch, and focus should updated
+    Focused(T),
+    /// The subtree handled the touch, but focus should not be changed
+    Handled,
+    /// The touch was not handled by the subtree
+    #[default]
+    Deferred,
+}
+
 /// The result of handling an event.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub enum EventResult {
@@ -95,8 +92,6 @@ pub enum EventResult {
     Handled {
         /// The content shape of the focused element
         shape: ContentShape,
-        /// The element which handled the event has focus
-        request_focus: bool,
         /// The group of the focused element
         group: FocusGroup,
     },
@@ -111,7 +106,6 @@ impl EventResult {
     pub const fn handled_unfocused() -> Self {
         Self::Handled {
             shape: ContentShape::Empty,
-            request_focus: false,
             group: focus::GROUP_0,
         }
     }
@@ -121,7 +115,6 @@ impl EventResult {
     pub const fn handled_focused(shape: ContentShape) -> Self {
         Self::Handled {
             shape,
-            request_focus: true,
             group: focus::GROUP_0,
         }
     }
@@ -143,18 +136,6 @@ impl EventResult {
     #[must_use]
     pub const fn is_handled(&self) -> bool {
         matches!(self, Self::Handled { .. })
-    }
-
-    /// Returns true if this result is from an element requesting focus.
-    #[must_use]
-    pub const fn requested_focus(&self) -> bool {
-        matches!(
-            self,
-            Self::Handled {
-                request_focus: true,
-                ..
-            }
-        )
     }
 
     /// Returns the content shape if this result has one.
@@ -234,6 +215,15 @@ pub mod simulator {
     use embedded_graphics_simulator::{SimulatorEvent, sdl2::Keycode};
     use embedded_touch::{Phase, PointerButton, Tool, Touch, TouchPoint};
 
+    /// An input event produced by the simulator.
+    #[derive(Debug, Clone, PartialEq)]
+    pub enum InputEvent {
+        /// A non-touch event (scroll, focus, key, etc.)
+        Event(Event),
+        /// A touch event, routed through `App::send_touch`.
+        Touch(Touch),
+    }
+
     /// Tracks mouse state and converts simulator events to touch events.
     #[derive(Debug, Default)]
     pub struct MouseTracker {
@@ -247,8 +237,8 @@ pub mod simulator {
             Self { touch: None }
         }
 
-        /// Processes a simulator event and returns the corresponding event type.
-        pub fn process_event(&mut self, event: SimulatorEvent) -> Option<Event> {
+        /// Processes a simulator event and returns the corresponding input event.
+        pub fn process_event(&mut self, event: SimulatorEvent) -> Option<InputEvent> {
             match event {
                 SimulatorEvent::MouseButtonDown { point, mouse_btn } => {
                     let touch = Touch {
@@ -260,7 +250,7 @@ pub mod simulator {
                         },
                     };
                     self.touch = Some(touch.clone());
-                    Some(Event::Touch(touch))
+                    Some(InputEvent::Touch(touch))
                 }
                 SimulatorEvent::MouseButtonUp { point, mouse_btn } => {
                     let touch = Touch {
@@ -273,13 +263,13 @@ pub mod simulator {
                     };
 
                     self.touch = None;
-                    Some(Event::Touch(touch))
+                    Some(InputEvent::Touch(touch))
                 }
                 SimulatorEvent::MouseMove { point } => {
                     if let Some(touch) = &mut self.touch {
                         touch.location = TouchPoint::new(point.x, point.y);
                         touch.phase = Phase::Moved;
-                        Some(Event::Touch(touch.clone()))
+                        Some(InputEvent::Touch(touch.clone()))
                     } else {
                         let touch = Touch {
                             id: 0,
@@ -290,7 +280,7 @@ pub mod simulator {
                             },
                         };
 
-                        Some(Event::Touch(touch))
+                        Some(InputEvent::Touch(touch))
                     }
                 }
                 SimulatorEvent::MouseWheel {
@@ -299,15 +289,15 @@ pub mod simulator {
                 } => {
                     if direction == embedded_graphics_simulator::sdl2::MouseWheelDirection::Flipped
                     {
-                        Some(Event::Scroll(Point::new(
+                        Some(InputEvent::Event(Event::Scroll(Point::new(
                             scroll_delta.x * 4,
                             scroll_delta.y * 4,
-                        )))
+                        ))))
                     } else {
-                        Some(Event::Scroll(Point::new(
+                        Some(InputEvent::Event(Event::Scroll(Point::new(
                             -scroll_delta.x * 4,
                             -scroll_delta.y * 4,
-                        )))
+                        ))))
                     }
                 }
                 SimulatorEvent::Quit => None,
@@ -315,12 +305,18 @@ pub mod simulator {
                     keycode,
                     keymod: _,
                     repeat: _,
-                } => keycode.try_into().ok().map(Event::KeyDown),
+                } => keycode
+                    .try_into()
+                    .ok()
+                    .map(|k| InputEvent::Event(Event::KeyDown(k))),
                 SimulatorEvent::KeyUp {
                     keycode,
                     keymod: _,
                     repeat: _,
-                } => keycode.try_into().ok().map(Event::KeyUp),
+                } => keycode
+                    .try_into()
+                    .ok()
+                    .map(|k| InputEvent::Event(Event::KeyUp(k))),
             }
         }
     }

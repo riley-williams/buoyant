@@ -1,5 +1,7 @@
+use embedded_touch::Touch;
+
 use crate::{
-    event::{EventContext, EventResult},
+    event::{EventContext, EventResult, TouchResult},
     focus::{DefaultFocus, FocusAction, FocusDirection},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
@@ -430,6 +432,34 @@ macro_rules! define_branch {
                             "State branch does not match view branch, likely due to improper reuse of layout."
                         );
                         EventResult::default()
+                    }
+                }
+            }
+
+            fn handle_touch(
+                &self,
+                touch: &Touch,
+                context: &EventContext,
+                render_tree: &mut Self::Renderables,
+                captures: &mut Captures,
+                state: &mut Self::State,
+            ) -> TouchResult<Self::FocusTree> {
+                match (self, render_tree, state) {
+                    $(
+                    (Self::$variant(v), render::$name::$variant(t), $name::$variant(s)) => {
+                        match v.handle_touch(touch, context, t, captures, s) {
+                            TouchResult::Focused(f) => TouchResult::Focused($name::$variant(f)),
+                            TouchResult::Handled => TouchResult::Handled,
+                            TouchResult::Deferred => TouchResult::Deferred,
+                        }
+                    }
+                    )+
+                    _ => {
+                        assert!(
+                            !cfg!(debug_assertions),
+                            "State branch does not match view branch, likely due to improper reuse of layout."
+                        );
+                        TouchResult::Deferred
                     }
                 }
             }

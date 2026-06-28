@@ -10,9 +10,11 @@ pub use circle::Circle;
 pub use rectangle::Rectangle;
 pub use rounded_rectangle::RoundedRectangle;
 
+use embedded_touch::Touch;
+
 use crate::{
     environment::LayoutEnvironment,
-    event::EventResult,
+    event::{EventResult, TouchResult},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
     render::{
@@ -143,5 +145,16 @@ where
         _focus: &mut Self::FocusTree,
     ) -> EventResult {
         EventResult::Deferred
+    }
+
+    fn handle_touch(
+        &self,
+        _touch: &Touch,
+        _context: &crate::event::EventContext,
+        _render_tree: &mut Self::Renderables,
+        _captures: &mut Captures,
+        _state: &mut Self::State,
+    ) -> TouchResult<Self::FocusTree> {
+        TouchResult::Deferred
     }
 }

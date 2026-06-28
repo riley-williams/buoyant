@@ -1,8 +1,8 @@
-use embedded_touch::Phase;
+use embedded_touch::{Phase, Touch};
 
 use crate::{
     environment::LayoutEnvironment,
-    event::{Event, EventResult},
+    event::{EventResult, TouchResult},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions, geometry::Rectangle},
     render,
@@ -89,26 +89,38 @@ where
         state: &mut Self::State,
         focus: &mut Self::FocusTree,
     ) -> EventResult {
+        self.child.handle_event(
+            event,
+            context,
+            &mut render_tree.subtree,
+            captures,
+            state,
+            focus,
+        )
+    }
+
+    fn handle_touch(
+        &self,
+        touch: &Touch,
+        context: &crate::event::EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> TouchResult<Self::FocusTree> {
         // only cull inner handling of start touches. Drag/end may move outside the clip rect
         // but they should sill be tracked
-        let should_handle = match event {
-            Event::Touch(touch) => {
-                touch.phase != Phase::Started
-                    || render_tree.clip_rect.contains(&From::from(touch.location))
-            }
-            _ => true,
-        };
+        let should_handle = touch.phase != Phase::Started
+            || render_tree.clip_rect.contains(&From::from(touch.location));
         if should_handle {
-            self.child.handle_event(
-                event,
+            self.child.handle_touch(
+                touch,
                 context,
                 &mut render_tree.subtree,
                 captures,
                 state,
-                focus,
             )
         } else {
-            EventResult::Deferred
+            TouchResult::Deferred
         }
     }
 }

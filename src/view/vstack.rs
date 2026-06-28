@@ -1,8 +1,10 @@
 use core::cmp::max;
 
+use embedded_touch::Touch;
+
 use crate::{
     environment::LayoutEnvironment,
-    event::{Event, EventContext, EventResult},
+    event::{Event, EventContext, EventResult, TouchResult},
     focus::{DefaultFocus, FocusAction, FocusDirection},
     layout::{HorizontalAlignment, LayoutDirection, ResolvedLayout},
     primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions},
@@ -455,6 +457,34 @@ macro_rules! impl_view_for_vstack {
 
                 EventResult::Deferred
             }
+
+            fn handle_touch(
+                &self,
+                touch: &Touch,
+                context: &EventContext,
+                render_tree: &mut Self::Renderables,
+                captures: &mut Captures,
+                state: &mut Self::State,
+            ) -> TouchResult<Self::FocusTree> {
+                $(
+                    match self.items.$n.handle_touch(
+                        touch,
+                        context,
+                        &mut render_tree.$n,
+                        captures,
+                        &mut state.$n,
+                    ) {
+                        TouchResult::Focused(f) => {
+                            return TouchResult::Focused(
+                                super::match_view::[<OneOf $ct>]::[<V $n>](f),
+                            );
+                        }
+                        TouchResult::Handled => return TouchResult::Handled,
+                        TouchResult::Deferred => {}
+                    }
+                )+
+                TouchResult::Deferred
+            }
         }
         }
     };
@@ -573,5 +603,18 @@ where
         self.items
             .0
             .handle_event(event, context, render_tree, captures, state, focus)
+    }
+
+    fn handle_touch(
+        &self,
+        touch: &Touch,
+        context: &EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> TouchResult<Self::FocusTree> {
+        self.items
+            .0
+            .handle_touch(touch, context, render_tree, captures, state)
     }
 }

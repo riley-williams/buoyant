@@ -1,12 +1,14 @@
 use crate::{
     animation::Animation,
     environment::LayoutEnvironment,
-    event::EventResult,
+    event::{EventResult, TouchResult},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
     render::Animate,
     view::{ViewLayout, ViewMarker},
 };
+
+use embedded_touch::Touch;
 
 #[derive(Debug, Clone)]
 pub struct Animated<InnerView, Value> {
@@ -98,6 +100,23 @@ where
             captures,
             &mut state.1,
             focus,
+        )
+    }
+
+    fn handle_touch(
+        &self,
+        touch: &Touch,
+        context: &crate::event::EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> TouchResult<Self::FocusTree> {
+        self.inner.handle_touch(
+            touch,
+            context,
+            &mut render_tree.subtree,
+            captures,
+            &mut state.1,
         )
     }
 }

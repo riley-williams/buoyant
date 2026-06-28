@@ -3,9 +3,11 @@
 
 use core::marker::PhantomData;
 
+use embedded_touch::Touch;
+
 use crate::{
     environment::LayoutEnvironment,
-    event::{Event, EventContext, EventResult},
+    event::{Event, EventContext, EventResult, TouchResult},
     focus::{DefaultFocus, FocusAction, Role},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
@@ -265,25 +267,36 @@ where
                     }
                 }
             };
-        } else if let Event::Touch(touch) = event
-            && render_tree.content_shape().contains(touch.location.into())
-        {
+        }
+
+        EventResult::Deferred
+    }
+
+    fn handle_touch(
+        &self,
+        touch: &Touch,
+        context: &EventContext,
+        render_tree: &mut Self::Renderables,
+        _captures: &mut C,
+        state: &mut Self::State,
+    ) -> TouchResult<Self::FocusTree> {
+        if render_tree.content_shape().contains(touch.location.into()) {
             // Just move focus to this element on touch for now, but we could maybe
             // also support dragging or scroll events.
             match state.0 {
                 RotaryState::UnFocused => {
                     context.request_view_rebuild();
                     state.0 = RotaryState::Focused;
-                    return EventResult::handled_focused(render_tree.content_shape());
+                    return TouchResult::Focused(RotaryFocus::default_first());
                 }
                 RotaryState::Captive | RotaryState::Focused => {
-                    // This prevents focus_touches from sending a `Terminate` event and
-                    // swapping to the new touch focus tree.
-                    return EventResult::handled_unfocused();
+                    // This prevents the App from reasserting focus and swapping to
+                    // the new touch focus tree.
+                    return TouchResult::Handled;
                 }
             }
         }
 
-        EventResult::Deferred
+        TouchResult::Deferred
     }
 }
