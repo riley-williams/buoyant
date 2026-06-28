@@ -6,7 +6,6 @@ mod modifier {
     mod focus_touches;
     mod frame;
     mod hidden;
-    mod multiplex_focus;
     mod opacity;
     mod overlay;
     mod popover;

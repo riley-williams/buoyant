@@ -733,8 +733,7 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
                                     && matches!(
                                         &inner_result,
                                         TouchResult::Focused(_) | TouchResult::Handled
-                                    )
-                                {
+                                    ) {
                                     *target = InteractionTarget::Inner;
                                     inner_result
                                 } else {
@@ -846,11 +845,13 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
                 let permitted_offset_x = render_tree
                     .inner_size
                     .width
-                    .saturating_sub(render_tree.scroll_size.width) as i32;
+                    .saturating_sub(render_tree.scroll_size.width)
+                    as i32;
                 let permitted_offset_y = render_tree
                     .inner_size
                     .height
-                    .saturating_sub(render_tree.scroll_size.height) as i32;
+                    .saturating_sub(render_tree.scroll_size.height)
+                    as i32;
 
                 // Movement beyond the bounds is reduced by half while dragging
                 let mut offset = state.scroll_offset;
