@@ -4,7 +4,7 @@ use std::time::{Duration, Instant};
 
 use buoyant::{
     app::{App, Harness},
-    event::simulator::MouseTracker,
+    event::simulator::{InputEvent, MouseTracker},
     render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _},
     view::prelude::*,
 };
@@ -51,8 +51,13 @@ fn main() {
                 }
                 mouse_tracker.process_event(event)
             })
-            .for_each(|event| {
-                app.send(event);
+            .for_each(|event| match event {
+                InputEvent::Event(e) => {
+                    app.send(e);
+                }
+                InputEvent::Touch(t) => {
+                    app.send_touch(&t);
+                }
             });
         // ANCHOR_END: handle_events
 

@@ -1,11 +1,13 @@
 use crate::{
     environment::LayoutEnvironment,
-    event::EventResult,
+    event::{EventResult, TouchResult},
     layout::ResolvedLayout,
     primitives::{Interpolate, Point, ProposedDimensions},
     render::ShadeSubtree,
     view::{ViewLayout, ViewMarker},
 };
+
+use embedded_touch::Touch;
 
 /// Sets a foreground style
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -92,5 +94,17 @@ impl<Color: Interpolate + Clone, Captures: ?Sized, Inner: ViewLayout<Captures>> 
             state,
             focus,
         )
+    }
+
+    fn handle_touch(
+        &self,
+        touch: &Touch,
+        context: &crate::event::EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> TouchResult<Self::FocusTree> {
+        self.inner
+            .handle_touch(touch, context, &mut render_tree.subtree, captures, state)
     }
 }

@@ -1,11 +1,13 @@
 use crate::{
     environment::LayoutEnvironment,
-    event::{Event, EventContext, EventResult},
+    event::{Event, EventContext, EventResult, TouchResult},
     focus::{DefaultFocus, FocusAction, FocusDirection, FocusGroupSet},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
     view::{ViewLayout, ViewMarker},
 };
+
+use embedded_touch::Touch;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MultiplexFocusTree<T, const N: usize>([Option<T>; N]);
@@ -150,11 +152,6 @@ where
                     };
                     tree
                 }
-                Event::Touch(_) => {
-                    // Touch events route with depth first search, we can generally expect
-                    // child views to want first-focus if uninitialized
-                    focus.get_or_init(index, FocusDirection::Forward)
-                }
             };
 
             // Pass the group-specific focus tree to the child
@@ -180,6 +177,21 @@ where
                 }
             }
             result
+        }
+    }
+
+    fn handle_touch(
+        &self,
+        touch: &Touch,
+        context: &EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> TouchResult<Self::FocusTree> {
+        // FIXME: touch routing for multiplex focus is approximate pending removal of this modifier
+        match self.child.handle_touch(touch, context, render_tree, captures, state) {
+            TouchResult::Focused(_) | TouchResult::Handled => TouchResult::Handled,
+            TouchResult::Deferred => TouchResult::Deferred,
         }
     }
 }

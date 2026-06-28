@@ -1,11 +1,13 @@
 use crate::{
     environment::LayoutEnvironment,
-    event::EventResult,
+    event::{EventResult, TouchResult},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
     render::Offset,
     view::{ViewLayout, ViewMarker},
 };
+
+use embedded_touch::Touch;
 
 #[derive(Debug, Clone)]
 pub struct GeometryGroup<InnerView> {
@@ -85,10 +87,9 @@ where
         state: &mut Self::State,
         focus: &mut Self::FocusTree,
     ) -> EventResult {
-        let event = event.offset(-render_tree.offset);
         self.inner
             .handle_event(
-                &event,
+                event,
                 context,
                 &mut render_tree.subtree,
                 captures,
@@ -96,5 +97,19 @@ where
                 focus,
             )
             .with_offset(render_tree.offset)
+    }
+
+    fn handle_touch(
+        &self,
+        touch: &Touch,
+        context: &crate::event::EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> TouchResult<Self::FocusTree> {
+        let mut touch = touch.clone();
+        touch.location -= render_tree.offset.into();
+        self.inner
+            .handle_touch(&touch, context, &mut render_tree.subtree, captures, state)
     }
 }

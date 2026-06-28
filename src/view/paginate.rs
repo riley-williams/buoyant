@@ -1,9 +1,11 @@
 //! A view that manages pagination of a child view using a separate focus group to
 //! trigger page changes.
 
+use embedded_touch::Touch;
+
 use crate::{
     environment::LayoutEnvironment,
-    event::{Event, EventContext, EventResult},
+    event::{Event, EventContext, EventResult, TouchResult},
     focus::{DefaultFocus, FocusAction, FocusGroup},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
@@ -157,5 +159,23 @@ where
             state,
             &mut focus.inner,
         )
+    }
+
+    fn handle_touch(
+        &self,
+        touch: &Touch,
+        context: &EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut C,
+        state: &mut Self::State,
+    ) -> TouchResult<Self::FocusTree> {
+        match self
+            .view
+            .handle_touch(touch, context, render_tree, captures, state)
+        {
+            TouchResult::Focused(f) => TouchResult::Focused(PaginateFocusTree { inner: f }),
+            TouchResult::Handled => TouchResult::Handled,
+            TouchResult::Deferred => TouchResult::Deferred,
+        }
     }
 }

@@ -1,6 +1,8 @@
+use embedded_touch::Touch;
+
 use crate::{
     environment::LayoutEnvironment,
-    event::{EventContext, EventResult},
+    event::{EventContext, EventResult, TouchResult},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
     view::{ViewLayout, ViewMarker},
@@ -101,5 +103,17 @@ impl<
             state,
             focus,
         )
+    }
+
+    fn handle_touch(
+        &self,
+        touch: &Touch,
+        context: &EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> TouchResult<Self::FocusTree> {
+        self.inner
+            .handle_touch(touch, context, render_tree, (self.capture_fn)(captures), state)
     }
 }

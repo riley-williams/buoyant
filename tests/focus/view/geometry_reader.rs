@@ -52,7 +52,7 @@ fn focus_reaches_inner_view() {
         .with_roles(Role::Button);
 
     let result = harness.focus_forward();
-    assert!(result.requested_focus());
+    assert!(result.is_handled());
     assert!(matches!(result.shape(), Some(ContentShape::Circle(_))));
 }
 
@@ -76,15 +76,15 @@ fn navigate_through_inner_stack() {
         App::new(state, Size::new(100, 100), geometry_reader_with_stack).with_roles(Role::Button);
 
     let result = harness.focus_forward();
-    assert!(result.requested_focus());
+    assert!(result.is_handled());
     assert!(matches!(result.shape(), Some(ContentShape::Circle(_))));
 
     let result = harness.next();
-    assert!(result.requested_focus());
+    assert!(result.is_handled());
     assert!(matches!(result.shape(), Some(ContentShape::Rectangle(_))));
 
     let result = harness.next();
-    assert!(result.requested_focus());
+    assert!(result.is_handled());
     assert!(matches!(
         result.shape(),
         Some(ContentShape::RoundedRectangle(_))
@@ -105,11 +105,11 @@ fn backward_navigation_in_inner_stack() {
     harness.next();
 
     let result = harness.previous();
-    assert!(result.requested_focus());
+    assert!(result.is_handled());
     assert!(matches!(result.shape(), Some(ContentShape::Rectangle(_))));
 
     let result = harness.previous();
-    assert!(result.requested_focus());
+    assert!(result.is_handled());
     assert!(matches!(result.shape(), Some(ContentShape::Circle(_))));
 }
 
@@ -133,11 +133,11 @@ fn geometry_reader_in_stack_forward() {
     assert!(matches!(result.shape(), Some(ContentShape::Circle(_))));
 
     let result = harness.next();
-    assert!(result.requested_focus());
+    assert!(result.is_handled());
     assert!(matches!(result.shape(), Some(ContentShape::Rectangle(_))));
 
     let result = harness.next();
-    assert!(result.requested_focus());
+    assert!(result.is_handled());
     assert!(matches!(
         result.shape(),
         Some(ContentShape::RoundedRectangle(_))
@@ -158,11 +158,11 @@ fn geometry_reader_in_stack_backward() {
     ));
 
     let result = harness.previous();
-    assert!(result.requested_focus());
+    assert!(result.is_handled());
     assert!(matches!(result.shape(), Some(ContentShape::Rectangle(_))));
 
     let result = harness.previous();
-    assert!(result.requested_focus());
+    assert!(result.is_handled());
     assert!(matches!(result.shape(), Some(ContentShape::Circle(_))));
 }
 
@@ -173,7 +173,7 @@ fn nested_geometry_readers_focus() {
         App::new(state, Size::new(100, 100), nested_geometry_readers).with_roles(Role::Button);
 
     let result = harness.focus_forward();
-    assert!(result.requested_focus());
+    assert!(result.is_handled());
     assert!(matches!(result.shape(), Some(ContentShape::Circle(_))));
 
     harness.select();
@@ -189,7 +189,7 @@ fn focus_backward_from_end() {
 
     // Focus backward should start at last element
     let result = harness.focus_backward();
-    assert!(result.requested_focus());
+    assert!(result.is_handled());
     assert!(matches!(
         result.shape(),
         Some(ContentShape::RoundedRectangle(_))

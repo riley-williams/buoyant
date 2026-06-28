@@ -1,3 +1,5 @@
+use embedded_touch::Touch;
+
 use crate::{
     environment::LayoutEnvironment,
     font::{CustomSize, Font, FontMetrics},
@@ -12,7 +14,7 @@ use core::fmt::Write;
 mod character_wrap;
 mod word_wrap;
 
-use crate::event::EventResult;
+use crate::event::{EventResult, TouchResult};
 
 pub use character_wrap::CharacterWrap;
 pub use word_wrap::WordWrap;
@@ -436,6 +438,17 @@ where
     ) -> EventResult {
         // FIXME: check for text mask
         EventResult::Deferred
+    }
+
+    fn handle_touch(
+        &self,
+        _touch: &Touch,
+        _context: &crate::event::EventContext,
+        _render_tree: &mut Self::Renderables,
+        _captures: &mut Captures,
+        _state: &mut Self::State,
+    ) -> TouchResult<Self::FocusTree> {
+        TouchResult::Deferred
     }
 }
 

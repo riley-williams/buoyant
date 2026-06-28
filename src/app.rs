@@ -8,13 +8,14 @@ use core::time::Duration;
 
 use crate::{
     environment::DefaultEnvironment,
-    event::{Event, EventContext, EventResult},
-    focus::{DefaultFocus, Role, RoleSet},
+    event::{Event, EventContext, EventResult, TouchResult},
+    focus::{DefaultFocus, FocusAction, FocusDirection, Role, RoleSet},
     primitives::{Point, Size, transform::LinearTransform},
     render::{AnimatedJoin, AnimationDomain, ContentShape, Render},
     render_target::{RenderTarget, SolidBrush, Stroke},
     view::{View, ViewLayout},
 };
+use embedded_touch::Touch;
 
 mod harness;
 pub use harness::Harness;
@@ -345,5 +346,43 @@ where
             self.requires_redraw = true;
         }
         result
+    }
+
+    fn send_touch(&mut self, touch: &Touch) {
+        let context = EventContext::new(self.elapsed).with_roles(self.roles);
+        let target_tree = self.trees.target_mut();
+
+        let result = self.view.handle_touch(
+            touch,
+            &context,
+            target_tree,
+            &mut self.state,
+            &mut self.view_state,
+        );
+
+        match result {
+            TouchResult::Focused(new_focus) => {
+                // Tear down the previously focused element.
+                _ = self.send(Event::Focus {
+                    action: FocusAction::Teardown,
+                    group: crate::focus::GROUP_0,
+                });
+                // Install the new focus tree and reassert focus forward.
+                self.focus_tree = new_focus;
+                let reassert = self.send(Event::Focus {
+                    action: FocusAction::Focus(FocusDirection::Forward),
+                    group: crate::focus::GROUP_0,
+                });
+                self.update_focus_shape(&reassert);
+            }
+            TouchResult::Handled | TouchResult::Deferred => {}
+        }
+
+        if context.view_rebuild_requested.get() {
+            self.requires_rebuild = true;
+        }
+        if context.redraw_requested.get() {
+            self.requires_redraw = true;
+        }
     }
 }

@@ -20,7 +20,7 @@ fn frame_sets_shape_size() {
     let mut harness = App::new(state, Size::new(100, 100), view).with_roles(Role::Button);
 
     let result = harness.focus_forward();
-    assert!(result.requested_focus());
+    assert!(result.is_handled());
 
     // Shape should reflect the explicit frame size
     if let Some(ContentShape::Circle(circle)) = result.shape() {
@@ -45,7 +45,7 @@ fn frame_with_padding_accumulates() {
     let mut harness = App::new(state, Size::new(100, 100), view).with_roles(Role::Button);
 
     let result = harness.focus_forward();
-    assert!(result.requested_focus());
+    assert!(result.is_handled());
 
     // Padding affects the outer layout but the inner shape remains the Circle
     if let Some(ContentShape::Circle(circle)) = result.shape() {

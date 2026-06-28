@@ -1,8 +1,10 @@
 use core::marker::PhantomData;
 
+use embedded_touch::Touch;
+
 use crate::{
     environment::LayoutEnvironment,
-    event::{EventContext, EventResult},
+    event::{EventContext, EventResult, TouchResult},
     layout::ResolvedLayout,
     primitives::{Dimensions, ProposedDimensions, Size, geometry::Rectangle},
     render::Container,
@@ -182,6 +184,38 @@ where
                 captures,
                 &mut inner_state,
                 focus,
+            );
+            *state = Some(inner_state);
+            result
+        }
+    }
+
+    fn handle_touch(
+        &self,
+        touch: &Touch,
+        context: &EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> TouchResult<Self::FocusTree> {
+        // TODO: Rebuilding the view here seems inefficient, maybe cache the view in the state?
+        let view = (self.inner)(render_tree.frame.size);
+        if let Some(inner_state) = state {
+            view.handle_touch(
+                touch,
+                context,
+                &mut render_tree.child,
+                captures,
+                inner_state,
+            )
+        } else {
+            let mut inner_state = view.build_state(captures);
+            let result = view.handle_touch(
+                touch,
+                context,
+                &mut render_tree.child,
+                captures,
+                &mut inner_state,
             );
             *state = Some(inner_state);
             result

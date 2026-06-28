@@ -40,7 +40,6 @@ fn view(state: &State) -> impl View<(), State> + use<> {
         })
         .bound_focus(focus::BoundaryBehavior::Wrap),
     )
-    .focus_touches()
 }
 
 #[test]

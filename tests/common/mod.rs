@@ -4,8 +4,6 @@ use std::time::Duration;
 
 use buoyant::{
     environment::{DefaultEnvironment, LayoutEnvironment},
-    event::Event,
-    focus::DefaultFocus,
     layout::{Alignment, LayoutDirection},
     primitives::{Point, ProposedDimensions, Size},
     render_target::FixedTextBuffer,
@@ -91,39 +89,39 @@ where
 }
 
 #[allow(dead_code)]
-pub fn touch_down(x: i32, y: i32) -> Event {
-    Event::Touch(Touch {
+pub fn touch_down(x: i32, y: i32) -> Touch {
+    Touch {
         id: 0,
         location: TouchPoint::new(x, y),
         phase: Phase::Started,
         tool: Tool::Pointer {
             button: PointerButton::Primary,
         },
-    })
+    }
 }
 
 #[allow(dead_code)]
-pub fn touch_up(x: i32, y: i32) -> Event {
-    Event::Touch(Touch {
+pub fn touch_up(x: i32, y: i32) -> Touch {
+    Touch {
         id: 0,
         location: TouchPoint::new(x, y),
         phase: Phase::Ended,
         tool: Tool::Pointer {
             button: PointerButton::Primary,
         },
-    })
+    }
 }
 
 #[allow(dead_code)]
-pub fn touch_move(x: i32, y: i32) -> Event {
-    Event::Touch(Touch {
+pub fn touch_move(x: i32, y: i32) -> Touch {
+    Touch {
         id: 0,
         location: TouchPoint::new(x, y),
         phase: Phase::Moved,
         tool: Tool::Pointer {
             button: PointerButton::Primary,
         },
-    })
+    }
 }
 
 /// Tap at the given coordinates on the view.
@@ -151,31 +149,29 @@ pub fn tap<V: View<char, Data>, Data: ?Sized>(
         state,
     );
 
-    view.handle_event(
-        &Event::Touch(Touch::new(
+    view.handle_touch(
+        &Touch::new(
             0,
             Point::new(x, y).into(),
             embedded_touch::Phase::Started,
             Tool::Finger,
-        )),
+        ),
         &buoyant::event::EventContext::new(Duration::ZERO),
         &mut tree,
         captures,
         state,
-        &mut DefaultFocus::default_first(),
     );
 
-    view.handle_event(
-        &Event::Touch(Touch::new(
+    view.handle_touch(
+        &Touch::new(
             0,
             Point::new(x, y).into(),
             embedded_touch::Phase::Ended,
             Tool::Finger,
-        )),
+        ),
         &buoyant::event::EventContext::new(Duration::ZERO),
         &mut tree,
         captures,
         state,
-        &mut DefaultFocus::default_first(),
     );
 }

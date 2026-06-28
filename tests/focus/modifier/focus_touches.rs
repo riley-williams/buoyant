@@ -20,7 +20,6 @@ fn three_buttons_with_focus_touches(_: &State) -> impl View<(), State> + use<> {
         RoundedRectangle::new(10).frame_sized(50, 50),
         Button::new(|s: &mut State| s.c += 1, |_| RoundedRectangle::new(5)).frame_sized(50, 50),
     ))
-    .focus_touches()
 }
 
 #[test]
@@ -78,7 +77,6 @@ fn grouped_buttons(_: &State) -> impl View<(), State> + use<> {
             .unfocusable(),
     ))
     .multiplex_focus([focus::GROUP_0.into(), focus::GROUP_1.into()])
-    .focus_touches()
 }
 
 #[test]

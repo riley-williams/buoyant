@@ -58,10 +58,10 @@ fn unfocused_behavior() {
     assert!(
         harness
             .focus_forward_group(focus::GROUP_0)
-            .requested_focus()
+            .is_handled()
     );
-    assert!(!harness.blur_group(focus::GROUP_0).requested_focus());
-    assert!(harness.select_group(focus::GROUP_0).requested_focus());
+    assert!(!harness.blur_group(focus::GROUP_0).is_handled());
+    assert!(harness.select_group(focus::GROUP_0).is_handled());
 
     // Programmer error to blur/select when no focus was obtained
     assert_eq!(harness.blur_group(focus::GROUP_1), EventResult::Deferred);
