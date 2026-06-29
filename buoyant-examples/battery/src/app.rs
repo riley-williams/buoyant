@@ -1,9 +1,8 @@
 use core::time::Duration;
 
 use buoyant::view::prelude::*;
-use buoyant::{environment::DefaultEnvironment, primitives::ProposedDimensions, render::Render};
 
-use crate::{charge_simulator::ChargeSim, color, view::Screen};
+use crate::{charge_simulator::ChargeSim, view::Screen};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ButtonState {
@@ -29,69 +28,25 @@ impl ButtonState {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct App {
-    state: State,
-    is_dirty: bool,
-}
-
-#[derive(Debug, Clone, PartialEq)]
 pub struct State {
     pub simulator: ChargeSim,
     pub screen: Screen,
     pub auto_off: bool,
 }
 
-impl App {
+impl State {
     #[must_use]
     pub fn new(simulator: ChargeSim) -> Self {
         Self {
-            state: State {
-                simulator,
-                screen: Screen::default(),
-                auto_off: false,
-            },
-            is_dirty: false,
+            simulator,
+            screen: Screen::default(),
+            auto_off: false,
         }
     }
+}
 
-    pub fn state_mut(&mut self) -> &mut State {
-        self.is_dirty = true;
-        &mut self.state
-    }
-
-    #[must_use]
-    pub fn state(&self) -> &State {
-        &self.state
-    }
-
-    pub fn reset_dirty(&mut self) -> bool {
-        let was_dirty = self.is_dirty;
-        self.is_dirty = false;
-        was_dirty
-    }
-
-    #[must_use]
-    pub fn tree(
-        &self,
-        dimensions: ProposedDimensions,
-        app_time: Duration,
-    ) -> impl Render<color::ColorFormat> + use<> {
-        let env = DefaultEnvironment::new(app_time);
-        let view = crate::view::root_view(
-            self.state.screen,
-            &self.state.simulator.battery,
-            self.state.auto_off,
-        );
-        // FIXME: State is intended to persist across instantiations of view, layout, and render
-        // trees
-        let mut state = view.build_state(&mut ());
-        let layout = view.layout(&dimensions, &env, &mut (), &mut state);
-        view.render_tree(
-            &layout.sublayouts,
-            buoyant::primitives::Point::zero(),
-            &env,
-            &mut (),
-            &mut state,
-        )
-    }
+/// The root view function used by [`buoyant::app::App`].
+#[must_use]
+pub fn root_view(state: &State) -> impl View<crate::color::ColorFormat, State> + use<> {
+    crate::view::root_view(state.screen, &state.simulator.battery, state.auto_off)
 }

@@ -1,13 +1,14 @@
 use buoyant::view::prelude::*;
 
 use crate::{
+    app::State,
     color::{self, ColorFormat},
     font,
     state::BatteryStatus,
 };
 
 #[must_use]
-pub fn view(_battery: &BatteryStatus) -> impl View<ColorFormat, ()> + use<> {
+pub fn view(_battery: &BatteryStatus) -> impl View<ColorFormat, State> + use<> {
     ViewThatFits::new(FitAxis::Vertical, {
         VStack::new((
             labeled_pair("Temperature", "23 C / 73 F", HorizontalAlignment::Leading),
@@ -41,7 +42,7 @@ pub fn labeled_pair<'a>(
     label: &'a str,
     value: &'a str,
     alignment: HorizontalAlignment,
-) -> impl View<ColorFormat, ()> + use<'a> {
+) -> impl View<ColorFormat, State> + use<'a> {
     VStack::new((
         Text::new(value, &font::BODY_BOLD).foreground_color(color::CONTENT),
         Text::new(label, &font::FOOTNOTE).foreground_color(color::SECONDARY_CONTENT),

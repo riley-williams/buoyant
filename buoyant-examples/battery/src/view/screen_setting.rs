@@ -3,12 +3,13 @@ use core::time::Duration;
 use buoyant::{if_view, view::prelude::*};
 
 use crate::{
+    app::State,
     color::{self, ColorFormat},
     font,
 };
 
 #[must_use]
-pub fn view(auto_off: bool) -> impl View<ColorFormat, ()> + use<> {
+pub fn view(auto_off: bool) -> impl View<ColorFormat, State> + use<> {
     VStack::new((
         Text::new("Auto Screen Off", &font::SUBTITLE)
             .multiline_text_alignment(HorizontalTextAlignment::Center),
@@ -19,7 +20,7 @@ pub fn view(auto_off: bool) -> impl View<ColorFormat, ()> + use<> {
     .with_spacing(5)
 }
 
-fn toggle(is_on: bool) -> impl View<ColorFormat, ()> + use<> {
+fn toggle(is_on: bool) -> impl View<ColorFormat, State> + use<> {
     let (txt_lhs, txt_rhs) = if is_on {
         (color::GREEN, color::BLACK)
     } else {
