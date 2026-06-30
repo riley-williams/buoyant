@@ -5,13 +5,13 @@
 use core::array;
 use core::cmp::max;
 
-use crate::environment::LayoutEnvironment;
-use crate::event::{Event, EventContext, EventResult, Key};
-use crate::focus::{FocusTree, FocusAction, FocusDirection, FocusGroup};
-use crate::layout::{HorizontalAlignment, LayoutDirection, ResolvedLayout, VerticalAlignment};
-use crate::primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions};
-use crate::transition::Opacity;
-use crate::view::{ViewLayout, ViewMarker};
+use buoyant::environment::LayoutEnvironment;
+use buoyant::event::{Event, EventContext, EventResult, Key};
+use buoyant::focus::{FocusTree, FocusAction, FocusDirection, FocusGroup};
+use buoyant::layout::{HorizontalAlignment, LayoutDirection, ResolvedLayout, VerticalAlignment};
+use buoyant::primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions};
+use buoyant::transition::Opacity;
+use buoyant::view::{ViewLayout, ViewMarker};
 
 use FocusAction::{Blur, Select};
 
@@ -160,7 +160,7 @@ pub struct Focus<T: FocusTree> {
     tree: T,
 }
 
-impl<L: Clone + PartialEq + Default, const R: usize, const C: usize> TableLayout<L, R, C> {
+impl<L: Clone + PartialEq, const R: usize, const C: usize> TableLayout<L, R, C> {
     pub fn new(
         sublayouts: Array<C, Array<R, ResolvedLayout<L>>>,
         size: Dimensions,
@@ -173,14 +173,10 @@ impl<L: Clone + PartialEq + Default, const R: usize, const C: usize> TableLayout
             },
         }
     }
+
     #[must_use]
-    pub fn empty() -> Array<C, Array<R, ResolvedLayout<L>>> {
-        Array(array::from_fn(|_| {
-            Array(array::from_fn(|_| ResolvedLayout {
-                sublayouts: L::default(),
-                resolved_size: Dimensions::new(0, 0),
-            }))
-        }))
+    pub fn filled(throwaway: &ResolvedLayout<L>) -> Array<C, Array<R, ResolvedLayout<L>>> {
+        Array(array::from_fn(|_| Array(array::from_fn(|_| throwaway.clone()))))
     }
 }
 
@@ -364,7 +360,6 @@ where
     F: Fn(M::Output) -> V,
     Captures: ?Sized,
     V: ViewLayout<Captures>,
-    V::Sublayout: Default,
 {
     type Sublayout = TableLayout<V::Sublayout, R, C>;
     type State = TableState<V::State, R, C>;
@@ -399,8 +394,18 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> ResolvedLayout<Self::Sublayout> {
+        let throwaway = {
+            let view = (self.build_view)(self.items.index(0, 0));
+            view.layout(
+                &ProposedDimensions::compact(),
+                env,
+                captures,
+                &mut state.cell_states[0][0],
+            )
+        };
+
         // hopefully will not construct on stack
-        let mut sublayouts = TableLayout::<V::Sublayout, R, C>::empty();
+        let mut sublayouts = TableLayout::<V::Sublayout, R, C>::filled(&throwaway);
 
         let mut layout_fn = |c: usize, r: usize, offer: ProposedDimensions| {
             debug_assert!(c < self.width && r < self.height);
@@ -1134,7 +1139,7 @@ fn layout_n(
 mod render {
     use heapless::Vec;
 
-    use crate::{
+    use buoyant::{
         primitives::{
             Dimensions, Interpolate, Point, Size, geometry::Rectangle, transform::LinearTransform,
         },

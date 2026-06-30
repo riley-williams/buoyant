@@ -14,6 +14,7 @@ mod hardware_input_input_line;
 mod mock_data;
 mod settings;
 mod table;
+mod table_view;
 
 use std::process::exit;
 use std::time::{Duration, Instant};

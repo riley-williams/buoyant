@@ -2,7 +2,7 @@ use crate::FONT;
 use crate::definitions::{GoodPixelColor, IeName, MAX_COLS, MAX_ROWS, Palette, RenderData, State};
 use buoyant::view::popover::Dismissal;
 use buoyant::view::prelude::*;
-use buoyant::view::table::{Table, TableIndex};
+use crate::table_view::{Table, TableIndex};
 use heapless::String;
 
 use std::fmt::Write;
