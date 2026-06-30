@@ -2,7 +2,7 @@ use core::time::Duration;
 
 use buoyant::{
     event::EventContext,
-    focus::DefaultFocus,
+    focus::FocusTree,
     primitives::Size,
     render::{AnimationDomain, Render},
     render_target::FixedTextBuffer,
@@ -56,7 +56,7 @@ fn scroll_down_animates_back() {
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
     assert!(event_result.is_handled());
 
@@ -67,7 +67,7 @@ fn scroll_down_animates_back() {
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
     assert!(event_result.is_handled());
 
@@ -90,7 +90,7 @@ fn scroll_down_animates_back() {
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
     assert!(event_result.is_handled());
 

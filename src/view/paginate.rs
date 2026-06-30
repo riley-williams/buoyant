@@ -4,7 +4,7 @@
 use crate::{
     environment::LayoutEnvironment,
     event::{Event, EventContext, EventResult},
-    focus::{DefaultFocus, FocusAction, FocusGroup},
+    focus::{FocusTree, FocusAction, FocusGroup},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
     render::IntrinsicShape,
@@ -64,7 +64,7 @@ pub struct PaginateFocusTree<T> {
     child: T,
 }
 
-impl<T: DefaultFocus> DefaultFocus for PaginateFocusTree<T> {
+impl<T: FocusTree> FocusTree for PaginateFocusTree<T> {
     fn default_first() -> Self {
         Self {
             child: T::default_first(),

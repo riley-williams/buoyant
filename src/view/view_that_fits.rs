@@ -1,7 +1,7 @@
 use crate::{
     environment::LayoutEnvironment,
     event::EventResult,
-    focus::{DefaultFocus, FocusAction, FocusDirection},
+    focus::{FocusTree, FocusAction, FocusDirection},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimension, ProposedDimensions},
     render,
@@ -329,16 +329,16 @@ where
                 {
                     let inner_focus = match focus_event {
                         FocusAction::Focus(FocusDirection::Backward) | FocusAction::Previous => {
-                            focus.v0_or_init(DefaultFocus::default_last())
+                            focus.v0_or_init(FocusTree::default_last())
                         }
-                        _ => focus.v0_or_init(DefaultFocus::default_first()),
+                        _ => focus.v0_or_init(FocusTree::default_first()),
                     };
 
                     self.choices
                         .0
                         .handle_event(event, context, t0, captures, s0, inner_focus)
                 } else {
-                    let inner_focus = focus.v0_or_init(DefaultFocus::default_first());
+                    let inner_focus = focus.v0_or_init(FocusTree::default_first());
                     self.choices
                         .0
                         .handle_event(event, context, t0, captures, s0, inner_focus)
@@ -352,16 +352,16 @@ where
                 {
                     let inner_focus = match focus_event {
                         FocusAction::Focus(FocusDirection::Backward) | FocusAction::Previous => {
-                            focus.v1_or_init(DefaultFocus::default_last())
+                            focus.v1_or_init(FocusTree::default_last())
                         }
-                        _ => focus.v1_or_init(DefaultFocus::default_first()),
+                        _ => focus.v1_or_init(FocusTree::default_first()),
                     };
 
                     self.choices
                         .1
                         .handle_event(event, context, t1, captures, s1, inner_focus)
                 } else {
-                    let inner_focus = focus.v1_or_init(DefaultFocus::default_first());
+                    let inner_focus = focus.v1_or_init(FocusTree::default_first());
                     self.choices
                         .1
                         .handle_event(event, context, t1, captures, s1, inner_focus)
@@ -539,16 +539,16 @@ where
                 {
                     let inner_focus = match focus_event {
                         FocusAction::Focus(FocusDirection::Backward) | FocusAction::Previous => {
-                            focus.v0_or_init(DefaultFocus::default_last())
+                            focus.v0_or_init(FocusTree::default_last())
                         }
-                        _ => focus.v0_or_init(DefaultFocus::default_first()),
+                        _ => focus.v0_or_init(FocusTree::default_first()),
                     };
 
                     self.choices
                         .0
                         .handle_event(event, context, t0, captures, s0, inner_focus)
                 } else {
-                    let inner_focus = focus.v0_or_init(DefaultFocus::default_first());
+                    let inner_focus = focus.v0_or_init(FocusTree::default_first());
                     self.choices
                         .0
                         .handle_event(event, context, t0, captures, s0, inner_focus)
@@ -562,16 +562,16 @@ where
                 {
                     let inner_focus = match focus_event {
                         FocusAction::Focus(FocusDirection::Backward) | FocusAction::Previous => {
-                            focus.v1_or_init(DefaultFocus::default_last())
+                            focus.v1_or_init(FocusTree::default_last())
                         }
-                        _ => focus.v1_or_init(DefaultFocus::default_first()),
+                        _ => focus.v1_or_init(FocusTree::default_first()),
                     };
 
                     self.choices
                         .1
                         .handle_event(event, context, t1, captures, s1, inner_focus)
                 } else {
-                    let inner_focus = focus.v1_or_init(DefaultFocus::default_first());
+                    let inner_focus = focus.v1_or_init(FocusTree::default_first());
                     self.choices
                         .1
                         .handle_event(event, context, t1, captures, s1, inner_focus)
@@ -585,16 +585,16 @@ where
                 {
                     let inner_focus = match focus_event {
                         FocusAction::Focus(FocusDirection::Backward) | FocusAction::Previous => {
-                            focus.v2_or_init(DefaultFocus::default_last())
+                            focus.v2_or_init(FocusTree::default_last())
                         }
-                        _ => focus.v2_or_init(DefaultFocus::default_first()),
+                        _ => focus.v2_or_init(FocusTree::default_first()),
                     };
 
                     self.choices
                         .2
                         .handle_event(event, context, t2, captures, s2, inner_focus)
                 } else {
-                    let inner_focus = focus.v2_or_init(DefaultFocus::default_first());
+                    let inner_focus = focus.v2_or_init(FocusTree::default_first());
                     self.choices
                         .2
                         .handle_event(event, context, t2, captures, s2, inner_focus)
@@ -807,15 +807,15 @@ where
                 {
                     let inner_focus = match focus_event {
                         FocusAction::Focus(FocusDirection::Backward) | FocusAction::Previous => {
-                            focus.v0_or_init(DefaultFocus::default_last())
+                            focus.v0_or_init(FocusTree::default_last())
                         }
-                        _ => focus.v0_or_init(DefaultFocus::default_first()),
+                        _ => focus.v0_or_init(FocusTree::default_first()),
                     };
                     self.choices
                         .0
                         .handle_event(event, context, t0, captures, s0, inner_focus)
                 } else {
-                    let inner_focus = focus.v0_or_init(DefaultFocus::default_first());
+                    let inner_focus = focus.v0_or_init(FocusTree::default_first());
                     self.choices
                         .0
                         .handle_event(event, context, t0, captures, s0, inner_focus)
@@ -829,15 +829,15 @@ where
                 {
                     let inner_focus = match focus_event {
                         FocusAction::Focus(FocusDirection::Backward) | FocusAction::Previous => {
-                            focus.v1_or_init(DefaultFocus::default_last())
+                            focus.v1_or_init(FocusTree::default_last())
                         }
-                        _ => focus.v1_or_init(DefaultFocus::default_first()),
+                        _ => focus.v1_or_init(FocusTree::default_first()),
                     };
                     self.choices
                         .1
                         .handle_event(event, context, t1, captures, s1, inner_focus)
                 } else {
-                    let inner_focus = focus.v1_or_init(DefaultFocus::default_first());
+                    let inner_focus = focus.v1_or_init(FocusTree::default_first());
                     self.choices
                         .1
                         .handle_event(event, context, t1, captures, s1, inner_focus)
@@ -851,15 +851,15 @@ where
                 {
                     let inner_focus = match focus_event {
                         FocusAction::Focus(FocusDirection::Backward) | FocusAction::Previous => {
-                            focus.v2_or_init(DefaultFocus::default_last())
+                            focus.v2_or_init(FocusTree::default_last())
                         }
-                        _ => focus.v2_or_init(DefaultFocus::default_first()),
+                        _ => focus.v2_or_init(FocusTree::default_first()),
                     };
                     self.choices
                         .2
                         .handle_event(event, context, t2, captures, s2, inner_focus)
                 } else {
-                    let inner_focus = focus.v2_or_init(DefaultFocus::default_first());
+                    let inner_focus = focus.v2_or_init(FocusTree::default_first());
                     self.choices
                         .2
                         .handle_event(event, context, t2, captures, s2, inner_focus)
@@ -873,15 +873,15 @@ where
                 {
                     let inner_focus = match focus_event {
                         FocusAction::Focus(FocusDirection::Backward) | FocusAction::Previous => {
-                            focus.v3_or_init(DefaultFocus::default_last())
+                            focus.v3_or_init(FocusTree::default_last())
                         }
-                        _ => focus.v3_or_init(DefaultFocus::default_first()),
+                        _ => focus.v3_or_init(FocusTree::default_first()),
                     };
                     self.choices
                         .3
                         .handle_event(event, context, t3, captures, s3, inner_focus)
                 } else {
-                    let inner_focus = focus.v3_or_init(DefaultFocus::default_first());
+                    let inner_focus = focus.v3_or_init(FocusTree::default_first());
                     self.choices
                         .3
                         .handle_event(event, context, t3, captures, s3, inner_focus)

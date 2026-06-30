@@ -7,7 +7,7 @@ use core::cmp::max;
 
 use crate::environment::LayoutEnvironment;
 use crate::event::{Event, EventContext, EventResult, Key};
-use crate::focus::{DefaultFocus, FocusAction, FocusDirection, FocusGroup};
+use crate::focus::{FocusTree, FocusAction, FocusDirection, FocusGroup};
 use crate::layout::{HorizontalAlignment, LayoutDirection, ResolvedLayout, VerticalAlignment};
 use crate::primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions};
 use crate::transition::Opacity;
@@ -154,7 +154,7 @@ pub struct TableState<VState, const R: usize, const C: usize> {
 }
 
 #[derive(Debug, Clone)]
-pub struct Focus<T: DefaultFocus> {
+pub struct Focus<T: FocusTree> {
     x: usize,
     y: usize,
     tree: T,
@@ -184,7 +184,7 @@ impl<L: Clone + PartialEq + Default, const R: usize, const C: usize> TableLayout
     }
 }
 
-impl<T: DefaultFocus> DefaultFocus for Focus<T> {
+impl<T: FocusTree> FocusTree for Focus<T> {
     fn default_first() -> Self {
         Self {
             x: 0,
@@ -205,7 +205,7 @@ impl<T: DefaultFocus> DefaultFocus for Focus<T> {
     }
 }
 
-impl<T: DefaultFocus> Focus<T> {
+impl<T: FocusTree> Focus<T> {
     fn normalize_sentinels(&mut self, width: usize, height: usize) {
         if self.x == usize::MAX {
             self.x = width.saturating_sub(1);
@@ -906,7 +906,7 @@ where
         for r in 0..self.height {
             for c in 0..self.width {
                 let view = (self.build_view)(self.items.index(c, r));
-                let mut default_focus = DefaultFocus::default_first();
+                let mut default_focus = FocusTree::default_first();
                 last_result = view.handle_event(
                     &event,
                     context,

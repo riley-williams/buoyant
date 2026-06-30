@@ -5,7 +5,7 @@ use core::cmp::max;
 use crate::{
     environment::LayoutEnvironment,
     event::{EventContext, EventResult},
-    focus::DefaultFocus,
+    focus::FocusTree,
     layout::{HorizontalAlignment, LayoutDirection, ResolvedLayout, VerticalAlignment},
     primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions},
     transition::Opacity,
@@ -238,12 +238,12 @@ where
 }
 
 #[derive(Debug, Clone)]
-pub struct Focus<T: DefaultFocus> {
+pub struct Focus<T: FocusTree> {
     index: usize,
     tree: T,
 }
 
-impl<T: DefaultFocus> DefaultFocus for Focus<T> {
+impl<T: FocusTree> FocusTree for Focus<T> {
     fn default_first() -> Self {
         Self {
             index: 0,
@@ -265,7 +265,7 @@ impl<T: DefaultFocus> DefaultFocus for Focus<T> {
     }
 }
 
-impl<T: DefaultFocus> Default for Focus<T> {
+impl<T: FocusTree> Default for Focus<T> {
     fn default() -> Self {
         Self::default_first()
     }
@@ -275,7 +275,7 @@ impl<'a, const N: usize, I, V, F, Captures: ?Sized, D: ForEachDirection> ViewLay
     for ForEachView<'a, N, I, V, F, D>
 where
     V: ViewLayout<Captures>,
-    V::FocusTree: DefaultFocus,
+    V::FocusTree: FocusTree,
     F: Fn(&'a I) -> V,
 {
     type Sublayout = ResolvedLayout<heapless::Vec<ResolvedLayout<V::Sublayout>, N>>;
@@ -477,7 +477,7 @@ where
                             return EventResult::Deferred;
                         }
                         focus.index = current;
-                        focus.tree = <V::FocusTree as DefaultFocus>::default_first();
+                        focus.tree = <V::FocusTree as FocusTree>::default_first();
                         // When entering a new child, use Focus action (forward)
                         current_event = FocusAction::Focus(FocusDirection::Forward);
                     }
@@ -488,7 +488,7 @@ where
                         }
                         current -= 1;
                         focus.index = current;
-                        focus.tree = <V::FocusTree as DefaultFocus>::default_last();
+                        focus.tree = <V::FocusTree as FocusTree>::default_last();
                         // When entering a new child, use Focus action (backward)
                         current_event = FocusAction::Focus(FocusDirection::Backward);
                     }
@@ -523,11 +523,11 @@ where
             let item_state = &mut state[i];
             let item_render_tree = &mut render_tree[i];
             let mut default_focus = Focus {
-                tree: DefaultFocus::default_first(),
+                tree: FocusTree::default_first(),
                 index: i,
             };
             let focus = if let Event::Touch { .. } = event {
-                focus.tree = DefaultFocus::default_first();
+                focus.tree = FocusTree::default_first();
                 focus.index = i;
                 &mut focus.tree
             } else if focus.index == i {

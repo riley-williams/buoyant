@@ -6,7 +6,7 @@ use core::marker::PhantomData;
 use crate::{
     environment::LayoutEnvironment,
     event::{Event, EventContext, EventResult, Key},
-    focus::{DefaultFocus, FocusAction, Role},
+    focus::{FocusTree, FocusAction, Role},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
     render::IntrinsicShape,
@@ -117,7 +117,7 @@ impl RotaryFocus {
     }
 }
 
-impl DefaultFocus for RotaryFocus {
+impl FocusTree for RotaryFocus {
     fn default_first() -> Self {
         Self {
             focused: false,

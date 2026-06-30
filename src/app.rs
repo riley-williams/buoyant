@@ -9,7 +9,7 @@ use core::time::Duration;
 use crate::{
     environment::DefaultEnvironment,
     event::{Event, EventContext, EventResult},
-    focus::{DefaultFocus, Role, RoleSet},
+    focus::{FocusTree, Role, RoleSet},
     primitives::{Point, Size, transform::LinearTransform},
     render::{AnimatedJoin, AnimationDomain, ContentShape, Render},
     render_target::{RenderTarget, SolidBrush, Stroke},
@@ -82,7 +82,7 @@ where
 impl<V, S, F> App<V, S, F>
 where
     V: ViewLayout<S>,
-    V::FocusTree: DefaultFocus,
+    V::FocusTree: FocusTree,
     V::Renderables: AnimatedJoin,
     F: Fn(&S) -> V,
 {
@@ -110,7 +110,7 @@ where
             &mut state,
             &mut view_state,
         );
-        let focus_tree = DefaultFocus::default_first();
+        let focus_tree = FocusTree::default_first();
         let roles = Role::Button | Role::Container;
 
         Self {
@@ -143,7 +143,7 @@ where
     /// Initializes the focus tree to the last element.
     #[must_use]
     pub fn with_focus_at_end(mut self) -> Self {
-        self.focus_tree = DefaultFocus::default_last();
+        self.focus_tree = FocusTree::default_last();
         self
     }
 
@@ -322,7 +322,7 @@ where
 impl<V, S, F> Harness for App<V, S, F>
 where
     V: ViewLayout<S>,
-    V::FocusTree: DefaultFocus,
+    V::FocusTree: FocusTree,
     V::Renderables: AnimatedJoin,
     F: Fn(&S) -> V,
 {

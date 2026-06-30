@@ -68,7 +68,7 @@ pub mod prelude {
     pub use crate::view::shape::*;
 }
 
-use crate::focus::DefaultFocus;
+use crate::focus::FocusTree;
 use crate::transition::Transition;
 use crate::{
     environment::LayoutEnvironment,
@@ -137,7 +137,7 @@ pub trait ViewLayout<Captures: ?Sized>: ViewMarker {
     type Sublayout: Default + Clone + PartialEq + 'static;
 
     /// A path through this view's subtree pointing to the currently focused node
-    type FocusTree: Clone + DefaultFocus + 'static;
+    type FocusTree: Clone + FocusTree + 'static;
 
     /// The layout priority of the view. Higher priority views are more likely to
     /// be given the size they want

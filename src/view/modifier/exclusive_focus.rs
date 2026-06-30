@@ -1,7 +1,7 @@
 use crate::{
     environment::LayoutEnvironment,
     event::{Event, EventContext, EventResult},
-    focus::{DefaultFocus, FocusGroup},
+    focus::{FocusTree, FocusGroup},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
     view::{ViewLayout, ViewMarker},
@@ -31,7 +31,7 @@ impl<T: ViewMarker> ViewMarker for ExclusiveFocus<T> {
 
 impl<Captures: ?Sized, T: ViewLayout<Captures>> ViewLayout<Captures> for ExclusiveFocus<T>
 where
-    T::FocusTree: DefaultFocus,
+    T::FocusTree: FocusTree,
 {
     type Sublayout = T::Sublayout;
     type State = T::State;

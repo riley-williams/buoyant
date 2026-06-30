@@ -4,7 +4,7 @@ use paste::paste;
 use crate::{
     environment::LayoutEnvironment,
     event::{Event, EventContext, EventResult},
-    focus::{DefaultFocus, FocusAction, FocusDirection},
+    focus::{FocusTree, FocusAction, FocusDirection},
     layout::{LayoutDirection, ResolvedLayout, VerticalAlignment},
     primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions},
     view::{ViewLayout, ViewMarker, modifier::FixedSize},
@@ -399,7 +399,7 @@ macro_rules! impl_view_for_hstack {
                                 match current {
                                     $(
                                         $n => {
-                                            *focus = [<OneOf $ct>]::[<V $n>](DefaultFocus::default_first());
+                                            *focus = [<OneOf $ct>]::[<V $n>](FocusTree::default_first());
                                         }
                                     )+
                                     _ => return EventResult::Deferred,
@@ -416,7 +416,7 @@ macro_rules! impl_view_for_hstack {
                                 match current {
                                     $(
                                         $n => {
-                                            *focus = [<OneOf $ct>]::[<V $n>](DefaultFocus::default_last());
+                                            *focus = [<OneOf $ct>]::[<V $n>](FocusTree::default_last());
                                         }
                                     )+
                                     _ => return EventResult::Deferred,
@@ -444,9 +444,9 @@ macro_rules! impl_view_for_hstack {
 
                 // For non-focus events (touch, scroll, etc.), use DFS approach
                 $(
-                    let mut default_focus = DefaultFocus::default_first();
+                    let mut default_focus = FocusTree::default_first();
                     let inner_focus = if let Event::Touch(..) = event {
-                        focus.[<v $n _or_init_with>](|| DefaultFocus::default_first())
+                        focus.[<v $n _or_init_with>](|| FocusTree::default_first())
                     } else {
                         focus.[<v $n _mut>]().unwrap_or(&mut default_focus)
                     };

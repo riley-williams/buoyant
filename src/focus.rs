@@ -52,7 +52,7 @@ impl FocusAction {
 /// A trait for focus tree types that can be initialized to either the first or last element.
 ///
 /// This is roughly equivalent to `Default` but supports bidirectional navigation
-pub trait DefaultFocus {
+pub trait FocusTree {
     /// Returns a focus tree initialized to the first element.
     fn default_first() -> Self;
 
@@ -66,7 +66,7 @@ pub trait DefaultFocus {
     fn is_focused(&self) -> bool;
 }
 
-impl DefaultFocus for () {
+impl FocusTree for () {
     fn default_first() -> Self {}
     fn default_last() -> Self {}
     fn is_focused(&self) -> bool {

@@ -6,7 +6,7 @@
 use crate::{
     environment::LayoutEnvironment,
     event::{Event, EventContext, EventResult},
-    focus::{BoundaryBehavior, DefaultFocus, FocusAction, FocusDirection},
+    focus::{BoundaryBehavior, FocusTree, FocusAction, FocusDirection},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
     view::{ViewLayout, ViewMarker},
@@ -49,7 +49,7 @@ where
 impl<Captures: ?Sized, T> ViewLayout<Captures> for BoundFocus<T>
 where
     T: ViewLayout<Captures>,
-    T::FocusTree: DefaultFocus,
+    T::FocusTree: FocusTree,
 {
     type Sublayout = T::Sublayout;
     type State = T::State;
@@ -146,9 +146,9 @@ where
             BoundaryBehavior::Wrap => {
                 // Reset focus tree to the opposite end
                 *focus = if is_forward {
-                    DefaultFocus::default_first()
+                    FocusTree::default_first()
                 } else {
-                    DefaultFocus::default_last()
+                    FocusTree::default_last()
                 };
 
                 // Acquire focus at the wrapped position

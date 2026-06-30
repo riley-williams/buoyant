@@ -1,7 +1,7 @@
 use crate::{
     environment::LayoutEnvironment,
     event::{Event, EventResult},
-    focus::{DefaultFocus, FocusAction, FocusDirection},
+    focus::{FocusTree, FocusAction, FocusDirection},
     layout::{Alignment, ResolvedLayout},
     primitives::{Point, ProposedDimension, ProposedDimensions},
     view::{ViewLayout, ViewMarker},
@@ -34,7 +34,7 @@ pub struct BackgroundFocus<T, U> {
     background: U,
 }
 
-impl<T: DefaultFocus, U: DefaultFocus> DefaultFocus for BackgroundFocus<T, U> {
+impl<T: FocusTree, U: FocusTree> FocusTree for BackgroundFocus<T, U> {
     fn default_first() -> Self {
         Self {
             active_foreground: false,
@@ -186,7 +186,7 @@ where
                     // Foreground exhausted - only move to background on backward navigation
                     match focus_event {
                         FocusAction::Focus(FocusDirection::Backward) | FocusAction::Previous => {
-                            let mut background_focus = DefaultFocus::default_last();
+                            let mut background_focus = FocusTree::default_last();
                             let background_result = self.background.handle_event(
                                 &Event::Focus {
                                     action: FocusAction::Focus(FocusDirection::Backward),
@@ -229,7 +229,7 @@ where
                     // Background exhausted - only move to foreground on forward navigation
                     match focus_event {
                         FocusAction::Focus(FocusDirection::Forward) | FocusAction::Next => {
-                            let mut foreground_focus = DefaultFocus::default_first();
+                            let mut foreground_focus = FocusTree::default_first();
                             let foreground_result = self.foreground.handle_event(
                                 &Event::Focus {
                                     action: FocusAction::Focus(FocusDirection::Forward),

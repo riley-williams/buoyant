@@ -7,7 +7,7 @@ use embedded_touch::Phase;
 use crate::{
     environment::LayoutEnvironment,
     event::{Event, EventContext, EventResult},
-    focus::{DefaultFocus, FocusAction, FocusGroupSet, Role},
+    focus::{FocusTree, FocusAction, FocusGroupSet, Role},
     layout::ResolvedLayout,
     primitives::ProposedDimensions,
     render::IntrinsicShape,
@@ -72,7 +72,7 @@ pub struct ButtonFocus {
     focused_groups: FocusGroupSet,
 }
 
-impl DefaultFocus for ButtonFocus {
+impl FocusTree for ButtonFocus {
     fn default_first() -> Self {
         Self::default()
     }

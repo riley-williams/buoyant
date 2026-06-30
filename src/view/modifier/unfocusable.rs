@@ -1,7 +1,7 @@
 use crate::{
     environment::LayoutEnvironment,
     event::{Event, EventContext, EventResult},
-    focus::DefaultFocus,
+    focus::FocusTree,
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
     view::{ViewLayout, ViewMarker},
@@ -28,7 +28,7 @@ impl<T: ViewMarker> ViewMarker for Unfocusable<T> {
 
 impl<Captures: ?Sized, T: ViewLayout<Captures>> ViewLayout<Captures> for Unfocusable<T>
 where
-    T::FocusTree: DefaultFocus,
+    T::FocusTree: FocusTree,
 {
     type Sublayout = T::Sublayout;
     type State = T::State;
