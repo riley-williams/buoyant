@@ -3,7 +3,7 @@ use core::time::Duration;
 use crate::{
     animation::Animation,
     event::{Event, EventContext, EventResult},
-    focus::{BoundaryBehavior, FocusTree, FocusAction, FocusDirection},
+    focus::{BoundaryBehavior, FocusAction, FocusDirection, FocusTree},
     layout::{HorizontalAlignment, ResolvedLayout, VerticalAlignment},
     primitives::Point,
     render::{Animate, IntrinsicShape, TransitionOption},
@@ -168,9 +168,7 @@ where
         // FIXME: We don't know when the overlay appears, so we don't get a chance to obtain initial focus
         // Likely requires rethinking focus overall
 
-        let subfocus = focus
-            .overlay
-            .get_or_insert_with(FocusTree::default_first);
+        let subfocus = focus.overlay.get_or_insert_with(FocusTree::default_first);
         let overlay_state = state
             .overlay_state
             .get_or_insert_with(|| overlay_view.build_state(captures));

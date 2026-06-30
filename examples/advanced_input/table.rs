@@ -1,8 +1,8 @@
 use crate::FONT;
 use crate::definitions::{GoodPixelColor, IeName, MAX_COLS, MAX_ROWS, Palette, RenderData, State};
+use crate::table_view::{Table, TableIndex};
 use buoyant::view::popover::Dismissal;
 use buoyant::view::prelude::*;
-use crate::table_view::{Table, TableIndex};
 use heapless::String;
 
 use std::fmt::Write;

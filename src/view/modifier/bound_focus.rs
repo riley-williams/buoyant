@@ -6,7 +6,7 @@
 use crate::{
     environment::LayoutEnvironment,
     event::{Event, EventContext, EventResult},
-    focus::{BoundaryBehavior, FocusTree, FocusAction, FocusDirection},
+    focus::{BoundaryBehavior, FocusAction, FocusDirection, FocusTree},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
     view::{ViewLayout, ViewMarker},

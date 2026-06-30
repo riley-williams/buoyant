@@ -3,7 +3,7 @@ use core::cmp::max;
 use crate::{
     environment::LayoutEnvironment,
     event::{Event, EventContext, EventResult},
-    focus::{FocusTree, FocusAction, FocusDirection},
+    focus::{FocusAction, FocusDirection, FocusTree},
     layout::{HorizontalAlignment, LayoutDirection, ResolvedLayout},
     primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions},
     view::{ViewLayout, ViewMarker, modifier::FixedSize},

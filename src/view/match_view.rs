@@ -1,6 +1,6 @@
 use crate::{
     event::{EventContext, EventResult},
-    focus::{FocusTree, FocusAction, FocusDirection},
+    focus::{FocusAction, FocusDirection, FocusTree},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
     render,

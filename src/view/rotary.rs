@@ -6,7 +6,7 @@ use core::marker::PhantomData;
 use crate::{
     environment::LayoutEnvironment,
     event::{Event, EventContext, EventResult, Key},
-    focus::{FocusTree, FocusAction, Role},
+    focus::{FocusAction, FocusTree, Role},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
     render::IntrinsicShape,

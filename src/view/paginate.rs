@@ -4,7 +4,7 @@
 use crate::{
     environment::LayoutEnvironment,
     event::{Event, EventContext, EventResult},
-    focus::{FocusTree, FocusAction, FocusGroup},
+    focus::{FocusAction, FocusGroup, FocusTree},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
     render::IntrinsicShape,

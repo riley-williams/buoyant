@@ -1,7 +1,7 @@
 use crate::{
     environment::LayoutEnvironment,
     event::EventResult,
-    focus::{FocusTree, FocusAction, FocusDirection},
+    focus::{FocusAction, FocusDirection, FocusTree},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimension, ProposedDimensions},
     render,

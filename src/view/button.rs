@@ -7,7 +7,7 @@ use embedded_touch::Phase;
 use crate::{
     environment::LayoutEnvironment,
     event::{Event, EventContext, EventResult},
-    focus::{FocusTree, FocusAction, FocusGroupSet, Role},
+    focus::{FocusAction, FocusGroupSet, FocusTree, Role},
     layout::ResolvedLayout,
     primitives::ProposedDimensions,
     render::IntrinsicShape,

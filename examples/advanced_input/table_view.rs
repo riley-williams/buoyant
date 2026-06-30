@@ -7,7 +7,7 @@ use core::cmp::max;
 
 use buoyant::environment::LayoutEnvironment;
 use buoyant::event::{Event, EventContext, EventResult, Key};
-use buoyant::focus::{FocusTree, FocusAction, FocusDirection, FocusGroup};
+use buoyant::focus::{FocusAction, FocusDirection, FocusGroup, FocusTree};
 use buoyant::layout::{HorizontalAlignment, LayoutDirection, ResolvedLayout, VerticalAlignment};
 use buoyant::primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions};
 use buoyant::transition::Opacity;
@@ -176,7 +176,9 @@ impl<L: Clone + PartialEq, const R: usize, const C: usize> TableLayout<L, R, C> 
 
     #[must_use]
     pub fn filled(throwaway: &ResolvedLayout<L>) -> Array<C, Array<R, ResolvedLayout<L>>> {
-        Array(array::from_fn(|_| Array(array::from_fn(|_| throwaway.clone()))))
+        Array(array::from_fn(|_| {
+            Array(array::from_fn(|_| throwaway.clone()))
+        }))
     }
 }
 
