@@ -134,7 +134,7 @@ pub trait ViewLayout<Captures: ?Sized>: ViewMarker {
     /// The computed layout of the view and its subviews.
     ///
     /// Size is represented here, but placement is deferred to the render tree.
-    type Sublayout: Default + Clone + PartialEq + 'static;
+    type Sublayout: Clone + PartialEq + 'static;
 
     /// A path through this view's subtree pointing to the currently focused node
     type FocusTree: Clone + FocusTree + 'static;
