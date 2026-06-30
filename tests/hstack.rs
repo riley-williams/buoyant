@@ -27,7 +27,7 @@ fn test_oversized_layout_2() {
     let env = DefaultEnvironment::non_animated();
     let mut state = vstack.build_state(&mut ());
     let layout = vstack.layout(&offer.into(), &env, &mut (), &mut state);
-    assert_eq!(layout.resolved_size, Dimensions::new(10, 0));
+    assert_eq!(layout.resolved_size, Dimensions::new(10, 4));
 }
 
 #[test]
@@ -41,7 +41,7 @@ fn test_oversized_layout_3() {
     let env = DefaultEnvironment::non_animated();
     let mut state = vstack.build_state(&mut ());
     let layout = vstack.layout(&offer.into(), &env, &mut (), &mut state);
-    assert_eq!(layout.resolved_size, Dimensions::new(10, 0));
+    assert_eq!(layout.resolved_size, Dimensions::new(10, 4));
 }
 
 #[test]

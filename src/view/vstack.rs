@@ -211,11 +211,6 @@ fn layout_n(
         }
     }
 
-    // Prevent stack from reporting oversize, even if the children misbehave
-    if let ProposedDimension::Exact(offer_width) = offer.width {
-        max_width = max_width.min(offer_width.into());
-    }
-
     Dimensions {
         width: max_width,
         height: (height.saturating_sub(remaining_height)).into(),

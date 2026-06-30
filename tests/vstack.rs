@@ -27,7 +27,7 @@ fn test_oversized_layout_2() {
     let env = DefaultEnvironment::non_animated();
     let mut state = vstack.build_state(&mut ());
     let layout = vstack.layout(&offer.into(), &env, &mut (), &mut state);
-    assert_eq!(layout.resolved_size, Dimensions::new(0, 10));
+    assert_eq!(layout.resolved_size, Dimensions::new(4, 10));
 }
 
 #[test]
@@ -41,7 +41,7 @@ fn test_oversized_layout_3() {
     let env = DefaultEnvironment::non_animated();
     let mut state = vstack.build_state(&mut ());
     let layout = vstack.layout(&offer.into(), &env, &mut (), &mut state);
-    assert_eq!(layout.resolved_size, Dimensions::new(0, 10));
+    assert_eq!(layout.resolved_size, Dimensions::new(4, 10));
 }
 
 #[test]
@@ -477,7 +477,9 @@ fn test_flexible_layout_fills_frame_10k() {
         for height in &dimensions {
             let size = Size::new(*width, *height);
             let layout = stack.layout(&size.into(), &env, &mut (), &mut state);
-            assert_eq!(size, layout.resolved_size.into());
+            let resolved_size: Size = layout.resolved_size.into();
+            assert!(size.width <= resolved_size.width);
+            assert!(size.height <= resolved_size.height);
         }
     }
 }
@@ -524,4 +526,29 @@ fn empty_view_does_not_receive_spacing() {
     assert_eq!(buffer.text[2].iter().collect::<String>(), "c      ");
     assert_eq!(buffer.text[3].iter().collect::<String>(), "       ");
     assert_eq!(buffer.text[4].iter().collect::<String>(), "       ");
+}
+
+/// One child is larger than half the space
+#[test]
+fn unequal_nesting() {
+    let view = VStack::new((
+        Rectangle.foreground_color('x'),
+        HStack::new((
+            Rectangle.frame_sized(400, 300),
+            VStack::new((
+                Rectangle.frame_sized(50, 50),
+                Rectangle.frame_sized(50, 50),
+                Rectangle.frame_sized(50, 50),
+                Rectangle.frame_sized(50, 50),
+            )),
+        ))
+        .frame()
+        .with_height(300),
+    ))
+    .with_alignment(HorizontalAlignment::Leading);
+    let tree = make_render_tree(&view, Size::new(600, 500), &mut ());
+    let top_size = tree.0.subtree.size;
+    let bottom_size = tree.1.0.size;
+    assert_eq!(top_size, Size::new(600, 200));
+    assert_eq!(bottom_size, Size::new(400, 300));
 }
