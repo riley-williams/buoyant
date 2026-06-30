@@ -124,8 +124,11 @@ where
     S: View<(), State> + 'static,
 {
     Button::new(action, move |_| shape()).map_event(move |event, _: &mut State| match event {
-        Event::KeyDown(Key::Character('\n')) => Mapping::Replace(Event::from(FocusAction::Select)),
-        Event::KeyUp(_) => Mapping::Defer,
+        Event::KeyDown {
+            key: Key::Character('\n'),
+            ..
+        } => Mapping::Replace(Event::from(FocusAction::Select)),
+        Event::KeyUp { .. } => Mapping::Defer,
         _ => Mapping::Passthrough,
     })
 }
@@ -253,13 +256,16 @@ fn teardown_does_not_dismiss() {
         Some(ContentShape::Circle(_))
     ));
 
-    // Send a Teardown event. The focused Button handles it by returning
-    // handled_unfocused (resetting its focused state); the popover proxies
-    // that result without wrapping or invoking on_blur.
+    // Send a Teardown event. The focused Button defers it and gives up focus;
+    // the popover proxies that result without wrapping or invoking on_blur.
     let result = harness.send(FocusAction::Teardown);
     assert!(
-        result.is_handled(),
-        "Teardown proxied to the focused child should be handled"
+        !result.is_handled(),
+        "Teardown proxied to the focused child should defer"
+    );
+    assert!(
+        !harness.is_focused(),
+        "Teardown should leave the child without focus"
     );
     assert!(
         harness.state().popover_visible.is_some(),

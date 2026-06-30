@@ -15,7 +15,7 @@ struct State {
 
 fn arrow_pointer() -> impl View<Rgb888, State> + use<> {
     Circle.map_event(|event, state: &mut State| match event {
-        Event::KeyDown(key) => {
+        Event::KeyDown { key, .. } => {
             match key {
                 Key::UpArrow => state.location.y += 1,
                 Key::DownArrow => state.location.y -= 1,
@@ -47,7 +47,7 @@ fn view(_s: &State) -> impl View<Rgb888, State> + use<> {
         arrow_pointer(),
     ))
     .map_event(|event, _: &mut State| match event {
-        Event::KeyDown(key) => match key {
+        Event::KeyDown { key, .. } => match key {
             Key::DownArrow | Key::RightArrow => Mapping::Fallback(Event::Focus {
                 action: FocusAction::Next,
                 group: FocusGroup::default(),
@@ -99,9 +99,10 @@ fn map_events() {
 fn replace_view(_s: &State) -> impl View<Rgb888, State> + use<> {
     Button::new(|s: &mut State| s.taps += 1, |_| Rectangle).map_event(|event, _: &mut State| {
         match event {
-            Event::KeyDown(Key::Character('\n')) => {
-                Mapping::Replace(Event::from(FocusAction::Select))
-            }
+            Event::KeyDown {
+                key: Key::Character('\n'),
+                ..
+            } => Mapping::Replace(Event::from(FocusAction::Select)),
             _ => Mapping::Passthrough,
         }
     })
@@ -166,7 +167,7 @@ fn handled_reports_handled_without_reaching_view() {
 
 fn stateful_view(_s: &State) -> impl View<Rgb888, State> + use<> {
     Rectangle.map_stateful_event(|event, state: &mut State, count: &mut u8| match event {
-        Event::KeyDown(_) => {
+        Event::KeyDown { .. } => {
             *count += 1;
             state.taps = *count;
             Mapping::Handled

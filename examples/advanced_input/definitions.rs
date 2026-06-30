@@ -28,9 +28,9 @@ pub struct State {
     pub page_action: Option<PageAction>,
     pub ie_value_update: Option<(u8, f32)>,
     pub page: Page<'static>,
+    pub is_focused: bool,
 
     pub(crate) opened_input: Option<IpType>,
-    pub(crate) focused_table: bool,
     pub(crate) opened_cell_input: Option<u8>,
 
     pub(crate) temporary_ip: TemporaryIp,
@@ -159,6 +159,15 @@ impl Default for HwCell {
     }
 }
 
+impl State {
+    pub fn popup_open(&self) -> bool {
+        self.opened_input.is_some() || self.opened_cell_input.is_some()
+    }
+    pub fn is_table(&self) -> bool {
+        matches!(self.page, Page::IeTable { .. })
+    }
+}
+
 impl Default for State {
     fn default() -> Self {
         Self {
@@ -175,11 +184,11 @@ impl Default for State {
             },
 
             opened_input: None,
-            focused_table: false,
             opened_cell_input: None,
 
             temporary_ip: Ipv4Addr::UNSPECIFIED.into(),
             temporary_ie: TemporaryIe::zero(),
+            is_focused: false,
         }
     }
 }

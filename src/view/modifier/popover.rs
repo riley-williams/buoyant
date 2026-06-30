@@ -3,7 +3,7 @@ use core::time::Duration;
 use crate::{
     animation::Animation,
     event::{Event, EventContext, EventResult},
-    focus::{BoundaryBehavior, DefaultFocus, FocusAction, FocusDirection},
+    focus::{BoundaryBehavior, FocusAction, FocusDirection, FocusTree},
     layout::{HorizontalAlignment, ResolvedLayout, VerticalAlignment},
     primitives::Point,
     render::{Animate, IntrinsicShape, TransitionOption},
@@ -58,32 +58,36 @@ pub struct Popover<Inner, Overlay, Action = NoDismiss> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FocusTree<T, U> {
+pub struct PopoverFocusTree<T, U> {
     /// The inner view's focus state (always preserved)
     pub inner: T,
     /// The overlay's focus state (when overlay is active)
     pub overlay: Option<U>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct PopoverState<T, U> {
     pub inner_state: T,
     pub overlay_state: Option<U>,
 }
 
-impl<T: DefaultFocus, U: DefaultFocus> DefaultFocus for FocusTree<T, U> {
+impl<T: FocusTree, U: FocusTree> FocusTree for PopoverFocusTree<T, U> {
     fn default_first() -> Self {
         Self {
-            inner: DefaultFocus::default_first(),
+            inner: FocusTree::default_first(),
             overlay: None,
         }
     }
 
     fn default_last() -> Self {
         Self {
-            inner: DefaultFocus::default_last(),
+            inner: FocusTree::default_last(),
             overlay: None,
         }
+    }
+
+    fn is_focused(&self) -> bool {
+        self.inner.is_focused() || self.overlay.as_ref().is_some_and(FocusTree::is_focused)
     }
 }
 
@@ -153,7 +157,7 @@ where
         render_tree: &mut <Self as ViewMarker>::Renderables,
         captures: &mut Captures,
         state: &mut PopoverState<Inner::State, Overlay::State>,
-        focus: &mut FocusTree<Inner::FocusTree, Overlay::FocusTree>,
+        focus: &mut PopoverFocusTree<Inner::FocusTree, Overlay::FocusTree>,
     ) -> EventResult
     where
         Inner: ViewLayout<Captures>,
@@ -164,9 +168,7 @@ where
         // FIXME: We don't know when the overlay appears, so we don't get a chance to obtain initial focus
         // Likely requires rethinking focus overall
 
-        let subfocus = focus
-            .overlay
-            .get_or_insert_with(DefaultFocus::default_first);
+        let subfocus = focus.overlay.get_or_insert_with(FocusTree::default_first);
         let overlay_state = state
             .overlay_state
             .get_or_insert_with(|| overlay_view.build_state(captures));
@@ -188,7 +190,7 @@ where
             subfocus,
         );
 
-        if result != EventResult::Deferred {
+        if !matches!(result, EventResult::Deferred) {
             return result;
         }
 
@@ -206,7 +208,10 @@ where
                     Dismissal::Retain => EventResult::handled_unfocused(),
                 }
             }
-            FocusAction::Teardown => EventResult::Deferred,
+            // Teardown drops the stale focus subtree without wrapping or
+            // invoking on_blur; propagate the child's result so the lost-focus
+            // signal survives.
+            FocusAction::Teardown => result,
             _ => {
                 let is_forward = matches!(
                     focus_event,
@@ -214,9 +219,9 @@ where
                 );
 
                 *subfocus = if is_forward {
-                    DefaultFocus::default_first()
+                    FocusTree::default_first()
                 } else {
-                    DefaultFocus::default_last()
+                    FocusTree::default_last()
                 };
                 let acquire_direction = if is_forward {
                     FocusDirection::Forward
@@ -260,7 +265,7 @@ where
 {
     type State = PopoverState<Inner::State, Overlay::State>;
     type Sublayout = ResolvedLayout<Inner::Sublayout>;
-    type FocusTree = FocusTree<Inner::FocusTree, Overlay::FocusTree>;
+    type FocusTree = PopoverFocusTree<Inner::FocusTree, Overlay::FocusTree>;
 
     fn transition(&self) -> Self::Transition {
         self.inner.transition()
@@ -406,7 +411,7 @@ where
                     subtree,
                     captures,
                     overlay_state,
-                    focus.overlay.get_or_insert(DefaultFocus::default_first()),
+                    focus.overlay.get_or_insert(FocusTree::default_first()),
                 )
             }
             (Some(_), TransitionOption::None) => {

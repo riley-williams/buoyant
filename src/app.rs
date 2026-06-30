@@ -9,7 +9,7 @@ use core::time::Duration;
 use crate::{
     environment::DefaultEnvironment,
     event::{Event, EventContext, EventResult},
-    focus::{DefaultFocus, Role, RoleSet},
+    focus::{FocusTree, Role, RoleSet},
     primitives::{Point, Size, transform::LinearTransform},
     render::{AnimatedJoin, AnimationDomain, ContentShape, Render},
     render_target::{RenderTarget, SolidBrush, Stroke},
@@ -82,7 +82,7 @@ where
 impl<V, S, F> App<V, S, F>
 where
     V: ViewLayout<S>,
-    V::FocusTree: DefaultFocus,
+    V::FocusTree: FocusTree,
     V::Renderables: AnimatedJoin,
     F: Fn(&S) -> V,
 {
@@ -110,7 +110,7 @@ where
             &mut state,
             &mut view_state,
         );
-        let focus_tree = DefaultFocus::default_first();
+        let focus_tree = FocusTree::default_first();
         let roles = Role::Button | Role::Container;
 
         Self {
@@ -143,7 +143,7 @@ where
     /// Initializes the focus tree to the last element.
     #[must_use]
     pub fn with_focus_at_end(mut self) -> Self {
-        self.focus_tree = DefaultFocus::default_last();
+        self.focus_tree = FocusTree::default_last();
         self
     }
 
@@ -180,6 +180,12 @@ where
         &self.focus_shape
     }
 
+    /// Returns true if any element in the view currently holds focus.
+    #[must_use]
+    pub fn is_focused(&self) -> bool {
+        self.focus_tree.is_focused()
+    }
+
     /// Returns mutable references to both source and target render trees.
     #[must_use]
     pub fn render_trees(&self) -> &Trees<V::Renderables> {
@@ -211,6 +217,8 @@ where
     ///
     /// See also: [`finalize_view`](Self::finalize_view).
     pub fn force_rebuild(&mut self) {
+        self.requires_rebuild = false;
+
         let domain = AnimationDomain::top_level(self.elapsed);
         self.trees.swap();
         let (source_tree, target_tree) = self.trees.both_mut();
@@ -219,12 +227,14 @@ where
         // Create new view and target tree
         self.view = (self.view_fn)(&self.state);
         self.env = DefaultEnvironment::new(self.elapsed);
+
         let layout = self.view.layout(
             &self.size.into(),
             &self.env,
             &mut self.state,
             &mut self.view_state,
         );
+
         *target_tree = self.view.render_tree(
             &layout.sublayouts,
             Point::zero(),
@@ -233,11 +243,6 @@ where
             &mut self.view_state,
         );
 
-        // reobtain focus after rebuild
-        let result = self.focus_forward();
-        self.update_focus_shape(&result);
-
-        self.requires_rebuild = false;
         self.requires_redraw = true;
     }
 
@@ -317,7 +322,7 @@ where
 impl<V, S, F> Harness for App<V, S, F>
 where
     V: ViewLayout<S>,
-    V::FocusTree: DefaultFocus,
+    V::FocusTree: FocusTree,
     V::Renderables: AnimatedJoin,
     F: Fn(&S) -> V,
 {

@@ -1,7 +1,7 @@
 use crate::{
     environment::LayoutEnvironment,
     event::{Event, EventResult},
-    focus::{DefaultFocus, FocusAction, FocusDirection},
+    focus::{FocusAction, FocusDirection, FocusTree},
     layout::{Alignment, ResolvedLayout},
     primitives::{Point, ProposedDimension, ProposedDimensions},
     view::{ViewLayout, ViewMarker},
@@ -35,13 +35,20 @@ pub enum OverlayFocus<T, U> {
     Overlay(U),
 }
 
-impl<T: DefaultFocus, U: DefaultFocus> DefaultFocus for OverlayFocus<T, U> {
+impl<T: FocusTree, U: FocusTree> FocusTree for OverlayFocus<T, U> {
     fn default_first() -> Self {
         Self::Overlay(U::default_first())
     }
 
     fn default_last() -> Self {
         Self::Foreground(T::default_last())
+    }
+
+    fn is_focused(&self) -> bool {
+        match self {
+            Self::Foreground(t) => t.is_focused(),
+            Self::Overlay(u) => u.is_focused(),
+        }
     }
 }
 
@@ -172,8 +179,8 @@ where
                     match focus_event {
                         FocusAction::Focus(FocusDirection::Forward) | FocusAction::Next => {
                             // Move to foreground
-                            let mut foreground_focus = DefaultFocus::default_first();
-                            let result = self.foreground.handle_event(
+                            let mut foreground_focus = FocusTree::default_first();
+                            let foreground_result = self.foreground.handle_event(
                                 &Event::Focus {
                                     action: FocusAction::Focus(FocusDirection::Forward),
                                     group: *group,
@@ -185,7 +192,11 @@ where
                                 &mut foreground_focus,
                             );
                             *focus = OverlayFocus::Foreground(foreground_focus);
-                            result
+                            if foreground_result.is_handled() {
+                                foreground_result
+                            } else {
+                                EventResult::Deferred
+                            }
                         }
                         FocusAction::Focus(FocusDirection::Backward)
                         | FocusAction::Previous
@@ -211,8 +222,8 @@ where
                     // Foreground exhausted - only move to overlay on backward navigation
                     match focus_event {
                         FocusAction::Focus(FocusDirection::Backward) | FocusAction::Previous => {
-                            let mut overlay_focus = DefaultFocus::default_last();
-                            let result = self.overlay.handle_event(
+                            let mut overlay_focus = FocusTree::default_last();
+                            let overlay_result = self.overlay.handle_event(
                                 &Event::Focus {
                                     action: FocusAction::Focus(FocusDirection::Backward),
                                     group: *group,
@@ -224,7 +235,11 @@ where
                                 &mut overlay_focus,
                             );
                             *focus = OverlayFocus::Overlay(overlay_focus);
-                            result
+                            if overlay_result.is_handled() {
+                                overlay_result
+                            } else {
+                                EventResult::Deferred
+                            }
                         }
                         FocusAction::Focus(FocusDirection::Forward)
                         | FocusAction::Next
@@ -235,7 +250,7 @@ where
                 }
             },
             // Key events are focus-routed: deliver only to the currently focused child.
-            Event::KeyDown(_) | Event::KeyUp(_) => match focus {
+            Event::KeyDown { .. } | Event::KeyUp { .. } => match focus {
                 OverlayFocus::Overlay(overlay_focus) => self.overlay.handle_event(
                     event,
                     context,
@@ -272,7 +287,7 @@ where
                         return overlay_result;
                     }
                     // Then foreground
-                    *focus = OverlayFocus::Foreground(DefaultFocus::default_first());
+                    *focus = OverlayFocus::Foreground(FocusTree::default_first());
                     self.foreground.handle_event(
                         event,
                         context,
@@ -287,7 +302,7 @@ where
                 }
                 OverlayFocus::Foreground(_) => {
                     // Start with overlay
-                    *focus = OverlayFocus::Overlay(DefaultFocus::default_first());
+                    *focus = OverlayFocus::Overlay(FocusTree::default_first());
                     let overlay_result = self.overlay.handle_event(
                         event,
                         context,
@@ -303,7 +318,7 @@ where
                         return overlay_result;
                     }
                     // Then foreground
-                    *focus = OverlayFocus::Foreground(DefaultFocus::default_first());
+                    *focus = OverlayFocus::Foreground(FocusTree::default_first());
                     self.foreground.handle_event(
                         event,
                         context,

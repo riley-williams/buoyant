@@ -1,7 +1,7 @@
 use crate::{
     environment::LayoutEnvironment,
     event::{Event, EventContext, EventResult},
-    focus::{DefaultFocus, FocusAction, FocusDirection, FocusGroupSet},
+    focus::{FocusAction, FocusDirection, FocusGroupSet, FocusTree},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
     view::{ViewLayout, ViewMarker},
@@ -10,7 +10,7 @@ use crate::{
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MultiplexFocusTree<T, const N: usize>([Option<T>; N]);
 
-impl<T: DefaultFocus, const N: usize> MultiplexFocusTree<T, N> {
+impl<T: FocusTree, const N: usize> MultiplexFocusTree<T, N> {
     /// Creates a new `MultiplexFocusTree` with default focus trees.
     #[must_use]
     pub fn new() -> Self {
@@ -27,13 +27,17 @@ impl<T: DefaultFocus, const N: usize> MultiplexFocusTree<T, N> {
     }
 }
 
-impl<T: DefaultFocus, const N: usize> DefaultFocus for MultiplexFocusTree<T, N> {
+impl<T: FocusTree, const N: usize> FocusTree for MultiplexFocusTree<T, N> {
     fn default_first() -> Self {
         Self::new()
     }
 
     fn default_last() -> Self {
         Self::new()
+    }
+
+    fn is_focused(&self) -> bool {
+        self.0.iter().flatten().any(FocusTree::is_focused)
     }
 }
 
@@ -65,7 +69,7 @@ impl<T: ViewMarker, const N: usize> ViewMarker for MultiplexFocus<T, N> {
 impl<Captures: ?Sized, T: ViewLayout<Captures>, const N: usize> ViewLayout<Captures>
     for MultiplexFocus<T, N>
 where
-    T::FocusTree: DefaultFocus,
+    T::FocusTree: FocusTree,
 {
     type Sublayout = T::Sublayout;
     type State = T::State;
@@ -142,8 +146,8 @@ where
                     ..
                 }
                 | Event::Scroll(_)
-                | Event::KeyUp(_)
-                | Event::KeyDown(_) => {
+                | Event::KeyUp { .. }
+                | Event::KeyDown { .. } => {
                     // Don't auto-initialize for these actions
                     let Some(tree) = focus.0[index as usize].as_mut() else {
                         return EventResult::Deferred;

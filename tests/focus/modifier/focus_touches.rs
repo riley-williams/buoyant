@@ -64,6 +64,56 @@ fn touch_moves_focus() {
     assert!(*harness.state() == State { a: 3, b: 0, c: 2 });
 }
 
+/// A focusable button above an unfocusable button. The unfocusable button still
+/// handles taps (running its action) but never takes focus, so a tap on it
+/// returns `Handled { request_focus: false }`.
+fn focusable_and_unfocusable_sibling(_: &State) -> impl View<(), State> + use<> {
+    VStack::new((
+        Button::new(|s: &mut State| s.a += 1, |_| Circle).frame_sized(50, 50),
+        Button::new(|s: &mut State| s.b += 1, |_| Rectangle)
+            .frame_sized(50, 50)
+            .unfocusable(),
+    ))
+    .focus_touches()
+}
+
+/// Tapping a sibling that handles the touch without taking focus should blur the
+/// currently focused button, leaving the focus tree reporting no focus.
+///
+/// Reaching green needs the tap path to actually blur the previously focused
+/// element when a touch is handled without acquiring focus (today
+/// `focus_touches` only tears down old focus on `request_focus: true`, and
+/// `focus_touches::touch_moves_focus` asserts the focus is *retained*).
+#[test]
+#[ignore = "needs tap-away blur behavior"]
+fn tap_unfocusable_sibling_blurs_focused_button() {
+    let mut harness = App::new(
+        State::default(),
+        Size::new(50, 100),
+        focusable_and_unfocusable_sibling,
+    )
+    .with_roles(Role::Button);
+
+    // Focus the top button.
+    assert!(matches!(
+        harness.focus_forward().shape(),
+        Some(ContentShape::Circle(_))
+    ));
+
+    // Tap the unfocusable sibling: it handles the tap (its action runs) but
+    // takes no focus.
+    let result = harness.tap(Point::new(25, 75));
+    assert_eq!(harness.state().b, 1, "the tap should have been handled");
+    assert!(result.is_handled());
+    assert!(!result.requested_focus());
+
+    // The focused button should have been blurred.
+    assert!(
+        !harness.is_focused(),
+        "tapping a handled, unfocusable sibling should blur the focused button"
+    );
+}
+
 fn grouped_buttons(_: &State) -> impl View<(), State> + use<> {
     VStack::new((
         Button::new(|s: &mut State| s.a += 1, |_| Circle)

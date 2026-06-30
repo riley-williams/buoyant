@@ -1,8 +1,9 @@
 use crate::FONT;
 use crate::definitions::{GoodPixelColor, IpType, Octet, Palette, RenderData, State, TemporaryIp};
 use buoyant::focus::BoundaryBehavior;
+use buoyant::view::popover::Dismissal;
 use buoyant::view::prelude::*;
-use buoyant::view::rotary::{Rotary, RotaryEvent, RotaryState};
+use buoyant::view::rotary::{Rotary, RotaryAxis, RotaryEvent, RotaryState};
 use core::{fmt::Write, net::Ipv4Addr};
 use heapless::String;
 
@@ -42,8 +43,6 @@ pub fn settings<'a, 'b, C: GoodPixelColor, F: Fn(&State) + 'a>(
             }
         })
     };
-    let cancel_ip = funnel(move |s: &mut State| s.opened_input = None);
-
     let static_ip = state.static_ip;
     let net_mask = state.net_mask;
     let gateway = state.gateway;
@@ -96,9 +95,9 @@ pub fn settings<'a, 'b, C: GoodPixelColor, F: Fn(&State) + 'a>(
     ))
     .popover(state.opened_input.as_ref(), move |opened_input| {
         buoyant::match_view!(opened_input, {
-            IpType::StaticIp => ip_setter(ip, set_ip(IpType::StaticIp), cancel_ip, p),
-            IpType::Gateway => ip_setter(ip, set_ip(IpType::Gateway), cancel_ip, p),
-            IpType::Dns => ip_setter(ip, set_ip(IpType::Dns), cancel_ip, p),
+            IpType::StaticIp => ip_setter(ip, set_ip(IpType::StaticIp), p),
+            IpType::Gateway => ip_setter(ip, set_ip(IpType::Gateway), p),
+            IpType::Dns => ip_setter(ip, set_ip(IpType::Dns), p),
         })
         .background(
             Alignment::Center,
@@ -110,9 +109,10 @@ pub fn settings<'a, 'b, C: GoodPixelColor, F: Fn(&State) + 'a>(
         .padding(Edges::All, 10)
         .bound_focus(BoundaryBehavior::Wrap)
     })
-    // // TODO: handle escape alongside submit
-    // ZStack::new((main, state.opened_input.as_ref().map(|_| overlay)))
-    //     .with_alignment(Alignment::Center)
+    .on_blur(|state: &mut State| {
+        state.opened_input = None;
+        Dismissal::Dismiss
+    })
 }
 
 fn ip_view<C: GoodPixelColor>(ip: Ipv4Addr) -> impl View<C, State> {
@@ -127,7 +127,6 @@ fn ip_view<C: GoodPixelColor>(ip: Ipv4Addr) -> impl View<C, State> {
 fn ip_setter<C: GoodPixelColor>(
     ip: TemporaryIp,
     submit: impl Fn(&mut State),
-    _cancel: impl Fn(&mut State),
     palette: &'static Palette<C>,
 ) -> impl View<C, State> {
     fn set<const OCTET: usize, const INDEX: usize>(s: &mut State, v: u8) {
@@ -223,10 +222,15 @@ fn ip_digit<C: GoodPixelColor>(
         _ => (),
     };
 
-    Rotary::new(on_action, move |page_state: RotaryState| {
-        let is_focused = page_state == RotaryState::Focused || page_state == RotaryState::Captive;
-        button_gut(is_focused, palette, Text::new(Num(num), &FONT))
-    })
+    Rotary::new_transparent(
+        RotaryAxis::Vertical,
+        on_action,
+        move |page_state: RotaryState| {
+            let is_focused =
+                page_state == RotaryState::Focused || page_state == RotaryState::Captive;
+            button_gut(is_focused, palette, Text::new(Num(num), &FONT))
+        },
+    )
 }
 
 fn netmask<C: GoodPixelColor>(mask: u8, palette: &'static Palette<C>) -> impl View<C, State> {

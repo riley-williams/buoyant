@@ -162,6 +162,8 @@ fn skips_unfocusable_front_layer() {
     assert!(result.requested_focus());
     assert!(matches!(result.shape(), Some(ContentShape::Rectangle(_))));
 
+    // The focused button gives up focus and the front layer is unfocusable, so
+    // focus leaves the stack entirely - the loss must be reported.
     let result = harness.next();
     assert_eq!(result, EventResult::Deferred);
 }
@@ -278,8 +280,11 @@ where
     S: View<(), State> + 'static,
 {
     Button::new(action, move |_| shape()).map_event(move |event, _: &mut State| match event {
-        Event::KeyDown(Key::Character('\n')) => Mapping::Replace(Event::from(FocusAction::Select)),
-        Event::KeyUp(_) => Mapping::Defer,
+        Event::KeyDown {
+            key: Key::Character('\n'),
+            ..
+        } => Mapping::Replace(Event::from(FocusAction::Select)),
+        Event::KeyUp { .. } => Mapping::Defer,
         _ => Mapping::Passthrough,
     })
 }

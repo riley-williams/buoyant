@@ -1,4 +1,4 @@
-use buoyant::focus::DefaultFocus;
+use buoyant::focus::FocusTree;
 use buoyant::font::CharacterBufferFont;
 use buoyant::if_view;
 use buoyant::primitives::{Point, Size};
@@ -132,7 +132,7 @@ fn empty_view_returns_deferred() {
         &mut tree,
         &mut (),
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
 
     assert!(

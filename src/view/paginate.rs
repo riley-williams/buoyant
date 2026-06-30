@@ -4,7 +4,7 @@
 use crate::{
     environment::LayoutEnvironment,
     event::{Event, EventContext, EventResult},
-    focus::{DefaultFocus, FocusAction, FocusGroup},
+    focus::{FocusAction, FocusGroup, FocusTree},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
     render::IntrinsicShape,
@@ -20,6 +20,7 @@ pub struct Paginate<V, Action> {
     view: V,
     group: FocusGroup,
     action: Action,
+    forceful: bool,
 }
 
 /// An event indicating a page should change, triggered by focus events on the pagination
@@ -33,17 +34,17 @@ pub enum PageEvent {
 }
 
 #[expect(missing_docs)]
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum PageState {
-    UnFocused,
-    Focused,
-    Captive,
+#[derive(Default, Clone, Copy, Debug, PartialEq, Eq)]
+pub struct PaginateState<T> {
+    child: T,
 }
 
 impl<V: ViewMarker, Action> Paginate<V, Action> {
-    #[expect(missing_docs)]
+    /// Create a new paginate view with the given child view, focus group, and action.
+    /// If forceful, focus events on the pagination group will trigger page changes
+    /// even if the child view currently holds focus.
     #[must_use]
-    pub fn new<C>(group: FocusGroup, action: Action, view: V) -> Self
+    pub fn new<C>(group: FocusGroup, forceful: bool, action: Action, view: V) -> Self
     where
         V: ViewLayout<C>,
         Action: Fn(&mut C, PageEvent),
@@ -52,6 +53,7 @@ impl<V: ViewMarker, Action> Paginate<V, Action> {
             view,
             group,
             action,
+            forceful,
         }
     }
 }
@@ -59,20 +61,24 @@ impl<V: ViewMarker, Action> Paginate<V, Action> {
 #[expect(missing_docs)]
 #[derive(Debug, Clone)]
 pub struct PaginateFocusTree<T> {
-    inner: T,
+    child: T,
 }
 
-impl<T: DefaultFocus> DefaultFocus for PaginateFocusTree<T> {
+impl<T: FocusTree> FocusTree for PaginateFocusTree<T> {
     fn default_first() -> Self {
         Self {
-            inner: T::default_first(),
+            child: T::default_first(),
         }
     }
 
     fn default_last() -> Self {
         Self {
-            inner: T::default_last(),
+            child: T::default_last(),
         }
+    }
+
+    fn is_focused(&self) -> bool {
+        self.child.is_focused()
     }
 }
 
@@ -86,7 +92,7 @@ where
     V: ViewLayout<C, Renderables: IntrinsicShape>,
     Action: Fn(&mut C, PageEvent),
 {
-    type State = V::State;
+    type State = PaginateState<V::State>;
 
     type Sublayout = V::Sublayout;
 
@@ -97,7 +103,9 @@ where
     }
 
     fn build_state(&self, captures: &mut C) -> Self::State {
-        self.view.build_state(captures)
+        PaginateState {
+            child: self.view.build_state(captures),
+        }
     }
 
     fn layout(
@@ -107,7 +115,7 @@ where
         captures: &mut C,
         state: &mut Self::State,
     ) -> ResolvedLayout<Self::Sublayout> {
-        self.view.layout(offer, env, captures, state)
+        self.view.layout(offer, env, captures, &mut state.child)
     }
 
     fn render_tree(
@@ -118,7 +126,8 @@ where
         captures: &mut C,
         state: &mut Self::State,
     ) -> Self::Renderables {
-        self.view.render_tree(layout, origin, env, captures, state)
+        self.view
+            .render_tree(layout, origin, env, captures, &mut state.child)
     }
 
     fn handle_event(
@@ -132,14 +141,30 @@ where
     ) -> EventResult {
         if let Event::Focus { action, group } = event
             && *group == self.group
+            && (!focus.child.is_focused() || self.forceful)
         {
+            let mut blur = || {
+                self.view.handle_event(
+                    &Event::Focus {
+                        action: FocusAction::Blur,
+                        group: self.group,
+                    },
+                    context,
+                    render_tree,
+                    captures,
+                    &mut state.child,
+                    &mut focus.child,
+                )
+            };
             // Events directed at the pagination group should trigger the action
             match action {
                 FocusAction::Next => {
+                    blur();
                     (self.action)(captures, PageEvent::Next);
                     context.request_view_rebuild();
                 }
                 FocusAction::Previous => {
+                    blur();
                     (self.action)(captures, PageEvent::Previous);
                     context.request_view_rebuild();
                 }
@@ -148,14 +173,15 @@ where
             return EventResult::handled_focused(render_tree.content_shape());
         }
 
-        // For non-focus events, delegate to inner view.
+        // For non-focus events, delegate to inner view. The child's focus tree is
+        // the source of truth for whether it holds focus.
         self.view.handle_event(
             event,
             context,
             render_tree,
             captures,
-            state,
-            &mut focus.inner,
+            &mut state.child,
+            &mut focus.child,
         )
     }
 }

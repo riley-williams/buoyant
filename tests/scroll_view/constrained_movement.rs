@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use buoyant::{
     event::EventContext,
-    focus::DefaultFocus,
+    focus::FocusTree,
     primitives::Size,
     render::Render,
     render_target::FixedTextBuffer,
@@ -60,7 +60,7 @@ fn vertical_scroll_does_not_move_horizontally() {
         &mut tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
 
     let ctx = EventContext::new(Duration::from_secs(3));
@@ -70,7 +70,7 @@ fn vertical_scroll_does_not_move_horizontally() {
         &mut tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
 
     assert!(!ctx.view_rebuild_requested.get());
@@ -94,7 +94,7 @@ fn vertical_scroll_does_not_move_horizontally() {
         &mut tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
 
     // Tree manually updated, no view recomputation
@@ -119,7 +119,7 @@ fn vertical_scroll_does_not_move_horizontally() {
         &mut tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
 
     assert!(ctx.view_rebuild_requested.get());

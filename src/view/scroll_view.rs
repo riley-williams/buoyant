@@ -214,14 +214,15 @@ enum InteractionTarget {
     Unknown,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 enum ContentPinning {
+    #[default]
     Floating,
     Pinned(bool, bool),
 }
 
 /// Persisted state for the scroll view and its inner view.
-#[derive(Debug, Clone)]
+#[derive(Default, Debug, Clone)]
 pub struct ScrollViewState<InnerState> {
     scroll_offset: Point,
     interaction: ScrollInteraction,

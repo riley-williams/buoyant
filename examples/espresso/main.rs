@@ -169,13 +169,14 @@ fn root_view(state: &AppState) -> impl View<color::Space, AppState> + use<> {
     .bound_focus(BoundaryBehavior::Wrap)
     .focus_touches()
     .map_event(|event: &Event, _state| match event {
-        Event::KeyDown(key) => match key {
+        Event::KeyDown { key, .. } => match key {
             Key::UpArrow | Key::LeftArrow => Mapping::Fallback(FocusAction::Previous.into()),
             Key::DownArrow | Key::RightArrow => Mapping::Fallback(FocusAction::Next.into()),
             Key::Character(' ' | '\n') => Mapping::Fallback(FocusAction::Select.into()),
             Key::Backspace | Key::Delete => Mapping::Fallback(FocusAction::Blur.into()),
             _ => Mapping::Passthrough,
         },
+        Event::KeyUp { .. } => Mapping::Defer, // Eat key up events
         _ => Mapping::Passthrough,
     })
 }
