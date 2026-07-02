@@ -57,6 +57,7 @@ pub struct Popover<Inner, Overlay, Action = NoDismiss> {
     overlay: Option<Overlay>,
     boundary_behavior: BoundaryBehavior,
     on_blur: Action,
+    animation: Animation,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -106,6 +107,7 @@ where
             overlay,
             boundary_behavior: BoundaryBehavior::Stop,
             on_blur: NoDismiss,
+            animation: Animation::ease_out(Duration::from_millis(300)),
         }
     }
 }
@@ -142,7 +144,14 @@ where
             overlay: self.overlay,
             boundary_behavior: self.boundary_behavior,
             on_blur,
+            animation: self.animation,
         }
+    }
+
+    /// Sets a custom animation curve on the popover presentation and dismissal.
+    #[must_use]
+    pub fn with_animation(self, animation: Animation) -> Self {
+        Self { animation, ..self }
     }
 
     #[allow(clippy::too_many_arguments, clippy::type_complexity)]
@@ -346,7 +355,7 @@ where
             inner_tree,
             Animate::new(
                 overlay_tree,
-                Animation::ease_out(Duration::from_millis(300)),
+                self.animation.clone(),
                 env.app_time(),
                 self.overlay.is_some(),
             ),
