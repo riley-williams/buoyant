@@ -2,7 +2,7 @@ use buoyant::{
     app::{App, Harness as _},
     event::{Event, Key},
     focus::{FocusAction, Role},
-    primitives::Size,
+    primitives::{Point, Size},
     render::ContentShape,
     view::{map_event::Mapping, popover::Dismissal, prelude::*},
 };
@@ -327,5 +327,54 @@ fn blur_retains_overlay_via_on_blur_retain() {
     assert!(
         harness.state().popover_visible.is_some(),
         "Retain should keep the overlay mounted"
+    );
+}
+
+fn popover_touch_view(state: &State) -> impl View<(), State> + use<> {
+    Button::new(|s: &mut State| s.main_tapped = true, |_| Rectangle).popover(
+        state.popover_visible.as_ref(),
+        |()| {
+            Button::new(|s: &mut State| s.popover_a_tapped = true, |_| Rectangle)
+                .frame_sized(50, 50)
+        },
+    )
+}
+
+/// When the popover is visible, touches are routed to the overlay (and not the inner
+/// view). When hidden, touches reach the inner view.
+#[test]
+fn popover_touch_routes_to_overlay_when_visible() {
+    let state = State::default().with_popover();
+    let mut harness =
+        App::new(state, Size::new(100, 100), popover_touch_view).with_roles(Role::Button);
+
+    // The overlay button is a 50x50 frame centered in the 100x100 stack at (25,25)-(75,75).
+    // (50,50) is inside it, so the overlay handles the touch.
+    harness.tap(Point::new(50, 50));
+    assert!(
+        harness.state().popover_a_tapped,
+        "overlay should handle the tap when visible"
+    );
+    assert!(
+        !harness.state().main_tapped,
+        "inner should not fire while the overlay is visible"
+    );
+}
+
+#[test]
+fn popover_touch_routes_to_inner_when_hidden() {
+    let state = State::default();
+    let mut harness =
+        App::new(state, Size::new(100, 100), popover_touch_view).with_roles(Role::Button);
+
+    // With no overlay, the inner button fills the 100x100 frame and handles the tap.
+    harness.tap(Point::new(50, 50));
+    assert!(
+        harness.state().main_tapped,
+        "inner should handle the tap when the overlay is hidden"
+    );
+    assert!(
+        !harness.state().popover_a_tapped,
+        "overlay should not fire when hidden"
     );
 }

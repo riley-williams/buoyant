@@ -4,8 +4,10 @@ use std::time::Duration;
 
 use buoyant::{
     environment::{DefaultEnvironment, LayoutEnvironment},
+    focus::DefaultFocus,
     layout::{Alignment, LayoutDirection},
     primitives::{Point, ProposedDimensions, Size},
+    render::AnimatedJoin,
     render_target::FixedTextBuffer,
     view::View,
 };
@@ -174,4 +176,20 @@ pub fn tap<V: View<char, Data>, Data: ?Sized>(
         captures,
         state,
     );
+}
+
+/// Builds an [`buoyant::app::App`] over a `10x10` `char` display, routing the view function
+/// through a generic boundary so the closure's higher-ranked `Fn(&S) -> V` signature is
+/// resolved correctly. The app is configured with [`buoyant::focus::Role::Button`].
+#[allow(dead_code)]
+pub fn app<V, S, F>(state: S, view_fn: F) -> buoyant::app::App<V, S, F>
+where
+    V: View<char, S>,
+    V::FocusTree: DefaultFocus,
+    V::Renderables: AnimatedJoin,
+    S: 'static,
+    F: Fn(&S) -> V,
+{
+    buoyant::app::App::new(state, Size::new(10, 10), view_fn)
+        .with_roles(buoyant::focus::Role::Button)
 }
