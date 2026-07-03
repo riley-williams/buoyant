@@ -329,9 +329,10 @@ where
     }
 
     fn raw_surface(&mut self) -> impl Surface<Color = Self::ColorFormat> + '_ {
+        let clip_rect = self.clip_rect();
         let offset_surface =
             OffsetSurface::new(&mut self.surface, self.active_layer.transform.offset);
-        ClippedSurface::new(offset_surface, self.active_layer.clip_rect.clone())
+        ClippedSurface::new(offset_surface, clip_rect)
     }
 
     fn raw_surface_unclipped(
