@@ -435,22 +435,25 @@ where
         state: &mut Self::State,
     ) -> TouchResult<Self::FocusTree> {
         // FIXME: touch routing for popover is approximate; overlay focus state is not committed
-        if let (Some(overlay_view), TransitionOption::Some { subtree, .. }) =
-            (&self.overlay, &mut render_tree.1.subtree)
+        if let Some(overlay_view) = &self.overlay
+            && let TransitionOption::Some { subtree, .. } = &mut render_tree.1.subtree
         {
             let overlay_state = state
                 .overlay_state
                 .get_or_insert_with(|| overlay_view.build_state(captures));
-            match overlay_view.handle_touch(touch, context, subtree, captures, overlay_state) {
+            return match overlay_view.handle_touch(touch, context, subtree, captures, overlay_state)
+            {
                 TouchResult::Focused(f) => {
-                    return TouchResult::Focused(FocusTree {
+                    // FIXME: This clears the inner focus, could pass Option<&Self::FocusTree> to handle_touch?
+                    TouchResult::Focused(FocusTree {
                         inner: DefaultFocus::default_first(),
                         overlay: Some(f),
-                    });
+                    })
                 }
-                TouchResult::Handled => return TouchResult::Handled,
-                TouchResult::Deferred => (),
-            }
+                TouchResult::Handled => TouchResult::Handled,
+                TouchResult::Deferred => TouchResult::Deferred,
+            };
+            // TODO: If the tap was outside the popover, dismiss it?
         }
         match self.inner.handle_touch(
             touch,

@@ -150,5 +150,6 @@ where
     ) -> TouchResult<Self::FocusTree> {
         self.foreground
             .handle_touch(touch, context, &mut render_tree.1.subtree, captures, state)
+        // TODO: should check if touch starts in background
     }
 }

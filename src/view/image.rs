@@ -1,9 +1,10 @@
 use embedded_graphics::{image::ImageDrawable, prelude::OriginDimensions};
-use embedded_touch::Touch;
+use embedded_touch::{Phase, Touch};
 
 use crate::{
     event::{EventResult, TouchResult},
     layout::ResolvedLayout,
+    primitives::geometry::Rectangle,
     render::{self},
     transition::Opacity,
     view::{ViewLayout, ViewMarker},
@@ -84,12 +85,18 @@ where
 
     fn handle_touch(
         &self,
-        _touch: &Touch,
+        touch: &Touch,
         _context: &crate::event::EventContext,
-        _render_tree: &mut Self::Renderables,
+        render_tree: &mut Self::Renderables,
         _captures: &mut Captures,
         _state: &mut Self::State,
     ) -> TouchResult<Self::FocusTree> {
+        if touch.phase == Phase::Started {
+            let rect = Rectangle::new(render_tree.origin, render_tree.image.size().into());
+            if rect.contains(&touch.location.into()) {
+                return TouchResult::Handled;
+            }
+        }
         TouchResult::Deferred
     }
 }
