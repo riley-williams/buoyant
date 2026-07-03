@@ -1,12 +1,15 @@
-use buoyant::environment::DefaultEnvironment;
-use buoyant::font::CharacterBufferFont;
-use buoyant::primitives::{Dimensions, Size};
-use buoyant::render::Render;
-use buoyant::render_target::FixedTextBuffer;
-use buoyant::view::prelude::*;
+use buoyant::{
+    app::Harness as _,
+    environment::DefaultEnvironment,
+    font::CharacterBufferFont,
+    primitives::{Dimensions, Size},
+    render::Render,
+    render_target::FixedTextBuffer,
+    view::prelude::*,
+};
 
 mod common;
-use common::make_render_tree;
+use common::{app, make_render_tree};
 
 #[test]
 fn test_layout_fills_two() {
@@ -257,4 +260,31 @@ fn compact_proposal_offers_max_child_dimension() {
         buffer.text[14].iter().collect::<String>(),
         "xxxxxxxxxxxxxxx"
     );
+}
+
+#[derive(Clone, Default, PartialEq, Eq, Debug)]
+struct TouchState {
+    back: u32,
+    front: u32,
+}
+
+fn zstack_touch_view(_: &TouchState) -> impl View<char, TouchState> + use<> {
+    ZStack::new((
+        Button::new(|s: &mut TouchState| s.back += 1, |_| Rectangle),
+        Button::new(|s: &mut TouchState| s.front += 1, |_| Rectangle).frame_sized(4, 4),
+    ))
+    .with_alignment(Alignment::TopLeading)
+}
+
+#[test]
+fn zstack_touch_consults_front_child_first() {
+    let mut harness = app(TouchState::default(), zstack_touch_view);
+
+    harness.tap(buoyant::primitives::Point::new(1, 1));
+    assert_eq!(harness.state().front, 1, "front view should handle tap");
+    assert_eq!(harness.state().back, 0, "back view should not handle");
+
+    harness.tap(buoyant::primitives::Point::new(8, 8));
+    assert_eq!(harness.state().front, 1, "front view should be unaffected");
+    assert_eq!(harness.state().back, 1);
 }

@@ -87,7 +87,7 @@ impl<T: ViewMarker> ZStack<T> {
 }
 
 macro_rules! impl_view_for_zstack {
-    ($ct:tt, $(($n:tt, $type:ident)),+) => {
+    ($ct:tt, $(($n:tt, $type:ident)),+ ; $($rn:tt),+) => {
         paste! {
         impl<$($type),+> ViewMarker for ZStack<($($type),+)>
         where
@@ -310,17 +310,20 @@ macro_rules! impl_view_for_zstack {
                 captures: &mut Captures,
                 state: &mut Self::State,
             ) -> TouchResult<Self::FocusTree> {
+                // Iterate children front-to-back so the topmost view that handles
+                // (or focuses on) the touch wins. The tuple is ordered back-to-front,
+                // so traverse the reversed index list.
                 $(
-                    match self.items.$n.handle_touch(
+                    match self.items.$rn.handle_touch(
                         touch,
                         context,
-                        &mut render_tree.$n,
+                        &mut render_tree.$rn,
                         captures,
-                        &mut state.$n,
+                        &mut state.$rn,
                     ) {
                         TouchResult::Focused(f) => {
                             return TouchResult::Focused(
-                                super::match_view::[<OneOf $ct>]::[<V $n>](f),
+                                super::match_view::[<OneOf $ct>]::[<V $rn>](f),
                             );
                         }
                         TouchResult::Handled => return TouchResult::Handled,
@@ -334,56 +337,30 @@ macro_rules! impl_view_for_zstack {
     }
 }
 
-impl_view_for_zstack!(2, (0, T0), (1, T1));
-impl_view_for_zstack!(3, (0, T0), (1, T1), (2, T2));
-impl_view_for_zstack!(4, (0, T0), (1, T1), (2, T2), (3, T3));
-impl_view_for_zstack!(5, (0, T0), (1, T1), (2, T2), (3, T3), (4, T4));
-impl_view_for_zstack!(6, (0, T0), (1, T1), (2, T2), (3, T3), (4, T4), (5, T5));
+impl_view_for_zstack!(2, (0, T0), (1, T1) ; 1, 0);
+impl_view_for_zstack!(3, (0, T0), (1, T1), (2, T2) ; 2, 1, 0);
+impl_view_for_zstack!(4, (0, T0), (1, T1), (2, T2), (3, T3) ; 3, 2, 1, 0);
+impl_view_for_zstack!(5, (0, T0), (1, T1), (2, T2), (3, T3), (4, T4) ; 4, 3, 2, 1, 0);
+impl_view_for_zstack!(6, (0, T0), (1, T1), (2, T2), (3, T3), (4, T4), (5, T5) ; 5, 4, 3, 2, 1, 0);
 impl_view_for_zstack!(
     7,
-    (0, T0),
-    (1, T1),
-    (2, T2),
-    (3, T3),
-    (4, T4),
-    (5, T5),
-    (6, T6)
+    (0, T0), (1, T1), (2, T2), (3, T3), (4, T4), (5, T5), (6, T6)
+    ; 6, 5, 4, 3, 2, 1, 0
 );
 impl_view_for_zstack!(
     8,
-    (0, T0),
-    (1, T1),
-    (2, T2),
-    (3, T3),
-    (4, T4),
-    (5, T5),
-    (6, T6),
-    (7, T7)
+    (0, T0), (1, T1), (2, T2), (3, T3), (4, T4), (5, T5), (6, T6), (7, T7)
+    ; 7, 6, 5, 4, 3, 2, 1, 0
 );
 impl_view_for_zstack!(
     9,
-    (0, T0),
-    (1, T1),
-    (2, T2),
-    (3, T3),
-    (4, T4),
-    (5, T5),
-    (6, T6),
-    (7, T7),
-    (8, T8)
+    (0, T0), (1, T1), (2, T2), (3, T3), (4, T4), (5, T5), (6, T6), (7, T7), (8, T8)
+    ; 8, 7, 6, 5, 4, 3, 2, 1, 0
 );
 impl_view_for_zstack!(
     10,
-    (0, T0),
-    (1, T1),
-    (2, T2),
-    (3, T3),
-    (4, T4),
-    (5, T5),
-    (6, T6),
-    (7, T7),
-    (8, T8),
-    (9, T9)
+    (0, T0), (1, T1), (2, T2), (3, T3), (4, T4), (5, T5), (6, T6), (7, T7), (8, T8), (9, T9)
+    ; 9, 8, 7, 6, 5, 4, 3, 2, 1, 0
 );
 
 // Implement single-item conformance for convenience, although it does nothing

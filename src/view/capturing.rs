@@ -113,7 +113,12 @@ impl<
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> TouchResult<Self::FocusTree> {
-        self.inner
-            .handle_touch(touch, context, render_tree, (self.capture_fn)(captures), state)
+        self.inner.handle_touch(
+            touch,
+            context,
+            render_tree,
+            (self.capture_fn)(captures),
+            state,
+        )
     }
 }

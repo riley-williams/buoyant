@@ -117,7 +117,5 @@ where
         } else {
             TouchResult::Deferred
         }
-
-        // TODO: needs tests
     }
 }
