@@ -330,7 +330,6 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> TouchResult<Self::FocusTree> {
-        // DFS: overlay first, then foreground
         match self
             .overlay
             .handle_touch(touch, context, &mut render_tree.1, captures, &mut state.1)
@@ -341,10 +340,13 @@ where
             TouchResult::Handled => return TouchResult::Handled,
             TouchResult::Deferred => (),
         }
-        match self
-            .foreground
-            .handle_touch(touch, context, &mut render_tree.0, captures, &mut state.0)
-        {
+        match self.foreground.handle_touch(
+            touch,
+            context,
+            &mut render_tree.0,
+            captures,
+            &mut state.0,
+        ) {
             TouchResult::Focused(f) => TouchResult::Focused(OverlayFocus::Foreground(f)),
             TouchResult::Handled => TouchResult::Handled,
             TouchResult::Deferred => TouchResult::Deferred,

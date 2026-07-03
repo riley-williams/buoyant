@@ -1,10 +1,11 @@
-use embedded_touch::Touch;
+use embedded_touch::{Phase, Touch};
 
 use crate::{
     environment::LayoutEnvironment,
     event::{EventResult, TouchResult},
     layout::ResolvedLayout,
-    primitives::{Dimensions, Point, ProposedDimensions, Size},
+    primitives::{Dimensions, Point, ProposedDimensions, Size, geometry::Shape as _},
+    render::shape::AsShapePrimitive as _,
     transition::Opacity,
     view::{ViewLayout, ViewMarker},
 };
@@ -75,12 +76,21 @@ impl<Captures: ?Sized> ViewLayout<Captures> for Capsule {
 
     fn handle_touch(
         &self,
-        _touch: &Touch,
+        touch: &Touch,
         _context: &crate::event::EventContext,
-        _render_tree: &mut Self::Renderables,
+        render_tree: &mut Self::Renderables,
         _captures: &mut Captures,
         _state: &mut Self::State,
     ) -> TouchResult<Self::FocusTree> {
-        TouchResult::Deferred
+        if touch.phase == Phase::Started
+            && render_tree
+                .as_shape()
+                .bounding_box()
+                .contains(&touch.location.into())
+        {
+            TouchResult::Handled
+        } else {
+            TouchResult::Deferred
+        }
     }
 }

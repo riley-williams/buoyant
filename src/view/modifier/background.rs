@@ -330,22 +330,26 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> TouchResult<Self::FocusTree> {
-        // DFS back to front: background first, then foreground
-        match self
-            .background
-            .handle_touch(touch, context, &mut render_tree.0, captures, &mut state.1)
-        {
-            TouchResult::Focused(f) => {
-                return TouchResult::Focused(BackgroundFocus::Background(f));
-            }
+        match self.foreground.handle_touch(
+            touch,
+            context,
+            &mut render_tree.1,
+            captures,
+            &mut state.0,
+        ) {
+            TouchResult::Focused(f) => return TouchResult::Focused(BackgroundFocus::Foreground(f)),
             TouchResult::Handled => return TouchResult::Handled,
             TouchResult::Deferred => (),
         }
-        match self
-            .foreground
-            .handle_touch(touch, context, &mut render_tree.1, captures, &mut state.0)
-        {
-            TouchResult::Focused(f) => TouchResult::Focused(BackgroundFocus::Foreground(f)),
+
+        match self.background.handle_touch(
+            touch,
+            context,
+            &mut render_tree.0,
+            captures,
+            &mut state.1,
+        ) {
+            TouchResult::Focused(f) => TouchResult::Focused(BackgroundFocus::Background(f)),
             TouchResult::Handled => TouchResult::Handled,
             TouchResult::Deferred => TouchResult::Deferred,
         }

@@ -107,20 +107,17 @@ where
         captures: &mut Captures,
         state: &mut Self::State,
     ) -> TouchResult<Self::FocusTree> {
-        // only cull inner handling of start touches. Drag/end may move outside the clip rect
+        // Only cull inner handling of start touches. Drag/end may move outside the clip rect
         // but they should sill be tracked
         let should_handle = touch.phase != Phase::Started
             || render_tree.clip_rect.contains(&From::from(touch.location));
         if should_handle {
-            self.child.handle_touch(
-                touch,
-                context,
-                &mut render_tree.subtree,
-                captures,
-                state,
-            )
+            self.child
+                .handle_touch(touch, context, &mut render_tree.subtree, captures, state)
         } else {
             TouchResult::Deferred
         }
+
+        // TODO: needs tests
     }
 }
