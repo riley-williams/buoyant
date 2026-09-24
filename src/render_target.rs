@@ -113,6 +113,25 @@ pub trait RenderTarget {
     /// img.draw(&mut target.raw_surface().draw_target());
     /// ```
     fn raw_surface(&mut self) -> impl Surface<Color = Self::ColorFormat> + '_;
+
+    /// Obtain a raw surface to directly write pixels, with its origin at
+    /// `origin` in the local coordinate space.
+    ///
+    /// The returned surface is not required to clip. Callers must confine their
+    /// drawing to [`RenderTarget::clip_rect`], translated by `-origin`.
+    ///
+    /// This exists so that callers which have already established that their
+    /// content is fully visible do not pay for a clip check on every drawing
+    /// call. Use [`RenderTarget::raw_surface`] when that is not known.
+    // The `Copy` bound on `Surface::Color` is carried by the surface returned
+    // from `raw_surface`, but is not visible through the opaque type here.
+    #[allow(opaque_hidden_inferred_bound)]
+    fn raw_surface_unclipped(
+        &mut self,
+        origin: Point,
+    ) -> impl Surface<Color = Self::ColorFormat> + '_ {
+        surface::OffsetSurface::new(self.raw_surface(), origin)
+    }
 }
 
 /// Positioned glyph.

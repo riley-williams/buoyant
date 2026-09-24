@@ -63,15 +63,18 @@ impl<T: ?Sized> AnimatedJoin for Image<'_, T> {
 
 #[cfg(feature = "embedded-graphics")]
 mod embedded_graphics {
-    use embedded_graphics::{
-        draw_target::DrawTargetExt,
-        image::{ImageDrawable, ImageDrawableExt},
-    };
+    use embedded_graphics::image::{ImageDrawable, ImageDrawableExt};
 
     use crate::{
-        primitives::{Interpolate as _, Point, geometry::Rectangle},
+        primitives::{
+            Interpolate as _, Point,
+            geometry::{Intersection, Rectangle},
+        },
         render::{ContentShape, IntrinsicShape, Render},
-        render_target::{RenderTarget, surface::AsDrawTarget},
+        render_target::{
+            RenderTarget,
+            surface::{AsDrawTarget, ClippedSurface},
+        },
     };
 
     use super::Image;
@@ -81,13 +84,7 @@ mod embedded_graphics {
             render_target: &mut impl RenderTarget<ColorFormat = I::Color>,
             _style: &I::Color,
         ) {
-            let clip_area = render_target.clip_rect();
-            _ = self.image.sub_image(&clip_area.into()).draw(
-                &mut render_target
-                    .raw_surface()
-                    .draw_target()
-                    .translated(self.origin.into()),
-            );
+            draw_image(render_target, self.image, self.origin);
         }
 
         fn render_animated(
@@ -97,22 +94,51 @@ mod embedded_graphics {
             _style: &I::Color,
             domain: &super::AnimationDomain,
         ) {
-            let offset = Point::interpolate(source.origin, target.origin, domain.factor);
+            let origin = Point::interpolate(source.origin, target.origin, domain.factor);
             if domain.factor == 0 {
-                _ = source.image.draw(
-                    &mut render_target
-                        .raw_surface()
-                        .draw_target()
-                        .translated(offset.into()),
-                );
+                draw_image(render_target, source.image, origin);
             } else {
-                _ = target.image.draw(
-                    &mut render_target
-                        .raw_surface()
-                        .draw_target()
-                        .translated(offset.into()),
-                );
+                draw_image(render_target, target.image, origin);
             }
+        }
+    }
+
+    /// Draws `image` with its top left corner at `origin` in the local coordinate space.
+    ///
+    /// The image is classified against the clip rect once here, rather than
+    /// once per drawing call issued by the image decoder. Images that are fully
+    /// visible, which is the common case, are drawn through a surface that only
+    /// applies a translation.
+    fn draw_image<I: ImageDrawable>(
+        render_target: &mut impl RenderTarget<ColorFormat = I::Color>,
+        image: &I,
+        origin: Point,
+    ) {
+        let clip_area = render_target.clip_rect();
+        let bounds = Rectangle::new(origin, image.size().into());
+
+        match clip_area.intersection_with(&bounds) {
+            Intersection::Contains => {
+                let mut surface = render_target.raw_surface_unclipped(origin);
+                _ = image.draw(&mut surface.draw_target());
+            }
+            Intersection::Overlaps => {
+                let Some(visible) = clip_area.intersection(&bounds) else {
+                    return;
+                };
+
+                // `sub_image` areas are image local, with the top left corner
+                // of the image at the origin.
+                let sub_area = Rectangle::new(visible.origin - origin, visible.size);
+                let mut surface = ClippedSurface::new(
+                    render_target.raw_surface_unclipped(visible.origin),
+                    Rectangle::new(Point::zero(), visible.size),
+                );
+                _ = image
+                    .sub_image(&sub_area.into())
+                    .draw(&mut surface.draw_target());
+            }
+            Intersection::NonIntersecting => (),
         }
     }
 

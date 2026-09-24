@@ -333,6 +333,16 @@ where
             OffsetSurface::new(&mut self.surface, self.active_layer.transform.offset);
         ClippedSurface::new(offset_surface, self.active_layer.clip_rect.clone())
     }
+
+    fn raw_surface_unclipped(
+        &mut self,
+        origin: Point,
+    ) -> impl Surface<Color = Self::ColorFormat> + '_ {
+        OffsetSurface::new(
+            &mut self.surface,
+            self.active_layer.transform.offset + origin,
+        )
+    }
 }
 
 fn draw_line<C: PixelColor>(
