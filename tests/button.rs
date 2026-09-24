@@ -6,7 +6,6 @@ use crate::common::{touch_down, touch_move, touch_up};
 use buoyant::{
     environment::DefaultEnvironment,
     event::EventContext,
-    focus::DefaultFocus,
     font::CharacterBufferFont,
     primitives::{Point, Size},
     render::Render,
@@ -89,22 +88,20 @@ fn increment_single_frame() {
     assert_eq!(buffer.text[5].iter().collect::<String>(), "Decrement ");
     assert_eq!(app_state, AppState { a: 0, b: 0 });
 
-    view.handle_event(
+    view.handle_touch(
         &touch_down(1, 1),
         &EventContext::new(Duration::ZERO),
         &mut tree,
         &mut app_state,
         &mut view_state,
-        &mut DefaultFocus::default_first(),
     );
     assert_eq!(app_state, AppState { a: 0, b: 0 });
-    view.handle_event(
+    view.handle_touch(
         &touch_up(1, 1),
         &EventContext::new(Duration::ZERO),
         &mut tree,
         &mut app_state,
         &mut view_state,
-        &mut DefaultFocus::default_first(),
     );
     assert_eq!(app_state, AppState { a: 1, b: 0 });
 
@@ -132,31 +129,28 @@ fn drag_cancel() {
         Size::new(10, 6),
     );
 
-    view.handle_event(
+    view.handle_touch(
         &touch_down(1, 1),
         &EventContext::new(Duration::ZERO),
         &mut tree,
         &mut app_state,
         &mut view_state,
-        &mut DefaultFocus::default_first(),
     );
     assert_eq!(app_state, AppState { a: 0, b: 0 });
-    view.handle_event(
+    view.handle_touch(
         &touch_move(1, 2),
         &EventContext::new(Duration::ZERO),
         &mut tree,
         &mut app_state,
         &mut view_state,
-        &mut DefaultFocus::default_first(),
     );
     assert_eq!(app_state, AppState { a: 0, b: 0 });
-    view.handle_event(
+    view.handle_touch(
         &touch_up(1, 2),
         &EventContext::new(Duration::ZERO),
         &mut tree,
         &mut app_state,
         &mut view_state,
-        &mut DefaultFocus::default_first(),
     );
     assert_eq!(app_state, AppState { a: 0, b: 0 });
 }
@@ -174,40 +168,36 @@ fn drag_cancel_uncancel() {
         Size::new(10, 6),
     );
 
-    view.handle_event(
+    view.handle_touch(
         &touch_down(1, 1),
         &EventContext::new(Duration::ZERO),
         &mut tree,
         &mut app_state,
         &mut view_state,
-        &mut DefaultFocus::default_first(),
     );
     assert_eq!(app_state, AppState { a: 0, b: 0 });
-    view.handle_event(
+    view.handle_touch(
         &touch_move(1, 2),
         &EventContext::new(Duration::ZERO),
         &mut tree,
         &mut app_state,
         &mut view_state,
-        &mut DefaultFocus::default_first(),
     );
     assert_eq!(app_state, AppState { a: 0, b: 0 });
-    view.handle_event(
+    view.handle_touch(
         &touch_move(5, 1),
         &EventContext::new(Duration::ZERO),
         &mut tree,
         &mut app_state,
         &mut view_state,
-        &mut DefaultFocus::default_first(),
     );
     assert_eq!(app_state, AppState { a: 0, b: 0 });
-    view.handle_event(
+    view.handle_touch(
         &touch_up(5, 1),
         &EventContext::new(Duration::ZERO),
         &mut tree,
         &mut app_state,
         &mut view_state,
-        &mut DefaultFocus::default_first(),
     );
     assert_eq!(app_state, AppState { a: 1, b: 0 });
 }

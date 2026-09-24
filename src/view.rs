@@ -31,6 +31,7 @@ pub use as_drawable::AsDrawable;
 pub use button::{Button, ButtonState};
 pub use capturing::Lens;
 pub use divider::Divider;
+use embedded_touch::Touch;
 pub use empty_view::EmptyView;
 pub use foreach::ForEach;
 pub use geometry_reader::GeometryReader;
@@ -71,7 +72,7 @@ use crate::focus::DefaultFocus;
 use crate::transition::Transition;
 use crate::{
     environment::LayoutEnvironment,
-    event::{Event, EventContext, EventResult},
+    event::{Event, EventContext, EventResult, TouchResult},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
     render::Render,
@@ -198,6 +199,16 @@ pub trait ViewLayout<Captures: ?Sized>: ViewMarker {
         state: &mut Self::State,
         focus: &mut Self::FocusTree,
     ) -> EventResult;
+
+    /// Handles a touch event, returning a focus tree that points at the tapped element.
+    fn handle_touch(
+        &self,
+        touch: &Touch,
+        context: &EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> TouchResult<Self::FocusTree>;
 }
 
 impl<T> ViewMarker for &T
@@ -263,6 +274,17 @@ where
         focus: &mut Self::FocusTree,
     ) -> EventResult {
         (*self).handle_event(event, context, render_tree, captures, state, focus)
+    }
+
+    fn handle_touch(
+        &self,
+        touch: &Touch,
+        context: &EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> TouchResult<Self::FocusTree> {
+        (*self).handle_touch(touch, context, render_tree, captures, state)
     }
 }
 

@@ -1,11 +1,13 @@
 use crate::{
     environment::LayoutEnvironment,
-    event::{Event, EventResult},
+    event::{Event, EventResult, TouchResult},
     focus::{DefaultFocus, FocusAction, FocusDirection},
     layout::{Alignment, ResolvedLayout},
     primitives::{Point, ProposedDimension, ProposedDimensions},
     view::{ViewLayout, ViewMarker},
 };
+
+use embedded_touch::Touch;
 
 /// A view that uses the layout of the modified view, rendering the overlay
 /// on top of it.
@@ -253,8 +255,8 @@ where
                     foreground_focus,
                 ),
             },
-            // For hit-test events (touch, scroll), perform DFS
-            Event::Touch(_) | Event::Scroll(_) => match focus {
+            // For hit-test events (scroll), perform DFS
+            Event::Scroll(_) => match focus {
                 OverlayFocus::Overlay(_) => {
                     // Start with overlay
                     let overlay_result = self.overlay.handle_event(
@@ -317,6 +319,37 @@ where
                     )
                 }
             },
+        }
+    }
+
+    fn handle_touch(
+        &self,
+        touch: &Touch,
+        context: &crate::event::EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> TouchResult<Self::FocusTree> {
+        match self
+            .overlay
+            .handle_touch(touch, context, &mut render_tree.1, captures, &mut state.1)
+        {
+            TouchResult::Focused(f) => {
+                return TouchResult::Focused(OverlayFocus::Overlay(f));
+            }
+            TouchResult::Handled => return TouchResult::Handled,
+            TouchResult::Deferred => (),
+        }
+        match self.foreground.handle_touch(
+            touch,
+            context,
+            &mut render_tree.0,
+            captures,
+            &mut state.0,
+        ) {
+            TouchResult::Focused(f) => TouchResult::Focused(OverlayFocus::Foreground(f)),
+            TouchResult::Handled => TouchResult::Handled,
+            TouchResult::Deferred => TouchResult::Deferred,
         }
     }
 }

@@ -1,11 +1,13 @@
 use crate::{
     environment::LayoutEnvironment,
-    event::{Event, EventResult},
+    event::{Event, EventResult, TouchResult},
     focus::{DefaultFocus, FocusAction, FocusDirection},
     layout::{Alignment, ResolvedLayout},
     primitives::{Point, ProposedDimension, ProposedDimensions},
     view::{ViewLayout, ViewMarker},
 };
+
+use embedded_touch::Touch;
 
 /// A view that uses the layout of the foreground view, but renders the background
 /// behind it.
@@ -253,8 +255,8 @@ where
                     foreground_focus,
                 ),
             },
-            // For hit-test events (touch, scroll), perform DFS back to front
-            Event::Touch(_) | Event::Scroll(_) => match focus {
+            // For hit-test events (scroll), perform DFS back to front
+            Event::Scroll(_) => match focus {
                 BackgroundFocus::Background(_) => {
                     // Start with background (back)
                     let background_result = self.background.handle_event(
@@ -317,6 +319,39 @@ where
                     )
                 }
             },
+        }
+    }
+
+    fn handle_touch(
+        &self,
+        touch: &Touch,
+        context: &crate::event::EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> TouchResult<Self::FocusTree> {
+        match self.foreground.handle_touch(
+            touch,
+            context,
+            &mut render_tree.1,
+            captures,
+            &mut state.0,
+        ) {
+            TouchResult::Focused(f) => return TouchResult::Focused(BackgroundFocus::Foreground(f)),
+            TouchResult::Handled => return TouchResult::Handled,
+            TouchResult::Deferred => (),
+        }
+
+        match self.background.handle_touch(
+            touch,
+            context,
+            &mut render_tree.0,
+            captures,
+            &mut state.1,
+        ) {
+            TouchResult::Focused(f) => TouchResult::Focused(BackgroundFocus::Background(f)),
+            TouchResult::Handled => TouchResult::Handled,
+            TouchResult::Deferred => TouchResult::Deferred,
         }
     }
 }

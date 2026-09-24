@@ -1,11 +1,13 @@
 use crate::{
     environment::LayoutEnvironment,
-    event::{Event, EventContext, EventResult},
+    event::{Event, EventContext, EventResult, TouchResult},
     focus::{DefaultFocus, FocusGroup},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
     view::{ViewLayout, ViewMarker},
 };
+
+use embedded_touch::Touch;
 
 /// A modifier that gates focus based on a focus group index.
 ///
@@ -103,5 +105,17 @@ where
         }
 
         EventResult::Deferred
+    }
+
+    fn handle_touch(
+        &self,
+        touch: &Touch,
+        context: &EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> TouchResult<Self::FocusTree> {
+        self.child
+            .handle_touch(touch, context, render_tree, captures, state)
     }
 }

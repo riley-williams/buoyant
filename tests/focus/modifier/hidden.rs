@@ -24,7 +24,7 @@ fn hidden_view_is_skipped() {
 
     // Hidden button should be skipped - focus lands on Rectangle button
     let result = harness.focus_forward();
-    assert!(result.requested_focus());
+    assert!(result.is_handled());
     assert!(
         matches!(result.shape(), Some(ContentShape::Rectangle(_))),
         "Should focus second button (Rectangle), not hidden first button (Circle)"
@@ -45,7 +45,7 @@ fn visible_view_can_receive_focus() {
 
     // First button should be focusable
     let result = harness.focus_forward();
-    assert!(result.requested_focus());
+    assert!(result.is_handled());
     assert!(
         matches!(result.shape(), Some(ContentShape::Circle(_))),
         "Should focus first button (Circle)"

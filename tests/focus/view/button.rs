@@ -35,8 +35,6 @@ fn indicator_button() -> impl View<char, State> + use<> {
 fn multi_button(_: &State) -> impl View<char, State> + use<> {
     HStack::new((indicator_button(), indicator_button(), Rectangle))
         .bound_focus(BoundaryBehavior::Stop)
-        // .multiplex_focus::<1>()
-        .focus_touches()
 }
 
 #[test]
@@ -46,10 +44,7 @@ fn single_button_focus() {
         App::new(state, Size::new(100, 100), single_button_view).with_roles(Role::Button);
 
     let result = harness.focus_forward();
-    assert!(
-        result.requested_focus(),
-        "Single button should be focusable"
-    );
+    assert!(result.is_handled(), "Single button should be focusable");
     assert!(matches!(result.shape(), Some(ContentShape::Circle(_))));
 }
 

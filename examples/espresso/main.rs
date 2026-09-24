@@ -11,7 +11,10 @@ use std::process::exit;
 use std::time::{Duration, Instant};
 
 use buoyant::app::{App, Harness};
-use buoyant::event::{Event, Key, simulator::MouseTracker};
+use buoyant::event::{
+    Event, Key,
+    simulator::{InputEvent, MouseTracker},
+};
 use buoyant::focus::{BoundaryBehavior, FocusAction, Role};
 use buoyant::render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _};
 use buoyant::view::map_event::Mapping;
@@ -103,8 +106,13 @@ fn main() {
                 }
                 touch_tracker.process_event(event)
             })
-            .for_each(|event| {
-                app.send(event);
+            .for_each(|event| match event {
+                InputEvent::Event(e) => {
+                    app.send(e);
+                }
+                InputEvent::Touch(t) => {
+                    app.send_touch(&t);
+                }
             });
 
         // Only render if active animation was reported or redraw needed
@@ -167,7 +175,6 @@ fn root_view(state: &AppState) -> impl View<color::Space, AppState> + use<> {
     ))
     .popover(state.clean_overlay.as_ref(), view::clean::clean_overlay)
     .bound_focus(BoundaryBehavior::Wrap)
-    .focus_touches()
     .map_event(|event: &Event, _state| match event {
         Event::KeyDown(key) => match key {
             Key::UpArrow | Key::LeftArrow => Mapping::Fallback(FocusAction::Previous.into()),

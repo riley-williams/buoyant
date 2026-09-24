@@ -2,13 +2,15 @@ use core::time::Duration;
 
 use crate::{
     animation::Animation,
-    event::{Event, EventContext, EventResult},
+    event::{Event, EventContext, EventResult, TouchResult},
     focus::{BoundaryBehavior, DefaultFocus, FocusAction, FocusDirection},
     layout::{HorizontalAlignment, ResolvedLayout, VerticalAlignment},
     primitives::Point,
     render::{Animate, IntrinsicShape, TransitionOption},
     view::{ViewLayout, ViewMarker},
 };
+
+use embedded_touch::Touch;
 
 /// The decision to either retain or dismiss the active popover on blur
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -421,6 +423,51 @@ where
                 &mut state.inner_state,
                 &mut focus.inner,
             ),
+        }
+    }
+
+    fn handle_touch(
+        &self,
+        touch: &Touch,
+        context: &EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> TouchResult<Self::FocusTree> {
+        // FIXME: touch routing for popover is approximate; overlay focus state is not committed
+        if let Some(overlay_view) = &self.overlay
+            && let TransitionOption::Some { subtree, .. } = &mut render_tree.1.subtree
+        {
+            let overlay_state = state
+                .overlay_state
+                .get_or_insert_with(|| overlay_view.build_state(captures));
+            return match overlay_view.handle_touch(touch, context, subtree, captures, overlay_state)
+            {
+                TouchResult::Focused(f) => {
+                    // FIXME: This clears the inner focus, could pass Option<&Self::FocusTree> to handle_touch?
+                    TouchResult::Focused(FocusTree {
+                        inner: DefaultFocus::default_first(),
+                        overlay: Some(f),
+                    })
+                }
+                TouchResult::Handled => TouchResult::Handled,
+                TouchResult::Deferred => TouchResult::Deferred,
+            };
+            // TODO: If the tap was outside the popover, dismiss it?
+        }
+        match self.inner.handle_touch(
+            touch,
+            context,
+            &mut render_tree.0,
+            captures,
+            &mut state.inner_state,
+        ) {
+            TouchResult::Focused(f) => TouchResult::Focused(FocusTree {
+                inner: f,
+                overlay: None,
+            }),
+            TouchResult::Handled => TouchResult::Handled,
+            TouchResult::Deferred => TouchResult::Deferred,
         }
     }
 }

@@ -1,10 +1,12 @@
 use crate::{
     environment::LayoutEnvironment,
-    event::EventResult,
+    event::{EventResult, TouchResult},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions, Size},
     view::{ViewLayout, ViewMarker},
 };
+
+use embedded_touch::Touch;
 
 /// Describes a set of edges
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -137,5 +139,17 @@ where
     ) -> EventResult {
         self.inner
             .handle_event(event, context, render_tree, captures, state, focus)
+    }
+
+    fn handle_touch(
+        &self,
+        touch: &Touch,
+        context: &crate::event::EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> TouchResult<Self::FocusTree> {
+        self.inner
+            .handle_touch(touch, context, render_tree, captures, state)
     }
 }

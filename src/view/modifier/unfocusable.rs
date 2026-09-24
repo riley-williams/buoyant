@@ -1,11 +1,13 @@
 use crate::{
     environment::LayoutEnvironment,
-    event::{Event, EventContext, EventResult},
+    event::{Event, EventContext, EventResult, TouchResult},
     focus::DefaultFocus,
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
     view::{ViewLayout, ViewMarker},
 };
+
+use embedded_touch::Touch;
 
 /// A modifier that prevents a subtree from obtaining focus.
 /// Touch events are always passed through.
@@ -82,20 +84,29 @@ where
     ) -> EventResult {
         // Only allow non-focus events
         let Event::Focus { .. } = event else {
-            let mut result =
-                self.child
-                    .handle_event(event, context, render_tree, captures, state, focus);
-            // Prevent `focus_touches` from giving this view focus when handling touch events
-            if let EventResult::Handled {
-                request_focus: has_focus,
-                ..
-            } = &mut result
-            {
-                *has_focus = false;
-            }
-            return result;
+            return self
+                .child
+                .handle_event(event, context, render_tree, captures, state, focus);
         };
 
         EventResult::Deferred
+    }
+
+    fn handle_touch(
+        &self,
+        touch: &Touch,
+        context: &EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> TouchResult<Self::FocusTree> {
+        // Suppress focus: remap Focused to Handled
+        match self
+            .child
+            .handle_touch(touch, context, render_tree, captures, state)
+        {
+            TouchResult::Focused(_) | TouchResult::Handled => TouchResult::Handled,
+            TouchResult::Deferred => TouchResult::Deferred,
+        }
     }
 }

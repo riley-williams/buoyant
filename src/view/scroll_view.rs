@@ -2,11 +2,11 @@
 
 use core::time::Duration;
 
-use embedded_touch::Phase;
+use embedded_touch::{Phase, Touch};
 
 use crate::{
     animation::Animation,
-    event::{Event, EventContext, EventResult},
+    event::{Event, EventContext, EventResult, TouchResult},
     layout::ResolvedLayout,
     primitives::{
         Dimensions, Point, ProposedDimension, ProposedDimensions, Size, geometry::Rectangle,
@@ -517,214 +517,6 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
                 context.request_view_rebuild();
                 (EventResult::Deferred, *delta)
             }
-            Event::Touch(touch) => {
-                // Only track the first touch. This could cause problems if
-                // the touch is "lost" without an ended or cancelled event.
-                if let ScrollInteraction::Dragging { touch_id, .. } = state.interaction
-                    && touch.id != touch_id
-                {
-                    return self.inner.handle_event(
-                        event,
-                        context,
-                        render_tree.inner_mut(),
-                        captures,
-                        &mut state.inner_state,
-                        focus,
-                    );
-                }
-                let point = touch.location.into();
-                match touch.phase {
-                    Phase::Started => {
-                        let bounds = render_tree.bounds();
-                        if bounds.contains(&point) {
-                            state.interaction = ScrollInteraction::Dragging {
-                                drag_start: point,
-                                last_point: point,
-                                target: InteractionTarget::Unknown,
-                                touch_id: touch.id,
-                            };
-
-                            context.request_redraw();
-                            // returning the inner result here would move focus before we're committed to scrolling
-                            {
-                                let _inner_result = self.inner.handle_event(
-                                    &event.offset(-render_tree.offset() - render_tree.inner.offset),
-                                    context,
-                                    render_tree.inner_mut(),
-                                    captures,
-                                    &mut state.inner_state,
-                                    focus,
-                                );
-                                (EventResult::handled_unfocused(), Point::zero())
-                            }
-                        } else {
-                            // Touches cannot start outside the bounds, return early
-                            return EventResult::Deferred;
-                        }
-                    }
-                    Phase::Moved => match &mut state.interaction {
-                        ScrollInteraction::Dragging {
-                            drag_start,
-                            last_point,
-                            target,
-                            ..
-                        } => {
-                            let delta = point - *last_point;
-
-                            *last_point = point;
-                            let total_scroll = point - *drag_start;
-
-                            context.request_redraw();
-                            // 4 pixels of wiggle without cancelling inner
-                            match target {
-                                InteractionTarget::Scroll => {
-                                    (EventResult::handled_unfocused(), delta)
-                                }
-                                InteractionTarget::Inner => {
-                                    let inner_result = self.inner.handle_event(
-                                        &event.offset(
-                                            -render_tree.offset() - render_tree.inner.offset,
-                                        ),
-                                        context,
-                                        render_tree.inner_mut(),
-                                        captures,
-                                        &mut state.inner_state,
-                                        focus,
-                                    );
-                                    (inner_result, Point::zero())
-                                }
-                                InteractionTarget::Unknown => {
-                                    let horizontal_intent = total_scroll.x.abs() >= 4
-                                        && self.direction != ScrollDirection::Vertical;
-                                    let vertical_intent = total_scroll.y.abs() >= 4
-                                        && self.direction != ScrollDirection::Horizontal;
-
-                                    if horizontal_intent || vertical_intent {
-                                        // cancel inner interaction once we're sure the user intended to scroll
-                                        *target = InteractionTarget::Scroll;
-                                        let mut cancel_event = touch.clone();
-                                        cancel_event.phase = Phase::Cancelled;
-                                        // returning the inner result here would move focus before we're committed to scrolling
-                                        {
-                                            let _inner_result = self.inner.handle_event(
-                                                &Event::Touch(cancel_event),
-                                                context,
-                                                render_tree.inner_mut(),
-                                                captures,
-                                                &mut state.inner_state,
-                                                focus,
-                                            );
-                                            (EventResult::handled_unfocused(), delta)
-                                        }
-                                    } else {
-                                        let horizontal_intent = total_scroll.x.abs() >= 8
-                                            && self.direction == ScrollDirection::Vertical;
-                                        let vertical_intent = total_scroll.y.abs() >= 8
-                                            && self.direction == ScrollDirection::Horizontal;
-
-                                        // notify inner of result, don't commit
-                                        let inner_result = self.inner.handle_event(
-                                            &event.offset(
-                                                -render_tree.offset() - render_tree.inner.offset,
-                                            ),
-                                            context,
-                                            render_tree.inner_mut(),
-                                            captures,
-                                            &mut state.inner_state,
-                                            focus,
-                                        );
-                                        let result = if (horizontal_intent || vertical_intent)
-                                            && inner_result.is_handled()
-                                        {
-                                            *target = InteractionTarget::Inner;
-                                            inner_result
-                                        } else {
-                                            EventResult::handled_unfocused()
-                                        };
-                                        (result, delta)
-                                    }
-                                }
-                            }
-                        }
-                        ScrollInteraction::Idle => {
-                            (EventResult::handled_unfocused(), Point::zero())
-                        }
-                    },
-                    Phase::Ended => match state.interaction {
-                        ScrollInteraction::Dragging {
-                            drag_start: _,
-                            last_point,
-                            target,
-                            ..
-                        } => {
-                            state.interaction = ScrollInteraction::Idle;
-
-                            let delta = point - last_point;
-
-                            context.request_view_rebuild();
-                            if target == InteractionTarget::Scroll {
-                                // If we don't set this, the scroll view will not animate the
-                                // snap back
-                                render_tree.inner.subtree.value = true;
-                                (EventResult::handled_unfocused(), delta)
-                            } else {
-                                let touch_offset = render_tree.offset() + render_tree.inner.offset;
-                                let mut touch = touch.clone();
-                                touch.location -= touch_offset.into();
-
-                                {
-                                    let inner_result = self.inner.handle_event(
-                                        &Event::Touch(touch),
-                                        context,
-                                        render_tree.inner_mut(),
-                                        captures,
-                                        &mut state.inner_state,
-                                        focus,
-                                    );
-                                    (inner_result, delta)
-                                }
-                            }
-                        }
-                        ScrollInteraction::Idle => (
-                            self.inner.handle_event(
-                                event,
-                                context,
-                                render_tree.inner_mut(),
-                                captures,
-                                &mut state.inner_state,
-                                focus,
-                            ),
-                            Point::zero(),
-                        ),
-                    },
-                    Phase::Cancelled => {
-                        state.interaction = ScrollInteraction::Idle;
-                        context.request_view_rebuild();
-                        {
-                            let inner_result = self.inner.handle_event(
-                                event,
-                                context,
-                                render_tree.inner_mut(),
-                                captures,
-                                &mut state.inner_state,
-                                focus,
-                            );
-                            (inner_result, Point::zero())
-                        }
-                    }
-                    Phase::Hovering(_) => (
-                        self.inner.handle_event(
-                            event,
-                            context,
-                            render_tree.inner_mut(),
-                            captures,
-                            &mut state.inner_state,
-                            focus,
-                        ),
-                        Point::zero(),
-                    ),
-                }
-            }
             _ => (
                 self.inner.handle_event(
                     event,
@@ -769,6 +561,285 @@ impl<Inner: ViewLayout<Captures>, Captures> ViewLayout<Captures> for ScrollView<
         // This is used to avoid recomputing the entire view tree every time the
         // scroll position changes. If there's scroll jank it's probably related
         // to this optimization.
+        if delta != Point::zero() && !context.view_rebuild_requested.get() {
+            let subview_offset = {
+                let permitted_offset_x = render_tree
+                    .inner_size
+                    .width
+                    .saturating_sub(render_tree.scroll_size.width)
+                    as i32;
+                let permitted_offset_y = render_tree
+                    .inner_size
+                    .height
+                    .saturating_sub(render_tree.scroll_size.height)
+                    as i32;
+
+                // Movement beyond the bounds is reduced by half while dragging
+                let mut offset = state.scroll_offset;
+                if offset.x > 0 {
+                    // Overscrolling on the left
+                    offset.x /= 2;
+                } else if -offset.x > permitted_offset_x {
+                    // Overscrolling on the right
+                    offset.x = offset.x.midpoint(permitted_offset_x) - permitted_offset_x;
+                }
+
+                if offset.y > 0 {
+                    // Overscrolling on the top
+                    offset.y /= 2;
+                } else if -offset.y > permitted_offset_y {
+                    // Overscrolling on the bottom
+                    offset.y = offset.y.midpoint(permitted_offset_y) - permitted_offset_y;
+                }
+
+                offset
+            };
+            *render_tree.offset_mut() = subview_offset;
+            let (horizontal_bar, vertical_bar) = self.scroll_bars(
+                Point::zero(),
+                render_tree.scroll_size,
+                render_tree.inner_size,
+                subview_offset,
+            );
+            render_tree.set_bars(horizontal_bar, vertical_bar);
+        }
+
+        result
+    }
+
+    #[expect(clippy::too_many_lines)]
+    fn handle_touch(
+        &self,
+        touch: &Touch,
+        context: &EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> TouchResult<Self::FocusTree> {
+        // Only track the first touch. This could cause problems if
+        // the touch is "lost" without an ended or cancelled event.
+        if let ScrollInteraction::Dragging { touch_id, .. } = state.interaction
+            && touch.id != touch_id
+        {
+            return self.inner.handle_touch(
+                touch,
+                context,
+                render_tree.inner_mut(),
+                captures,
+                &mut state.inner_state,
+            );
+        }
+        let point = touch.location.into();
+        let (result, delta) = match touch.phase {
+            Phase::Started => {
+                let bounds = render_tree.bounds();
+                if bounds.contains(&point) {
+                    state.interaction = ScrollInteraction::Dragging {
+                        drag_start: point,
+                        last_point: point,
+                        target: InteractionTarget::Unknown,
+                        touch_id: touch.id,
+                    };
+
+                    context.request_redraw();
+                    // returning the inner result here would move focus before we're committed to scrolling
+                    {
+                        let mut offset_touch = touch.clone();
+                        offset_touch.location -=
+                            (render_tree.offset() + render_tree.inner.offset).into();
+                        let _inner_result = self.inner.handle_touch(
+                            &offset_touch,
+                            context,
+                            render_tree.inner_mut(),
+                            captures,
+                            &mut state.inner_state,
+                        );
+                    }
+                    (TouchResult::Handled, Point::zero())
+                } else {
+                    // Touches cannot start outside the bounds, return early
+                    return TouchResult::Deferred;
+                }
+            }
+            Phase::Moved => match &mut state.interaction {
+                ScrollInteraction::Dragging {
+                    drag_start,
+                    last_point,
+                    target,
+                    ..
+                } => {
+                    let delta = point - *last_point;
+
+                    *last_point = point;
+                    let total_scroll = point - *drag_start;
+
+                    context.request_redraw();
+                    // 4 pixels of wiggle without cancelling inner
+                    match target {
+                        InteractionTarget::Scroll => (TouchResult::Handled, delta),
+                        InteractionTarget::Inner => {
+                            let mut offset_touch = touch.clone();
+                            offset_touch.location -=
+                                (render_tree.offset() + render_tree.inner.offset).into();
+                            let inner_result = self.inner.handle_touch(
+                                &offset_touch,
+                                context,
+                                render_tree.inner_mut(),
+                                captures,
+                                &mut state.inner_state,
+                            );
+                            (inner_result, Point::zero())
+                        }
+                        InteractionTarget::Unknown => {
+                            let horizontal_intent = total_scroll.x.abs() >= 4
+                                && self.direction != ScrollDirection::Vertical;
+                            let vertical_intent = total_scroll.y.abs() >= 4
+                                && self.direction != ScrollDirection::Horizontal;
+
+                            if horizontal_intent || vertical_intent {
+                                // cancel inner interaction once we're sure the user intended to scroll
+                                *target = InteractionTarget::Scroll;
+                                let mut cancel_touch = touch.clone();
+                                cancel_touch.phase = Phase::Cancelled;
+                                // returning the inner result here would move focus before we're committed to scrolling
+                                {
+                                    let _inner_result = self.inner.handle_touch(
+                                        &cancel_touch,
+                                        context,
+                                        render_tree.inner_mut(),
+                                        captures,
+                                        &mut state.inner_state,
+                                    );
+                                }
+                                (TouchResult::Handled, delta)
+                            } else {
+                                let horizontal_intent = total_scroll.x.abs() >= 8
+                                    && self.direction == ScrollDirection::Vertical;
+                                let vertical_intent = total_scroll.y.abs() >= 8
+                                    && self.direction == ScrollDirection::Horizontal;
+
+                                // notify inner of result, don't commit
+                                let mut offset_touch = touch.clone();
+                                offset_touch.location -=
+                                    (render_tree.offset() + render_tree.inner.offset).into();
+                                let inner_result = self.inner.handle_touch(
+                                    &offset_touch,
+                                    context,
+                                    render_tree.inner_mut(),
+                                    captures,
+                                    &mut state.inner_state,
+                                );
+                                let result = if (horizontal_intent || vertical_intent)
+                                    && matches!(
+                                        &inner_result,
+                                        TouchResult::Focused(_) | TouchResult::Handled
+                                    ) {
+                                    *target = InteractionTarget::Inner;
+                                    inner_result
+                                } else {
+                                    TouchResult::Handled
+                                };
+                                (result, delta)
+                            }
+                        }
+                    }
+                }
+                ScrollInteraction::Idle => (TouchResult::Handled, Point::zero()),
+            },
+            Phase::Ended => match state.interaction {
+                ScrollInteraction::Dragging {
+                    drag_start: _,
+                    last_point,
+                    target,
+                    ..
+                } => {
+                    state.interaction = ScrollInteraction::Idle;
+
+                    let delta = point - last_point;
+
+                    context.request_view_rebuild();
+                    if target == InteractionTarget::Scroll {
+                        // If we don't set this, the scroll view will not animate the
+                        // snap back
+                        render_tree.inner.subtree.value = true;
+                        (TouchResult::Handled, delta)
+                    } else {
+                        let touch_offset = render_tree.offset() + render_tree.inner.offset;
+                        let mut touch = touch.clone();
+                        touch.location -= touch_offset.into();
+
+                        let inner_result = self.inner.handle_touch(
+                            &touch,
+                            context,
+                            render_tree.inner_mut(),
+                            captures,
+                            &mut state.inner_state,
+                        );
+                        (inner_result, delta)
+                    }
+                }
+                ScrollInteraction::Idle => (
+                    self.inner.handle_touch(
+                        touch,
+                        context,
+                        render_tree.inner_mut(),
+                        captures,
+                        &mut state.inner_state,
+                    ),
+                    Point::zero(),
+                ),
+            },
+            Phase::Cancelled => {
+                state.interaction = ScrollInteraction::Idle;
+                context.request_view_rebuild();
+                let inner_result = self.inner.handle_touch(
+                    touch,
+                    context,
+                    render_tree.inner_mut(),
+                    captures,
+                    &mut state.inner_state,
+                );
+                (inner_result, Point::zero())
+            }
+            Phase::Hovering(_) => (
+                self.inner.handle_touch(
+                    touch,
+                    context,
+                    render_tree.inner_mut(),
+                    captures,
+                    &mut state.inner_state,
+                ),
+                Point::zero(),
+            ),
+        };
+
+        // Constrain delta to configured axis
+        let delta = match self.direction {
+            ScrollDirection::Vertical => Point::new(0, delta.y),
+            ScrollDirection::Horizontal => Point::new(delta.x, 0),
+            ScrollDirection::Both => delta,
+        };
+        state.scroll_offset.x = state.scroll_offset.x.saturating_add(delta.x);
+        state.scroll_offset.y = state.scroll_offset.y.saturating_add(delta.y);
+
+        let should_pin_bottom = -state.scroll_offset.y
+            >= (render_tree
+                .inner_size
+                .height
+                .saturating_sub(render_tree.scroll_size.height)) as i32
+            && state.scroll_offset.y != 0;
+        let should_pin_trailing = -state.scroll_offset.x
+            >= (render_tree
+                .inner_size
+                .width
+                .saturating_sub(render_tree.scroll_size.width)) as i32
+            && state.scroll_offset.x != 0;
+
+        state.content_pinning = match (should_pin_trailing, should_pin_bottom) {
+            (false, false) => ContentPinning::Floating,
+            (horizontal, vertical) => ContentPinning::Pinned(horizontal, vertical),
+        };
+
         if delta != Point::zero() && !context.view_rebuild_requested.get() {
             let subview_offset = {
                 let permitted_offset_x = render_tree

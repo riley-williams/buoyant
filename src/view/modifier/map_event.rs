@@ -1,9 +1,11 @@
 use core::marker::PhantomData;
 
 use crate::{
-    event::{Event, EventResult},
+    event::{Event, EventResult, TouchResult},
     view::{ViewLayout, ViewMarker},
 };
+
+use embedded_touch::Touch;
 
 #[derive(Debug, Clone)]
 pub struct MapEvent<V, F, C: ?Sized, I> {
@@ -147,5 +149,17 @@ impl<C: ?Sized, V: ViewLayout<C>, F: Fn(&Event, &mut C, &mut I) -> Mapping, I: '
             Mapping::Defer => EventResult::Deferred,
             Mapping::Handled => EventResult::handled_unfocused(),
         }
+    }
+
+    fn handle_touch(
+        &self,
+        touch: &Touch,
+        context: &crate::event::EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut C,
+        state: &mut Self::State,
+    ) -> TouchResult<Self::FocusTree> {
+        self.inner
+            .handle_touch(touch, context, render_tree, captures, &mut state.1)
     }
 }

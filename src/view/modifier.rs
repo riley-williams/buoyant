@@ -17,14 +17,12 @@ mod exclusive_focus;
 mod fixed_frame;
 mod fixed_size;
 mod flex_frame;
-mod focus_touches;
 mod foreground_color;
 mod geometry_group;
 mod hidden;
 mod hint_background;
 #[allow(missing_docs)]
 pub mod map_event;
-mod multiplex_focus;
 mod offset;
 mod opacity;
 mod overlay;
@@ -37,10 +35,7 @@ mod scale_effect;
 mod transition;
 mod unfocusable;
 
-use crate::{
-    focus::{BoundaryBehavior, FocusGroupSet},
-    view::ViewLayout,
-};
+use crate::{focus::BoundaryBehavior, view::ViewLayout};
 pub(crate) use animated::Animated;
 pub(crate) use aspect_ratio::AspectRatio;
 pub(crate) use background::BackgroundView;
@@ -54,12 +49,10 @@ use fixed::traits::ToFixed;
 pub(crate) use fixed_frame::FixedFrame;
 pub(crate) use fixed_size::FixedSize;
 pub(crate) use flex_frame::FlexFrame;
-pub(crate) use focus_touches::FocusTouches;
 pub(crate) use foreground_color::ForegroundStyle;
 pub(crate) use geometry_group::GeometryGroup;
 pub(crate) use hidden::Hidden;
 pub(crate) use hint_background::HintBackground;
-pub(crate) use multiplex_focus::MultiplexFocus;
 pub(crate) use offset::Offset;
 pub(crate) use opacity::Opacity;
 pub(crate) use overlay::OverlayView;
@@ -412,12 +405,6 @@ pub trait ViewModifier: Sized + ViewMarker {
             .with_horizontal_alignment(alignment)
     }
 
-    /// Allows touch events to focus tapped elements. Generally, this should be applied
-    /// once near the root of the view hierarchy.
-    fn focus_touches(self) -> FocusTouches<Self> {
-        FocusTouches::new(self)
-    }
-
     /// Sets the foreground color of the modified view and its children.
     fn foreground_color<C>(self, color: C) -> ForegroundStyle<Self, C> {
         ForegroundStyle::new(color, self)
@@ -562,16 +549,6 @@ pub trait ViewModifier: Sized + ViewMarker {
         Self: ViewLayout<C>,
     {
         MapEvent::new(self, mapping)
-    }
-
-    /// Maintains multiple independent focus trees.
-    ///
-    /// The provided groups must be disjoint.
-    fn multiplex_focus<const N: usize>(
-        self,
-        groups: [FocusGroupSet; N],
-    ) -> MultiplexFocus<Self, N> {
-        MultiplexFocus::new(self, groups)
     }
 
     /// Offsets a view by the specified values.

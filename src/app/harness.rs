@@ -8,8 +8,11 @@ use crate::{
 
 /// [`Harness`] provides a convenience interface for sending events
 pub trait Harness {
-    /// Sends an event and returns the result.
+    /// Sends a non-touch event and returns the result.
     fn send(&mut self, event: impl Into<Event>) -> EventResult;
+
+    /// Sends a touch event to the view, reconciling focus if the view requests it.
+    fn send_touch(&mut self, touch: &Touch);
 
     /// Acquires focus, searching forward.
     ///
@@ -100,86 +103,82 @@ pub trait Harness {
     }
 
     /// Sends a tap (touch down + touch up) at the given point.
-    ///
-    /// The result of the touch up event is returned.
-    fn tap(&mut self, point: Point) -> EventResult {
-        self.send(Event::Touch(Touch::new(
+    fn tap(&mut self, point: Point) {
+        self.send_touch(&Touch::new(
             0,
             point.into(),
             embedded_touch::Phase::Started,
             Tool::Finger,
-        )));
+        ));
 
-        self.send(Event::Touch(Touch::new(
+        self.send_touch(&Touch::new(
             0,
             point.into(),
             embedded_touch::Phase::Ended,
             Tool::Finger,
-        )))
+        ));
     }
 
     /// Sends a drag (down + move + up) from the start point to the end point.
-    ///
-    /// The result of the touch up event is returned.
-    fn drag(&mut self, start: Point, end: Point) -> EventResult {
-        self.send(Event::Touch(Touch::new(
+    fn drag(&mut self, start: Point, end: Point) {
+        self.send_touch(&Touch::new(
             0,
             start.into(),
             embedded_touch::Phase::Started,
             Tool::Finger,
-        )));
+        ));
 
-        self.send(Event::Touch(Touch::new(
+        self.send_touch(&Touch::new(
             0,
             end.into(),
             embedded_touch::Phase::Moved,
             Tool::Finger,
-        )));
+        ));
 
-        self.send(Event::Touch(Touch::new(
+        self.send_touch(&Touch::new(
             0,
             end.into(),
             embedded_touch::Phase::Ended,
             Tool::Finger,
-        )))
+        ));
     }
 
     /// Sends a touch down event at the given point.
     ///
     /// Prefer [`Self::tap()`] or [`Self::drag()`] when possible to avoid leaving
     /// the view in an inconsistent state.
-    fn touch_down(&mut self, point: Point) -> EventResult {
-        self.send(Event::Touch(Touch::new(
+    fn touch_down(&mut self, point: Point) {
+        self.send_touch(&Touch::new(
             0,
             point.into(),
             embedded_touch::Phase::Started,
             Tool::Finger,
-        )))
+        ));
     }
 
     /// Sends a touch move event at the given point.
     ///
     /// Prefer [`Self::drag()`] when possible to avoid leaving the view in an
     /// inconsistent state.
-    fn touch_move(&mut self, point: Point) -> EventResult {
-        self.send(Event::Touch(Touch::new(
+    fn touch_move(&mut self, point: Point) {
+        self.send_touch(&Touch::new(
             0,
             point.into(),
             embedded_touch::Phase::Moved,
             Tool::Finger,
-        )))
+        ));
     }
 
     /// Sends a touch up event at the given point.
     ///
     /// Prefer [`Self::tap()`] or [`Self::drag()`] when possible to avoid leaving
     /// the view in an inconsistent state.
-    fn touch_up(&mut self, point: Point) -> EventResult {
-        self.send(Event::Touch(Touch::new(
+    fn touch_up(&mut self, point: Point) {
+        self.send_touch(&Touch::new(
             0,
             point.into(),
             embedded_touch::Phase::Ended,
             Tool::Finger,
-        )))
+        ));
     }
 }

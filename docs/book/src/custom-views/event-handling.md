@@ -8,11 +8,13 @@ should generally not mutate the focus tree or search for a handler.
 
 ## `Touch`
 
-Touch events should be routed with depth first search. Non-matching elements should
-return `Deferred`. Elements can signal to the `focus_touches()` modifier that they
-should acquire focus by returning `EventResult::handled_focused()`. Elements like Button
-should return `EventResult::handled_unfocused()` on touch down to indicate the touch
-was handled but focus should not be moved.
+Touches are dispatched through `ViewLayout::handle_touch`, which returns a
+`TouchResult<FocusTree>`. Touches are routed with a depth-first search: non-matching
+elements return `TouchResult::Deferred`. An element that handles the touch returns
+`TouchResult::Focused(focus_tree)` to signal that focus should move to it, or
+`TouchResult::Handled` when the touch was handled but focus should not change (for
+example, a `Button` pressed while already focused). `App::send_touch` reconciles the
+returned focus tree with the app's current focus unconditionally.
 
 ## `Focus(_)`
 
