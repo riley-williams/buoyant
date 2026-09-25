@@ -30,7 +30,7 @@ impl<InnerView: ViewMarker<Renderables: Clone>, U: Clone> ViewMarker for Animate
     type Transition = InnerView::Transition;
 }
 
-impl<Captures: ?Sized, InnerView, U: PartialEq + Clone + 'static> ViewLayout<Captures>
+impl<Captures: ?Sized, InnerView, U: Default + PartialEq + Clone + 'static> ViewLayout<Captures>
     for Animated<InnerView, U>
 where
     InnerView: ViewLayout<Captures, Renderables: Clone>,

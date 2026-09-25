@@ -1,6 +1,6 @@
 use crate::{
     event::{EventContext, EventResult},
-    focus::DefaultFocus,
+    focus::FocusTree,
     layout::ResolvedLayout,
     primitives::{Dimensions, Point, ProposedDimensions},
     render::TransitionOption,
@@ -8,13 +8,17 @@ use crate::{
     view::{Event, ViewLayout, ViewMarker},
 };
 
-impl<T: DefaultFocus> DefaultFocus for Option<T> {
+impl<T: FocusTree> FocusTree for Option<T> {
     fn default_first() -> Self {
         Some(T::default_first())
     }
 
     fn default_last() -> Self {
         Some(T::default_last())
+    }
+
+    fn is_focused(&self) -> bool {
+        self.as_ref().is_some_and(FocusTree::is_focused)
     }
 }
 
@@ -120,7 +124,7 @@ where
         match (self, render_tree, state) {
             (Some(v), TransitionOption::Some { subtree, .. }, Some(s)) => {
                 // TODO: Correct to always init first??
-                let inner_focus = focus.get_or_insert(DefaultFocus::default_first());
+                let inner_focus = focus.get_or_insert(FocusTree::default_first());
                 v.handle_event(event, context, subtree, captures, s, inner_focus)
             }
             (None, _, _) => EventResult::Deferred,

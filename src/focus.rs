@@ -1,5 +1,7 @@
 mod role;
 
+use core::fmt;
+
 pub use role::{Role, RoleSet};
 
 use crate::event::Event;
@@ -50,25 +52,34 @@ impl FocusAction {
 /// A trait for focus tree types that can be initialized to either the first or last element.
 ///
 /// This is roughly equivalent to `Default` but supports bidirectional navigation
-pub trait DefaultFocus {
+pub trait FocusTree {
     /// Returns a focus tree initialized to the first element.
     fn default_first() -> Self;
 
     /// Returns a focus tree initialized to the last element.
     fn default_last() -> Self;
+
+    /// Returns true if this subtree currently holds focus.
+    ///
+    /// Focusable leaves are the source of truth for their own focus state;
+    /// containers report whether any element within them is focused.
+    fn is_focused(&self) -> bool;
 }
 
-impl DefaultFocus for () {
+impl FocusTree for () {
     fn default_first() -> Self {}
     fn default_last() -> Self {}
+    fn is_focused(&self) -> bool {
+        false
+    }
 }
 
 /// A group identifying a set of related elements.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct FocusGroup(u8);
 
 /// A set of focus groups.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct FocusGroupSet(u8);
 
 impl FocusGroup {
@@ -121,6 +132,24 @@ impl FocusGroupSet {
     #[must_use]
     pub const fn contains(self, group: FocusGroup) -> bool {
         (self.0 & group.0) != 0
+    }
+
+    /// Returns true if this set contains no focus groups.
+    #[must_use]
+    pub const fn is_empty(self) -> bool {
+        self.0 == 0
+    }
+
+    /// Returns a copy of this set with the specified focus group removed.
+    #[must_use]
+    pub const fn without(self, group: FocusGroup) -> Self {
+        Self(self.0 & !group.0)
+    }
+}
+
+impl Default for FocusGroupSet {
+    fn default() -> Self {
+        Self::new_none()
     }
 }
 
@@ -179,6 +208,27 @@ pub enum BoundaryBehavior {
     Wrap,
     /// Stop movement at the boundaries (focus stays on the current element)
     Stop,
+}
+
+impl fmt::Display for FocusGroup {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "FocusGroup({})", self.index())
+    }
+}
+impl fmt::Debug for FocusGroup {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{self}")
+    }
+}
+impl fmt::Display for FocusGroupSet {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "FocusGroupSet({:08b})", self.0)
+    }
+}
+impl fmt::Debug for FocusGroupSet {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{self}")
+    }
 }
 
 #[cfg(test)]

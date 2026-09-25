@@ -214,10 +214,11 @@ fn key_aware_foreach(_: &State) -> impl View<(), State> + use<> {
         let index = item as usize;
         Button::new(move |s: &mut State| s.selected = Some(index), |_| Circle).map_event(
             move |event, _: &mut State| match event {
-                Event::KeyDown(Key::Character('\n')) => {
-                    Mapping::Replace(Event::from(FocusAction::Select))
-                }
-                Event::KeyUp(_) => Mapping::Defer,
+                Event::KeyDown {
+                    key: Key::Character('\n'),
+                    ..
+                } => Mapping::Replace(Event::from(FocusAction::Select)),
+                Event::KeyUp { .. } => Mapping::Defer,
                 _ => Mapping::Passthrough,
             },
         )

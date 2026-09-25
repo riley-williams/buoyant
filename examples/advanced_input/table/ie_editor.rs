@@ -1,7 +1,7 @@
 use crate::FONT;
 use crate::definitions::{GoodPixelColor, Palette, State, TemporaryIe};
 use buoyant::view::prelude::*;
-use buoyant::view::rotary::{Rotary, RotaryEvent, RotaryState};
+use buoyant::view::rotary::{Rotary, RotaryAxis, RotaryEvent, RotaryState};
 
 #[derive(Copy, Clone)]
 struct Digit(u8);
@@ -17,10 +17,15 @@ fn digit_editor<C: GoodPixelColor>(
         _ => (),
     };
 
-    Rotary::new(on_action, move |page_state: RotaryState| {
-        let is_focused = page_state == RotaryState::Focused || page_state == RotaryState::Captive;
-        button_gut(is_focused, palette, Text::new(Digit(value), &FONT))
-    })
+    Rotary::new_transparent(
+        RotaryAxis::Vertical,
+        on_action,
+        move |page_state: RotaryState| {
+            let is_focused =
+                page_state == RotaryState::Focused || page_state == RotaryState::Captive;
+            button_gut(is_focused, palette, Text::new(Digit(value), &FONT))
+        },
+    )
 }
 
 fn flag_editor<C: GoodPixelColor>(
@@ -35,11 +40,16 @@ fn flag_editor<C: GoodPixelColor>(
         _ => (),
     };
 
-    Rotary::new(on_action, move |page_state: RotaryState| {
-        let is_focused = page_state == RotaryState::Focused || page_state == RotaryState::Captive;
-        let text = if value { label } else { label_false };
-        button_gut(is_focused, palette, Text::new(text, &FONT))
-    })
+    Rotary::new_transparent(
+        RotaryAxis::Vertical,
+        on_action,
+        move |page_state: RotaryState| {
+            let is_focused =
+                page_state == RotaryState::Focused || page_state == RotaryState::Captive;
+            let text = if value { label } else { label_false };
+            button_gut(is_focused, palette, Text::new(text, &FONT))
+        },
+    )
 }
 
 fn button_gut<C: GoodPixelColor>(
@@ -63,7 +73,6 @@ fn button_gut<C: GoodPixelColor>(
 pub fn ie_editor<C: GoodPixelColor>(
     TemporaryIe { sign, int, frac }: TemporaryIe,
     submit: impl Fn(&mut State),
-    _cancel: impl Fn(&mut State),
     palette: &'static Palette<C>,
 ) -> impl View<C, State> {
     fn set_int<const I: usize>(s: &mut State, v: u8) {

@@ -1,6 +1,6 @@
 use crate::{
     event::{EventContext, EventResult},
-    focus::{DefaultFocus, FocusAction, FocusDirection},
+    focus::{FocusAction, FocusDirection, FocusTree},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
     render,
@@ -8,7 +8,7 @@ use crate::{
     view::{Event, ViewLayout, ViewMarker},
 };
 
-/// Helper macro to construct the last variant of a OneOfN enum with DefaultFocus
+/// Helper macro to construct the last variant of a OneOfN enum with FocusTree
 #[macro_export]
 #[doc(hidden)]
 macro_rules! last_variant_focus {
@@ -246,6 +246,14 @@ macro_rules! define_branch {
                 $variant($variant),
             )+
         }
+        impl <$($variant),+> Default for $name<$($variant),+>
+        where
+            V0: Default,
+        {
+            fn default() -> Self {
+                $name::V0(V0::default())
+            }
+        }
 
         impl <$($variant),+> $name<$($variant),+> {
             $(
@@ -275,13 +283,22 @@ macro_rules! define_branch {
                             }
                         }
                     }
+
+                    pub fn [<$variant:lower _mut>](&mut self) -> Option<&mut $variant> {
+                        #[allow(irrefutable_let_patterns)]
+                        if let $name::$variant(inner) = self {
+                            Some(inner)
+                        } else {
+                            None
+                        }
+                    }
                 }
             )+
         }
 
-        impl <$($variant),+> DefaultFocus for $name<$($variant),+>
+        impl <$($variant),+> FocusTree for $name<$($variant),+>
         where
-            $($variant: DefaultFocus,)+
+            $($variant: FocusTree,)+
         {
             fn default_first() -> Self {
                 $name::V0(V0::default_first())
@@ -290,6 +307,12 @@ macro_rules! define_branch {
             fn default_last() -> Self {
                 // Use a helper to get the last variant
                 last_variant_focus!($name, $($variant),+)
+            }
+
+            fn is_focused(&self) -> bool {
+                match self {
+                    $( Self::$variant(v) => v.is_focused(),)+
+                }
             }
         }
 
@@ -408,17 +431,17 @@ macro_rules! define_branch {
                             let inner_focus = paste::paste! {
                                 match focus_event {
                                     FocusAction::Focus(FocusDirection::Backward) | FocusAction::Previous => {
-                                        focus.[< $variant:lower _or_init >](DefaultFocus::default_last())
+                                        focus.[< $variant:lower _or_init >](FocusTree::default_last())
                                     }
                                     _ => {
-                                        focus.[< $variant:lower _or_init >](DefaultFocus::default_first())
+                                        focus.[< $variant:lower _or_init >](FocusTree::default_first())
                                     }
                                 }
                             };
                             v.handle_event(event, context, t, captures, s, inner_focus)
                         } else {
                             let inner_focus = paste::paste! {
-                                focus.[< $variant:lower _or_init >](DefaultFocus::default_first())
+                                focus.[< $variant:lower _or_init >](FocusTree::default_first())
                             };
                             v.handle_event(event, context, t, captures, s, inner_focus)
                         }

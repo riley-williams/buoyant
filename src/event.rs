@@ -23,9 +23,19 @@ pub enum Event {
         group: FocusGroup,
     },
     /// A key was pressed.
-    KeyDown(Key),
+    KeyDown {
+        /// The key that was pressed.
+        key: Key,
+        /// The focus group this event targets.
+        group: FocusGroup,
+    },
     /// A key was released.
-    KeyUp(Key),
+    KeyUp {
+        /// The key that was released.
+        key: Key,
+        /// The focus group this event targets.
+        group: FocusGroup,
+    },
 }
 
 /// A key press event.
@@ -68,7 +78,7 @@ impl Event {
             Self::Touch(touch) => {
                 touch.location += offset.into();
             }
-            Self::Scroll(_) | Self::Focus { .. } | Self::KeyDown(_) | Self::KeyUp(_) => {}
+            Self::Scroll(_) | Self::Focus { .. } | Self::KeyDown { .. } | Self::KeyUp { .. } => {}
         }
         event
     }
@@ -129,13 +139,12 @@ impl EventResult {
     /// Returns a new [`EventResult`] with the specified focus group.
     #[must_use]
     pub const fn with_group(mut self, group: FocusGroup) -> Self {
-        let Self::Handled {
+        if let Self::Handled {
             group: event_group, ..
         } = &mut self
-        else {
-            return Self::Deferred;
-        };
-        *event_group = group;
+        {
+            *event_group = group;
+        }
         self
     }
 
@@ -315,12 +324,18 @@ pub mod simulator {
                     keycode,
                     keymod: _,
                     repeat: _,
-                } => keycode.try_into().ok().map(Event::KeyDown),
+                } => keycode.try_into().ok().map(|k| Event::KeyDown {
+                    key: k,
+                    group: crate::focus::GROUP_0,
+                }),
                 SimulatorEvent::KeyUp {
                     keycode,
                     keymod: _,
                     repeat: _,
-                } => keycode.try_into().ok().map(Event::KeyUp),
+                } => keycode.try_into().ok().map(|k| Event::KeyUp {
+                    key: k,
+                    group: crate::focus::GROUP_0,
+                }),
             }
         }
     }

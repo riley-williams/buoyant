@@ -3,7 +3,7 @@ use crate::common::{touch_move, touch_up};
 use crate::{assert_str_grid_eq, common::touch_down};
 use core::time::Duration;
 
-use buoyant::focus::DefaultFocus;
+use buoyant::focus::FocusTree;
 use buoyant::{
     event::EventContext,
     primitives::Size,
@@ -105,7 +105,7 @@ fn scroll_down_snaps_back() {
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
     assert!(event_result.is_handled());
 
@@ -116,7 +116,7 @@ fn scroll_down_snaps_back() {
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
     assert!(event_result.is_handled());
 
@@ -139,7 +139,7 @@ fn scroll_down_snaps_back() {
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
     assert!(event_result.is_handled());
 
@@ -190,7 +190,7 @@ fn scroll_up_past_bottom_snaps_back() {
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
     assert!(event_result.is_handled());
 
@@ -201,7 +201,7 @@ fn scroll_up_past_bottom_snaps_back() {
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
     assert!(event_result.is_handled());
 
@@ -225,7 +225,7 @@ fn scroll_up_past_bottom_snaps_back() {
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
     assert!(event_result.is_handled());
 
@@ -249,7 +249,7 @@ fn scroll_up_past_bottom_snaps_back() {
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
     assert!(event_result.is_handled());
 
@@ -313,7 +313,7 @@ fn horizontal_scroll_right_snaps_back() {
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
     assert!(event_result.is_handled());
 
@@ -324,7 +324,7 @@ fn horizontal_scroll_right_snaps_back() {
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
     assert!(event_result.is_handled());
 
@@ -347,7 +347,7 @@ fn horizontal_scroll_right_snaps_back() {
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
     assert!(event_result.is_handled());
 
@@ -411,7 +411,7 @@ fn both_direction_scroll_diagonal_snaps_back_up_left() {
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
     assert!(event_result.is_handled());
 
@@ -422,7 +422,7 @@ fn both_direction_scroll_diagonal_snaps_back_up_left() {
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
     assert!(event_result.is_handled());
 
@@ -446,7 +446,7 @@ fn both_direction_scroll_diagonal_snaps_back_up_left() {
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
     assert!(event_result.is_handled());
 
@@ -498,7 +498,7 @@ fn both_direction_scroll_bottom_right_snaps_back() {
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
     assert!(event_result.is_handled());
 
@@ -509,7 +509,7 @@ fn both_direction_scroll_bottom_right_snaps_back() {
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
     assert!(event_result.is_handled());
 
@@ -534,7 +534,7 @@ fn both_direction_scroll_bottom_right_snaps_back() {
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
     assert!(event_result.is_handled());
 
@@ -558,7 +558,7 @@ fn both_direction_scroll_bottom_right_snaps_back() {
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
     assert!(event_result.is_handled());
 
@@ -610,7 +610,7 @@ fn horizontal_scroll_left_past_right_edge_snaps_back() {
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
     assert!(event_result.is_handled());
 
@@ -621,7 +621,7 @@ fn horizontal_scroll_left_past_right_edge_snaps_back() {
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
     assert!(event_result.is_handled());
 
@@ -645,7 +645,7 @@ fn horizontal_scroll_left_past_right_edge_snaps_back() {
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
     assert!(event_result.is_handled());
 
@@ -669,7 +669,7 @@ fn horizontal_scroll_left_past_right_edge_snaps_back() {
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
     assert!(event_result.is_handled());
 

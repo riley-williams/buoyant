@@ -1,7 +1,7 @@
 use crate::{
     environment::LayoutEnvironment,
     event::{EventContext, EventResult},
-    focus::DefaultFocus,
+    focus::FocusTree,
     layout::{Alignment, HorizontalAlignment, ResolvedLayout, VerticalAlignment},
     primitives::{Point, ProposedDimension, ProposedDimensions},
     view::{ViewLayout, ViewMarker},
@@ -223,6 +223,7 @@ macro_rules! impl_view_for_zstack {
                             )+
                         };
 
+
                         // If the child handled it (not deferred), return the result
                         if !matches!(result, EventResult::Deferred) || current_event == FocusAction::Teardown {
                             return result;
@@ -240,7 +241,7 @@ macro_rules! impl_view_for_zstack {
                                 match current {
                                     $(
                                         $n => {
-                                            *focus = [<OneOf $ct>]::[<V $n>](DefaultFocus::default_first());
+                                            *focus = [<OneOf $ct>]::[<V $n>](FocusTree::default_first());
                                         }
                                     )+
                                     _ => return EventResult::Deferred,
@@ -257,7 +258,7 @@ macro_rules! impl_view_for_zstack {
                                 match current {
                                     $(
                                         $n => {
-                                            *focus = [<OneOf $ct>]::[<V $n>](DefaultFocus::default_last());
+                                            *focus = [<OneOf $ct>]::[<V $n>](FocusTree::default_last());
                                         }
                                     )+
                                     _ => return EventResult::Deferred,
@@ -267,7 +268,7 @@ macro_rules! impl_view_for_zstack {
                             }
                         }
                     }
-                } else if matches!(event, Event::KeyDown(_) | Event::KeyUp(_)) {
+                } else if matches!(event, Event::KeyDown { .. } | Event::KeyUp { .. }) {
                     return match focus {
                         $(
                             [<OneOf $ct>]::[<V $n>](f) => self.items.$n.handle_event(
@@ -284,7 +285,12 @@ macro_rules! impl_view_for_zstack {
 
                 // For non-focus events (touch, scroll, etc.), use DFS approach
                 $(
-                    let inner_focus = focus.[<v $n _or_init_with>](|| DefaultFocus::default_first());
+                    let mut default_focus = FocusTree::default_first();
+                    let inner_focus = if let Event::Touch(..) = event {
+                        focus.[<v $n _or_init_with>](|| FocusTree::default_first())
+                    } else {
+                        focus.[<v $n _mut>]().unwrap_or(&mut default_focus)
+                    };
                     let result = self.items.$n.handle_event(
                         event,
                         context,
@@ -297,7 +303,7 @@ macro_rules! impl_view_for_zstack {
                         return result;
                     }
                 )+
-                EventResult::Deferred
+                result
             }
         }
     }

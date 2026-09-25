@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use buoyant::{
     event::EventContext,
-    focus::DefaultFocus,
+    focus::FocusTree,
     primitives::Size,
     render::Render,
     render_target::FixedTextBuffer,
@@ -69,7 +69,7 @@ fn button_action_cancelled_by_scroll() {
         &mut tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
     assert!(ctx.view_rebuild_requested.get());
 
@@ -102,7 +102,7 @@ fn button_action_cancelled_by_scroll() {
         &mut tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
     view.handle_event(
         &touch_move(2, 3),
@@ -110,7 +110,7 @@ fn button_action_cancelled_by_scroll() {
         &mut tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
 
     assert!(ctx.view_rebuild_requested.get());
@@ -142,7 +142,7 @@ fn button_action_cancelled_by_scroll() {
         &mut tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
 
     // Tree manually updated, no view recomputation
@@ -167,7 +167,7 @@ fn button_action_cancelled_by_scroll() {
         &mut tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
 
     assert!(ctx.view_rebuild_requested.get());
@@ -232,7 +232,7 @@ fn button_can_be_pressed_with_tiny_wiggle() {
         &mut tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
     assert!(ctx.view_rebuild_requested.get());
 
@@ -265,7 +265,7 @@ fn button_can_be_pressed_with_tiny_wiggle() {
         &mut tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
     assert!(!ctx.view_rebuild_requested.get());
 
@@ -276,7 +276,7 @@ fn button_can_be_pressed_with_tiny_wiggle() {
         &mut tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
 
     assert!(ctx.view_rebuild_requested.get());

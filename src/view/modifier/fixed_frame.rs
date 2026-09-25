@@ -74,7 +74,7 @@ impl<T> PartialEq for FixedFrame<T> {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct Layout<T> {
     inner: T,
     frame_size: Dimensions,

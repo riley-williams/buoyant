@@ -6,7 +6,7 @@
 use crate::{
     environment::LayoutEnvironment,
     event::{Event, EventContext, EventResult},
-    focus::{BoundaryBehavior, DefaultFocus, FocusAction, FocusDirection},
+    focus::{BoundaryBehavior, FocusAction, FocusDirection, FocusTree},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
     view::{ViewLayout, ViewMarker},
@@ -21,6 +21,7 @@ use crate::{
 /// Focus events that should pass through:
 /// - `Blur` - always deferred to parent
 /// - `Select` - always deferred to parent if not handled
+/// - `Teardown` - cleanup signal; must never trigger boundary re-acquisition
 ///
 /// If the subtree contains no focusable elements, all focus events are deferred.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -48,7 +49,7 @@ where
 impl<Captures: ?Sized, T> ViewLayout<Captures> for BoundFocus<T>
 where
     T: ViewLayout<Captures>,
-    T::FocusTree: DefaultFocus,
+    T::FocusTree: FocusTree,
 {
     type Sublayout = T::Sublayout;
     type State = T::State;
@@ -113,7 +114,10 @@ where
         };
 
         // Blur and Select always pass through (defer to parent)
-        if matches!(focus_event, FocusAction::Blur | FocusAction::Select) {
+        if matches!(
+            focus_event,
+            FocusAction::Blur | FocusAction::Select | FocusAction::Teardown
+        ) {
             return self
                 .child
                 .handle_event(event, context, render_tree, captures, state, focus);
@@ -142,9 +146,9 @@ where
             BoundaryBehavior::Wrap => {
                 // Reset focus tree to the opposite end
                 *focus = if is_forward {
-                    DefaultFocus::default_first()
+                    FocusTree::default_first()
                 } else {
-                    DefaultFocus::default_last()
+                    FocusTree::default_last()
                 };
 
                 // Acquire focus at the wrapped position

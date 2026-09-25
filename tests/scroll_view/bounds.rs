@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use buoyant::{
     event::EventContext,
-    focus::DefaultFocus,
+    focus::FocusTree,
     render::Render,
     render_target::FixedTextBuffer,
     view::{prelude::*, scroll_view::ScrollDirection},
@@ -172,7 +172,7 @@ fn tap_button(x: i32, y: i32, should_recompute: bool) -> TestState {
         &mut tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
     assert_eq!(ctx_down.view_rebuild_requested.get(), should_recompute);
 
@@ -183,7 +183,7 @@ fn tap_button(x: i32, y: i32, should_recompute: bool) -> TestState {
         &mut tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
+        &mut FocusTree::default_first(),
     );
     assert_eq!(ctx_up.view_rebuild_requested.get(), should_recompute);
 

@@ -29,6 +29,12 @@ fn view_with_empty_overlay(_: &State) -> impl View<(), State> + use<> {
     .overlay(Alignment::Center, EmptyView)
 }
 
+/// Focusable foreground under an unfocusable (empty) overlay.
+fn focusable_foreground_empty_overlay(_: &State) -> impl View<(), State> + use<> {
+    Button::new(|s: &mut State| s.foreground_tapped = true, |_| Circle)
+        .overlay(Alignment::Center, EmptyView)
+}
+
 #[test]
 fn navigate_forward_through_overlay() {
     let state = State {
@@ -85,6 +91,33 @@ fn navigate_backward_through_overlay() {
     assert!(matches!(harness.previous(), EventResult::Deferred));
 }
 
+/// When focus leaves the foreground backward and the overlay can't take it, the
+/// foreground's lost-focus signal must not be swallowed by the overlay's plain
+/// deferral.
+#[test]
+fn lost_focus_propagates_when_leaving_foreground_backward() {
+    let state = State {
+        foreground_tapped: false,
+        overlay_tapped: false,
+    };
+    let mut harness = App::new(
+        state,
+        Size::new(100, 100),
+        focusable_foreground_empty_overlay,
+    )
+    .with_roles(Role::Button);
+
+    // Focus lands on the foreground button (overlay is empty).
+    assert!(matches!(
+        harness.focus_forward().shape(),
+        Some(ContentShape::Circle(_))
+    ));
+
+    // Navigating backward leaves the foreground; the empty overlay can't take
+    // focus, so the view as a whole loses focus.
+    assert_eq!(harness.previous(), EventResult::Deferred);
+}
+
 #[test]
 fn empty_overlay_skips_to_foreground() {
     let state = State {
@@ -108,8 +141,11 @@ where
     S: View<(), State> + 'static,
 {
     Button::new(action, move |_| shape()).map_event(move |event, _: &mut State| match event {
-        Event::KeyDown(Key::Character('\n')) => Mapping::Replace(Event::from(FocusAction::Select)),
-        Event::KeyUp(_) => Mapping::Defer,
+        Event::KeyDown {
+            key: Key::Character('\n'),
+            ..
+        } => Mapping::Replace(Event::from(FocusAction::Select)),
+        Event::KeyUp { .. } => Mapping::Defer,
         _ => Mapping::Passthrough,
     })
 }
