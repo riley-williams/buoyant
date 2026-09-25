@@ -14,7 +14,10 @@ use crate::{
         geometry::Rectangle,
         transform::{CoordinateSpaceTransform, LinearTransform},
     },
-    render_target::{LayerConfig, LayerHandle, surface::Surface},
+    render_target::{
+        LayerConfig, LayerHandle,
+        surface::{OffsetSurface, Surface},
+    },
 };
 
 use super::{Brush, Glyph, RenderTarget, Shape, Stroke};
@@ -294,13 +297,18 @@ impl RenderTarget for CrosstermRenderTarget {
         }
     }
 
-    fn raw_surface(&mut self) -> impl Surface<Color = Self::ColorFormat> + '_ {
-        self
+    fn raw_surface(&mut self, origin: Point) -> impl Surface<Color = Self::ColorFormat> + '_ {
+        let offset = self.active_layer.transform.offset + origin;
+        OffsetSurface::new(self, offset)
     }
 }
 
 impl Surface for CrosstermRenderTarget {
     type Color = Colors;
+
+    fn bounding_box(&self) -> Rectangle {
+        Rectangle::new(Point::zero(), self.size())
+    }
 
     fn size(&self) -> Size {
         self.size()

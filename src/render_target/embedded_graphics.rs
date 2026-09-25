@@ -9,7 +9,7 @@ use crate::{
     },
     render_target::{
         Brush, LayerConfig, LayerHandle, RenderTarget, Shape,
-        surface::{AsDrawTarget, ClippedSurface, DrawTargetSurface},
+        surface::{AsDrawTarget, BoundedSurface, ClippedSurface, DrawTargetSurface},
     },
 };
 
@@ -328,21 +328,16 @@ where
         }
     }
 
-    fn raw_surface(&mut self) -> impl Surface<Color = Self::ColorFormat> + '_ {
+    fn raw_surface(&mut self, origin: Point) -> impl Surface<Color = Self::ColorFormat> + '_ {
+        // The clip rect is in the local coordinate space, while the returned
+        // surface has its origin at `origin` within that space.
         let clip_rect = self.clip_rect();
-        let offset_surface =
-            OffsetSurface::new(&mut self.surface, self.active_layer.transform.offset);
-        ClippedSurface::new(offset_surface, clip_rect)
-    }
-
-    fn raw_surface_unclipped(
-        &mut self,
-        origin: Point,
-    ) -> impl Surface<Color = Self::ColorFormat> + '_ {
-        OffsetSurface::new(
+        let bounds = Rectangle::new(clip_rect.origin - origin, clip_rect.size);
+        let offset_surface = OffsetSurface::new(
             &mut self.surface,
             self.active_layer.transform.offset + origin,
-        )
+        );
+        BoundedSurface::new(offset_surface, bounds)
     }
 }
 

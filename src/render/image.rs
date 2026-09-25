@@ -84,7 +84,7 @@ mod embedded_graphics {
     use core::marker::PhantomData;
     use embedded_graphics::{
         Pixel,
-        draw_target::{DrawTarget, DrawTargetExt},
+        draw_target::DrawTarget,
         geometry::Dimensions,
         image::{ImageDrawable, ImageDrawableExt},
         pixelcolor::{BinaryColor, GrayColor, PixelColor},
@@ -92,14 +92,11 @@ mod embedded_graphics {
     };
 
     use crate::{
-        primitives::{
-            Interpolate, Point,
-            geometry::{Intersection, Rectangle},
-        },
+        primitives::{Interpolate, Point, geometry::Rectangle},
         render::{ContentShape, IntrinsicShape, Render},
         render_target::{
             RenderTarget,
-            surface::{AsDrawTarget, ClippedSurface},
+            surface::{AsDrawTarget, ClippedSurface, OffsetSurface, Surface as _, Visibility},
         },
     };
 
@@ -214,31 +211,26 @@ mod embedded_graphics {
         image: &I,
         origin: Point,
     ) {
-        let clip_area = render_target.clip_rect();
-        let bounds = Rectangle::new(origin, image.size().into());
+        let mut surface = render_target.raw_surface(origin);
+        // The surface has its origin at the top left corner of the image, so
+        // image local and surface coordinates coincide.
+        let bounds = Rectangle::new(Point::zero(), image.size().into());
 
-        match clip_area.intersection_with(&bounds) {
-            Intersection::Contains => {
-                let mut surface = render_target.raw_surface_unclipped(origin);
+        match surface.visibility_of(&bounds) {
+            Visibility::Full => {
                 _ = image.draw(&mut surface.draw_target());
             }
-            Intersection::Overlaps => {
-                let Some(visible) = clip_area.intersection(&bounds) else {
-                    return;
-                };
-
-                // `sub_image` areas are image local, with the top left corner
-                // of the image at the origin.
-                let sub_area = Rectangle::new(visible.origin - origin, visible.size);
+            Visibility::Clipped(visible) => {
+                let size = visible.size;
                 let mut surface = ClippedSurface::new(
-                    render_target.raw_surface_unclipped(visible.origin),
-                    Rectangle::new(Point::zero(), visible.size),
+                    OffsetSurface::new(surface, visible.origin),
+                    Rectangle::new(Point::zero(), size),
                 );
                 _ = image
-                    .sub_image(&sub_area.into())
+                    .sub_image(&visible.into())
                     .draw(&mut surface.draw_target());
             }
-            Intersection::NonIntersecting => (),
+            Visibility::Hidden => (),
         }
     }
 
@@ -253,20 +245,7 @@ mod embedded_graphics {
             render_target: &mut impl RenderTarget<ColorFormat = TargetColor>,
             style: &TargetColor,
         ) {
-            // TODO: .sub_image exists, which could pre-clip the image for better performance
-            // FIXME: This is wrong, no access to real base color, should move templating into
-            // render target to fix
-            let background_color = TargetColor::from(BinaryColor::Off);
-            let mut surface = render_target.raw_surface();
-            let mut draw_target = surface.draw_target();
-            let mut target = draw_target.translated(self.origin.into());
-            let mut template_target = TemplatedTarget::<_, I::Color> {
-                color: *style,
-                target: &mut target,
-                background_color,
-                _template_color: PhantomData,
-            };
-            _ = self.image.draw(&mut template_target);
+            draw_template(render_target, self.image, self.origin, *style);
         }
 
         fn render_animated(
@@ -276,21 +255,58 @@ mod embedded_graphics {
             style: &TargetColor,
             domain: &super::AnimationDomain,
         ) {
-            // TODO: .sub_image exists, which could pre-clip the image for better performance
-            // FIXME: This is wrong, no access to real base color, should move templating into
-            // render target to fix
-            let offset = Point::interpolate(source.origin, target.origin, domain.factor);
-            let background_color = TargetColor::from(BinaryColor::Off);
-            let mut surface = render_target.raw_surface();
-            let mut draw_target = surface.draw_target();
-            let mut translated_target = draw_target.translated(offset.into());
-            let mut template_target = TemplatedTarget::<_, I::Color> {
-                color: *style,
-                target: &mut translated_target,
-                background_color,
-                _template_color: PhantomData,
-            };
-            _ = target.image.draw(&mut template_target);
+            let origin = Point::interpolate(source.origin, target.origin, domain.factor);
+            draw_template(render_target, target.image, origin, *style);
+        }
+    }
+
+    /// Draws `image` as a template with its top left corner at `origin` in the
+    /// local coordinate space.
+    ///
+    /// Classified against the clip rect once, as in [`draw_image`].
+    fn draw_template<I, TargetColor>(
+        render_target: &mut impl RenderTarget<ColorFormat = TargetColor>,
+        image: &I,
+        origin: Point,
+        color: TargetColor,
+    ) where
+        I: ImageDrawable,
+        I::Color: GrayColor,
+        TargetColor: PixelColor + Interpolate + From<BinaryColor> + Copy,
+    {
+        // FIXME: This is wrong, no access to real base color, should move templating into
+        // render target to fix
+        let background_color = TargetColor::from(BinaryColor::Off);
+        let mut surface = render_target.raw_surface(origin);
+        let bounds = Rectangle::new(Point::zero(), image.size().into());
+
+        match surface.visibility_of(&bounds) {
+            Visibility::Full => {
+                let mut draw_target = surface.draw_target();
+                let mut template_target = TemplatedTarget::<_, I::Color> {
+                    color,
+                    target: &mut draw_target,
+                    background_color,
+                    _template_color: PhantomData,
+                };
+                _ = image.draw(&mut template_target);
+            }
+            Visibility::Clipped(visible) => {
+                let size = visible.size;
+                let mut surface = ClippedSurface::new(
+                    OffsetSurface::new(surface, visible.origin),
+                    Rectangle::new(Point::zero(), size),
+                );
+                let mut draw_target = surface.draw_target();
+                let mut template_target = TemplatedTarget::<_, I::Color> {
+                    color,
+                    target: &mut draw_target,
+                    background_color,
+                    _template_color: PhantomData,
+                };
+                _ = image.sub_image(&visible.into()).draw(&mut template_target);
+            }
+            Visibility::Hidden => (),
         }
     }
 
