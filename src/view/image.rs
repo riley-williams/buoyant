@@ -1,3 +1,5 @@
+use core::marker::PhantomData;
+
 use embedded_graphics::{image::ImageDrawable, prelude::OriginDimensions};
 
 use crate::{
@@ -8,29 +10,51 @@ use crate::{
     view::{ViewLayout, ViewMarker},
 };
 
+pub use render::image::{Original, Template};
+
 /// A view that renders raw images conforming to [`ImageDrawable`].
 ///
 /// Images are fixed to the size of the image itself.
+///
+/// The `Mode` parameter selects how the image is rendered. It defaults to
+/// [`Original`], which draws the image in its own colors. Use
+/// [`Image::as_template`] to obtain an [`Image`] backed by the [`Template`]
+/// mode, which renders the image as a template by replacing white pixels with
+/// the foreground color and rendering black pixels transparent.
 #[non_exhaustive]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Image<'a, T: ?Sized> {
+pub struct Image<'a, T: ?Sized, Mode = Original> {
     image: &'a T,
+    _mode: PhantomData<Mode>,
 }
 
-impl<'a, T: ImageDrawable + ?Sized> Image<'a, T> {
+impl<'a, T: ImageDrawable + ?Sized> Image<'a, T, Original> {
     #[allow(missing_docs)]
     #[must_use]
     pub const fn new(image: &'a T) -> Self {
-        Self { image }
+        Self {
+            image,
+            _mode: PhantomData,
+        }
+    }
+
+    /// Treats the image as a template, rendering white pixels
+    /// with the foreground color and black pixels transparent
+    #[must_use]
+    pub const fn as_template(self) -> Image<'a, T, Template> {
+        Image {
+            image: self.image,
+            _mode: PhantomData,
+        }
     }
 }
 
-impl<'a, T: ?Sized> ViewMarker for Image<'a, T> {
-    type Renderables = render::Image<'a, T>;
+impl<'a, T: ?Sized, Mode> ViewMarker for Image<'a, T, Mode> {
+    type Renderables = render::Image<'a, T, Mode>;
     type Transition = Opacity;
 }
 
-impl<Captures: ?Sized, T> ViewLayout<Captures> for Image<'_, T>
+impl<Captures: ?Sized, T, Mode> ViewLayout<Captures> for Image<'_, T, Mode>
 where
     T: OriginDimensions + ImageDrawable + ?Sized,
 {

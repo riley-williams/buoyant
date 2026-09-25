@@ -19,8 +19,10 @@ impl<S: Surface> ClippedSurface<S> {
 impl<S: Surface> Surface for ClippedSurface<S> {
     type Color = S::Color;
 
-    fn size(&self) -> Size {
-        self.clip_rect.size
+    fn bounding_box(&self) -> Rectangle {
+        self.clip_rect
+            .intersection(&self.surface.bounding_box())
+            .unwrap_or_default()
     }
 
     fn draw_iter<I>(&mut self, pixels: I)
@@ -133,8 +135,8 @@ mod tests {
     impl Surface for RecordingSurface {
         type Color = u32;
 
-        fn size(&self) -> Size {
-            Size::new(16, 16)
+        fn bounding_box(&self) -> Rectangle {
+            Rectangle::new(Point::zero(), Size::new(16, 16))
         }
 
         fn draw_iter<I>(&mut self, pixels: I)

@@ -89,13 +89,19 @@ pub trait RenderTarget {
         conservative_bounds: &Rectangle,
     );
 
-    /// Obtain a raw surface to directly write pixels.
+    /// Obtain a raw surface to directly write pixels, with its origin at
+    /// `origin` in the local coordinate space.
     ///
     /// This is most often useful for bridging `embedded_graphics` types
     /// that are designed to render to a `DrawTarget`.
     ///
+    /// The returned surface may not clip, and is sized to the current clip
+    /// area. Callers must confine their drawing to the region reported by
+    /// [`Surface::visibility_of`], which is expressed in the returned
+    /// surface's coordinate space.
+    ///
     /// ```no_run
-    /// # use buoyant::primitives::Size;
+    /// # use buoyant::primitives::{Point, Size};
     /// # use buoyant::render_target::RenderTarget;
     /// # use buoyant::render_target::EmbeddedGraphicsRenderTarget;
     /// # use embedded_graphics::prelude::*;
@@ -110,28 +116,9 @@ pub trait RenderTarget {
     /// let data= [0u8; 100]; // include_bytes!("path/to/image.tga");
     /// let img: Tga<Rgb888> = Tga::from_slice(&data[..]).unwrap();
     ///
-    /// img.draw(&mut target.raw_surface().draw_target());
+    /// img.draw(&mut target.raw_surface(Point::zero()).draw_target());
     /// ```
-    fn raw_surface(&mut self) -> impl Surface<Color = Self::ColorFormat> + '_;
-
-    /// Obtain a raw surface to directly write pixels, with its origin at
-    /// `origin` in the local coordinate space.
-    ///
-    /// The returned surface is not required to clip. Callers must confine their
-    /// drawing to [`RenderTarget::clip_rect`], translated by `-origin`.
-    ///
-    /// This exists so that callers which have already established that their
-    /// content is fully visible do not pay for a clip check on every drawing
-    /// call. Use [`RenderTarget::raw_surface`] when that is not known.
-    // The `Copy` bound on `Surface::Color` is carried by the surface returned
-    // from `raw_surface`, but is not visible through the opaque type here.
-    #[allow(opaque_hidden_inferred_bound)]
-    fn raw_surface_unclipped(
-        &mut self,
-        origin: Point,
-    ) -> impl Surface<Color = Self::ColorFormat> + '_ {
-        surface::OffsetSurface::new(self.raw_surface(), origin)
-    }
+    fn raw_surface(&mut self, origin: Point) -> impl Surface<Color = Self::ColorFormat> + '_;
 }
 
 /// Positioned glyph.
