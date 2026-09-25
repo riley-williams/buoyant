@@ -6,7 +6,7 @@ use crate::{
         geometry::Rectangle,
         transform::{CoordinateSpaceTransform as _, LinearTransform},
     },
-    render_target::{LayerConfig, LayerHandle},
+    render_target::{LayerConfig, LayerHandle, surface::OffsetSurface},
 };
 
 use super::{Brush, Glyph, RenderTarget, Shape, Stroke, Surface};
@@ -186,13 +186,18 @@ impl<const W: usize, const H: usize> RenderTarget for FixedTextBuffer<W, H> {
         }
     }
 
-    fn raw_surface(&mut self) -> impl Surface<Color = Self::ColorFormat> + '_ {
-        self
+    fn raw_surface(&mut self, origin: Point) -> impl Surface<Color = Self::ColorFormat> + '_ {
+        let offset = self.active_layer.transform.offset + origin;
+        OffsetSurface::new(self, offset)
     }
 }
 
 impl<const W: usize, const H: usize> Surface for FixedTextBuffer<W, H> {
     type Color = char;
+
+    fn bounding_box(&self) -> Rectangle {
+        Rectangle::new(Point::zero(), self.size())
+    }
 
     fn size(&self) -> Size {
         self.size()

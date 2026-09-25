@@ -1,4 +1,5 @@
 use buoyant::{
+    primitives::Point,
     render_target::{EmbeddedGraphicsRenderTarget, RenderTarget, surface::AsDrawTarget},
     view::prelude::*,
 };
@@ -26,7 +27,7 @@ fn raw_surface_draw_target() {
     let mut target = EmbeddedGraphicsRenderTarget::new(&mut display);
     // target as surface -> surface as target
     rectangle
-        .draw(&mut target.raw_surface().draw_target())
+        .draw(&mut target.raw_surface(Point::zero()).draw_target())
         .unwrap();
 
     let mut display_2 = MockDisplay::new();
