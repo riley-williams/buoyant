@@ -20,8 +20,7 @@ mod container;
 mod content_shape_override;
 mod empty;
 mod hint_background;
-#[cfg(feature = "embedded-graphics")]
-mod image;
+pub mod image;
 mod offset;
 mod one_of;
 mod opacity;
@@ -38,7 +37,6 @@ pub use clipped::Clipped;
 pub use container::Container;
 pub use content_shape_override::ContentShapeOverride;
 pub use hint_background::HintBackground;
-#[cfg(feature = "embedded-graphics")]
 pub use image::Image;
 pub use offset::Offset;
 pub use one_of::{OneOf2, OneOf3, OneOf4, OneOf5, OneOf6, OneOf7, OneOf8, OneOf9, OneOf10};

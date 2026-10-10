@@ -3,13 +3,13 @@ use crate::font::FontRender;
 use crate::render_target::surface::OffsetSurface;
 use crate::{
     primitives::{
-        Interpolate, Point,
+        Interpolate, Point, Size,
         geometry::{Circle, Intersection, Line, PathEl, Rectangle, RoundedRectangle},
         transform::{CoordinateSpaceTransform, LinearTransform},
     },
     render_target::{
         Brush, LayerConfig, LayerHandle, RenderTarget, Shape,
-        surface::{AsDrawTarget, ClippedSurface, DrawTargetSurface},
+        surface::{AsDrawTarget, BoundedSurface, ClippedSurface, DrawTargetSurface},
     },
 };
 
@@ -64,6 +64,29 @@ where
         }
     }
 
+    /// Sets an initial rendering offset on the render target.
+    ///
+    /// This shifts the coordinate space so that content at `offset` in the view
+    /// is rendered at the origin of the underlying draw target.
+    #[must_use]
+    pub fn with_offset(mut self, offset: Point) -> Self {
+        self.active_layer.transform.offset.x += offset.x;
+        self.active_layer.transform.offset.y += offset.y;
+        self
+    }
+
+    /// Restricts the initial clip rectangle of the render target.
+    ///
+    /// The provided rectangle is intersected with the existing clip rectangle,
+    /// so the result can only be the same size or smaller.
+    #[must_use]
+    pub fn with_clip(mut self, clip_rect: &Rectangle) -> Self {
+        self.active_layer.clip_rect = clip_rect
+            .intersection(&self.active_layer.clip_rect)
+            .unwrap_or_else(|| Rectangle::new(Point::zero(), Size::new(0, 0)));
+        self
+    }
+
     #[must_use]
     pub fn display(&self) -> &D {
         self.surface.0
@@ -111,6 +134,10 @@ where
 
     fn alpha(&self) -> u8 {
         self.active_layer.alpha
+    }
+
+    fn background_hint(&self) -> Option<Self::ColorFormat> {
+        self.active_layer.background_hint
     }
 
     fn report_active_animation(&mut self) {
@@ -328,20 +355,16 @@ where
         }
     }
 
-    fn raw_surface(&mut self) -> impl Surface<Color = Self::ColorFormat> + '_ {
-        let offset_surface =
-            OffsetSurface::new(&mut self.surface, self.active_layer.transform.offset);
-        ClippedSurface::new(offset_surface, self.active_layer.clip_rect.clone())
-    }
-
-    fn raw_surface_unclipped(
-        &mut self,
-        origin: Point,
-    ) -> impl Surface<Color = Self::ColorFormat> + '_ {
-        OffsetSurface::new(
+    fn raw_surface(&mut self, origin: Point) -> impl Surface<Color = Self::ColorFormat> + '_ {
+        // The clip rect is in the local coordinate space, while the returned
+        // surface has its origin at `origin` within that space.
+        let clip_rect = self.clip_rect();
+        let bounds = Rectangle::new(clip_rect.origin - origin, clip_rect.size);
+        let offset_surface = OffsetSurface::new(
             &mut self.surface,
             self.active_layer.transform.offset + origin,
-        )
+        );
+        BoundedSurface::new(offset_surface, bounds)
     }
 }
 
