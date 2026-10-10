@@ -37,28 +37,28 @@ fn touch_moves_focus() {
     ));
 
     harness.tap(Point::new(25, 175));
-    assert!(*harness.state() == State { a: 0, b: 0, c: 1 });
+    assert_eq!(*harness.state(), State { a: 0, b: 0, c: 1 });
     assert!(matches!(
         harness.select().shape(),
         Some(ContentShape::RoundedRectangle(_))
     ));
-    assert!(*harness.state() == State { a: 0, b: 0, c: 2 });
+    assert_eq!(*harness.state(), State { a: 0, b: 0, c: 2 });
 
     // Still on the circle
     harness.tap(Point::new(25, 25));
-    assert!(*harness.state() == State { a: 1, b: 0, c: 2 });
+    assert_eq!(*harness.state(), State { a: 1, b: 0, c: 2 });
     assert!(matches!(
         harness.select().shape(),
         Some(ContentShape::Circle(_))
     ));
-    assert!(*harness.state() == State { a: 2, b: 0, c: 2 });
+    assert_eq!(*harness.state(), State { a: 2, b: 0, c: 2 });
 
     // Tap in the non-button rectangle, Circle should still be focused
     harness.tap(Point::new(25, 125));
-    assert!(*harness.state() == State { a: 2, b: 0, c: 2 });
+    assert_eq!(*harness.state(), State { a: 2, b: 0, c: 2 });
     assert!(matches!(
         harness.select().shape(),
         Some(ContentShape::Circle(_))
     ));
-    assert!(*harness.state() == State { a: 3, b: 0, c: 2 });
+    assert_eq!(*harness.state(), State { a: 3, b: 0, c: 2 });
 }
