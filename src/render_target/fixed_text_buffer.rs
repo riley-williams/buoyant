@@ -93,6 +93,10 @@ impl<const W: usize, const H: usize> RenderTarget for FixedTextBuffer<W, H> {
         255
     }
 
+    fn background_hint(&self) -> Option<Self::ColorFormat> {
+        self.active_layer.background_hint
+    }
+
     fn report_active_animation(&mut self) {
         self.active_animation = true;
     }

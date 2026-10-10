@@ -3,7 +3,7 @@ use crate::{
     render_target::Surface,
 };
 
-/// A surface which draws with a specified offset.
+/// A surface which clips drawing to the specified bounds.
 #[derive(Debug)]
 pub struct ClippedSurface<S> {
     surface: S,

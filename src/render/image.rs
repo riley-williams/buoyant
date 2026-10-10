@@ -84,10 +84,10 @@ mod embedded_graphics {
     use core::marker::PhantomData;
     use embedded_graphics::{
         Pixel,
-        draw_target::DrawTarget,
+        draw_target::{DrawTarget, DrawTargetExt as _},
         geometry::Dimensions,
         image::{ImageDrawable, ImageDrawableExt},
-        pixelcolor::{BinaryColor, GrayColor, PixelColor},
+        pixelcolor::{GrayColor, PixelColor},
         primitives::PointsIter,
     };
 
@@ -96,7 +96,7 @@ mod embedded_graphics {
         render::{ContentShape, IntrinsicShape, Render},
         render_target::{
             RenderTarget,
-            surface::{AsDrawTarget, ClippedSurface, OffsetSurface, Surface as _, Visibility},
+            surface::{AsDrawTarget, Visibility},
         },
     };
 
@@ -107,6 +107,24 @@ mod embedded_graphics {
         color: T::Color,
         background_color: T::Color,
         _template_color: PhantomData<C>,
+    }
+
+    impl<T: DrawTarget<Color: Interpolate>, C: GrayColor> TemplatedTarget<'_, T, C> {
+        fn template_color(
+            color: C,
+            background: T::Color,
+            foreground: T::Color,
+        ) -> Option<T::Color> {
+            let luma = color.luma();
+            if luma == 0 {
+                None
+            } else {
+                // Gray2 and Gray4 use their native ranges, rather than 0..=255.
+                // This math is expected to be mostly inlined despite not being const
+                let alpha = (u16::from(luma) * 255 / u16::from(C::WHITE.luma())) as u8;
+                Some(Interpolate::interpolate(background, foreground, alpha))
+            }
+        }
     }
 
     impl<T: DrawTarget, C> Dimensions for TemplatedTarget<'_, T, C> {
@@ -124,17 +142,11 @@ mod embedded_graphics {
         where
             I: IntoIterator<Item = embedded_graphics::prelude::Pixel<Self::Color>>,
         {
-            self.target.draw_iter(pixels.into_iter().filter_map(|p| {
-                let luma = p.1.luma();
-                if luma == 0 {
-                    None
-                } else {
-                    Some(Pixel(
-                        p.0,
-                        Interpolate::interpolate(self.background_color, self.color, luma),
-                    ))
-                }
-            }))
+            let pixels = pixels.into_iter().filter_map(|p| {
+                Self::template_color(p.1, self.background_color, self.color)
+                    .map(|color| Pixel(p.0, color))
+            });
+            self.target.draw_iter(pixels)
         }
 
         fn fill_contiguous<I>(
@@ -157,21 +169,17 @@ mod embedded_graphics {
             area: &embedded_graphics::primitives::Rectangle,
             color: Self::Color,
         ) -> Result<(), Self::Error> {
-            let luma = color.luma();
-            if luma == 0 {
-                return Ok(());
+            if let Some(color) = Self::template_color(color, self.background_color, self.color) {
+                self.target.fill_solid(area, color)?;
             }
-            let color = Interpolate::interpolate(self.background_color, self.color, luma);
-            self.target.fill_solid(area, color)
+            Ok(())
         }
 
         fn clear(&mut self, color: Self::Color) -> Result<(), Self::Error> {
-            let luma = color.luma();
-            if luma == 0 {
-                return Ok(());
+            if let Some(color) = Self::template_color(color, self.background_color, self.color) {
+                self.target.clear(color)?;
             }
-            let color = Interpolate::interpolate(self.background_color, self.color, luma);
-            self.target.clear(color)
+            Ok(())
         }
     }
 
@@ -181,7 +189,10 @@ mod embedded_graphics {
             render_target: &mut impl RenderTarget<ColorFormat = I::Color>,
             _style: &I::Color,
         ) {
-            draw_image(render_target, self.image, self.origin);
+            draw_image(
+                &mut render_target.raw_surface(self.origin).draw_target(),
+                self.image,
+            );
         }
 
         fn render_animated(
@@ -192,39 +203,31 @@ mod embedded_graphics {
             domain: &super::AnimationDomain,
         ) {
             let origin = Point::interpolate(source.origin, target.origin, domain.factor);
-            draw_image(render_target, target.image, origin);
+            draw_image(
+                &mut render_target.raw_surface(origin).draw_target(),
+                target.image,
+            );
         }
     }
 
-    /// Draws `image` with its top left corner at `origin` in the local coordinate space.
+    /// Draws `image` at the origin of an image-local target.
     ///
     /// The image is classified against the clip rect once here, rather than
     /// once per drawing call issued by the image decoder. Images that are fully
     /// visible, which is the common case, are drawn through a surface that only
     /// applies a translation.
-    fn draw_image<I: ImageDrawable>(
-        render_target: &mut impl RenderTarget<ColorFormat = I::Color>,
-        image: &I,
-        origin: Point,
-    ) {
-        let mut surface = render_target.raw_surface(origin);
-        // The surface has its origin at the top left corner of the image, so
-        // image local and surface coordinates coincide.
+    fn draw_image<I: ImageDrawable>(target: &mut impl DrawTarget<Color = I::Color>, image: &I) {
         let bounds = Rectangle::new(Point::zero(), image.size().into());
 
-        match surface.visibility_of(&bounds) {
+        match Visibility::classify(&target.bounding_box().into(), &bounds) {
             Visibility::Full => {
-                _ = image.draw(&mut surface.draw_target());
+                _ = image.draw(target);
             }
             Visibility::Clipped(visible) => {
-                let size = visible.size;
-                let mut surface = ClippedSurface::new(
-                    OffsetSurface::new(surface, visible.origin),
-                    Rectangle::new(Point::zero(), size),
-                );
+                let offset = visible.origin.into();
                 _ = image
                     .sub_image(&visible.into())
-                    .draw(&mut surface.draw_target());
+                    .draw(&mut target.translated(offset));
             }
             Visibility::Hidden => (),
         }
@@ -234,7 +237,7 @@ mod embedded_graphics {
     where
         I: ImageDrawable,
         I::Color: GrayColor,
-        TargetColor: PixelColor + Interpolate + From<BinaryColor> + Copy,
+        TargetColor: PixelColor + Interpolate,
     {
         fn render(
             &self,
@@ -268,42 +271,23 @@ mod embedded_graphics {
     ) where
         I: ImageDrawable,
         I::Color: GrayColor,
-        TargetColor: PixelColor + Interpolate + From<BinaryColor> + Copy,
+        TargetColor: PixelColor + Interpolate,
     {
-        // FIXME: This is wrong, no access to real base color, should move templating into
-        // render target to fix
-        let background_color = TargetColor::from(BinaryColor::Off);
+        // Without a background hint, nonzero pixels use the foreground color,
+        // matching the fallback used for antialiased text.
+        let background_color = render_target.background_hint().unwrap_or(color);
+        let color = Interpolate::interpolate(background_color, color, render_target.alpha());
         let mut surface = render_target.raw_surface(origin);
-        let bounds = Rectangle::new(Point::zero(), image.size().into());
-
-        match surface.visibility_of(&bounds) {
-            Visibility::Full => {
-                let mut draw_target = surface.draw_target();
-                let mut template_target = TemplatedTarget::<_, I::Color> {
-                    color,
-                    target: &mut draw_target,
-                    background_color,
-                    _template_color: PhantomData,
-                };
-                _ = image.draw(&mut template_target);
-            }
-            Visibility::Clipped(visible) => {
-                let size = visible.size;
-                let mut surface = ClippedSurface::new(
-                    OffsetSurface::new(surface, visible.origin),
-                    Rectangle::new(Point::zero(), size),
-                );
-                let mut draw_target = surface.draw_target();
-                let mut template_target = TemplatedTarget::<_, I::Color> {
-                    color,
-                    target: &mut draw_target,
-                    background_color,
-                    _template_color: PhantomData,
-                };
-                _ = image.sub_image(&visible.into()).draw(&mut template_target);
-            }
-            Visibility::Hidden => (),
-        }
+        let mut draw_target = surface.draw_target();
+        draw_image(
+            &mut TemplatedTarget::<_, I::Color> {
+                color,
+                target: &mut draw_target,
+                background_color,
+                _template_color: PhantomData,
+            },
+            image,
+        );
     }
 
     impl<I: ImageDrawable, Mode> IntrinsicShape for Image<'_, I, Mode> {

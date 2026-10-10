@@ -2,6 +2,7 @@ use core::cell::Cell;
 
 use buoyant::{
     primitives::{Interpolate as _, Point},
+    render::{AnimationDomain, Render},
     view::prelude::*,
 };
 use embedded_graphics::{
@@ -15,6 +16,7 @@ use embedded_graphics::{
 };
 use tinytga::Tga;
 
+use super::super::images::{BACKGROUND, FOREGROUND, GRADIENT_TGA, TEMPLATE_RAMP};
 use crate::embedded_graphics_target::{render_animated_to_mock, render_to_mock};
 
 #[test]
@@ -201,71 +203,196 @@ struct DrawCalls {
 
 /// An image which records how it was asked to draw itself instead of drawing.
 #[derive(Debug)]
-struct ProbeImage<'a> {
+struct ProbeImage<'a, C> {
     size: EgSize,
     calls: &'a Cell<DrawCalls>,
+    color: core::marker::PhantomData<C>,
 }
 
-impl OriginDimensions for ProbeImage<'_> {
+impl<C> OriginDimensions for ProbeImage<'_, C> {
     fn size(&self) -> EgSize {
         self.size
     }
 }
 
-impl ImageDrawable for ProbeImage<'_> {
-    type Color = Rgb888;
+impl<C: embedded_graphics::pixelcolor::PixelColor> ImageDrawable for ProbeImage<'_, C> {
+    type Color = C;
 
-    fn draw<D: DrawTarget<Color = Rgb888>>(&self, _target: &mut D) -> Result<(), D::Error> {
-        let mut calls = self.calls.get();
-        calls.whole += 1;
-        self.calls.set(calls);
+    fn draw<D: DrawTarget<Color = C>>(&self, _target: &mut D) -> Result<(), D::Error> {
+        self.calls.update(|mut calls| {
+            calls.whole += 1;
+            calls
+        });
         Ok(())
     }
 
-    fn draw_sub_image<D: DrawTarget<Color = Rgb888>>(
+    fn draw_sub_image<D: DrawTarget<Color = C>>(
         &self,
         _target: &mut D,
         _area: &EgRectangle,
     ) -> Result<(), D::Error> {
-        let mut calls = self.calls.get();
-        calls.sub += 1;
-        self.calls.set(calls);
+        self.calls.update(|mut calls| {
+            calls.sub += 1;
+            calls
+        });
         Ok(())
     }
 }
 
-fn probe_draw_calls(offset: Point) -> DrawCalls {
-    let calls = Cell::new(DrawCalls::default());
-    let image = ProbeImage {
-        size: EgSize::new(24, 20),
-        calls: &calls,
+#[test]
+fn image_visibility_selects_whole_sub_image_or_no_drawing() {
+    use buoyant::{
+        primitives::{Size, geometry::Rectangle},
+        render::{
+            self, Render as _,
+            image::{Original, Template},
+        },
+        render_target::EmbeddedGraphicsRenderTarget,
     };
+    use embedded_graphics::pixelcolor::Gray8;
 
-    _ = render_to_mock(&image_in_offset_clip(&image, offset), false);
+    for (offset, expected) in [
+        (Point::new(9, 6), DrawCalls { whole: 1, sub: 0 }),
+        (Point::new(-8, 6), DrawCalls { whole: 0, sub: 1 }),
+        (Point::new(-40, 6), DrawCalls { whole: 0, sub: 0 }),
+    ] {
+        for templated in [false, true] {
+            let calls = Cell::new(DrawCalls::default());
+            let mut display = MockDisplay::<Rgb888>::new();
+            let mut target = EmbeddedGraphicsRenderTarget::new(&mut display)
+                .with_offset(Point::new(11, 3))
+                .with_clip(&Rectangle::new(Point::new(11, 3), Size::new(53, 61)));
+            if templated {
+                let image = ProbeImage::<Gray8> {
+                    size: EgSize::new(24, 20),
+                    calls: &calls,
+                    color: core::marker::PhantomData,
+                };
+                render::Image::<_, Template>::new(offset, &image)
+                    .render(&mut target, &Rgb888::new(255, 255, 255));
+            } else {
+                let image = ProbeImage::<Rgb888> {
+                    size: EgSize::new(24, 20),
+                    calls: &calls,
+                    color: core::marker::PhantomData,
+                };
+                render::Image::<_, Original>::new(offset, &image)
+                    .render(&mut target, &Rgb888::new(255, 255, 255));
+            }
+            assert_eq!(
+                calls.get(),
+                expected,
+                "offset={offset:?}, templated={templated}"
+            );
+        }
+    }
+}
 
-    calls.get()
+fn draw_static_or_animated<R: Render<Rgb888>>(
+    target: &mut impl buoyant::render_target::RenderTarget<ColorFormat = Rgb888>,
+    source: &R,
+    image: &R,
+    factor: Option<u8>,
+) {
+    if let Some(factor) = factor {
+        R::render_animated(
+            target,
+            source,
+            image,
+            &FOREGROUND,
+            &AnimationDomain::new(factor, core::time::Duration::from_millis(100)),
+        );
+    } else {
+        image.render(target, &FOREGROUND);
+    }
 }
 
 #[test]
-fn fully_visible_image_is_drawn_in_one_piece() {
-    assert_eq!(
-        probe_draw_calls(Point::new(9, 6)),
-        DrawCalls { whole: 1, sub: 0 }
-    );
-}
+fn gradient_clipping_tracks_image_layer_and_target_offsets() {
+    use buoyant::{
+        primitives::{Size, geometry::Rectangle},
+        render::image::{Original, Template},
+        render::{self},
+        render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _},
+    };
+    use embedded_graphics::{Pixel, pixelcolor::Gray8};
 
-#[test]
-fn partially_visible_image_is_drawn_as_a_sub_image() {
-    assert_eq!(
-        probe_draw_calls(Point::new(-8, 6)),
-        DrawCalls { whole: 0, sub: 1 }
-    );
-}
+    let original = Tga::<Rgb888>::from_slice(GRADIENT_TGA).unwrap();
+    let template = Tga::<Gray8>::from_slice(GRADIENT_TGA).unwrap();
+    let layer_offset = Point::new(3, -2);
+    // Full, exact bounds, each pair of edges, an interior crop, touching but
+    // outside, and an empty clip. Coordinates below are physical display pixels.
+    for (position, clip_origin, clip_size) in [
+        ((9, 7), (8, 6), (7, 5)),
+        ((8, 6), (8, 6), (5, 3)),
+        ((6, 5), (8, 6), (5, 3)),
+        ((10, 7), (8, 6), (5, 3)),
+        ((6, 7), (8, 6), (5, 3)),
+        ((10, 5), (8, 6), (5, 3)),
+        ((7, 5), (8, 6), (2, 1)),
+        ((3, 6), (8, 6), (5, 3)),
+        ((13, 6), (8, 6), (5, 3)),
+        ((8, 6), (8, 6), (0, 0)),
+        ((-2, -1), (0, 0), (64, 64)),
+        ((62, 63), (0, 0), (64, 64)),
+    ] {
+        let clip = Rectangle::new(
+            Point::new(clip_origin.0, clip_origin.1),
+            Size::new(clip_size.0, clip_size.1),
+        );
+        for target_offset in [Point::zero(), Point::new(7, 5), Point::new(-3, -2)] {
+            let origin = Point::new(position.0, position.1) - target_offset - layer_offset;
+            let source_origin = origin - Point::new(4, 2);
+            for factor in [None, Some(0), Some(128), Some(255)] {
+                let rendered_origin = factor.map_or(origin, |factor| {
+                    Point::interpolate(source_origin, origin, factor)
+                }) + target_offset
+                    + layer_offset;
+                for templated in [false, true] {
+                    let mut display = MockDisplay::new();
+                    let mut target =
+                        EmbeddedGraphicsRenderTarget::new_hinted(&mut display, BACKGROUND)
+                            .with_offset(target_offset)
+                            .with_clip(&clip);
+                    target.with_layer(
+                        |layer| layer.offset(layer_offset),
+                        |target| {
+                            if templated {
+                                draw_static_or_animated(
+                                    target,
+                                    &render::Image::<_, Template>::new(source_origin, &template),
+                                    &render::Image::<_, Template>::new(origin, &template),
+                                    factor,
+                                );
+                            } else {
+                                draw_static_or_animated(
+                                    target,
+                                    &render::Image::<_, Original>::new(source_origin, &original),
+                                    &render::Image::<_, Original>::new(origin, &original),
+                                    factor,
+                                );
+                            }
+                        },
+                    );
 
-#[test]
-fn image_outside_the_clip_rect_is_not_drawn() {
-    assert_eq!(
-        probe_draw_calls(Point::new(-40, 6)),
-        DrawCalls { whole: 0, sub: 0 }
-    );
+                    let mut expected = MockDisplay::new();
+                    for (i, &luma) in GRADIENT_TGA[18..].iter().enumerate() {
+                        let point = rendered_origin + Point::new((i % 5) as i32, (i / 5) as i32);
+                        if clip.contains(&point) && !(templated && luma == 0) {
+                            let color = if templated {
+                                TEMPLATE_RAMP[usize::from(luma).div_ceil(64)]
+                            } else {
+                                Rgb888::new(luma, luma, luma)
+                            };
+                            expected.draw_iter([Pixel(point.into(), color)]).unwrap();
+                        }
+                    }
+                    assert_eq!(
+                        display, expected,
+                        "position={position:?}, clip={clip:?}, target_offset={target_offset:?}, factor={factor:?}, templated={templated}"
+                    );
+                }
+            }
+        }
+    }
 }

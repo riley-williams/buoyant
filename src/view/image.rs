@@ -39,7 +39,11 @@ impl<'a, T: ImageDrawable + ?Sized> Image<'a, T, Original> {
     }
 
     /// Treats the image as a template, rendering white pixels
-    /// with the foreground color and black pixels transparent
+    /// with the foreground color and black pixels transparent.
+    ///
+    /// Gray pixels blend the foreground color with the render target's current
+    /// background hint. Without a hint, all nonzero pixels use the foreground
+    /// color. The image must use a grayscale color format.
     #[must_use]
     pub const fn as_template(self) -> Image<'a, T, Template> {
         Image {

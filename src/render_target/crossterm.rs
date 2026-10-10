@@ -179,6 +179,10 @@ impl RenderTarget for CrosstermRenderTarget {
         self.active_layer.alpha
     }
 
+    fn background_hint(&self) -> Option<Self::ColorFormat> {
+        self.active_layer.background_hint
+    }
+
     fn report_active_animation(&mut self) {
         self.active_animation = true;
     }

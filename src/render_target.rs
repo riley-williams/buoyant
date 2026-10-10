@@ -49,6 +49,11 @@ pub trait RenderTarget {
     /// The alpha value for the current layer.
     fn alpha(&self) -> u8;
 
+    /// The current layer's background color hint, used to simulate alpha blending.
+    ///
+    /// Returns `None` when the background is unknown.
+    fn background_hint(&self) -> Option<Self::ColorFormat>;
+
     /// Reports that an animation is active.
     ///
     /// If a frame passes without this being called, the render target may

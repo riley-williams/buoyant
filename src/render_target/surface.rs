@@ -72,6 +72,7 @@ pub trait Surface {
     ///
     /// Surfaces which do not enforce their permitted region rely on callers
     /// consulting this before drawing.
+    #[inline]
     fn visibility_of(&self, rect: &Rectangle) -> Visibility {
         Visibility::classify(&self.bounding_box(), rect)
     }
