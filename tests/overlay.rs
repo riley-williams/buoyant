@@ -1,9 +1,9 @@
 use buoyant::{
-    font::CharacterBufferFont, render::Render as _, render_target::FixedTextBuffer,
-    view::prelude::*,
+    app::Harness as _, font::CharacterBufferFont, primitives::Point, render::Render as _,
+    render_target::FixedTextBuffer, view::prelude::*,
 };
 mod common;
-use common::make_render_tree;
+use common::{app, make_render_tree};
 
 #[test]
 fn overlay_inherits_foreground_size() {
@@ -190,4 +190,45 @@ fn overlay_offset_order() {
     assert_eq!(buffer.text[0].iter().collect::<String>(), "1133");
     assert_eq!(buffer.text[1].iter().collect::<String>(), "1233");
     assert_eq!(buffer.text[2].iter().collect::<String>(), "1133");
+}
+
+#[derive(Clone, Default, PartialEq, Eq, Debug)]
+struct TouchState {
+    foreground_taps: u32,
+    overlay_taps: u32,
+}
+
+fn overlay_touch_view(_: &TouchState) -> impl View<char, TouchState> + use<> {
+    Button::new(|s: &mut TouchState| s.foreground_taps += 1, |_| Rectangle).overlay(
+        Alignment::default(),
+        Button::new(|s: &mut TouchState| s.overlay_taps += 1, |_| Rectangle).frame_sized(4, 4),
+    )
+}
+
+/// `overlay` consults the overlay (front) before the foreground (back). A touch in the
+/// overlap fires only the overlay; a touch the overlay defers falls through to the
+/// foreground.
+#[test]
+fn overlay_touch_consults_overlay_first() {
+    let mut harness = app(TouchState::default(), overlay_touch_view);
+
+    // The overlay button is a 4x4 frame centered in the 10x10 foreground at (3,3)-(7,7).
+    // (5,5) is inside both, so the overlay (front) wins.
+    harness.tap(Point::new(5, 5));
+    assert_eq!(harness.state().overlay_taps, 1);
+    assert_eq!(
+        harness.state().foreground_taps,
+        0,
+        "overlay should claim the overlap"
+    );
+
+    // (1,1) is outside the overlay but inside the foreground rectangle, so the overlay
+    // defers and the foreground handles it.
+    harness.tap(Point::new(1, 1));
+    assert_eq!(
+        harness.state().overlay_taps,
+        1,
+        "overlay should not fire for the corner tap"
+    );
+    assert_eq!(harness.state().foreground_taps, 1);
 }

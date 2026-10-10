@@ -2,12 +2,12 @@
 
 use core::marker::PhantomData;
 
-use embedded_touch::Phase;
+use embedded_touch::{Phase, Touch};
 
 use crate::{
     environment::LayoutEnvironment,
-    event::{Event, EventContext, EventResult},
-    focus::{FocusAction, Role},
+    event::{Event, EventContext, EventResult, TouchResult},
+    focus::{DefaultFocus, FocusAction, Role},
     layout::ResolvedLayout,
     primitives::ProposedDimensions,
     render::IntrinsicShape,
@@ -205,76 +205,6 @@ where
         _focus: &mut Self::FocusTree,
     ) -> EventResult {
         match event {
-            Event::Touch(touch) => {
-                // Only track the ID of the first touch that started within the button.
-                if let ButtonTouchState::Captive(touch_id)
-                | ButtonTouchState::CaptivePressed(touch_id) = state.0.touch
-                    && touch.id != touch_id
-                {
-                    return EventResult::Deferred;
-                }
-
-                let point = touch.location.into();
-                match touch.phase {
-                    Phase::Started => {
-                        if render_tree.content_shape().contains(point) {
-                            state.0.touch = ButtonTouchState::CaptivePressed(touch.id);
-                            // TODO: I think we could maybe just recompute the tiny button render
-                            // tree here and avoid recomputing the view.
-                            // May require an internal animation render node?
-                            context.request_view_rebuild();
-                            return EventResult::handled_unfocused();
-                        }
-                    }
-                    Phase::Ended => {
-                        if state.0.touch != ButtonTouchState::AtRest {
-                            state.0.touch = ButtonTouchState::AtRest;
-                            context.request_view_rebuild();
-                            let content_shape = render_tree.content_shape();
-                            if content_shape.contains(point) {
-                                (self.action)(captures);
-                                return EventResult::handled_focused(content_shape);
-                            }
-                            return EventResult::handled_unfocused();
-                        }
-                    }
-                    Phase::Moved => {
-                        match (render_tree.content_shape().contains(point), state.0.touch) {
-                            (true, ButtonTouchState::Captive(touch_id)) => {
-                                state.0.touch = ButtonTouchState::CaptivePressed(touch_id);
-                                // TODO: Same here...
-                                context.request_view_rebuild();
-                                return EventResult::handled_unfocused();
-                            }
-                            (false, ButtonTouchState::CaptivePressed(touch_id)) => {
-                                state.0.touch = ButtonTouchState::Captive(touch_id);
-                                // TODO: Same here...
-                                context.request_view_rebuild();
-                                return EventResult::handled_unfocused();
-                            }
-                            (true, ButtonTouchState::CaptivePressed(_))
-                            | (false, ButtonTouchState::Captive(_)) => {
-                                return EventResult::handled_unfocused();
-                            }
-                            (_, ButtonTouchState::AtRest) => (),
-                        }
-                    }
-                    Phase::Cancelled => {
-                        let was_pressed =
-                            matches!(state.0.touch, ButtonTouchState::CaptivePressed(_));
-                        state.0.touch = ButtonTouchState::AtRest;
-                        state.0.is_focused = false;
-                        if was_pressed {
-                            // TODO: Same here...
-                            context.request_view_rebuild();
-                            return EventResult::handled_unfocused();
-                        }
-                        return EventResult::Deferred;
-                    }
-                    Phase::Hovering(_) => {}
-                }
-                EventResult::Deferred
-            }
             Event::Focus {
                 action: focus_event,
                 ..
@@ -313,5 +243,82 @@ where
             }
             _ => EventResult::Deferred,
         }
+    }
+
+    fn handle_touch(
+        &self,
+        touch: &Touch,
+        context: &EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> TouchResult<Self::FocusTree> {
+        // Only track the ID of the first touch that started within the button.
+        if let ButtonTouchState::Captive(touch_id) | ButtonTouchState::CaptivePressed(touch_id) =
+            state.0.touch
+            && touch.id != touch_id
+        {
+            return TouchResult::Deferred;
+        }
+
+        let point = touch.location.into();
+        match touch.phase {
+            Phase::Started => {
+                if render_tree.content_shape().contains(point) {
+                    state.0.touch = ButtonTouchState::CaptivePressed(touch.id);
+                    // TODO: I think we could maybe just recompute the tiny button render
+                    // tree here and avoid recomputing the view.
+                    // May require an internal animation render node?
+                    context.request_view_rebuild();
+                    return TouchResult::Handled;
+                }
+            }
+            Phase::Ended => {
+                if state.0.touch != ButtonTouchState::AtRest {
+                    state.0.touch = ButtonTouchState::AtRest;
+                    context.request_view_rebuild();
+                    let content_shape = render_tree.content_shape();
+                    if content_shape.contains(point) {
+                        (self.action)(captures);
+                        return TouchResult::Focused(Inner::FocusTree::default_first());
+                    }
+                    return TouchResult::Handled;
+                }
+            }
+            Phase::Moved => {
+                match (render_tree.content_shape().contains(point), state.0.touch) {
+                    (true, ButtonTouchState::Captive(touch_id)) => {
+                        state.0.touch = ButtonTouchState::CaptivePressed(touch_id);
+                        // TODO: Same here...
+                        context.request_view_rebuild();
+                        return TouchResult::Handled;
+                    }
+                    (false, ButtonTouchState::CaptivePressed(touch_id)) => {
+                        state.0.touch = ButtonTouchState::Captive(touch_id);
+                        // TODO: Same here...
+                        context.request_view_rebuild();
+                        return TouchResult::Handled;
+                    }
+                    (true, ButtonTouchState::CaptivePressed(_))
+                    | (false, ButtonTouchState::Captive(_)) => {
+                        return TouchResult::Handled;
+                    }
+                    (_, ButtonTouchState::AtRest) => (),
+                }
+            }
+            Phase::Cancelled => {
+                let was_pressed = matches!(state.0.touch, ButtonTouchState::CaptivePressed(_));
+                state.0.touch = ButtonTouchState::AtRest;
+                state.0.is_focused = false;
+                if was_pressed {
+                    // TODO: Same here...
+                    context.request_view_rebuild();
+                    return TouchResult::Handled;
+                }
+                return TouchResult::Deferred;
+            }
+            Phase::Hovering(_) => {}
+        }
+        TouchResult::Deferred
     }
 }

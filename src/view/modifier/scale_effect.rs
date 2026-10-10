@@ -1,6 +1,6 @@
 use crate::{
     environment::LayoutEnvironment,
-    event::EventResult,
+    event::{EventResult, TouchResult},
     layout::ResolvedLayout,
     primitives::{
         Point, ProposedDimensions, UnitPoint,
@@ -10,6 +10,8 @@ use crate::{
     render,
     view::{ViewLayout, ViewMarker},
 };
+
+use embedded_touch::Touch;
 
 /// Applies a scale effect to the inner view.
 ///
@@ -106,14 +108,25 @@ where
         focus: &mut Self::FocusTree,
     ) -> EventResult {
         // FIXME: this is wrong, doesn't account for scale
-        let event = event.offset(-render_tree.transform.offset);
         self.inner.handle_event(
-            &event,
+            event,
             context,
             &mut render_tree.inner,
             captures,
             state,
             focus,
         )
+    }
+
+    fn handle_touch(
+        &self,
+        touch: &Touch,
+        context: &crate::event::EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> TouchResult<Self::FocusTree> {
+        self.inner
+            .handle_touch(touch, context, &mut render_tree.inner, captures, state)
     }
 }

@@ -2,7 +2,6 @@ use std::time::Duration;
 
 use buoyant::{
     event::EventContext,
-    focus::DefaultFocus,
     primitives::Size,
     render::Render,
     render_target::FixedTextBuffer,
@@ -63,13 +62,12 @@ fn button_action_cancelled_by_scroll() {
     );
 
     let ctx = EventContext::new(Duration::from_secs(2));
-    view.handle_event(
+    view.handle_touch(
         &touch_down(2, 3),
         &ctx,
         &mut tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
     );
     assert!(ctx.view_rebuild_requested.get());
 
@@ -96,21 +94,19 @@ fn button_action_cancelled_by_scroll() {
 
     // cancel touch by moving touch up and back
     let ctx = EventContext::new(Duration::from_secs(3));
-    view.handle_event(
+    view.handle_touch(
         &touch_move(2, -4),
         &ctx,
         &mut tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
     );
-    view.handle_event(
+    view.handle_touch(
         &touch_move(2, 3),
         &ctx,
         &mut tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
     );
 
     assert!(ctx.view_rebuild_requested.get());
@@ -136,13 +132,12 @@ fn button_action_cancelled_by_scroll() {
     );
 
     let ctx = EventContext::new(Duration::from_secs(4));
-    view.handle_event(
+    view.handle_touch(
         &touch_move(2, 3),
         &ctx,
         &mut tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
     );
 
     // Tree manually updated, no view recomputation
@@ -161,14 +156,7 @@ fn button_action_cancelled_by_scroll() {
     );
 
     let ctx = EventContext::new(Duration::from_secs(5));
-    view.handle_event(
-        &touch_up(3, 1),
-        &ctx,
-        &mut tree,
-        &mut captures,
-        &mut state,
-        &mut DefaultFocus::default_first(),
-    );
+    view.handle_touch(&touch_up(3, 1), &ctx, &mut tree, &mut captures, &mut state);
 
     assert!(ctx.view_rebuild_requested.get());
 
@@ -226,13 +214,12 @@ fn button_can_be_pressed_with_tiny_wiggle() {
     );
 
     let ctx = EventContext::new(Duration::from_secs(2));
-    view.handle_event(
+    view.handle_touch(
         &touch_down(2, 2),
         &ctx,
         &mut tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
     );
     assert!(ctx.view_rebuild_requested.get());
 
@@ -259,25 +246,17 @@ fn button_can_be_pressed_with_tiny_wiggle() {
 
     // little wiggle
     let ctx = EventContext::new(Duration::from_secs(3));
-    view.handle_event(
+    view.handle_touch(
         &touch_move(5, 3),
         &ctx,
         &mut tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
     );
     assert!(!ctx.view_rebuild_requested.get());
 
     let ctx = EventContext::new(Duration::from_secs(3));
-    view.handle_event(
-        &touch_up(5, 3),
-        &ctx,
-        &mut tree,
-        &mut captures,
-        &mut state,
-        &mut DefaultFocus::default_first(),
-    );
+    view.handle_touch(&touch_up(5, 3), &ctx, &mut tree, &mut captures, &mut state);
 
     assert!(ctx.view_rebuild_requested.get());
 

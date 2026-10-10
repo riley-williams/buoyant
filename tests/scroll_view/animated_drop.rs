@@ -1,8 +1,7 @@
 use core::time::Duration;
 
 use buoyant::{
-    event::EventContext,
-    focus::DefaultFocus,
+    event::{EventContext, TouchResult},
     primitives::Size,
     render::{AnimationDomain, Render},
     render_target::FixedTextBuffer,
@@ -50,26 +49,30 @@ fn scroll_down_animates_back() {
         &buffer.text
     );
     // picking times much greater than the scroll animation duration
-    let event_result = view.handle_event(
+    let event_result = view.handle_touch(
         &touch_down(2, 2),
         &EventContext::new(Duration::from_millis(500)),
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
     );
-    assert!(event_result.is_handled());
+    assert!(matches!(
+        event_result,
+        TouchResult::Handled | TouchResult::Focused(_)
+    ));
 
     // Pull down just offscreen and release
-    let event_result = view.handle_event(
+    let event_result = view.handle_touch(
         &touch_move(2, 8),
         &EventContext::new(Duration::from_secs(1)),
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
     );
-    assert!(event_result.is_handled());
+    assert!(matches!(
+        event_result,
+        TouchResult::Handled | TouchResult::Focused(_)
+    ));
 
     buffer.clear();
     render_tree.render(&mut buffer, &' ');
@@ -84,15 +87,17 @@ fn scroll_down_animates_back() {
         &buffer.text
     );
 
-    let event_result = view.handle_event(
+    let event_result = view.handle_touch(
         &touch_up(2, 6),
         &EventContext::new(Duration::from_millis(1500)),
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
     );
-    assert!(event_result.is_handled());
+    assert!(matches!(
+        event_result,
+        TouchResult::Handled | TouchResult::Focused(_)
+    ));
 
     let new_tree = tree(
         &view,

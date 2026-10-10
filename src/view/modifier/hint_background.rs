@@ -1,11 +1,13 @@
 use crate::{
     environment::LayoutEnvironment,
-    event::EventResult,
+    event::{EventResult, TouchResult},
     layout::ResolvedLayout,
     primitives::{Point, ProposedDimensions},
     render,
     view::{ViewLayout, ViewMarker},
 };
+
+use embedded_touch::Touch;
 
 /// A view modifier that adds a background color hint for fast simulated blending
 #[derive(Debug, Clone)]
@@ -95,5 +97,17 @@ where
             state,
             focus,
         )
+    }
+
+    fn handle_touch(
+        &self,
+        touch: &Touch,
+        context: &crate::event::EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> TouchResult<Self::FocusTree> {
+        self.inner
+            .handle_touch(touch, context, &mut render_tree.subtree, captures, state)
     }
 }

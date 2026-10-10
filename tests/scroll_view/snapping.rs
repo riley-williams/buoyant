@@ -3,7 +3,7 @@ use crate::common::{touch_move, touch_up};
 use crate::{assert_str_grid_eq, common::touch_down};
 use core::time::Duration;
 
-use buoyant::focus::DefaultFocus;
+use buoyant::event::TouchResult;
 use buoyant::{
     event::EventContext,
     primitives::Size,
@@ -99,26 +99,30 @@ fn scroll_down_snaps_back() {
         ],
         &buffer.text
     );
-    let event_result = view.handle_event(
+    let event_result = view.handle_touch(
         &touch_down(2, 3),
         &EventContext::new(Duration::ZERO),
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
     );
-    assert!(event_result.is_handled());
+    assert!(matches!(
+        event_result,
+        TouchResult::Handled | TouchResult::Focused(_)
+    ));
 
     // Pull down
-    let event_result = view.handle_event(
+    let event_result = view.handle_touch(
         &touch_move(2, 7),
         &EventContext::new(Duration::ZERO),
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
     );
-    assert!(event_result.is_handled());
+    assert!(matches!(
+        event_result,
+        TouchResult::Handled | TouchResult::Focused(_)
+    ));
 
     buffer.clear();
     render_tree.render(&mut buffer, &' ');
@@ -133,15 +137,17 @@ fn scroll_down_snaps_back() {
         &buffer.text
     );
 
-    let event_result = view.handle_event(
+    let event_result = view.handle_touch(
         &touch_up(2, 7), // Just at the bottom edge
         &EventContext::new(Duration::ZERO),
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
     );
-    assert!(event_result.is_handled());
+    assert!(matches!(
+        event_result,
+        TouchResult::Handled | TouchResult::Focused(_)
+    ));
 
     buffer.clear();
     render_tree.render(&mut buffer, &' ');
@@ -184,26 +190,30 @@ fn scroll_up_past_bottom_snaps_back() {
     let mut render_tree = tree(&view, &mut captures, &mut state, Duration::default(), size);
 
     // First scroll to the bottom of the content normally
-    let event_result = view.handle_event(
+    let event_result = view.handle_touch(
         &touch_down(2, 2),
         &EventContext::new(Duration::ZERO),
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
     );
-    assert!(event_result.is_handled());
+    assert!(matches!(
+        event_result,
+        TouchResult::Handled | TouchResult::Focused(_)
+    ));
 
     // Scroll up to just touch bottom content
-    let event_result = view.handle_event(
+    let event_result = view.handle_touch(
         &touch_move(2, -7),
         &EventContext::new(Duration::ZERO),
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
     );
-    assert!(event_result.is_handled());
+    assert!(matches!(
+        event_result,
+        TouchResult::Handled | TouchResult::Focused(_)
+    ));
 
     buffer.clear();
     render_tree.render(&mut buffer, &' ');
@@ -219,15 +229,17 @@ fn scroll_up_past_bottom_snaps_back() {
     );
 
     // Now scroll past the bottom limit - additional movement should be reduced by half
-    let event_result = view.handle_event(
+    let event_result = view.handle_touch(
         &touch_move(2, -11), // 4 past the limit
         &EventContext::new(Duration::ZERO),
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
     );
-    assert!(event_result.is_handled());
+    assert!(matches!(
+        event_result,
+        TouchResult::Handled | TouchResult::Focused(_)
+    ));
 
     buffer.clear();
     render_tree.render(&mut buffer, &' ');
@@ -243,15 +255,17 @@ fn scroll_up_past_bottom_snaps_back() {
     );
 
     // Release touch
-    let event_result = view.handle_event(
+    let event_result = view.handle_touch(
         &touch_up(2, -11),
         &EventContext::new(Duration::ZERO),
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
     );
-    assert!(event_result.is_handled());
+    assert!(matches!(
+        event_result,
+        TouchResult::Handled | TouchResult::Focused(_)
+    ));
 
     // We're modifying the target tree, so it should retain the scroll position
     buffer.clear();
@@ -307,26 +321,30 @@ fn horizontal_scroll_right_snaps_back() {
         ],
         &buffer.text
     );
-    let event_result = view.handle_event(
+    let event_result = view.handle_touch(
         &touch_down(4, 2),
         &EventContext::new(Duration::ZERO),
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
     );
-    assert!(event_result.is_handled());
+    assert!(matches!(
+        event_result,
+        TouchResult::Handled | TouchResult::Focused(_)
+    ));
 
     // Pull right
-    let event_result = view.handle_event(
+    let event_result = view.handle_touch(
         &touch_move(8, 2),
         &EventContext::new(Duration::ZERO),
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
     );
-    assert!(event_result.is_handled());
+    assert!(matches!(
+        event_result,
+        TouchResult::Handled | TouchResult::Focused(_)
+    ));
 
     buffer.clear();
     render_tree.render(&mut buffer, &' ');
@@ -341,15 +359,17 @@ fn horizontal_scroll_right_snaps_back() {
         &buffer.text
     );
 
-    let event_result = view.handle_event(
+    let event_result = view.handle_touch(
         &touch_up(8, 2), // Just at the right edge
         &EventContext::new(Duration::ZERO),
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
     );
-    assert!(event_result.is_handled());
+    assert!(matches!(
+        event_result,
+        TouchResult::Handled | TouchResult::Focused(_)
+    ));
 
     buffer.clear();
     render_tree.render(&mut buffer, &' ');
@@ -405,26 +425,30 @@ fn both_direction_scroll_diagonal_snaps_back_up_left() {
         &buffer.text
     );
 
-    let event_result = view.handle_event(
+    let event_result = view.handle_touch(
         &touch_down(2, 2),
         &EventContext::new(Duration::ZERO),
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
     );
-    assert!(event_result.is_handled());
+    assert!(matches!(
+        event_result,
+        TouchResult::Handled | TouchResult::Focused(_)
+    ));
 
     // Pull diagonally down-right past the top-left bounds
-    let event_result = view.handle_event(
+    let event_result = view.handle_touch(
         &touch_move(6, 4),
         &EventContext::new(Duration::ZERO),
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
     );
-    assert!(event_result.is_handled());
+    assert!(matches!(
+        event_result,
+        TouchResult::Handled | TouchResult::Focused(_)
+    ));
 
     buffer.clear();
     render_tree.render(&mut buffer, &' ');
@@ -440,15 +464,17 @@ fn both_direction_scroll_diagonal_snaps_back_up_left() {
         &buffer.text
     );
 
-    let event_result = view.handle_event(
+    let event_result = view.handle_touch(
         &touch_up(6, 4),
         &EventContext::new(Duration::ZERO),
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
     );
-    assert!(event_result.is_handled());
+    assert!(matches!(
+        event_result,
+        TouchResult::Handled | TouchResult::Focused(_)
+    ));
 
     buffer.clear();
     render_tree.render(&mut buffer, &' ');
@@ -492,26 +518,30 @@ fn both_direction_scroll_bottom_right_snaps_back() {
     let mut render_tree = tree(&view, &mut captures, &mut state, Duration::default(), size);
 
     // First scroll to the bottom-right corner normally
-    let event_result = view.handle_event(
+    let event_result = view.handle_touch(
         &touch_down(6, 3),
         &EventContext::new(Duration::from_millis(500)),
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
     );
-    assert!(event_result.is_handled());
+    assert!(matches!(
+        event_result,
+        TouchResult::Handled | TouchResult::Focused(_)
+    ));
 
     // Scroll to bottom-right corner
-    let event_result = view.handle_event(
+    let event_result = view.handle_touch(
         &touch_move(4, 1),
         &EventContext::new(Duration::from_millis(600)),
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
     );
-    assert!(event_result.is_handled());
+    assert!(matches!(
+        event_result,
+        TouchResult::Handled | TouchResult::Focused(_)
+    ));
 
     buffer.clear();
     render_tree.render(&mut buffer, &' ');
@@ -528,15 +558,17 @@ fn both_direction_scroll_bottom_right_snaps_back() {
     );
 
     // Now scroll past the bottom-right bounds (up-left movement past limits)
-    let event_result = view.handle_event(
+    let event_result = view.handle_touch(
         &touch_move(0, -3),
         &EventContext::new(Duration::from_millis(700)),
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
     );
-    assert!(event_result.is_handled());
+    assert!(matches!(
+        event_result,
+        TouchResult::Handled | TouchResult::Focused(_)
+    ));
 
     buffer.clear();
     render_tree.render(&mut buffer, &' ');
@@ -552,15 +584,17 @@ fn both_direction_scroll_bottom_right_snaps_back() {
         &buffer.text
     );
 
-    let event_result = view.handle_event(
+    let event_result = view.handle_touch(
         &touch_up(0, -3),
         &EventContext::new(Duration::from_millis(800)),
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
     );
-    assert!(event_result.is_handled());
+    assert!(matches!(
+        event_result,
+        TouchResult::Handled | TouchResult::Focused(_)
+    ));
 
     buffer.clear();
     render_tree.render(&mut buffer, &' ');
@@ -604,26 +638,30 @@ fn horizontal_scroll_left_past_right_edge_snaps_back() {
     let mut render_tree = tree(&view, &mut captures, &mut state, Duration::default(), size);
 
     // First scroll to the right edge of the content normally
-    let event_result = view.handle_event(
+    let event_result = view.handle_touch(
         &touch_down(2, 2),
         &EventContext::new(Duration::from_millis(500)),
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
     );
-    assert!(event_result.is_handled());
+    assert!(matches!(
+        event_result,
+        TouchResult::Handled | TouchResult::Focused(_)
+    ));
 
     // Scroll left to just touch right edge content
-    let event_result = view.handle_event(
+    let event_result = view.handle_touch(
         &touch_move(0, 2),
         &EventContext::new(Duration::from_millis(600)),
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
     );
-    assert!(event_result.is_handled());
+    assert!(matches!(
+        event_result,
+        TouchResult::Handled | TouchResult::Focused(_)
+    ));
 
     buffer.clear();
     render_tree.render(&mut buffer, &' ');
@@ -639,15 +677,17 @@ fn horizontal_scroll_left_past_right_edge_snaps_back() {
     );
 
     // Now scroll past the right limit - additional movement should be reduced by half
-    let event_result = view.handle_event(
+    let event_result = view.handle_touch(
         &touch_move(-8, 2), // 4 past the limit
         &EventContext::new(Duration::from_millis(700)),
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
     );
-    assert!(event_result.is_handled());
+    assert!(matches!(
+        event_result,
+        TouchResult::Handled | TouchResult::Focused(_)
+    ));
 
     buffer.clear();
     render_tree.render(&mut buffer, &' ');
@@ -663,15 +703,17 @@ fn horizontal_scroll_left_past_right_edge_snaps_back() {
     );
 
     // Release touch
-    let event_result = view.handle_event(
+    let event_result = view.handle_touch(
         &touch_up(-8, 2),
         &EventContext::new(Duration::from_millis(800)),
         &mut render_tree,
         &mut captures,
         &mut state,
-        &mut DefaultFocus::default_first(),
     );
-    assert!(event_result.is_handled());
+    assert!(matches!(
+        event_result,
+        TouchResult::Handled | TouchResult::Focused(_)
+    ));
 
     // We're modifying the target tree, so it should retain the scroll position
     buffer.clear();

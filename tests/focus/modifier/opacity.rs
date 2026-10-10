@@ -34,7 +34,7 @@ fn opacity_zero_skips_focus() {
 
     // Invisible button (Circle) should be skipped - focus lands on Rectangle
     let result = harness.focus_forward();
-    assert!(result.requested_focus());
+    assert!(result.is_handled());
     assert!(
         matches!(result.shape(), Some(ContentShape::Rectangle(_))),
         "Should skip invisible Circle button"
@@ -49,7 +49,7 @@ fn opacity_one_allows_focus() {
 
     // First button (Circle) should be focusable
     let result = harness.focus_forward();
-    assert!(result.requested_focus());
+    assert!(result.is_handled());
     assert!(
         matches!(result.shape(), Some(ContentShape::Circle(_))),
         "Should focus first button (Circle)"
@@ -70,7 +70,7 @@ fn partial_opacity_allows_focus() {
 
     // Partial opacity should still allow focus
     let result = harness.focus_forward();
-    assert!(result.requested_focus());
+    assert!(result.is_handled());
     assert!(
         matches!(result.shape(), Some(ContentShape::Circle(_))),
         "Should focus first button with partial opacity"

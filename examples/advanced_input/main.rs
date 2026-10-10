@@ -21,7 +21,10 @@ use std::time::{Duration, Instant};
 use buoyant::view::map_event::Mapping;
 use buoyant::{
     app::{App, Harness},
-    event::{Event, Key, simulator::MouseTracker},
+    event::{
+        Event, Key,
+        simulator::{InputEvent, MouseTracker},
+    },
     focus::{self, BoundaryBehavior, FocusAction, Role},
     render_target::{EmbeddedGraphicsRenderTarget, RenderTarget},
     view::prelude::*,
@@ -98,7 +101,6 @@ pub fn view<'a, 'b, C: GoodPixelColor, F: Fn(&State) + 'a + Copy>(
         })
         .background_color(data.palette.dark_blue(), Rectangle)
     })
-    .focus_touches()
     .map_event(|event: &Event, _state| match event {
         Event::KeyDown(key) => match key {
             Key::Character('h') | Key::LeftArrow => {
@@ -174,7 +176,7 @@ fn main() {
         app.set_time(app_start.elapsed());
 
         // Collect and process simulator events
-        let events: Vec<_> = window
+        window
             .events()
             .filter_map(|event| {
                 if event == SimulatorEvent::Quit {
@@ -182,11 +184,14 @@ fn main() {
                 }
                 touch_tracker.process_event(event)
             })
-            .collect();
-
-        for event in events {
-            app.send(event);
-        }
+            .for_each(|event| match event {
+                InputEvent::Event(e) => {
+                    app.send(e);
+                }
+                InputEvent::Touch(t) => {
+                    app.send_touch(&t);
+                }
+            });
 
         // Handle IE value updates
         if let Some((i, ie)) = app.state().ie_value_update {

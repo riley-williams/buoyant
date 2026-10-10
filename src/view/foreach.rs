@@ -2,9 +2,11 @@
 
 use core::cmp::max;
 
+use embedded_touch::Touch;
+
 use crate::{
     environment::LayoutEnvironment,
-    event::{EventContext, EventResult},
+    event::{EventContext, EventResult, TouchResult},
     focus::DefaultFocus,
     layout::{HorizontalAlignment, LayoutDirection, ResolvedLayout, VerticalAlignment},
     primitives::{Dimension, Dimensions, Point, ProposedDimension, ProposedDimensions},
@@ -533,6 +535,29 @@ where
             }
         }
         EventResult::Deferred
+    }
+
+    fn handle_touch(
+        &self,
+        touch: &Touch,
+        context: &EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> TouchResult<Self::FocusTree> {
+        for (i, item) in self.items.iter().enumerate() {
+            let view = (self.build_view)(item);
+            let item_state = &mut state[i];
+            let item_render_tree = &mut render_tree[i];
+            match view.handle_touch(touch, context, item_render_tree, captures, item_state) {
+                TouchResult::Focused(f) => {
+                    return TouchResult::Focused(Focus { index: i, tree: f });
+                }
+                TouchResult::Handled => return TouchResult::Handled,
+                TouchResult::Deferred => {}
+            }
+        }
+        TouchResult::Deferred
     }
 }
 

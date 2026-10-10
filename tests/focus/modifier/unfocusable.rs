@@ -17,7 +17,6 @@ fn three_button_stack(_state: &State) -> impl View<(), State> + use<> {
         Button::new(|s: &mut State| s.b += 1, |_| Rectangle).unfocusable(),
         Button::new(|s: &mut State| s.c += 1, |_| RoundedRectangle::new(10)),
     ))
-    .focus_touches()
 }
 
 #[test]

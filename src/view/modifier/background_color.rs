@@ -1,11 +1,13 @@
 use crate::{
     environment::LayoutEnvironment,
-    event::EventResult,
+    event::{EventResult, TouchResult},
     layout::{HorizontalAlignment, ResolvedLayout, VerticalAlignment},
-    primitives::{Point, ProposedDimensions},
-    render::{HintBackground, ShadeSubtree},
+    primitives::{Point, ProposedDimensions, geometry::Shape as _},
+    render::{HintBackground, ShadeSubtree, shape::AsShapePrimitive as _},
     view::{ViewLayout, ViewMarker, shape::Shape},
 };
+
+use embedded_touch::{Phase, Touch};
 
 /// A view that uses the layout of the foreground view, rendering a background shape
 /// in the specified color.
@@ -136,5 +138,42 @@ where
             state,
             focus,
         )
+    }
+
+    fn handle_touch(
+        &self,
+        touch: &Touch,
+        context: &crate::event::EventContext,
+        render_tree: &mut Self::Renderables,
+        captures: &mut Captures,
+        state: &mut Self::State,
+    ) -> TouchResult<Self::FocusTree> {
+        match self.foreground.handle_touch(
+            touch,
+            context,
+            &mut render_tree.1.subtree,
+            captures,
+            state,
+        ) {
+            TouchResult::Focused(f) => TouchResult::Focused(f),
+            TouchResult::Handled => TouchResult::Handled,
+            TouchResult::Deferred => {
+                // The foreground did not handle the touch. If a touch starts inside the
+                // background shape, claim it so it does not fall through.
+                // Uses the shape bounding box only because precise shape intersection doesn't exist yet.
+                if touch.phase == Phase::Started
+                    && render_tree
+                        .0
+                        .subtree
+                        .as_shape()
+                        .bounding_box()
+                        .contains(&touch.location.into())
+                {
+                    TouchResult::Handled
+                } else {
+                    TouchResult::Deferred
+                }
+            }
+        }
     }
 }

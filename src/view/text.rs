@@ -1,8 +1,10 @@
+use embedded_touch::{Phase, Touch};
+
 use crate::{
     environment::LayoutEnvironment,
     font::{CustomSize, Font, FontMetrics},
     layout::ResolvedLayout,
-    primitives::{Point, ProposedDimension, ProposedDimensions, Size},
+    primitives::{Point, ProposedDimension, ProposedDimensions, Size, geometry::Rectangle},
     render::{self},
     transition::Opacity,
     view::{ViewLayout, ViewMarker},
@@ -12,7 +14,7 @@ use core::fmt::Write;
 mod character_wrap;
 mod word_wrap;
 
-use crate::event::EventResult;
+use crate::event::{EventResult, TouchResult};
 
 pub use character_wrap::CharacterWrap;
 pub use word_wrap::WordWrap;
@@ -434,8 +436,25 @@ where
         _state: &mut Self::State,
         _focus: &mut Self::FocusTree,
     ) -> EventResult {
-        // FIXME: check for text mask
+        // FIXME: check for text role
         EventResult::Deferred
+    }
+
+    fn handle_touch(
+        &self,
+        touch: &Touch,
+        _context: &crate::event::EventContext,
+        render_tree: &mut Self::Renderables,
+        _captures: &mut Captures,
+        _state: &mut Self::State,
+    ) -> TouchResult<Self::FocusTree> {
+        if touch.phase == Phase::Started {
+            let rect = Rectangle::new(render_tree.origin, render_tree.size.into());
+            if rect.contains(&touch.location.into()) {
+                return TouchResult::Handled;
+            }
+        }
+        TouchResult::Deferred
     }
 }
 

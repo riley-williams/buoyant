@@ -1,10 +1,11 @@
-use buoyant::{primitives::Size, render::Render};
 use std::iter::zip;
 
 use buoyant::{
     environment::DefaultEnvironment,
+    event::{EventContext, TouchResult},
     font::CharacterBufferFont,
-    primitives::{Dimensions, Point},
+    primitives::{Dimensions, Point, Size},
+    render::Render,
     render_target::FixedTextBuffer,
     view::prelude::*,
 };
@@ -193,4 +194,68 @@ fn multibyte_char_wrapping_does_not_panic() {
             tree.render(&mut buffer, &' ');
         }
     }
+}
+
+#[allow(clippy::let_unit_value)]
+#[test]
+fn text_handles_touch_only_when_started_inside() {
+    let font = CharacterBufferFont;
+    let view = Text::new("abc", &font);
+    let mut state = view.build_state(&mut ());
+    let layout = view.layout(
+        &Size::new(10, 10).into(),
+        &DefaultEnvironment::default(),
+        &mut (),
+        &mut state,
+    );
+    let mut tree = view.render_tree(
+        &layout.sublayouts,
+        Point::zero(),
+        &DefaultEnvironment::default(),
+        &mut (),
+        &mut state,
+    );
+    let ctx = EventContext::new(core::time::Duration::ZERO);
+
+    // "abc" occupies (0,0)-(3,1); a touch starting there is handled.
+    let result = view.handle_touch(
+        &common::touch_down(1, 0),
+        &ctx,
+        &mut tree,
+        &mut (),
+        &mut state,
+    );
+    assert_eq!(
+        result,
+        TouchResult::Handled,
+        "touch starting inside text should be handled"
+    );
+
+    // A touch starting outside is not handled.
+    let result = view.handle_touch(
+        &common::touch_down(8, 8),
+        &ctx,
+        &mut tree,
+        &mut (),
+        &mut state,
+    );
+    assert_eq!(
+        result,
+        TouchResult::Deferred,
+        "touch starting outside text should defer"
+    );
+
+    // A non-Started touch inside is not handled (only Started touches are claimed).
+    let result = view.handle_touch(
+        &common::touch_move(1, 0),
+        &ctx,
+        &mut tree,
+        &mut (),
+        &mut state,
+    );
+    assert_eq!(
+        result,
+        TouchResult::Deferred,
+        "moved touch inside text should defer"
+    );
 }
