@@ -1,6 +1,6 @@
 use buoyant::{match_view, view::prelude::*};
 
-use crate::{color::ColorFormat, state::BatteryStatus};
+use crate::{app::State, color::ColorFormat, state::BatteryStatus};
 
 mod charge;
 pub mod screen_setting;
@@ -29,7 +29,7 @@ pub fn root_view(
     screen: Screen,
     battery: &BatteryStatus,
     auto_off: bool,
-) -> impl View<ColorFormat, ()> + use<> {
+) -> impl View<ColorFormat, State> + use<> {
     match_view!(screen, {
         Screen::Charge => charge::view(battery),
         Screen::Settings => screen_setting::view(auto_off),

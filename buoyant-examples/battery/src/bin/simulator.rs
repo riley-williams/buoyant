@@ -11,14 +11,12 @@
 use std::time::Instant;
 
 use battery::{
-    app::{App, ButtonState},
+    app::{ButtonState, State, root_view},
     charge_simulator::ChargeSim,
     color,
 };
-use buoyant::{
-    render::{AnimatedJoin, AnimationDomain, Render},
-    render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _},
-};
+use buoyant::app::App;
+use buoyant::render_target::{EmbeddedGraphicsRenderTarget, RenderTarget as _};
 use embedded_graphics::prelude::*;
 use embedded_graphics_simulator::{
     OutputSettings, SimulatorDisplay, SimulatorEvent, Window, sdl2::Keycode,
@@ -32,13 +30,15 @@ fn main() {
     let mut display: SimulatorDisplay<color::ColorFormat> =
         SimulatorDisplay::new(Size::new(210, 110));
     let mut target = EmbeddedGraphicsRenderTarget::new_hinted(&mut display, color::BACKGROUND);
+
+    // Send at least one update to the window so it doesn't panic when fetching events
+    window.update(target.display());
+
     let app_start = Instant::now();
 
     let simulator = ChargeSim::new(1.0, app_start.elapsed());
-    let mut app = App::new(simulator);
-
-    let mut source_tree = app.tree(target.size().into(), app_start.elapsed());
-    let mut target_tree = app.tree(target.size().into(), app_start.elapsed());
+    let initial_state = State::new(simulator);
+    let mut app = App::new(initial_state, target.size(), root_view);
 
     let mut button_down = ButtonState::Unpressed;
 
@@ -53,32 +53,8 @@ fn main() {
     let a_steps = [0.0, 1.0, 5.0, 20.0];
 
     'running: loop {
-        // Create a new target tree if the state changes
-        if app.reset_dirty() {
-            // merge into target
-            target_tree.join_from(
-                &source_tree,
-                &AnimationDomain::top_level(app_start.elapsed()),
-            );
-            // swap
-            source_tree = target_tree;
-            // compute new target
-            target_tree = app.tree(target.size().into(), app_start.elapsed());
-        }
-
-        target.clear(color::BACKGROUND);
-
-        // Render frame
-        Render::render_animated(
-            &mut target,
-            &source_tree,
-            &target_tree,
-            &color::WHITE,
-            &AnimationDomain::top_level(app_start.elapsed()),
-        );
-
-        // Flush to window
-        window.update(target.display());
+        // Sync the app's virtual clock with wall-clock time so animations advance.
+        app.set_time(app_start.elapsed());
 
         for event in window.events() {
             match event {
@@ -124,6 +100,13 @@ fn main() {
         }
 
         app.state_mut().simulator.update(app_start.elapsed());
+
+        // Render if there was a state change or an animation is still in flight.
+        if app.should_redraw() || target.clear_animation_status() {
+            target.clear(color::BACKGROUND);
+            app.render_animated(&mut target, &color::WHITE);
+            window.update(target.display());
+        }
     }
 }
 
