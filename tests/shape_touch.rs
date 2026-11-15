@@ -68,6 +68,12 @@ fn solid_shapes_handle_touch() {
     assert_solid_overlay(|_| {
         Button::new(|s: &mut State| s.taps += 1, |_| Rectangle).overlay(
             Alignment::TopLeading,
+            Arc::new(Angle::degrees(0), Angle::degrees(90)).frame_sized(3, 3),
+        )
+    });
+    assert_solid_overlay(|_| {
+        Button::new(|s: &mut State| s.taps += 1, |_| Rectangle).overlay(
+            Alignment::TopLeading,
             RoundedRectangle::new(3).frame_sized(3, 3),
         )
     });

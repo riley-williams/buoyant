@@ -1,9 +1,11 @@
+mod arc;
 mod circle;
 mod line;
 mod no_shape;
 mod rectangle;
 mod rounded_rectangle;
 
+pub use arc::Arc;
 pub use circle::Circle;
 pub use line::Line;
 pub use no_shape::NoShape;
@@ -59,6 +61,11 @@ pub trait Shape: CoordinateSpaceTransform {
 
     /// If the shape is a circle, make it available.
     fn as_circle(&self) -> Option<Circle> {
+        None
+    }
+
+    /// If the shape is an arc, make it available.
+    fn as_arc(&self) -> Option<Arc> {
         None
     }
 }

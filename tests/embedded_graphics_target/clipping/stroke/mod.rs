@@ -1,3 +1,4 @@
+mod arc;
 mod capsule;
 mod circle;
 mod rectangle;

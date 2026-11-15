@@ -4,7 +4,7 @@ use crate::render_target::surface::OffsetSurface;
 use crate::{
     primitives::{
         Interpolate, Point, Size,
-        geometry::{Circle, Intersection, Line, PathEl, Rectangle, RoundedRectangle},
+        geometry::{Arc, Circle, Intersection, Line, PathEl, Rectangle, RoundedRectangle},
         transform::{CoordinateSpaceTransform, LinearTransform},
     },
     render_target::{
@@ -21,7 +21,7 @@ use embedded_graphics::{
     pixelcolor::PixelColor,
     prelude::Primitive as _,
     primitives::{
-        Circle as EgCircle, Line as EgLine, PrimitiveStyle, PrimitiveStyleBuilder,
+        Arc as EgArc, Circle as EgCircle, Line as EgLine, PrimitiveStyle, PrimitiveStyleBuilder,
         Rectangle as EgRectangle, RoundedRectangle as EgRoundedRectangle,
     },
 };
@@ -185,6 +185,8 @@ where
                         draw_circle(&mut target, &circle, &transform, &style);
                     } else if let Some(rounded_rect) = shape.as_rounded_rect() {
                         draw_rounded_rectangle(&mut target, &rounded_rect, &transform, &style);
+                    } else if let Some(arc) = shape.as_arc() {
+                        draw_arc(&mut target, &arc, &transform, &style);
                     } else {
                         draw_path_shape(&mut target, shape, transform.offset, &style);
                     }
@@ -201,6 +203,8 @@ where
                         draw_circle(&mut target, &circle, &transform, &style);
                     } else if let Some(rounded_rect) = shape.as_rounded_rect() {
                         draw_rounded_rectangle(&mut target, &rounded_rect, &transform, &style);
+                    } else if let Some(arc) = shape.as_arc() {
+                        draw_arc(&mut target, &arc, &transform, &style);
                     } else {
                         draw_path_shape(&mut target, shape, transform.offset, &style);
                     }
@@ -275,6 +279,8 @@ where
                     draw_circle(&mut target, &circle, &transform, &style);
                 } else if let Some(rounded_rect) = shape.as_rounded_rect() {
                     draw_rounded_rectangle(&mut target, &rounded_rect, &transform, &style);
+                } else if let Some(arc) = shape.as_arc() {
+                    draw_arc(&mut target, &arc, &transform, &style);
                 } else {
                     draw_path_shape(&mut target, shape, transform.offset, &style);
                 }
@@ -291,6 +297,8 @@ where
                     draw_circle(&mut target, &circle, &transform, &style);
                 } else if let Some(rounded_rect) = shape.as_rounded_rect() {
                     draw_rounded_rectangle(&mut target, &rounded_rect, &transform, &style);
+                } else if let Some(arc) = shape.as_arc() {
+                    draw_arc(&mut target, &arc, &transform, &style);
                 } else {
                     draw_path_shape(&mut target, shape, transform.offset, &style);
                 }
@@ -408,6 +416,17 @@ fn draw_circle<C: PixelColor>(
     let circle: EgCircle = circle.applying(transform).into();
 
     _ = circle.into_styled(*style).draw(target);
+}
+
+fn draw_arc<C: PixelColor>(
+    target: &mut impl DrawTarget<Color = C>,
+    arc: &Arc,
+    transform: &LinearTransform,
+    style: &PrimitiveStyle<C>,
+) {
+    let arc: EgArc = arc.applying(transform).into();
+
+    _ = arc.into_styled(*style).draw(target);
 }
 
 fn draw_path_shape<C: PixelColor>(

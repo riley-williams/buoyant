@@ -1,8 +1,10 @@
+mod arc;
 mod capsule;
 mod circle;
 mod rect;
 mod rounded_rect;
 
+pub use arc::Arc;
 pub use capsule::Capsule;
 pub use circle::Circle;
 pub use rect::Rect;
