@@ -2,13 +2,13 @@
 mod embedded_graphics {
     use buoyant::view::prelude::*;
     use embedded_graphics::{
-        geometry::{OriginDimensions, Point as EgPoint, Size as EgSize},
+        geometry::{Angle as EgAngle, OriginDimensions, Point as EgPoint, Size as EgSize},
         mock_display::MockDisplay,
         pixelcolor::Rgb888,
         prelude::{Drawable, Primitive, RgbColor},
         primitives::{
-            Circle as EgCircle, CornerRadii, PrimitiveStyleBuilder, Rectangle as EgRectangle,
-            RoundedRectangle as EgRoundedRectangle,
+            Arc as EgArc, Circle as EgCircle, CornerRadii, PrimitiveStyleBuilder,
+            Rectangle as EgRectangle, RoundedRectangle as EgRoundedRectangle,
         },
     };
 
@@ -240,6 +240,99 @@ mod embedded_graphics {
             )
             .draw(&mut display_2)
             .unwrap();
+        display.assert_eq(&display_2);
+    }
+
+    #[test]
+    fn inner_inset_arc() {
+        let mut display = MockDisplay::new();
+        Arc::new(Angle::degrees(0), Angle::degrees(225))
+            .stroked(4)
+            .padding(Edges::All, 4)
+            .as_drawable(display.size(), Rgb888::WHITE, &mut ())
+            .draw(&mut display)
+            .unwrap();
+
+        let mut display_2 = MockDisplay::new();
+
+        let size = display.size();
+        let min_dimension = size.width.min(size.height) - 12; // Account for padding and stroke
+        EgArc::new(
+            EgPoint::new(6, 6),
+            min_dimension,
+            EgAngle::from_degrees(0.0),
+            EgAngle::from_degrees(225.0),
+        )
+        .into_styled(
+            PrimitiveStyleBuilder::new()
+                .stroke_color(Rgb888::WHITE)
+                .stroke_width(4)
+                .build(),
+        )
+        .draw(&mut display_2)
+        .unwrap();
+        display.assert_eq(&display_2);
+    }
+
+    #[test]
+    fn center_inset_arc() {
+        let mut display = MockDisplay::new();
+        Arc::new(Angle::degrees(0), Angle::degrees(225))
+            .stroked_offset(4, StrokeOffset::Center)
+            .padding(Edges::All, 4)
+            .as_drawable(display.size(), Rgb888::WHITE, &mut ())
+            .draw(&mut display)
+            .unwrap();
+
+        let mut display_2 = MockDisplay::new();
+
+        let size = display.size();
+        let min_dimension = size.width.min(size.height) - 8; // Account for padding only
+        EgArc::new(
+            EgPoint::new(4, 4),
+            min_dimension,
+            EgAngle::from_degrees(0.0),
+            EgAngle::from_degrees(225.0),
+        )
+        .into_styled(
+            PrimitiveStyleBuilder::new()
+                .stroke_color(Rgb888::WHITE)
+                .stroke_width(4)
+                .build(),
+        )
+        .draw(&mut display_2)
+        .unwrap();
+        display.assert_eq(&display_2);
+    }
+
+    #[test]
+    fn outer_inset_arc() {
+        let mut display = MockDisplay::new();
+        Arc::new(Angle::degrees(0), Angle::degrees(225))
+            .stroked_offset(4, StrokeOffset::Outer)
+            .padding(Edges::All, 4)
+            .as_drawable(display.size(), Rgb888::WHITE, &mut ())
+            .draw(&mut display)
+            .unwrap();
+
+        let mut display_2 = MockDisplay::new();
+
+        let size = display.size();
+        let min_dimension = size.width.min(size.height) - 4; // Account for padding, stroke extends outward
+        EgArc::new(
+            EgPoint::new(2, 2),
+            min_dimension,
+            EgAngle::from_degrees(0.0),
+            EgAngle::from_degrees(225.0),
+        )
+        .into_styled(
+            PrimitiveStyleBuilder::new()
+                .stroke_color(Rgb888::WHITE)
+                .stroke_width(4)
+                .build(),
+        )
+        .draw(&mut display_2)
+        .unwrap();
         display.assert_eq(&display_2);
     }
 

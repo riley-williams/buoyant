@@ -1,3 +1,4 @@
+mod angle;
 mod dimension;
 pub mod geometry;
 mod interpolate;
@@ -6,6 +7,7 @@ mod size;
 pub mod transform;
 mod unit_point;
 
+pub use angle::Angle;
 pub use dimension::*;
 pub use interpolate::Interpolate;
 pub use point::Point;

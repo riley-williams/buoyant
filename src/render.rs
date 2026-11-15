@@ -43,6 +43,7 @@ pub use one_of::{OneOf2, OneOf3, OneOf4, OneOf5, OneOf6, OneOf7, OneOf8, OneOf9,
 pub use opacity::Opacity;
 pub use scroll_renderable::ScrollRenderable;
 pub use shade_subtree::ShadeSubtree;
+pub use shape::Arc;
 pub use shape::Capsule;
 pub use shape::Circle;
 pub use shape::Rect;
@@ -136,6 +137,13 @@ impl From<geometry::RoundedRectangle> for ContentShape {
 impl From<geometry::Circle> for ContentShape {
     fn from(circle: geometry::Circle) -> Self {
         Self::Circle(circle)
+    }
+}
+
+impl From<geometry::Arc> for ContentShape {
+    fn from(arc: geometry::Arc) -> Self {
+        // FIXME: Arcs use the full circle for hit testing
+        Self::Circle(geometry::Circle::new(arc.origin, arc.diameter))
     }
 }
 

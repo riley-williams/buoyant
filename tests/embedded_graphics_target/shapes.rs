@@ -1,10 +1,10 @@
 use buoyant::view::prelude::*;
 use embedded_graphics::{
-    geometry::{OriginDimensions, Point as EgPoint, Size as EgSize},
+    geometry::{Angle as EgAngle, OriginDimensions, Point as EgPoint, Size as EgSize},
     mock_display::MockDisplay,
     pixelcolor::Rgb888,
     prelude::{Drawable, Primitive, WebColors},
-    primitives::{PrimitiveStyleBuilder, Rectangle as EgRectangle},
+    primitives::{Arc as EgArc, PrimitiveStyleBuilder, Rectangle as EgRectangle, StrokeAlignment},
 };
 
 use super::render_to_mock;
@@ -55,5 +55,72 @@ fn rectangle() {
         )
         .draw(&mut display_2)
         .unwrap();
+    display.assert_eq(&display_2);
+}
+
+#[test]
+fn unstroked_arc_is_not_drawn() {
+    let view =
+        Arc::new(Angle::degrees(0), Angle::degrees(270)).foreground_color(Rgb888::CSS_SPRING_GREEN);
+
+    let display = render_to_mock(&view, false);
+
+    display.assert_eq(&MockDisplay::new());
+}
+
+#[test]
+fn stroked_arc() {
+    let view = Arc::new(Angle::degrees(-90), Angle::degrees(180))
+        .stroked(3)
+        .padding(Edges::All, 4)
+        .foreground_color(Rgb888::CSS_SPRING_GREEN);
+
+    let display = render_to_mock(&view, false);
+
+    let mut display_2 = MockDisplay::new();
+
+    EgArc::new(
+        EgPoint::new(4, 4),
+        display.size().width - 8,
+        EgAngle::from_degrees(-90.0),
+        EgAngle::from_degrees(270.0),
+    )
+    .into_styled(
+        PrimitiveStyleBuilder::new()
+            .stroke_color(Rgb888::CSS_SPRING_GREEN)
+            .stroke_width(3)
+            .stroke_alignment(StrokeAlignment::Inside)
+            .build(),
+    )
+    .draw(&mut display_2)
+    .unwrap();
+    display.assert_eq(&display_2);
+}
+
+#[test]
+fn counterclockwise_arc() {
+    let view = Arc::new(Angle::degrees(90), Angle::degrees(-45))
+        .stroked(2)
+        .foreground_color(Rgb888::CSS_TOMATO);
+
+    let display = render_to_mock(&view, false);
+
+    let mut display_2 = MockDisplay::new();
+
+    EgArc::new(
+        EgPoint::new(0, 0),
+        display.size().width,
+        EgAngle::from_degrees(90.0),
+        EgAngle::from_degrees(-135.0),
+    )
+    .into_styled(
+        PrimitiveStyleBuilder::new()
+            .stroke_color(Rgb888::CSS_TOMATO)
+            .stroke_width(2)
+            .stroke_alignment(StrokeAlignment::Inside)
+            .build(),
+    )
+    .draw(&mut display_2)
+    .unwrap();
     display.assert_eq(&display_2);
 }

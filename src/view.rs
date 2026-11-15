@@ -65,6 +65,7 @@ pub mod prelude {
     pub use super::{FitAxis, HorizontalTextAlignment, padding::Edges};
     pub use crate::animation::Animation;
     pub use crate::layout::{Alignment, HorizontalAlignment, VerticalAlignment};
+    pub use crate::primitives::Angle;
     pub use crate::view::shape::*;
 }
 
